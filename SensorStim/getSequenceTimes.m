@@ -1,4 +1,4 @@
-function [ sequenceTimes, eventTimes ] = getSequenceTimes(cds,stimState, GTOstim )
+function [ sequenceTimes, eventTimes ] = getSequenceTimes(cds,stimState, GTOstim, useEndAsZero )
 % this function generates the bins and values for all spikes in cds for a pst
 % according to stimState. The outputs are a matrix of bin heights and a 
 % matrix of bin widths. THIS IS DONE FOR A GIVEN UNIT NUMBER
@@ -13,16 +13,26 @@ for i = 2:length(stimState)
         if(stimState(i) == 1) 
             if(GTOstim)
                 sequenceTimes = [sequenceTimes; cds.lfp.t(i), -1];
-                eventTimes = [eventTimes; cds.lfp.t(i)];
+                if(~useEndAsZero)
+                    eventTimes = [eventTimes; cds.lfp.t(i)];
+                end
             else
                 sequenceTimes = [sequenceTimes; cds.analog{1,1}.t(i), -1];
-                eventTimes = [eventTimes; cds.analog{1,1}.t(i)];
+                if(~useEndAsZero)
+                    eventTimes = [eventTimes; cds.analog{1,1}.t(i)];
+                end
             end
         else
             if(GTOstim)
                 sequenceTimes(end,2) = cds.lfp.t(i);
+                if(useEndAsZero)
+                    eventTimes = [eventTimes; cds.lfp.t(i)];
+                end
             else
                 sequenceTimes(end,2) = cds.analog{1,1}.t(i);
+                if(useEndAsZero)
+                    eventTimes = [eventTimes; cds.analog{1,1}.t(i)];
+                end
             end
         end
     end

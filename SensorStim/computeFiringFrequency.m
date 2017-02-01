@@ -1,6 +1,6 @@
 function [ out ] = computeFiringFrequency( cds, stimState,stimDuration, noStimDuration, GTOstim )
-% computes the frequency of firing for both the on case (1) and off case
-% (2) and outputs this in an nx2 array. Firing frequency is computed as
+% computes the frequency of firing for both the on case (2) and off case
+% (1) and outputs this in an nx2 array. Firing frequency is computed as
 % number of spikes/time
 
 out = zeros(size(cds.units,2),2);

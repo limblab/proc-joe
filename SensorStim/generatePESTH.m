@@ -2,11 +2,13 @@ function [ histogramOut ] = generatePESTH(cds,neuronNumber, varargin)
 % possible varargin: 'useRate', 1 <- plots rate 
 %                    'optimalBinSize', 1 <-calculates and plots PSTH with optimal bin size as well, 
 %                    'binSize', # <- uses this binSize instead of 0.05.
-
+%                    'zeroEvent' 'start','end' <- zero point of histogram
+                   
 % initialize variables
 userBinSize = 0.05;
 optimalBinSize = 0;
 useRate = 0;
+useEndAsZero = 0;
 % deal with varargin
 for i = 1:2:size(varargin,2)
     switch varargin{i}
@@ -16,6 +18,10 @@ for i = 1:2:size(varargin,2)
             optimalBinSize = varargin{i+1};
         case 'binSize'
             userBinSize = varargin{i+1};
+        case 'zeroEvent'
+            if(strcmp(lower(varargin{i+1}), 'end'))
+                useEndAsZero = 1;
+            end
     end
 end
 
@@ -30,7 +36,7 @@ if(size(cds.analog,1) == 0)
 end
 
 [stimState,] = determineStimTiming(cds, GTOstim, 0);
-[sequenceTimes, eventTimes] = getSequenceTimes(cds, stimState,GTOstim);
+[sequenceTimes, eventTimes] = getSequenceTimes(cds, stimState,GTOstim,useEndAsZero);
 % use experiment class to generate PSTH
 preTime = eventTimes(1) - sequenceTimes(1,1);
 postTime = sequenceTimes(1,2)-eventTimes(1);
@@ -65,7 +71,11 @@ end
 figure();
 bar(binEdges(1:end-1) + mode(diff(binEdges))/2, binCounts);
 % clean up graph
-xlabel('Time After Stim Start (s)');
+if(useEndAsZero)
+    xlabel('Time Relative to Stim End (s)')
+else
+    xlabel('Time Relative to Stim Start (s)');
+end
 ylabel(yLabelStr);
 
 % find optimal bin width if optimalBinSize is 1

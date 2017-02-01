@@ -58,11 +58,22 @@ end
 %% compute time of stim and time of no stim
 stimDuration = 0;
 noStimDuration = 0;
-
+lengthStimAll = [];
+lengthStimCurr = 0;
 if(~GTOstim)
     timeDiff = cds.analog{1,1}.t(2) - cds.analog{1,1}.t(1);
-
+    flagStim = stimState(1);
     for i = 1:length(stimState)
+        if(stimState(i) == 1 && flagStim == 0)
+            flagStim = 1;
+            lengthStimCurr = lengthStimCurr + timeDiff;
+        elseif(stimState(i) == 0 && flagStim == 1)
+            flagStim = 0;
+            lengthStimAll = [lengthStimAll; lengthStimCurr];
+            lengthStimCurr = 0;
+        elseif(stimState(i) == 1 && flagStim == 1)
+            lengthStimCurr = lengthStimCurr + timeDiff;
+        end
         if(stimState(i) == 1)
             stimDuration = stimDuration + timeDiff;
         else
