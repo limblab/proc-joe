@@ -1,7 +1,16 @@
-function [ figHandle,sortFFR ] = plotRaster(cds, sortThreshold, GTOstim, timeAfterGTOStim)
+function [ figHandle,sortFFR ] = plotRaster(cds, sortThreshold, GTOstim, timeAfterGTOStim,varargin)
 % plots a raster plot given the commondatastructure, a sortThreshold,
 % whether this is spindle stim or GTOstim, and time after GTOstim to look
 % at
+specificNeurons=0;
+neurons = [];
+for i = 1
+    switch varargin{i}
+        case 'specificNeurons'
+            neurons = varargin{i+1};
+            specificNeurons = 1;
+    end
+end
 
 %% detect when stim is on/off
 [stimState,stimDuration,noStimDuration] = determineStimTiming(cds, GTOstim, timeAfterGTOStim);
@@ -34,7 +43,13 @@ ax1=subplot(2,1,1);
 hold on
 counter = 1;
 for i = sortFFR(:,2)'
-    if(sortFFR(counter,1) > sortThreshold)
+    if(specificNeurons)
+        if(sum(i==neurons)>0)
+            plot(cds.units(i).spikes.ts,(counter)*ones(length(cds.units(i).spikes.ts),1),'k.','markersize',ms)
+            counter = counter+1;
+        end
+        counter = counter-1;
+    elseif(sortFFR(counter,1) > sortThreshold)
         if(verticalLine)
             plot([cds.units(i).spikes.ts,cds.units(i).spikes.ts]', ...
             [(counter)*ones(length(cds.units(i).spikes.ts),1)-rpLineLength/2,...

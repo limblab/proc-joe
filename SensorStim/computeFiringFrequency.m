@@ -2,7 +2,6 @@ function [ out ] = computeFiringFrequency( cds, stimState,stimDuration, noStimDu
 % computes the frequency of firing for both the on case (2) and off case
 % (1) and outputs this in an nx2 array. Firing frequency is computed as
 % number of spikes/time
-
 out = zeros(size(cds.units,2),2);
 spikeLabel = zeros(length(cds.units(1).spikes.ts),1);
 %% count number of spikes during no stim and stim conditions
@@ -70,6 +69,8 @@ end
 % hold on
 % plot(cds.units(1).spikes.ts,spikeLabel,'o')
 % plot(cds.analog{1,1}.t,stimState)
+
+
 out = [out(:,1)./noStimDuration, out(:,2)./stimDuration];
 
 end

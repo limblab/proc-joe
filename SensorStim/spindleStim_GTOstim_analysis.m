@@ -6,9 +6,10 @@ sortThreshold = 0;
 funcFolder = pwd;
 
 filepath = 'D:\Lab\Data\SensorStim\Chips_20151123\';
-filename = 'Chips_20151123_TricepsSweep_009'; % NN: 36
+% filename = 'Chips_20151123_TricepsSweep_009'; % NN: 36
 % filename = 'Chips_20151123_WristExtVibe_007'; % NN: 3, 93, 4
 % filename = 'Chips_20151123_WristFlexVibe_006'; % NN: 21
+filename = 'Chips_20151123_GTOStim_03mA_noartefactrejection_003';
 
 % filepath = 'D:\Lab\Data\SensorStim\Han_20170106\';
 % filename = 'Han_20170106_SpindleStim_FCR_area2EMG_003'; % 156
@@ -35,7 +36,8 @@ end
 cd(funcFolder);
 
 %% raster: all units against time sorted by firing frequency ratio if that ratio is greater than sortThreshold
-[f,sortFFR] = plotRaster(cds, sortThreshold, GTOstim, timeAfterGTOStim);
+neurons = [7,119];
+[f,sortFFR] = plotRaster(cds, sortThreshold, GTOstim, timeAfterGTOStim,'specificNeurons',neurons);
 
 % check neuron number of interest across all files
 % multipleFileFiringRate(filepath, fileprefix, 3)

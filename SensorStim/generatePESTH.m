@@ -3,12 +3,18 @@ function [ histogramOut ] = generatePESTH(cds,neuronNumber, varargin)
 %                    'optimalBinSize', 1 <-calculates and plots PSTH with optimal bin size as well, 
 %                    'binSize', # <- uses this binSize instead of 0.05.
 %                    'zeroEvent' 'start','end' <- zero point of histogram
-                   
+%                    'gaussianSmooth', <- 1 if yes, 0 if no
+%                    'gaussianStd', # <- # is the std of the kernel
+%                    'plotGaussianSmooth', # <- 1 or 0 if want to plot
 % initialize variables
 userBinSize = 0.05;
 optimalBinSize = 0;
 useRate = 0;
 useEndAsZero = 0;
+gaussianSmooth = 0;
+gaussianSmooth_std = userBinSize;
+plotGaussianSmooth = 0;
+eventOccurs = 0;
 % deal with varargin
 for i = 1:2:size(varargin,2)
     switch varargin{i}
@@ -22,12 +28,16 @@ for i = 1:2:size(varargin,2)
             if(strcmp(lower(varargin{i+1}), 'end'))
                 useEndAsZero = 1;
             end
+        case 'gaussianSmooth'
+            gaussianSmooth = varargin{i+1};
+        case 'gaussianStd'
+            gaussianSmooth_std = varargin{i+1};
+        case 'plotGaussian'
+            plotGaussianSmooth = varargin{i+1};
+        case 'eventOccurs'
+            eventOccurs = varargin{i+1};
     end
 end
-
-
-warning('off')
-funcFolder = pwd;
 
 % generates a post stimulus time histogram from the given unit in the cds
 GTOstim = 0;
@@ -41,14 +51,6 @@ end
 preTime = eventTimes(1) - sequenceTimes(1,1);
 postTime = sequenceTimes(1,2)-eventTimes(1);
 
-% stack events and spikes
-spikes = [];
-for i = 1:length(eventTimes)
-    spikeMask = (cds.units(neuronNumber).spikes.ts  > eventTimes(i) - preTime & ...
-        cds.units(neuronNumber).spikes.ts < eventTimes(i) + postTime);
-    spikes = [spikes; cds.units(neuronNumber).spikes.ts(spikeMask) - eventTimes(i)];
-end
-
 % initialize bins
 numBinsPre = ceil(preTime/userBinSize);
 numBinsPost = ceil(postTime/userBinSize);
@@ -60,16 +62,59 @@ end
 for i = 1:numBinsPost
     binEdges = [binEdges i*userBinSize];
 end
+
+% stack events and spikes
+spikes = [];
+binEventOccurences = [];
+for i = 1:length(eventTimes)
+    spikeMask = (cds.units(neuronNumber).spikes.ts  > eventTimes(i) - preTime & ...
+        cds.units(neuronNumber).spikes.ts < eventTimes(i) + postTime);
+    spikes = [spikes; cds.units(neuronNumber).spikes.ts(spikeMask) - eventTimes(i)];
+    % count times at least one spike happens per bin
+    [eventInBin, binEdges] = histcounts(cds.units(neuronNumber).spikes.ts(spikeMask) - eventTimes(i),binEdges);
+    if(i==1)
+        binEventOccurences = (eventInBin>0);
+    else
+        binEventOccurences = binEventOccurences+(eventInBin>0);
+    end
+end
+binEventRate = binEventOccurences./length(eventTimes);
+
+
 [binCounts, binEdges] = histcounts(spikes,binEdges);
-if(useRate)
+if(eventOccurs)
+    yLabelStr = 'Rate of Spike Occuring';
+elseif(useRate)
     binCounts = binCounts/numel(eventTimes)/(binEdges(2)-binEdges(1));
     yLabelStr = 'Average Firing Rate (spikes/s)';
 else
     binCounts = binCounts/numel(eventTimes);
     yLabelStr = 'Average Spike Counts (spikes)';
 end
+
+% perform gaussian smoothing if required
+if(gaussianSmooth)
+    kernel_width = ceil(3*gaussianSmooth_std/userBinSize);
+    kernel = normpdf(-kernel_width*userBinSize: ...
+        userBinSize: ...
+        kernel_width*userBinSize,...
+        0, gaussianSmooth_std); 
+    normalizer = conv(kernel,ones(1,length(binEdges)-1));
+    smoothed_fr_inter = conv(kernel,binCounts)./normalizer;
+    smoothed_fr = smoothed_fr_inter(kernel_width+1:end-kernel_width);
+end
+
+
 figure();
-bar(binEdges(1:end-1) + mode(diff(binEdges))/2, binCounts);
+if(eventOccurs)
+    bar(binEdges(1:end-1) + mode(diff(binEdges))/2,binEventRate);
+    ylim([0,1]);
+elseif(useRate)
+    bar(binEdges(1:end-1) + mode(diff(binEdges))/2, binCounts);
+    ylim([0,1]);
+else
+    bar(binEdges(1:end-1) + mode(diff(binEdges))/2, binCounts);
+end
 % clean up graph
 if(useEndAsZero)
     xlabel('Time Relative to Stim End (s)')
@@ -77,7 +122,10 @@ else
     xlabel('Time Relative to Stim Start (s)');
 end
 ylabel(yLabelStr);
-
+if(plotGaussianSmooth && gaussianSmooth)
+    hold on
+    plot((binEdges(1:end-1)+binEdges(2:end))/2,smoothed_fr,'r','linewidth',2);
+end
 % find optimal bin width if optimalBinSize is 1
 if(optimalBinSize)
     figure();
@@ -94,23 +142,5 @@ if(optimalBinSize)
     ylabel(yLabelStr);
 end
 
-
-
-% figure();
-% [histogramOut] = PESTH(exp.units,eventTimes,preTime,postTime,neuronNumber);
-% cd(funcFolder);
-% warning('on')
-% 
-% plot([0.7 0.7],[0,max(get(gca,'YTick'))],'r')
 end
-
-% 
-% exp = experiment();
-% exp.meta.hasLfp=cds.meta.hasLfp;
-% exp.meta.hasKinematics=cds.meta.hasKinematics;
-% exp.meta.hasForce=cds.meta.hasForce;
-% exp.meta.hasUnits=cds.meta.hasUnits;
-% exp.meta.hasTrials=false;
-% exp.meta.hasAnalog=cds.meta.hasAnalog;
-% exp.addSession(cds);
 
