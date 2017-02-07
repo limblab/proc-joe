@@ -6,7 +6,7 @@ funcFolder = pwd;
 
 filepath = 'D:\Lab\Data\SensorStim\Chips_20151123\';
 % filename = 'Chips_20151123_GTOStim_03mA_artefactrejection_002'; % 21, 36, 136
-filename = 'Chips_20151123_GTOStim_03mA_noartefactrejection_003'; % 7,36,119
+% filename = 'Chips_20151123_GTOStim_03mA_noartefactrejection_003'; % 7,36,119
 % filename = 'Chips_20151123_GTOStim_025mA_noartefactrejection_001'; % 67,101,193
 
 % filepath = 'D:\Lab\Data\SensorStim\Han_20170106\';
