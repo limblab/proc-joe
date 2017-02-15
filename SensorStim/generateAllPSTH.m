@@ -1,16 +1,16 @@
 %% Generates PSTH histograms for every neuron in the file one at a time
 useZeroAsStart = 1;
-neuronNumberStart = 1;
+neuronNumberStart = 40;
 % load cds from file
 funcFolder = pwd;
 
-filepath = 'D:\Lab\Data\SensorStim\Chips_20151123\';
+% filepath = 'D:\Lab\Data\SensorStim\Chips_20151123\';
 % filename = 'Chips_20151123_GTOStim_03mA_artefactrejection_002'; % 21, 36, 136
 % filename = 'Chips_20151123_GTOStim_03mA_noartefactrejection_003'; % 7,36,119
 % filename = 'Chips_20151123_GTOStim_025mA_noartefactrejection_001'; % 67,101,193
 
-% filepath = 'D:\Lab\Data\SensorStim\Han_20170106\';
-% filename = 'Han_20170106_SpindleStim_FCR_area2EMG_003'; 
+filepath = 'D:\Lab\Data\SensorStim\Han_20170209\';
+filename = 'Han_20170209_GTOstim_ECR_2mA_area2_001';
 
 GTOstim = ~isempty(strfind(lower(filename),'gtostim'));
 
@@ -34,9 +34,9 @@ cd(funcFolder);
 for i = neuronNumberStart:size(cds.units,2)
     if(cds.units(i).ID ~= 0 && cds.units(i).ID ~=255) % unsorted stuff
         if(useZeroAsStart)
-            generatePESTH(cds, i, 'zeroEvent', 'start','eventOccurs',1);
+            generatePESTH(cds, i, 'zeroEvent', 'start');
         else
-            generatePESTH(cds, i, 'zeroEvent', 'end','eventOccurs',1);
+            generatePESTH(cds, i, 'zeroEvent', 'end');
         end
         title(['NN:' num2str(i) ' CH' num2str(cds.units(i).chan) ' ID' num2str(cds.units(i).ID)]);
         pause(3);

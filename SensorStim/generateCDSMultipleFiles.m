@@ -2,8 +2,8 @@ function [] = generateCDSMultipleFiles()
 % generates cds files for the given filepath and fileprefix
 funcFolder = pwd;
 
-filepath = 'D:\Lab\Data\SensorStim\Han_20170106\';
-fileprefix = 'Han_20170106';
+filepath = 'D:\Lab\Data\SensorStim\Han_20170209\';
+fileprefix = 'Han_20170209';
 files = dir([filepath fileprefix '*.mat']);
 % remove '_cds' files and '-s' files
 i = 1;
