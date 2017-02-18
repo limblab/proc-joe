@@ -1,4 +1,4 @@
-function [ barFig ] = plotPSTH(cds, neuronNumber, eventTimes, preTime, postTime, binSize, varargin)
+function [ binEdges, binCounts ] = plotPSTH(cds, neuronNumber, eventTimes, preTime, postTime, binSize, varargin)
 % plots a PSTH given the data and relevant times/binSize. This should be
 % usuable with any function that aims to plot a PSTH
 useRate = 0;
@@ -10,7 +10,8 @@ optimalBinSize = 0;
 useEndAsZero = 0;
 zeroCenter = 0;
 averageSpikeWaveform = 0;
-
+noPlots = 0;
+confInter = 1;
 for i = 1:2:length(varargin)
     switch varargin{i}
         case 'optimalBinSize'
@@ -31,6 +32,10 @@ for i = 1:2:length(varargin)
             zeroCenter = varargin{i+1};
         case 'averageSpikeWaveform'
             averageSpikeWaveform = varargin{i+1};
+        case 'noPlots'
+            noPlots = varargin{i+1};
+        case 'confidenceInterval'
+            confInter = varargin{i+1};
     end
     
 end
@@ -80,11 +85,11 @@ if(eventOccurs)
             binCounts = binCounts+(eventInBin>0);
         end
     end
-    binCounts = binCounts/length(eventTimes(i));
+    binCounts = binCounts/numel(eventTimes);
     yLabelStr = 'Rate of Spike Occuring';
 elseif(useRate)
     [binCounts, binEdges] = histcounts(spikes,binEdges);
-    binCounts = binCounts/numel(eventTimes)/(binEdges(2)-binEdges(1));
+    binCounts = binCounts/numel(eventTimes)/(binSize);
     yLabelStr = 'Average Firing Rate (spikes/s)';
 else
     [binCounts, binEdges] = histcounts(spikes,binEdges);
@@ -105,47 +110,82 @@ if(gaussianSmooth)
     smoothed_fr = smoothed_fr_inter(kernel_width+1:end-kernel_width);
 end
 
-
-barFig = figure();
-if(eventOccurs)
-    bar(binEdges(1:end-1) + mode(diff(binEdges))/2,binEventRate);
-    ylim([0,1]);
-elseif(useRate)
-    bar(binEdges(1:end-1) + mode(diff(binEdges))/2, binCounts);
-    ylim([0,1]);
-else
-    bar(binEdges(1:end-1) + mode(diff(binEdges))/2, binCounts);
-end
-% clean up graph
-if(useEndAsZero)
-    xlabel('Time Relative to Stim End (s)')
-else
-    xlabel('Time Relative to Stim Start (s)');
-end
-ylabel(yLabelStr);
-if(plotGaussianSmooth && gaussianSmooth)
-    hold on
-    plot((binEdges(1:end-1)+binEdges(2:end))/2,smoothed_fr,'r','linewidth',2);
-end
-
-if(averageSpikeWaveform)
-    % want 50-100 ms bin, this needs to be changed in the code
-    binIdx = numBinsPre + 2;
-    for i = 1:length(eventTimes)
-        spikemask = (cds.units(neuronNumber).spikes.ts  > eventTimes(i) + binEdges(binIdx) & ...
-            cds.units(neuronNumber).spikes.ts < eventTimes(i) + binEdges(binIdx+1));
-        spikeIdx = find(cds.units(neuronNumber).spikes.ts(spikeMask));
+if(~noPlots)
+    barFig = figure();
+    if(eventOccurs)
+        bar(binEdges(1:end-1) + mode(diff(binEdges))/2,binEventRate);
+        ylim([0,1]);
+    elseif(useRate)
+        bar(binEdges(1:end-1) + mode(diff(binEdges))/2, binCounts);
+    else
+        bar(binEdges(1:end-1) + mode(diff(binEdges))/2, binCounts);
     end
-    spikesTable = cds.units(neuronNumber).spikes;
-    waves = spikesTable{spikeIdx,:};
-    aveWaves = mean(waves);
-    figure();
-    plot(aveWaves,'r','linewidth',2);
-    hold on
-    plot(aveWaves + std(waves),'--r','linewidth',2);
-    plot(aveWaves - std(waves),'--r','linewidth',2);
-    ylabel('Voltage (\muV)');
-    xlabel('Wave Point');
+    % clean up graph
+    if(useEndAsZero)
+        xlabel('Time Relative to Stim End (s)')
+    else
+        xlabel('Time Relative to Stim Start (s)');
+    end
+    ylabel(yLabelStr);
+    if(plotGaussianSmooth && gaussianSmooth)
+        hold on
+        plot((binEdges(1:end-1)+binEdges(2:end))/2,smoothed_fr,'r','linewidth',2);
+    end
+    
+    %% conf interval if requested
+    if(confInter) % so definitely not a normal distribution -- bootstrapping
+        a = gca;
+        xLimits = a.XLim;
+        hold on
+        [meanConf, plusMinus] = bootstrapConfidenceInterval(cds, neuronNumber, eventTimes(1), binSize);
+        if(useRate)
+            meanConf = meanConf/binSize;
+            plusMinus = plusMinus/binSize;
+        end
+        plot([-100,100],[meanConf,meanConf],'k','linewidth',2)
+        plot([-100,100],[plusMinus(1),plusMinus(1)],'k','linewidth',2)
+        plot([-100,100],[plusMinus(2),plusMinus(2)],'k','linewidth',2)
+        a.XLim = xLimits;
+    end
+    
+    
+    %% Average Spike Waveform
+    spikeIdxWave = [];
+    spikeIdxAllElse = [];
+    
+    temp = num2str(averageSpikeWaveform);
+    
+    if(str2num(temp(1))==1)
+        % 
+        if(length(temp)>1)
+            binIdx = numBinsPre + str2num(temp(2:end));
+        else
+            binIdx = numBinsPre + 2;
+        end
+        for i = 1:length(eventTimes)
+            spikeMask = (cds.units(neuronNumber).spikes.ts  > eventTimes(i) + binEdges(binIdx) & ...
+                cds.units(neuronNumber).spikes.ts < eventTimes(i) + binEdges(binIdx+1));
+            spikeIdxWave = [spikeIdxWave; find(spikeMask)];
+            spikeIdxAllElse = [spikeIdxAllElse; find(~spikeMask)];
+        end
+        spikesTable = cds.units(neuronNumber).spikes;
+        wavesWave = spikesTable{spikeIdxWave,:};
+        wavesAllElse = spikesTable{spikeIdxAllElse,:};
+        aveWavesWave = mean(wavesWave);
+        aveWavesAllElse = mean(wavesAllElse);
+        
+        figure();
+        plot(aveWavesWave,'r','linewidth',2);
+        hold on
+        plot(aveWavesAllElse,'b','linewidth',2);
+        plot(aveWavesWave + std(wavesWave),'--r','linewidth',2);
+        plot(aveWavesWave - std(wavesWave),'--r','linewidth',2);
+        plot(aveWavesAllElse + std(wavesAllElse),'--b','linewidth',2);
+        plot(aveWavesAllElse - std(wavesAllElse),'--b','linewidth',2);
+        ylabel('Voltage (\muV)');
+        xlabel('Wave Point');
+        legend('binned waves','all other waves')
+    end
 end
 
 end

@@ -1,22 +1,15 @@
+function [] = generateAllPSTH(filepath, filename, varargin)
+% to do -- deal with varargin so that the plots can be customized
+
 %% Generates PSTH histograms for every neuron in the file one at a time
 useZeroAsStart = 1;
-neuronNumberStart = 40;
+neuronNumberStart = 1;
 % load cds from file
 funcFolder = pwd;
 
-% filepath = 'D:\Lab\Data\SensorStim\Chips_20151123\';
-% filename = 'Chips_20151123_GTOStim_03mA_artefactrejection_002'; % 21, 36, 136
-% filename = 'Chips_20151123_GTOStim_03mA_noartefactrejection_003'; % 7,36,119
-% filename = 'Chips_20151123_GTOStim_025mA_noartefactrejection_001'; % 67,101,193
-
-filepath = 'D:\Lab\Data\SensorStim\Han_20170209\';
-filename = 'Han_20170209_GTOstim_ECR_2mA_area2_001';
-
-GTOstim = ~isempty(strfind(lower(filename),'gtostim'));
-
 % if cds exists, load that, otherwise make new one and save cds
-if(exist([filepath filename '_cds.mat'],'file') > 0)
-    load([filepath filename '_cds.mat']);
+if(exist([filepath filename],'file') > 0)
+    load([filepath filename]);
 else
     labnum = 6;
     monkey = 'monkeyHan';
@@ -31,15 +24,25 @@ end
 cd(funcFolder);
 
 % for each neuron, run generatePESTH
+
+GTOstim = 0;
+if(size(cds.analog,1) == 0)
+    GTOstim = 1;
+end
+[stimState,] = determineStimTiming(cds, GTOstim, 0);
+[sequenceTimes, eventTimes] = getSequenceTimes(cds, stimState,GTOstim,0);
+
 for i = neuronNumberStart:size(cds.units,2)
     if(cds.units(i).ID ~= 0 && cds.units(i).ID ~=255) % unsorted stuff
         if(useZeroAsStart)
-            generatePESTH(cds, i, 'zeroEvent', 'start');
+            generatePESTH(cds, i, 'zeroEvent', 'start','sequenceTimes',sequenceTimes,'eventTimes',eventTimes);
         else
-            generatePESTH(cds, i, 'zeroEvent', 'end');
+            generatePESTH(cds, i, 'zeroEvent', 'end','sequenceTimes',sequenceTimes,'eventTimes',eventTimes);
         end
         title(['NN:' num2str(i) ' CH' num2str(cds.units(i).chan) ' ID' num2str(cds.units(i).ID)]);
         pause(3);
         close all;
     end 
+end
+
 end

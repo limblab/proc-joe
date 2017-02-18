@@ -1,9 +1,6 @@
-function [] = generateCDSMultipleFiles()
+function [] = generateCDSMultipleFiles(filepath, fileprefix)
 % generates cds files for the given filepath and fileprefix
 funcFolder = pwd;
-
-filepath = 'D:\Lab\Data\SensorStim\Han_20170209\';
-fileprefix = 'Han_20170209';
 files = dir([filepath fileprefix '*.mat']);
 % remove '_cds' files and '-s' files
 i = 1;
@@ -13,6 +10,9 @@ while i <= length(files)
         i=i-1;
     elseif(~isempty(strfind(files(i).name,'_cds')))
         files(i) = []; % removes row i from struct files
+        i=i-1;
+    elseif(~isempty(strfind(lower(files(i).name),'neurons')))
+        files(i) = [];
         i=i-1;
     end
     i=i+1;
