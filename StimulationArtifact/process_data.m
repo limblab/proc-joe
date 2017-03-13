@@ -35,7 +35,7 @@ outputData.chList = chList; clear chList;
 outputData.eList = eList; clear eList;
 outputData.posList = posList; clear posList;
 
-%% add neuron like waveforms (triangles lol) to the artifact data
+% add neuron like waveforms (triangles lol) to the artifact data
 % add waves after the artifact -- data point inputData.presample and beyond
 % waves should last roughly 0.5ms, sample rate is 30000
 addWaveforms = 1;
@@ -71,13 +71,9 @@ if(addWaveforms)
     end
 end
 %% perform filtering step 
-% filter combinations to use
-highPassCutoff = [-1,500,2500,5000];
-lowPassCutoff = [-1,1000,5000,10000];
-filterOrder = [1];
-% settling time matrix
-settlingTimeMat = [];
-filterParamsMat = [];
+highPassCutoff = [-1,500,1000,1500,2000,5000];
+lowPassCutoff = [-1,1000,2000,5000,10000];
+filterOrder = [1,2,3];
 sampRate = 30000; % hz
 for k = filterOrder
     for i = 1:numel(highPassCutoff)
@@ -105,25 +101,18 @@ for k = filterOrder
 
             if(~doNothing && ~noFilter) % filter and save png and .mat file
                 outputDataFiltered = filterArtifactData(outputData,'filter',filterStruct);
-                settlingTimeMat(end+1,:,:) = getSettlingTime(outputDataFiltered, inputData);
                 % plot results and save png
                 plotArtifactsAllStimChannels(outputDataFiltered,inputData,folderpath,'Name',filterStruct.name,'noPlots',1);
                 save(strcat(cd,filesep,'Raw_Figures',filesep,filterStruct.name(2:end)),'outputDataFiltered','inputData');
-                filterParamsMat(end+1,:) = [fhigh,flow,k];
-
+                close all;
             elseif(~doNothing && noFilter) % no filter, save .mat file
-                settlingTimeMat(end+1,:,:) = getSettlingTime(outputData, inputData);
                 plotArtifactsAllStimChannels(outputData,inputData,folderpath,'Name','_noFilter','noPlots',1);
                 save(strcat(cd,filesep,'Raw_Figures',filesep,'noFilter'),'outputData','inputData');
-                filterParamsMat(end+1,:) = [fhigh,flow,k];
-
+                close all;
             end
-            
         end
     end
 end
-
-meanSettlingTime = mean(settlingTimeMat,3);
 
 disp('Done plotting things');
 
