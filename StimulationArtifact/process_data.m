@@ -15,7 +15,7 @@ inputData.interpulse=.000053;%in s
 inputData.pWidth1=.0002;
 inputData.pWidth2=.0002;
 
-inputData.windowSize=30*20;%in points
+inputData.windowSize=30*5;%in points
 inputData.presample=100;%in points
 inputData.plotRange=0.2;%in mV
 inputData.lab=6;
@@ -34,8 +34,8 @@ outputData.artifactData = artifactData; clear artifactData;
 outputData.chList = chList; clear chList;
 outputData.eList = eList; clear eList;
 outputData.posList = posList; clear posList;
-
-% add neuron like waveforms (triangles lol) to the artifact data
+inputData = temp;
+%% add neuron like waveforms (triangles lol) to the artifact data
 % add waves after the artifact -- data point inputData.presample and beyond
 % waves should last roughly 0.5ms, sample rate is 30000
 addWaveforms = 1;
@@ -71,9 +71,11 @@ if(addWaveforms)
     end
 end
 %% perform filtering step 
-highPassCutoff = [-1,500,1000,1500,2000,5000];
-lowPassCutoff = [-1,1000,2000,5000,10000];
-filterOrder = [1,2,3];
+% highPassCutoff = [-1,500,1000,1500,2000,5000];
+% lowPassCutoff = [-1,1000,2000,5000,10000];
+highPassCutoff = [-1,3000,10000];
+lowPassCutoff = [-1];
+filterOrder = [1];
 sampRate = 30000; % hz
 for k = filterOrder
     for i = 1:numel(highPassCutoff)
@@ -104,11 +106,9 @@ for k = filterOrder
                 % plot results and save png
                 plotArtifactsAllStimChannels(outputDataFiltered,inputData,folderpath,'Name',filterStruct.name,'noPlots',1);
                 save(strcat(cd,filesep,'Raw_Figures',filesep,filterStruct.name(2:end)),'outputDataFiltered','inputData');
-                close all;
             elseif(~doNothing && noFilter) % no filter, save .mat file
                 plotArtifactsAllStimChannels(outputData,inputData,folderpath,'Name','_noFilter','noPlots',1);
                 save(strcat(cd,filesep,'Raw_Figures',filesep,'noFilter'),'outputData','inputData');
-                close all;
             end
         end
     end
