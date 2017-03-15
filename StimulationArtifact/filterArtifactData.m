@@ -25,13 +25,14 @@ if(~userFilter) % use the one here
 end
 
 % apply filter to all electrodes
-for i = 1:numel(artifactData.electrodeNames)
-    % reverse the signals
-    artifactFlipped = fliplr(squeeze(artifactData.artifact(i,:,:)));
-    % filter and unreverse signal
-    outputDataFiltered.artifactData.artifact(i,:,:) = fliplr(filter(b,a,artifactFlipped')');
+for art = 1:numel(artifactData)
+    for i = 1:numel(artifactData(art).electrodeNames)
+        % reverse the signals
+        artifactFlipped = fliplr(squeeze(artifactData(art).artifact(i,:,:)));
+        % filter and unreverse signal
+        outputDataFiltered.artifactData(art).artifact(i,:,:) = fliplr(filter(b,a,artifactFlipped')');
+    end
 end
-
 
 end
 

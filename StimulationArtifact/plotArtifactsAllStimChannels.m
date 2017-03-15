@@ -126,7 +126,7 @@ chList = outputData.chList;
             fname=strcat('Figure_',num2str(double(H)));
         end
         fname(fname==' ')='_';%replace spaces in name for saving
-        print('-dpng',outputFigures(i),strcat(cd,filesep,'Raw_Figures',filesep,fname,'.png'))
+        print('-dpng',outputFigures(i),strcat(folderpath,filesep,'Raw_Figures',filesep,fname,'.png'))
     end
     outputFigures=[];
 
