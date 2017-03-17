@@ -22,7 +22,7 @@ for i = 2:length(stimState)
                     eventTimes = [eventTimes; cds.analog{1,1}.t(i)];
                 end
             end
-        else
+        else % change is off
             if(GTOstim)
                 sequenceTimes(end,2) = cds.lfp.t(i);
                 if(useEndAsZero)
@@ -37,8 +37,9 @@ for i = 2:length(stimState)
         end
     end
 end
-%% clean times (need to be at least 0.5s apart)
+%% clean times (need to be at least 0.5s apart and at most 1.5s apart)
 timeThresh = 0.5; % seconds
+timeThresh2 = 3;
 i = 2;
 while(i < length(eventTimes))
     if(eventTimes(i)-eventTimes(i-1) < timeThresh)
@@ -50,30 +51,42 @@ while(i < length(eventTimes))
             eventTimes = [eventTimes(1:i-1); eventTimes(i+1:end)];
             sequenceTimes = [sequenceTimes(1:i-1,:); sequenceTimes(i+1:end,:)];
             i = i-1;
-        end   
+        end
+    elseif(eventTimes(i)-eventTimes(i-1) > timeThresh2)
+        % remove i-1, don't update i
+        if(i-1 == 1)
+            eventTimes = eventTimes(2:end);
+            sequenceTimes = sequenceTimes(2:end,:);
+            i=i-1;
+        else
+            % eh do nothing?
+        end 
     end
-    i = i + 1;
+    i = i+1;
 end
 %% Widen sequences
 % add and subtract time from the end and beginning of sequences so that the
 % sequences are all as large as possible (same amount of time
 % added/subtracted for each)
-timeShift = (sequenceTimes(2,1)-sequenceTimes(1,2))/2; 
-dt = timeShift/100;
-flagOverlap = 1;
-while(flagOverlap && timeShift>0)
-    sequenceTimesAdjusted = [sequenceTimes(:,1)-timeShift, sequenceTimes(:,2)+timeShift];
-    diffTimes = sequenceTimes(2:end,1)-sequenceTimes(1:end-1:1);
-    if(min(diffTimes) > 0)
-        flagOverlap = 0;
-    else
-        flagOverlap = 1;
-        timeShift = timeShift-dt;
+if(size(sequenceTimes,1) > 1)
+    timeShift = max(5,(sequenceTimes(2,1)-sequenceTimes(1,2))/2); 
+    dt = timeShift/500;
+    flagOverlap = 1;
+    while(flagOverlap && timeShift>0)
+        sequenceTimesAdjusted = [sequenceTimes(:,1)-timeShift, sequenceTimes(:,2)+timeShift];
+        diffTimes = sequenceTimesAdjusted(2:end,1)-sequenceTimesAdjusted(1:end-1,2);
+        if(min(diffTimes) > 0)
+            flagOverlap = 0;
+        else
+            flagOverlap = 1;
+            timeShift = timeShift-dt;
+        end
     end
+    timeShift = max(timeShift,0);
+    sequenceTimes = [sequenceTimes(:,1)-timeShift, sequenceTimes(:,2)+timeShift];
+else
+    sequenceTimes = [sequenceTimes(:,1) - 0.8, sequenceTimes(:,2) + 0.8];
 end
-timeShift = max(timeShift,0);
-sequenceTimes = [sequenceTimes(:,1)-timeShift, sequenceTimes(:,2)+timeShift];
-
 
 end
 

@@ -7,10 +7,11 @@ if(~GTOstim)
     spindleStimValue = table{:,2};
     stimState = zeros(length(timeStim),1);
     numPoints = 100;
+    maxStim = max(abs(spindleStimValue(100:100+numPoints)));
     stdStim = std(spindleStimValue(100:100+numPoints));
     pointsLook = 10;
     for i = pointsLook:length(spindleStimValue)
-        if(std(spindleStimValue(i-pointsLook+1:i)) > 250*stdStim && max(abs(spindleStimValue(i-pointsLook+1:i))) > 500)
+        if(max(abs(spindleStimValue(i-pointsLook+1:i))) > maxStim + stdStim*100)
             stimState(i) = 1;
         else
             stimState(i) = 0;
@@ -23,7 +24,6 @@ if(~GTOstim)
 end
 if(GTOstim)
     meanNumPoints = 100;
-
     stimState = zeros(length(cds.lfp.t),1);
     table = cds.lfp;
     meanStim = mean(table{1:meanNumPoints,2});
@@ -51,8 +51,9 @@ if(GTOstim)
     
 %     figure();
 %     hold on
-%     plot(cds.lfp.t,cds.lfp.S1ElecStimSync)
+%     plot(cds.lfp.t,cds.lfp{:,2})
 %     plot(cds.lfp.t,stimState*2000)
+%     pause;
 end
 
 %% compute time of stim and time of no stim

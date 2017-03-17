@@ -1,4 +1,4 @@
-function [keep] = keepNeuronGTOstim(cds, neuronNumber, binEdges, binCounts, stimStart, useRate, varargin)
+function [keep] = keepNeuronSpindleStim(cds, neuronNumber, binEdges, binCounts, eventTimes, useRate, stimState, varargin)
 % rejects or keeps neuron (nn in cds) based on the binEdges and counts
 % provided
 
@@ -23,7 +23,7 @@ end
 binSize=binEdges(2)-binEdges(1);
 
 if(bootstrap)
-    [meanCounts, plusMinus] = bootstrapConfidenceInterval(cds,neuronNumber,stimStart,binSize);
+    [meanCounts, plusMinus] = bootstrapConfidenceInterval(cds,neuronNumber,eventTimes(1),binSize);
 end
 
 zeroIdx = find(binEdges==0);
@@ -33,10 +33,15 @@ if(useRate)
     plusMinus=plusMinus/(binEdges(2)-binEdges(1));
 end
 threshold = 1.0;
+stimSampRate = 1;
+if(~isempty(cds.analog))
+    stimSampRate = 1/(cds.analog{1,1}.t(2) - cds.analog{1,1}.t(1));
+else
+    stimSampRate = 1/(cds.lfp.t(2) - cds.lfp.t(1));
+end
+aveStimTime = (sum(stimState == 1))/numel(eventTimes)/stimSampRate;
 
-% keep if count in bin is large enough and this is the max bin in the trial
-% time
-if(binCounts(zeroIdx+1) > plusMinus(2)*threshold && binCounts(zeroIdx+1)>mean(binCounts)+2*std(binCounts))
+if(sum(binCounts(zeroIdx+1:zeroIdx+floor(aveStimTime/binSize)) <= plusMinus(2)*threshold) <= 1)
     keep = 1;
 % elseif(binCounts(zeroIdx+2) > plusMinus(2)*threshold && max(binCounts) == binCounts(zeroIdx+2))
 %     keep = 1;

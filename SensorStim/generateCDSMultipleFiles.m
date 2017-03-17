@@ -20,13 +20,13 @@ end
 
 % check for file existance, and if cds already exists
 for i = 1:length(files)
-    if(exist([filepath files(i).name],'file') > 0 && ~exist([filepath files(i).name(1:end-4) '_cds.mat'],'file') ...
-            && isempty(strfind(files(i).name,'EMGextra')))
+    if((exist([filepath files(i).name],'file') > 0 && ~exist([filepath files(i).name(1:end-4) '_cds.mat'],'file') ...
+            && isempty(strfind(files(i).name,'EMGextra'))))
         labnum = 6;
         monkey = 'monkeyHan';
         ranBy = 'ranByRaeed';
         array = 'arrayLeftS1Area2';
-        task = 'taskRW';
+        task = 'tasknone';
         cds = commonDataStructure();
         cds.file2cds([filepath files(i).name], labnum, task, monkey, ranBy, array)
         save([filepath files(i).name(1:end-4) '_cds'],'cds');

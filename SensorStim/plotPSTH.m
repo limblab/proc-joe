@@ -1,4 +1,4 @@
-function [ binEdges, binCounts ] = plotPSTH(cds, neuronNumber, eventTimes, preTime, postTime, binSize, varargin)
+function [ binEdges, binCounts ] = plotPSTH(cds, neuronNumber, eventTimes, preTime, postTime, stimState, binSize, varargin)
 % plots a PSTH given the data and relevant times/binSize. This should be
 % usuable with any function that aims to plot a PSTH
 useRate = 0;
@@ -12,6 +12,8 @@ zeroCenter = 0;
 averageSpikeWaveform = 0;
 noPlots = 0;
 confInter = 1;
+plotEndStimulation = 0;
+
 for i = 1:2:length(varargin)
     switch varargin{i}
         case 'optimalBinSize'
@@ -36,6 +38,8 @@ for i = 1:2:length(varargin)
             noPlots = varargin{i+1};
         case 'confidenceInterval'
             confInter = varargin{i+1};
+        case 'plotEndStimulation'
+            plotEndStimulation = varargin{i+1};
     end
     
 end
@@ -142,13 +146,33 @@ if(~noPlots)
             meanConf = meanConf/binSize;
             plusMinus = plusMinus/binSize;
         end
-        plot([-100,100],[meanConf,meanConf],'k','linewidth',2)
-        plot([-100,100],[plusMinus(1),plusMinus(1)],'k','linewidth',2)
-        plot([-100,100],[plusMinus(2),plusMinus(2)],'k','linewidth',2)
+        h1=plot([-100,100],[meanConf,meanConf],'g','linewidth',2)
+        plot([-100,100],[plusMinus(1),plusMinus(1)],'g','linewidth',2)
+        plot([-100,100],[plusMinus(2),plusMinus(2)],'g','linewidth',2)
+        
+        meanCounts = mean(binCounts);
+        stdCounts = std(binCounts);
+        plot([-100,100],[meanCounts,meanCounts],'r','linewidth',2);
+        h2=plot([-100,100],[meanCounts+2*stdCounts,meanCounts+2*stdCounts],'r','linewidth',2);
+        
+        legend([h1 h2],'Boostrap','Mean+2*Std');
         a.XLim = xLimits;
     end
-    
-    
+    formatForLee(gcf);
+    if(plotEndStimulation == 1) % plot end of stimulation marker (average)
+        stimSampRate = 1;
+        if(~isempty(cds.analog))
+            stimSampRate = 1/(cds.analog{1,1}.t(2) - cds.analog{1,1}.t(1));
+        else
+            stimSampRate = 1/(cds.lfp.t(2) - cds.lfp.t(1));
+        end
+        stimStateTimeAverage = (sum(stimState == 1))/numel(eventTimes)/stimSampRate;
+        
+        % plot vertical line at this time
+        hold on
+        figHandle = gcf;
+        plot([stimStateTimeAverage, stimStateTimeAverage],figHandle.CurrentAxes.YLim,'--k','linewidth',2)
+    end
     %% Average Spike Waveform
     spikeIdxWave = [];
     spikeIdxAllElse = [];
@@ -171,8 +195,16 @@ if(~noPlots)
         spikesTable = cds.units(neuronNumber).spikes;
         wavesWave = spikesTable{spikeIdxWave,:};
         wavesAllElse = spikesTable{spikeIdxAllElse,:};
-        aveWavesWave = mean(wavesWave);
-        aveWavesAllElse = mean(wavesAllElse);
+        if(size(wavesWave,1)>1)
+            aveWavesWave = mean(wavesWave);
+        else
+            aveWavesWave = wavesWave;
+        end
+        if(size(wavesAllElse > 1))
+            aveWavesAllElse = mean(wavesAllElse);
+        else
+            aveWavesAllElse = wavesAllElse;
+        end
         
         figure();
         plot(aveWavesWave,'r','linewidth',2);
@@ -185,6 +217,7 @@ if(~noPlots)
         ylabel('Voltage (\muV)');
         xlabel('Wave Point');
         legend('binned waves','all other waves')
+        formatForLee(gcf);
     end
 end
 

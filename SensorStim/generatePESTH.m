@@ -19,6 +19,8 @@ averageSpikeWaveform = 0;
 plotWaveform = 0;
 noPlots=0;
 confidenceInterval = 1;
+plotEndStimulation = 0;
+
 % deal with varargin
 for i = 1:2:size(varargin,2)
     switch varargin{i}
@@ -49,8 +51,12 @@ for i = 1:2:size(varargin,2)
             sequenceTimes = varargin{i+1};
         case 'eventTimes'
             eventTimes = varargin{i+1};
+        case 'stimState'
+            stimState = varargin{i+1};
         case 'confidenceInterval'
             confidenceInterval = varargin{i+1};
+        case 'plotEndStimulation',
+            plotEndStimulation = varargin{i+1};
     end
 end
 
@@ -60,7 +66,7 @@ if(size(cds.analog,1) == 0)
     GTOstim = 1;
 end
 
-if(~exist('sequenceTimes') || ~exist('eventTimes'))
+if(~exist('sequenceTimes') || ~exist('eventTimes') || ~exist('stimState'))
     [stimState,] = determineStimTiming(cds, GTOstim, 0);
     [sequenceTimes, eventTimes] = getSequenceTimes(cds, stimState,GTOstim,useEndAsZero);
 end
@@ -69,11 +75,13 @@ postTime = sequenceTimes(1,2)-eventTimes(1);
 
 
 
-[binEdges, binCounts] = plotPSTH(cds, neuronNumber, eventTimes, preTime, postTime, userBinSize,...
+[binEdges, binCounts] = plotPSTH(cds, neuronNumber, eventTimes, preTime, postTime, stimState, userBinSize,...
     'optimalBinSize', optimalBinSize, 'useRate',useRate,...
     'eventOccurs',eventOccurs,'gaussianSmooth',gaussianSmooth,...
     'gaussianStd',gaussianSmooth_std,'plotGaussian',plotGaussianSmooth,...
     'useEndAsZero',useEndAsZero,'averageSpikeWaveform',averageSpikeWaveform,...
-    'plotWaveform',plotWaveform, 'noPlots',noPlots);
+    'plotWaveform',plotWaveform, 'noPlots',noPlots,'confidenceInterval',confidenceInterval,...
+    'plotEndStimulation',plotEndStimulation);
+
 end
 

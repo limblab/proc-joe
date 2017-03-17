@@ -8,7 +8,9 @@ preSample = inputData.presample + 300e-6*sampRate;
 for a = 1:numel(data.artifactData)
     for i = 1:size(data.artifactData(a).artifact,1)
         for j = 1:size(data.artifactData(a).artifact,2)
-            settlingTimeMetric(a,i,j) = sum(abs(squeeze(data.artifactData(a).artifact(i,j,preSample:preSample+inputData.windowSize-1-300e-6*sampRate))'))*1/sampRate;
+            dataToAnalyze = squeeze(data.artifactData(a).artifact(i,j,preSample:preSample+inputData.windowSize-1-300e-6*sampRate));
+            meanDataToAnalyze = mean(dataToAnalyze);
+            settlingTimeMetric(a,i,j) = sum(abs(dataToAnalyze-meanDataToAnalyze'))*1/sampRate;
         end
     end
 end

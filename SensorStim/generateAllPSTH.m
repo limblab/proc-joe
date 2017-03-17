@@ -1,4 +1,4 @@
-function [] = generateAllPSTH(filepath, filename, varargin)
+function [neuronRet] = generateAllPSTH(filepath, filename, varargin)
 % to do -- deal with varargin so that the plots can be customized
 
 %% Generates PSTH histograms for every neuron in the file one at a time
@@ -6,6 +6,25 @@ useZeroAsStart = 1;
 neuronNumberStart = 1;
 % load cds from file
 funcFolder = pwd;
+
+noPlots = 0;
+useRate = 1;
+ret = 0;
+binSize = 0.05;
+neuronRet = [];
+for i = 1:2:length(varargin)
+    switch varargin{i}
+        case 'noPlots' % so nothing is plotted
+            noPlots = varargin{i+1};
+        case 'useRate' % returns things in terms of rates
+            useRate = varargin{i+1};
+        case 'return' % returns a set of neurons that matter
+            ret = varargin{i+1};
+        case 'binSize'
+            binSize = varargin{i+1};
+    end
+    
+end
 
 % if cds exists, load that, otherwise make new one and save cds
 if(exist([filepath filename],'file') > 0)
@@ -29,19 +48,29 @@ GTOstim = 0;
 if(size(cds.analog,1) == 0)
     GTOstim = 1;
 end
-[stimState,] = determineStimTiming(cds, GTOstim, 0);
-[sequenceTimes, eventTimes] = getSequenceTimes(cds, stimState,GTOstim,0);
+if((~exist('sequenceTimes') || ~exist('eventTimes')) || ~exist('stimState'))
+    [stimState,] = determineStimTiming(cds, GTOstim, 0);
+    [sequenceTimes, eventTimes] = getSequenceTimes(cds, stimState,GTOstim,0);
+    save([filepath filename],'cds','sequenceTimes','eventTimes','stimState');
+end
 
 for i = neuronNumberStart:size(cds.units,2)
     if(cds.units(i).ID ~= 0 && cds.units(i).ID ~=255) % unsorted stuff
         if(useZeroAsStart)
-            generatePESTH(cds, i, 'zeroEvent', 'start','sequenceTimes',sequenceTimes,'eventTimes',eventTimes);
+            [binEdges,binCounts]=generatePESTH(cds, i, 'zeroEvent', 'start','sequenceTimes',sequenceTimes,'eventTimes',eventTimes,...
+                'stimState',stimState,'noPlots',noPlots,'useRate',useRate, 'return', ret,'binSize',binSize);
         else
-            generatePESTH(cds, i, 'zeroEvent', 'end','sequenceTimes',sequenceTimes,'eventTimes',eventTimes);
+            [binEdges,binCounts]=generatePESTH(cds, i, 'zeroEvent', 'end','sequenceTimes',sequenceTimes,'eventTimes',eventTimes,...
+                'stimState',stimState,'noPlots',noPlots,'useRate',useRate, 'return', ret,'binSize',binSize);
         end
-        title(['NN:' num2str(i) ' CH' num2str(cds.units(i).chan) ' ID' num2str(cds.units(i).ID)]);
-        pause(3);
-        close all;
+        if(~noPlots)
+            title(['NN:' num2str(i) ' CH' num2str(cds.units(i).chan) ' ID' num2str(cds.units(i).ID)]);
+            pause(3);
+            close all;
+        end
+        if(ret && keepNeuronSpindleStim(cds, i, binEdges, binCounts, eventTimes,useRate,stimState)==1) % determine if keeping
+            neuronRet = [neuronRet; i];
+        end
     end 
 end
 
