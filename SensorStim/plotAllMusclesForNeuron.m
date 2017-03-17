@@ -4,6 +4,7 @@ confInt = 0;
 label = 0;
 noPlots =0;
 useRate = 1;
+plotEndStimulation = 1;
 for i = 1:2:length(varargin)
     switch varargin{i}
         case 'confidenceInterval'
@@ -14,6 +15,8 @@ for i = 1:2:length(varargin)
             noPlots = varargin{i+1};
         case 'useRate'
             useRate = varargin{i+1};
+        case 'plotEndStimulation'
+            plotEndStimulation = varargin{i+1};
     end
 end
 
@@ -22,12 +25,9 @@ if(label)
 end
 
 numPlots = length(common.muscleNames);
-numCols = 4; % 4 set by programmer
-numRows = ceil(numPlots/numCols);
-if(numPlots < 4)
-    numCols = numPlots;
-    numRows = 1;
-end
+[p,] = numSubplots(numPlots);
+numCols = p(2);
+numRows = p(1);
 
 if(~noPlots)
     figure();
@@ -65,8 +65,18 @@ for i = 1:length(common.muscleNames)
                 legend([h1 h2],'Boostrap','Mean+2*Std');
             end
             a.XLim = xLimits;
-            title(common.muscleNames{i});
         end
+        if(plotEndStimulation)
+            stimSampRate = 1/1e-3;
+            
+            stimStateTimeAverage = (sum(common.(genvarname(common.muscleNames{i})).stimState == 1))/numel(common.(genvarname(common.muscleNames{i})).eventTimes)/stimSampRate;
+
+            % plot vertical line at this time
+            hold on
+            figHandle = gcf;
+            plot([stimStateTimeAverage, stimStateTimeAverage],figHandle.CurrentAxes.YLim,'--k','linewidth',2)
+        end
+        title(common.muscleNames{i});
     end
     
     if(label && keepNeuronGTOstim(-1,-1,bE,bC,common.(genvarname(common.muscleNames{i})).eventTimes(1),1,...

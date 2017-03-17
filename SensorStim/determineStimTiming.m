@@ -11,7 +11,7 @@ if(~GTOstim)
     stdStim = std(spindleStimValue(100:100+numPoints));
     pointsLook = 10;
     for i = pointsLook:length(spindleStimValue)
-        if(max(abs(spindleStimValue(i-pointsLook+1:i))) > maxStim + stdStim*100)
+        if(max(abs(spindleStimValue(i-pointsLook+1:i))) > maxStim + stdStim*200)
             stimState(i) = 1;
         else
             stimState(i) = 0;

@@ -70,8 +70,8 @@ if(~exist('sequenceTimes') || ~exist('eventTimes') || ~exist('stimState'))
     [stimState,] = determineStimTiming(cds, GTOstim, 0);
     [sequenceTimes, eventTimes] = getSequenceTimes(cds, stimState,GTOstim,useEndAsZero);
 end
-preTime = eventTimes(1) - sequenceTimes(1,1);
-postTime = sequenceTimes(1,2)-eventTimes(1);
+preTime = max(eventTimes(:) - sequenceTimes(:,1));
+postTime = max(sequenceTimes(:,2)-eventTimes(:));
 
 
 

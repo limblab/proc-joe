@@ -43,17 +43,19 @@ for i = 1:length(files)
     if(size(cds.analog,1) == 0)
         GTOstim = 1;
     end
-    if(~exist('sequenceTimes') || ~exist('eventTimes'))
+    if(~exist('sequenceTimes') || ~exist('eventTimes') || ~exist('stimState'))
         [stimState,] = determineStimTiming(cds, GTOstim, 0);
         [sequenceTimes, eventTimes] = getSequenceTimes(cds, stimState,GTOstim,0);
     end
     common.(genvarname(muscleName)).eventTimes = eventTimes;
     common.(genvarname(muscleName)).sequenceTimes = sequenceTimes;
+    common.(genvarname(muscleName)).stimState = stimState;
     
     for j = 1:length(common.muscles)
         nn = findNeuronNumber(cds, common.channels(j), common.IDs(j), common.electrodes{j});
         if(nn == -1) % generate PSTH to get correct sizes, fill in counts with zeros
-            [bE, bC] = generatePESTH(cds,1,'useRate',1,'noPlots',1,'sequenceTimes',sequenceTimes,'eventTimes',eventTimes,'binSize',binSize);
+            [bE, bC] = generatePESTH(cds,1,'useRate',1,'noPlots',1,'sequenceTimes',sequenceTimes,'eventTimes',eventTimes,...
+                'stimState',stimState,'binSize',binSize);
             common.(genvarname(muscleName)).counts{end+1,1} = zeros(size(bC));
             common.(genvarname(muscleName)).edges{end+1,1} = bE;
             common.(genvarname(muscleName)).bootstrapMean(end+1,1) = 0;
@@ -61,7 +63,9 @@ for i = 1:length(files)
             common.(genvarname(muscleName)).meanCount(end+1,1) = 0;
             common.(genvarname(muscleName)).stdCount(end+1,1) = 0;
         else
-            [bE, bC] = generatePESTH(cds,nn,'useRate',1,'noPlots',1,'sequenceTimes',sequenceTimes,'eventTimes',eventTimes,'binSize',binSize);
+            [bE, bC] = generatePESTH(cds,nn,'useRate',1,'noPlots',1,'sequenceTimes',sequenceTimes,'eventTimes',eventTimes,...
+                'stimState',stimState,'binSize',binSize);
+            
             common.(genvarname(muscleName)).counts{end+1,1} = bC;
             common.(genvarname(muscleName)).edges{end+1,1} = bE;
             [common.(genvarname(muscleName)).bootstrapMean(end+1,1), common.(genvarname(muscleName)).bootstrapBounds(end+1,:)] = ...

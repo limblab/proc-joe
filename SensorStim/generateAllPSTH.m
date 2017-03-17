@@ -11,6 +11,7 @@ noPlots = 0;
 useRate = 1;
 ret = 0;
 binSize = 0.05;
+spindleStim = 0; % GTO stim is 0, spindle stim is 1
 neuronRet = [];
 for i = 1:2:length(varargin)
     switch varargin{i}
@@ -22,6 +23,8 @@ for i = 1:2:length(varargin)
             ret = varargin{i+1};
         case 'binSize'
             binSize = varargin{i+1};
+        case 'spindleStim'
+            spindleStim = varargin{i+1};
     end
     
 end
@@ -68,7 +71,10 @@ for i = neuronNumberStart:size(cds.units,2)
             pause(3);
             close all;
         end
-        if(ret && keepNeuronSpindleStim(cds, i, binEdges, binCounts, eventTimes,useRate,stimState)==1) % determine if keeping
+        if(~spindleStim && ret && keepNeuronGTOstim(cds, i, binEdges, binCounts, eventTimes(1),useRate)==1) % determine if keeping
+            neuronRet = [neuronRet; i];
+        end
+        if(spindleStim && ret && keepNeuronSpindleStim(cds, i, binEdges, binCounts, eventTimes,useRate,stimState)==1) % determine if keeping
             neuronRet = [neuronRet; i];
         end
     end 

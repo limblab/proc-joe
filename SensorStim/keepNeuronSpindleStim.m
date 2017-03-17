@@ -41,10 +41,9 @@ else
 end
 aveStimTime = (sum(stimState == 1))/numel(eventTimes)/stimSampRate;
 
-if(sum(binCounts(zeroIdx+1:zeroIdx+floor(aveStimTime/binSize)) <= plusMinus(2)*threshold) <= 1)
+if(sum(binCounts(zeroIdx+1:zeroIdx+floor(aveStimTime/binSize)) <= plusMinus(2)*threshold) <= 3 && ... % this is bootstrap constraint
+        mean(binCounts(zeroIdx+1:zeroIdx+floor(aveStimTime/binSize))) > mean(binCounts(1:zeroIdx)) + 1.5*std(binCounts(1:zeroIdx)))
     keep = 1;
-% elseif(binCounts(zeroIdx+2) > plusMinus(2)*threshold && max(binCounts) == binCounts(zeroIdx+2))
-%     keep = 1;
 end
 
 end

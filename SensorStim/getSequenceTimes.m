@@ -75,7 +75,12 @@ if(size(sequenceTimes,1) > 1)
     while(flagOverlap && timeShift>0)
         sequenceTimesAdjusted = [sequenceTimes(:,1)-timeShift, sequenceTimes(:,2)+timeShift];
         diffTimes = sequenceTimesAdjusted(2:end,1)-sequenceTimesAdjusted(1:end-1,2);
-        if(min(diffTimes) > 0)
+        if(GTOstim)
+            pastLastTime = (sequenceTimesAdjusted(end,2)>cds.lfp.t(end));
+        else
+            pastLastTime = (sequenceTimesAdjusted(end,2)>cds.analog{1,1}.t(end));
+        end
+        if(min(diffTimes) > 0 && ~pastLastTime)
             flagOverlap = 0;
         else
             flagOverlap = 1;

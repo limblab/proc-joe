@@ -11,6 +11,12 @@ while i <= length(files)
     elseif(~isempty(strfind(files(i).name,'_cds')))
         files(i) = []; % removes row i from struct files
         i=i-1;
+    elseif(~isempty(strfind(files(i).name,'EMGextra')))
+        files(i) = []; % removes row i from struct files
+        i=i-1;
+    elseif(~isempty(strfind(files(i).name,'Sweep')))
+        files(i) = []; % removes row i from struct files
+        i=i-1;
     elseif(~isempty(strfind(lower(files(i).name),'neurons')))
         files(i) = [];
         i=i-1;
@@ -20,6 +26,7 @@ end
 
 % check for file existance, and if cds already exists
 for i = 1:length(files)
+    disp(i)
     if((exist([filepath files(i).name],'file') > 0 && ~exist([filepath files(i).name(1:end-4) '_cds.mat'],'file') ...
             && isempty(strfind(files(i).name,'EMGextra'))))
         labnum = 6;
