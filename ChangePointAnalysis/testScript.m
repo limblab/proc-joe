@@ -14,8 +14,9 @@ data(1:changePoint,1) = poissrnd(lambda1,size(data(1:changePoint,1),1),1);
 data(changePoint+1:changePoint+20,1) = poissrnd(lambda2,size(data(changePoint+1:changePoint+20,1),1),1);
 data(changePoint+21:end,1) = poissrnd(lambda3,size(data(changePoint+21:end,1),1),1);
 
-%% do binary splitting to get change points
-changePointIdx = findChangePointsMLE(t,data);
+% do binary splitting to get change points
+alpha = 0.05;
+changePointIdx = findChangePointsMLE(t,data,alpha);
 
 %%
 findchangepts(data,'Statistic','mean','MaxNumChanges',2)
@@ -23,9 +24,9 @@ findchangepts(data,'Statistic','mean','MaxNumChanges',2)
 %%
 load('SpindleStimData_5ms.mat')
 
-t = bE(1:end-1) + (bE(2)-bE(1))/2;
+t = bE(1:end-1);
 data = floor(bC*20);
-findchangepts(data,'Statistic','mean','MaxNumChanges',2)
-[theta0,theta1,tau,L] = computePoissonEstimatorsAndLikelihoods(t',data');
+% findchangepts(data,'Statistic','mean','MaxNumChanges',2)
+changePoints = findChangePointsMLE(t',data');
 [~,cIdx] = max(L);
-cIdx
+% cIdx

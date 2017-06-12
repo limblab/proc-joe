@@ -54,7 +54,7 @@ end
 % this section allows for that 
 
 figDir = 'D:\Lab\Summary Figures\SensorStim\Spindlestim\';
-for tgtFile = 1%:size(neurons,1)% file number
+for tgtFile = 1:size(neurons,1)% file number
     filename = files(tgtFile).name;
     idxUnderscore = strfind(filename,'_');
     muscleName = filename(idxUnderscore(3)+1:idxUnderscore(4)-1);
@@ -66,8 +66,9 @@ for tgtFile = 1%:size(neurons,1)% file number
         neuronNumber = neurons{tgtFile}(nn); % target neuron number
         [bE,bC,~]=generatePESTH(cds, neuronNumber,'spindleStim',1,'useRate',1, 'averageSpikeWaveform',0,...
             'sequenceTimes',sequenceTimes,'eventTimes',eventTimes,'stimState',stimState,'confidenceInterval',1,...
-            'binSize',0.01,'plotEndStimulation',1,'highlightBin',0);
+            'binSize',0.005,'plotEndStimulation',1,'highlightBin',0);
         formatForLee(gcf)
+        figure
 %         saveFigure(gcf,figDirCurr,strcat(figName,'nn',num2str(neuronNumber),'_histogram'));
 %         close all
     end
@@ -93,7 +94,7 @@ end
 
 %% Once a set of neurons have been selected for each muscle, put this info
 % together in a struct called 'common'
-doAgain =0; % if you want to rerun versus check and load
+doAgain = 1; % if you want to rerun versus check and load
 
 if(doAgain || ~exist(strcat(filepath,fileprefix,'_significantNeuronsAllRates.mat')))
     common = getAllNeuronRates(filepath, files, neurons,'binSize',BIN_SIZE);

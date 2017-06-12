@@ -1,16 +1,38 @@
-function [ changePointIdx,L,L0 ] = findChangePointsMLE(t,data)
-changePointIdx = [];
+function [ changePoints ] = findChangePointsMLE(t,data,alpha)
 numSamples = numel(data);
 thetaNoChange = mean(data)*numSamples;
+
+% compute L0 -- model with no changepoints
 L0 = computePoissonLikelihood(t,data,thetaNoChange,thetaNoChange,t(floor(numSamples/2)),floor(numSamples/2));
+
+% compute L -- likelihoods 
 [~,~,~,L] = computePoissonEstimatorsAndLikelihoods(t,data);
-LRatio = -2*(log(L0)-log(L));
-[LRatioMax,maxIdx] = max(LRatio);
-LRatio(isnan(LRatio) | LRatio == 0) = 0;
-LRatio(LRatio < 0) = 0;
-LRatio = LRatio/sum(LRatio);
-LRatio = LRatio - mean(LRatio);
-changePointIdx = maxIdx;
+
+% find best L
+[Lmax,maxIdx] = max(L);
+% determine test statistic
+D = 2*(log(Lmax) - log(L0));
+
+% degrees of freedom = dalt - dnull = number of change points in each
+dof = 1-0; % for this one, its easy
+
+% chi-squared test for significance
+pVal = 1-chi2cdf(D,dof);
+
+if(pVal < alpha) % if we pass the test
+    % update changePoints
+    changePoints = maxIdx;
+
+    % check for more splits by doing binary splitting?
+    
+end
+% 
+% [LRatioMax,maxIdx] = max(LRatio);
+% LRatio(isnan(LRatio) | LRatio == 0) = 0;
+% LRatio(LRatio < 0) = 0;
+% LRatio = LRatio/sum(LRatio);
+% LRatio = LRatio - mean(LRatio);
+% changePoints = maxIdx;
 % if(LRatioMax > 0.005)
 %     % set changePointIdx
 %     changePointIdx = maxIdx;
