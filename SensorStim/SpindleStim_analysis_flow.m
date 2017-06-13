@@ -68,29 +68,38 @@ for tgtFile = 1:size(neurons,1)% file number
             'sequenceTimes',sequenceTimes,'eventTimes',eventTimes,'stimState',stimState,'confidenceInterval',1,...
             'binSize',0.005,'plotEndStimulation',1,'highlightBin',0);
         formatForLee(gcf)
-        figure
 %         saveFigure(gcf,figDirCurr,strcat(figName,'nn',num2str(neuronNumber),'_histogram'));
 %         close all
     end
     disp(tgtFile)
 end
 % 
-% for tgtFile = 1:size(neurons,1)% file number
-%     filename = files(tgtFile).name;
-%     idxUnderscore = strfind(filename,'_');
-%     muscleName = filename(idxUnderscore(3)+1:idxUnderscore(4)-1);
-%     dateRan = filename(idxUnderscore(1)+1:idxUnderscore(2)-1);
-%     load([filepath filename]); % load in cds
-%     figName = strcat(filename(1:end-8),'_');
-%     figDirCurr = strcat(figDir,filesep,muscleName,'_',dateRan);
-%     for nn = 1:numel(neurons{tgtFile,1})
-%         neuronNumber = neurons{tgtFile}(nn); % target neuron number
-%         generateRaster(cds,neuronNumber,eventTimes,sequenceTimes,'plotStimTime',1,'GTOstim',0);
-% %         saveFigure(gcf,figDirCurr,strcat(figName,'nn',num2str(neuronNumber),'_raster'));
-% %         close all
-%     end
-%     disp(tgtFile)
-% end
+for tgtFile = 1:size(neurons,1)% file number
+    filename = files(tgtFile).name;
+    idxUnderscore = strfind(filename,'_');
+    muscleName = filename(idxUnderscore(3)+1:idxUnderscore(4)-1);
+    dateRan = filename(idxUnderscore(1)+1:idxUnderscore(2)-1);
+    load([filepath filename]); % load in cds
+    figName = strcat(filename(1:end-8),'_');
+    figDirCurr = strcat(figDir,filesep,muscleName,'_',dateRan);
+    for nn = 1:numel(neurons{tgtFile,1})
+        neuronNumber = neurons{tgtFile}(nn); % target neuron number
+        generateRaster(cds,neuronNumber,eventTimes,sequenceTimes,'plotStimTime',1,'GTOstim',0);
+%         saveFigure(gcf,figDirCurr,strcat(figName,'nn',num2str(neuronNumber),'_raster'));
+%         close all
+    end
+    disp(tgtFile)
+end
+
+%% check for phase locking with these neurons
+for tgtFile = 1:size(neurons,1)% file number
+    filename = files(tgtFile).name;
+    load([filepath filename]); % load in cds
+    for nn  = 1:numel(neurons{tgtFile,1})
+        neuronNumber = neurons{tgtFile}(nn); % target neuron number
+        checkPhaseLockingSpindle(cds,nn,eventTimes,stimState);
+    end
+end
 
 %% Once a set of neurons have been selected for each muscle, put this info
 % together in a struct called 'common'
