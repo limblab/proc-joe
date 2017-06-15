@@ -92,12 +92,31 @@ for tgtFile = 1:size(neurons,1)% file number
 end
 
 %% check for phase locking with these neurons
+phaseLockingPVals = [];
 for tgtFile = 1:size(neurons,1)% file number
     filename = files(tgtFile).name;
     load([filepath filename]); % load in cds
     for nn  = 1:numel(neurons{tgtFile,1})
         neuronNumber = neurons{tgtFile}(nn); % target neuron number
-        checkPhaseLockingSpindle(cds,nn,eventTimes,stimState);
+        [~,phaseLockingPVals(end+1,1)] = checkPhaseLockingSpindle(cds,nn,eventTimes,stimState);
+    end
+end
+
+%% Change point analysis for latency
+alpha = 0.05;
+changePoints = [];
+for tgtFile = 1:size(neurons,1)% file number
+    filename = files(tgtFile).name;
+    load([filepath filename]); % load in cds
+    for nn  = 1:numel(neurons{tgtFile,1})
+        neuronNumber = neurons{tgtFile}(nn); % target neuron number
+        [bE,bC,~]=generatePESTH(cds, neuronNumber,'spindleStim',1,'useRate',1, ...
+            'sequenceTimes',sequenceTimes,'eventTimes',eventTimes,'stimState',stimState, ...
+            'binSize',0.005,'noPlots',1);
+        tBins = bE(1:floor(numel(bC))/2)';
+        dataBins = bC(1:floor(numel(bC))/2)';
+        changePoints(end+1,:) = [0,0,0];
+        [changePoints(end,1), changePoints(end,2:3)] = findChangePointsMLE(tBins,dataBins,alpha);
     end
 end
 

@@ -4,6 +4,7 @@ function [ changePoint, confInter] = findChangePointsMLE(t,data,alpha)
 changePoint = [];
 confInter = [];
 
+t = t - t(1);
 numSamples = numel(data);
 binSize = t(2)-t(1);
 thetaNoChange = mean(data)/binSize;
@@ -19,8 +20,8 @@ L0 = computePoissonLikelihood(t,data,thetaNoChange,thetaNoChange,t(floor(numSamp
 % determine test statistic
 D = 2*(Lmax - L0);
 
-% degrees of freedom = dalt - dnull = number of change points in each
-dof = 3-1; % for this one, its easy?
+% degrees of freedom = dalt - dnull
+dof = 3-1; 
 
 % chi-squared test for significance
 pVal = 1-chi2cdf(D,dof);
@@ -30,8 +31,8 @@ if(pVal <= alpha/numSamples) % if we pass the test
     changePoint = maxIdx;
     % do conf interval for this by finding highest density region
     Lcut = max(L); % start from highes point
-    stepSize = Lcut*0.0001;
-    while(computeDensity(L,Lcut) < alpha)
+    stepSize = abs(Lcut*0.0001);
+    while(computeDensity(L,Lcut) < 1-alpha)
         Lcut = Lcut - stepSize;  
     end
     Lcut = Lcut + stepSize;

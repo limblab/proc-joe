@@ -1,4 +1,4 @@
-function [ phases,pVal,zScore ] = checkPhaseLockingSpindle(cds,nn,eventStartTimes,stimState)
+function [ phases,pVal ] = checkPhaseLockingSpindle(cds,nn,eventStartTimes,stimState)
 % checks for phase locking with a neuron by computing the phase for all
 % spikes during spindle stimulation (based on analog output data) and then
 % using a Rayleigh uniformity test
@@ -22,20 +22,20 @@ for e = 1:numel(eventStartIdx) % for each event
             maxIdxs(end+1) = idx;
         end
     end
-    sinFreq = 2*pi/(mean(diff(maxIdxs(2:end)))*dt);
-    sinOffset = (maxIdxs(2) + eventStartIdx(e))*dt - pi/2;
+    cosFreq = 2*pi/(mean(diff(maxIdxs(2:end)))*dt);
+    cosOffset = (maxIdxs(3) + eventStartIdx(e) - 1)*dt;
     
-    figure
-    plot(t(eventStartIdx(e):eventEndIdx(e)),800*sin(sinFreq*(t(eventStartIdx(e):eventEndIdx(e))-sinOffset)))
-    hold on
-    plot(t(eventStartIdx(e):eventEndIdx(e)),spindleStim(eventStartIdx(e):eventEndIdx(e)))
-    
+%     figure
+%     plot(t(eventStartIdx(e):eventEndIdx(e)),800*cos(cosFreq*(t(eventStartIdx(e):eventEndIdx(e))-cosOffset)))
+%     hold on
+%     plot(t(eventStartIdx(e):eventEndIdx(e)),spindleStim(eventStartIdx(e):eventEndIdx(e)))
+%     
     % find spikes within eventStartTimes(e) and eventEndTimes(e)
-    spikeMask = cds.units(nn).spikes.ts < eventEndTimes(e) & ...
-        cds.units(nn).spikes.ts > eventStartTimes(e);
+    spikeMask = cds.units(nn).spikes.ts < eventEndTimes(e) - dt & ...
+        cds.units(nn).spikes.ts > eventStartTimes(e) + dt;
     spikes = cds.units(nn).spikes.ts(spikeMask);
     % find and store phase for all spikes
-    phaseTemp = mod(sinFreq*spikes + sinOffset,2*pi);
+    phaseTemp = mod(cosFreq*(spikes-cosOffset),2*pi);
     phases = [phases;phaseTemp];
 end
 

@@ -2,18 +2,19 @@
 clear;
 
 T = 100;
-numSamples = 1000;
+numSamples = 110;
 binSize = T/numSamples;
-changePoint = 500;
-lambda1 = 2;
-lambda2 = 10;
-lambda3 = 2;
+changePoint = 50;
+lambda1 = 3;
+lambda2 = 1;
+lambda3 = 1;
 t = (0:binSize:T-binSize)';
 data = zeros(numSamples,1);
 data(1:changePoint,1) = poissrnd(lambda1,size(data(1:changePoint,1),1),1);
-data(changePoint+1:changePoint+100,1) = poissrnd(lambda2,size(data(changePoint+1:changePoint+100,1),1),1);
-data(changePoint+101:end,1) = poissrnd(lambda3,size(data(changePoint+101:end,1),1),1);
+data(changePoint+1:end,1) = poissrnd(lambda2,size(data(changePoint+1:end,1),1),1);
+% data(changePoint+101:end,1) = poissrnd(lambda3,size(data(changePoint+101:end,1),1),1);
 
+plot(t,data)
 % do binary splitting to get change points
 alpha = 0.05;
 changePointIdx = findChangePointsMLE(t,data,alpha);
