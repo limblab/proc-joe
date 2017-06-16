@@ -8,7 +8,7 @@ chanSpikes = data.elec;
 
 % open the NEV file -- add .nev extension if necessary
 [pathstr,fname,fext]=fileparts(filename);
-fid = fopen(strcat(fname,'.NEV'),'wb');
+fid = fopen(strcat(fname,'.NEV'),'Wb');
 
 %% Section 1 - header basic info.
 numExtendedHeaders = 0;
@@ -22,33 +22,33 @@ precision{1,1} = 'char';
 % 2. File spec, 2 bytes, major and minor revision numbers -- 0x0203 for 2.3
 headerInfoWrite{end+1,1} = 770;
 bytesHeader = bytesHeader + 2;
-precision{end+1,1} = 'int16';
+precision{end+1,1} = 'bit16';
 % 3. Additional Flags, 2 Bytes, bit 0: set as 1 if all waveforms are 16
 %       bit, else if a mixture is expected. All other bits are set to 0
 headerInfoWrite{end+1,1} = 1;
 bytesHeader = bytesHeader + 2;
-precision{end+1,1} = 'int16';
+precision{end+1,1} = 'bit16';
 % 4. Bytes in headers, 4 bytes -- total number of bytes in both headers.
 %       Used as a zero idx reference to the first data packet
 headerInfoWrite{4} = bytesHeader; % this will updated last
 bytesHeader = bytesHeader + 4;
-precision{4,1} = 'int32';
+precision{4,1} = 'bit32';
 % 5. Bytes in data packets, 4 bytes, length of fixed width data packets in
 %       the data section of the file. Must be between 12 and 256, multiple 
 %       of 4 (104 will be used for spikes only)
 headerInfoWrite{end+1,1} = packetWidth;
 bytesHeader = bytesHeader + 4;
-precision{end+1,1} = 'int32';
+precision{end+1,1} = 'bit32';
 % 6. Time resolution of time stamps, 4 bytes, frequency of global clock.
 %       Will be set to 30,000
 headerInfoWrite{end+1,1} = 30000;
 bytesHeader = bytesHeader + 4;
-precision{end+1,1} = 'int32';
+precision{end+1,1} = 'bit32';
 % 7. Time resolution of samples, 4 bytes, sampling frequency used to
 %       digitize neural waveforms. Will be set to 30,000
 headerInfoWrite{end+1,1} = 30000;
 bytesHeader = bytesHeader + 4;
-precision{end+1,1} = 'int32';
+precision{end+1,1} = 'bit32';
 % 8. Time origin, 16 bytes, UTC time at which the data file is collected. 8
 %       2-byte values definining Year, Month, DayOfWeek, Day, Hour, Minute,
 %       Second, Millisecond
@@ -57,7 +57,7 @@ c = [c(1:2),1,c(3:end),0];
 str = '';
 for i = 1:numel(c)
     headerInfoWrite{end+1,1} = c(i);
-    precision{end+1,1} = 'int16';
+    precision{end+1,1} = 'bit16';
 end
 bytesHeader = bytesHeader + 16;
 
@@ -87,7 +87,7 @@ precision{end+1,1} = 'char';
 headerInfoWrite{end+1,1} = numExtendedHeaders;
 extendedHeaderIdx = numel(headerInfoWrite);
 bytesHeader = bytesHeader + 4;
-precision{end+1,1} = 'int32';
+precision{end+1,1} = 'bit32';
 
 
 %% Section 2 - header extend information
@@ -118,37 +118,37 @@ for arrayMapIdx = 1:size(arrayMap,1)
     precision{end+1,1} = 'char';
     % electrode ID -- 2 bytes
     headerInfoWrite{end+1,1} = arrayMap.chan(arrayMapIdx);
-    precision{end+1,1} = 'int16';
+    precision{end+1,1} = 'bit16';
     % physical connector -- 1 byte (A,B,C,D = 1,2,3,4)
     headerInfoWrite{end+1,1} = arrayMap.bank{arrayMapIdx}-64;
-    precision{end+1,1} = 'int8';
+    precision{end+1,1} = 'bit8';
     % connector pin -- 1 byte (1-37)
     headerInfoWrite{end+1,1} = arrayMap.pin(arrayMapIdx);
-    precision{end+1,1} = 'int8';
+    precision{end+1,1} = 'bit8';
     % digitization scaling factor -- 2 bytes 
     headerInfoWrite{end+1,1} = 250;
-    precision{end+1,1} = 'int16';
+    precision{end+1,1} = 'bit16';
     % Energy threshold, 2 bytes, 0 if none used (0)
     headerInfoWrite{end+1,1} = 0;
-    precision{end+1,1} = 'int16';
+    precision{end+1,1} = 'bit16';
     % High threshold, 2 bytes, amplitude high threshold used (uV) (0)
     headerInfoWrite{end+1,1} = 0;
-    precision{end+1,1} = 'int16';
+    precision{end+1,1} = 'bit16';
     % Lowthreshold, 2 bytes, amplitude low threshold used (uV) (some #)
     headerInfoWrite{end+1,1} = 0;
-    precision{end+1,1} = 'int16';
+    precision{end+1,1} = 'bit16';
     % Number of sorted units, 1 byte, 0 for no unit classifcation
     headerInfoWrite{end+1,1} = 0;
-    precision{end+1,1} = 'int8';
+    precision{end+1,1} = 'bit8';
     % Bytes per waveform, 1 byte, number of bytes per waveform sample (2)
     headerInfoWrite{end+1,1} = 2;
-    precision{end+1,1} = 'int8';
+    precision{end+1,1} = 'bit8';
     % Spike Width (samples), 2 bytes, number of samples for each waveform
     headerInfoWrite{end+1,1} = 48;
-    precision{end+1,1} = 'int16';
+    precision{end+1,1} = 'bit16';
     % reserved bytes, 8 bytes, write as 0
     headerInfoWrite{end+1,1} = 0;
-    precision{end+1,1} = 'int64';
+    precision{end+1,1} = 'bit64';
 end
 headerInfoWrite{extendedHeaderIdx} = numExtendedHeaders;
 headerInfoWrite{4,1} = bytesHeader; % this will be updated last
@@ -166,7 +166,7 @@ for arrayMapIdx = 1:size(arrayMap,1)
     precision{end+1,1} = 'char';
     % electrode ID -- 2 bytes
     headerInfoWrite{end+1,1} = arrayMap.chan(arrayMapIdx);
-    precision{end+1,1} = 'int16';
+    precision{end+1,1} = 'bit16';
     % electrode label -- 16 bytes, null terminated
     lbl1 = arrayMap.label{arrayMapIdx};
     while(length(lbl1)<8)
@@ -199,28 +199,28 @@ for arrayMapIdx = 1:size(arrayMap,1)
     precision{end+1,1} = 'char';
     % electrode ID -- 2 bytes
     headerInfoWrite{end+1,1} = arrayMap.chan(arrayMapIdx);
-    precision{end+1,1} = 'int16';
+    precision{end+1,1} = 'bit16';
     % High freq corner, 4 bytes, in mHz
     headerInfoWrite{end+1,1} = 0;
-    precision{end+1,1} = 'int32';
+    precision{end+1,1} = 'bit32';
     % High freq order, 4 bytes, 0 = NONE
     headerInfoWrite{end+1,1} = 0;
-    precision{end+1,1} = 'int32';
+    precision{end+1,1} = 'bit32';
     % High filter type, 2 bytes, 0=none, 1=butter
     headerInfoWrite{end+1,1} = 0;
-    precision{end+1,1} = 'int16';
+    precision{end+1,1} = 'bit16';
     % Low freq corner, 4 bytes, in mHz
     headerInfoWrite{end+1,1} = 0;
-    precision{end+1,1} = 'int32';
+    precision{end+1,1} = 'bit32';
     % Low freq order, 4 bytes, 0 = NONE
     headerInfoWrite{end+1,1} = 0;
-    precision{end+1,1} = 'int32';
+    precision{end+1,1} = 'bit32';
     % Low filter type, 2 bytes, 0=none, 1=butter
     headerInfoWrite{end+1,1} = 0;
-    precision{end+1,1} = 'int16';
+    precision{end+1,1} = 'bit16';
     % reserved bytes, 2 bytes, write as 0
     headerInfoWrite{end+1,1} = 0;
-    precision{end+1,1} = 'int16';
+    precision{end+1,1} = 'bit16';
 end
 
 % DIGLABEL
@@ -247,7 +247,7 @@ headerInfoWrite{end+1,1} = 0;
 precision{end+1,1} = 'bit8';
 % reserved bytes, 7 bytes, write as 0
 headerInfoWrite{end+1,1} = 0;
-precision{end+1,1} = 'int56';
+precision{end+1,1} = 'bit56';
 
 bytesHeader = bytesHeader + numExtendedHeaders*32;
 headerInfoWrite{extendedHeaderIdx,1} = numExtendedHeaders;
@@ -273,27 +273,31 @@ packetInfoWrite = {};
 precision = {};
 for spikeIdx = 1:numel(timeSpikes)
     % timestamp, 4 bytes, 0 is beginning of file
-    packetInfoWrite{end+1,1} = floor(30000*timeSpikes(spikeIdx));
-    precision{end+1,1} = 'int32';
+    fwrite(fid,floor(30000*timeSpikes(spikeIdx)),'bit32',0,'ieee-le');
+%     packetInfoWrite{end+1,1} = floor(30000*timeSpikes(spikeIdx));
+%     precision{end+1,1} = 'bit32';
     % packet id, 2 bytes, elec number
-    packetInfoWrite{end+1,1} = chanSpikes(spikeIdx,1);
-    precision{end+1,1} = 'int16';
+    fwrite(fid,chanSpikes(spikeIdx,1),'bit16',0,'ieee-le');
+%     packetInfoWrite{end+1,1} = chanSpikes(spikeIdx,1);
+%     precision{end+1,1} = 'bit16';
     % unit classification #, 1 byte, 0 is unclassified
-    packetInfoWrite{end+1,1} = 0;
-    precision{end+1,1} = 'int8';
-    % reserved, 1 byte, 0
-    packetInfoWrite{end+1,1} = 0;
-    precision{end+1,1} = 'int8';
+    fwrite(fid,0,'bit16',0,'ieee-le');
+%     packetInfoWrite{end+1,1} = 0;
+%     precision{end+1,1} = 'bit8';
+%     % reserved, 1 byte, 0
+%     packetInfoWrite{end+1,1} = 0;
+%     precision{end+1,1} = 'bit8';
     % waveform, packetWidth-8 bytes, sample waveform, 2 bytes per datapoint
     for waveformIdx = 1:size(waveformSpikes,2)
-        packetInfoWrite{end+1,1} = waveformSpikes(spikeIdx,waveformIdx);
-        precision{end+1,1} = 'int16';
+        fwrite(fid,waveformSpikes(spikeIdx,waveformIdx),'bit16',0,'ieee-le');
+%         packetInfoWrite{end+1,1} = waveformSpikes(spikeIdx,waveformIdx);
+%         precision{end+1,1} = 'bit16';
     end
 end
 
-for idx = 1:numel(packetInfoWrite)
-    fwrite(fid,packetInfoWrite{idx,1},precision{idx,1},0,'ieee-le');
-end
+% for idx = 1:numel(packetInfoWrite)
+%     fwrite(fid,packetInfoWrite{idx,1},precision{idx,1},0,'ieee-le');
+% end
 
 % digital/serial inputs
 % each packet begins with a 4 byte time stamp and a 2 byte packed id
@@ -309,24 +313,24 @@ digDummyTS = [0,timeSpikes(end)+1];
 for dummyIdx = 1:numel(digDummyTS)
     % timestamp, 4 bytes, 0 is beginning of file
     packetInfoWrite{end+1,1} = floor(30000*digDummyTS(dummyIdx));
-    precision{end+1,1} = 'int32';
+    precision{end+1,1} = 'bit32';
     % packet id, 2 bytes, 0
     packetInfoWrite{end+1,1} = 0;
-    precision{end+1,1} = 'int16';
+    precision{end+1,1} = 'bit16';
     % packet insertion reason -- if digital channel then 1
     packetInfoWrite{end+1,1} = 1;
-    precision{end+1,1} = 'int8';
+    precision{end+1,1} = 'bit8';
     % reserved, 1 byte, 0
     packetInfoWrite{end+1,1} = 0;
-    precision{end+1,1} = 'int8';
+    precision{end+1,1} = 'bit8';
     % dig input, 2 bytes, 
     packetInfoWrite{end+1,1} = dummyIdx;
-    precision{end+1,1} = 'int16';
+    precision{end+1,1} = 'bit16';
     % reserved, 10 bytes
     packetInfoWrite{end+1,1} = 0;
-    precision{end+1,1} = 'int64';
+    precision{end+1,1} = 'bit64';
     packetInfoWrite{end+1,1} = 0;
-    precision{end+1,1} = 'int16';
+    precision{end+1,1} = 'bit16';
 end
 
 for idx = 1:numel(packetInfoWrite)
