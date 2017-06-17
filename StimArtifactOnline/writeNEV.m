@@ -341,6 +341,169 @@ end
 % close the NEV file
 fclose(fid);
 
+
+
+%% we also used to need to write a single NSx file to put it back into a cds later
+% open the NSx file -- add extension if necessary
+[pathstr,fname,fext]=fileparts(filename);
+fid = fopen(strcat(fname,'.ns1'),'wb');
+
+numExtendedHeaders = 0;
+bytesHeader = 0;
+headerInfoWrite = {};
+precision = {};
+
+%% Section 1 -- Basic Header
+% 1. File type ID, 8 bytes, always set as "NEURALCD" for neural events
+headerInfoWrite{1,1} = 'NEURALCD';
+bytesHeader = bytesHeader + 8;
+precision{1,1} = 'char';
+% 2. File spec, 2 bytes, major and minor revision numbers -- 0x0203 for 2.3
+headerInfoWrite{end+1,1} = 770;
+bytesHeader = bytesHeader + 2;
+precision{end+1,1} = 'int16';
+% 3. Bytes in headers, 4 bytes -- total number of bytes in both headers.
+%       Used as a zero idx reference to the first data packet
+headerInfoWrite{end+1,1} = bytesHeader; % this will updated last
+bytesHeader = bytesHeader + 4;
+precision{end+1,1} = 'int32';
+% 4. Label, 16 bytes, label of the sampling group, must be null terminated
+temp(1:16)=setstr(0);
+temp(1:7) = 'LFP Low';
+headerInfoWrite{end+1,1} = temp; 
+precision{end+1,1} = 'char';
+% temp(1:8)=setstr(0);
+% headerInfoWrite{end+1,1} = temp; 
+% precision{end+1,1} = 'char';
+bytesHeader = bytesHeader + 16;
+% 5. Comment, 256 bytes, must be null terminated
+temp(1:256)=setstr(0);
+headerInfoWrite{end+1,1} = temp;
+precision{end+1,1} = 'char';
+bytesHeader = bytesHeader + 256;
+% 6. Period, 4 bytes, number of 1/30000 between data points
+headerInfoWrite{end+1,1} = 60;
+precision{end+1,1} = 'int32';
+bytesHeader = bytesHeader + 4;
+% 7. Time resolution of samples, 4 bytes, sampling frequency used to
+%       digitize neural waveforms. Will be set to 30,000
+headerInfoWrite{end+1,1} = 30000;
+bytesHeader = bytesHeader + 4;
+precision{end+1,1} = 'int32';
+% 8. Time origin, 16 bytes, UTC time at which the data file is collected. 8
+%       2-byte values definining Year, Month, DayOfWeek, Day, Hour, Minute,
+%       Second, Millisecond
+c = clock;
+c = [c(1:2),1,c(3:end),0];
+for i = 1:numel(c)
+    headerInfoWrite{end+1,1} = c(i);
+    precision{end+1,1} = 'int16';
+end
+bytesHeader = bytesHeader + 16;
+
+% 9. Channel Count, 4 bytes, number of channels per data point
+headerInfoWrite{end+1,1} = 1;
+bytesHeader = bytesHeader + 4;
+precision{end+1,1} = 'int32';
+
+%% Extended header 1
+numExtendedHeaders = numExtendedHeaders + 1;
+% write "CC", 2 bytes
+% headerInfoWrite{end+1,1} = 67; % 'C'
+% precision{end+1,1} = 'int8';
+% headerInfoWrite{end+1,1} = 67; % 'C'
+% precision{end+1,1} = 'int8';
+headerInfoWrite{end+1,1} = 'CC'; % 'C'
+precision{end+1,1} = 'char';
+% electrode ID -- 2 bytes
+headerInfoWrite{end+1,1} = 97;
+precision{end+1,1} = 'int16';
+% label, 16 bytes, label of the electrode, must be null terminated
+temp = '';
+temp(1:16)=setstr(0);
+temp(1:7) = 'elecJOE';
+headerInfoWrite{end+1,1} = temp; 
+precision{end+1,1} = 'char';
+% physical connector -- 1 byte (A,B,C,D = 1,2,3,4)
+headerInfoWrite{end+1,1} = 1;
+precision{end+1,1} = 'uint8';
+% connector pin -- 1 byte (1-37)
+headerInfoWrite{end+1,1} = 1;
+precision{end+1,1} = 'uint8';
+% min digital value
+headerInfoWrite{end+1,1} = -1000;
+precision{end+1,1} = 'int16';
+% max digital value
+headerInfoWrite{end+1,1} = 1000;
+precision{end+1,1} = 'int16';
+% min analog value
+headerInfoWrite{end+1,1} = -1000;
+precision{end+1,1} = 'int16';
+% max analog value
+headerInfoWrite{end+1,1} = 1000;
+precision{end+1,1} = 'int16';
+% units, 16 bytes, label of the electrode, must be null terminated
+temp(1:16) = setstr(0);
+temp(1:3)= 'JOE';
+headerInfoWrite{end+1,1} = temp; % this will updated last
+precision{end+1,1} = 'char';
+% High freq corner, 4 bytes, in mHz
+headerInfoWrite{end+1,1} = 0;
+precision{end+1,1} = 'int32';
+% High freq order, 4 bytes, 0 = NONE
+headerInfoWrite{end+1,1} = 0;
+precision{end+1,1} = 'int32';
+% High filter type, 2 bytes, 0=none, 1=butter
+headerInfoWrite{end+1,1} = 0;
+precision{end+1,1} = 'int16';
+% Low freq corner, 4 bytes, in mHz
+headerInfoWrite{end+1,1} = 0;
+precision{end+1,1} = 'int32';
+% Low freq order, 4 bytes, 0 = NONE
+headerInfoWrite{end+1,1} = 0;
+precision{end+1,1} = 'int32';
+% Low filter type, 2 bytes, 0=none, 1=butter
+headerInfoWrite{end+1,1} = 0;
+precision{end+1,1} = 'int16';
+
+bytesHeader = bytesHeader + numExtendedHeaders*66; % this is updated below
+headerInfoWrite{3,1} = bytesHeader; 
+%% write all of the header related information to the file
+
+for idx = 1:numel(headerInfoWrite)
+    fwrite(fid,headerInfoWrite{idx,1},precision{idx,1},0,'ieee-le');
+end
+
+%% Section 3 - data packets
+packetInfoWrite = {};
+precision = {};
+for idx = 1:2
+    % header, 1 byte, 0x01
+    packetInfoWrite{end+1,1} = 1;
+    precision{end+1,1} = 'int8';
+    % timestamp, 4 bytes, 0 is beginning of file
+    if(idx==1)
+        packetInfoWrite{end+1,1} = 0.1;
+    else
+        packetInfoWrite{end+1,1} = ceil(30000*timeSpikes(end));
+    end
+    precision{end+1,1} = 'int32';
+    % # data points, 4 bytes,
+    packetInfoWrite{end+1,1} = 1;
+    precision{end+1,1} = 'int32';
+    % data point, 2 bytes
+    packetInfoWrite{end+1,1} = idx*10;
+    precision{end+1,1} = 'int16';
+end
+
+for idx = 1:numel(packetInfoWrite)
+    fwrite(fid,packetInfoWrite{idx,1},precision{idx,1},0,'ieee-le');
+end
+
+% close the NSx file
+fclose(fid);
+
+
 end
 
 

@@ -3,11 +3,9 @@
 load('Neuron_data_canonical')
 
 [b,a] = butter(6,500/30000*2,'high');
-neuronMeanWave = neuronMeanWave - mean(neuronMeanWave);
-neuronWavesFiltered = fliplr(filter(b,a,fliplr(neuronWaves)')');
 
-neuronMeanWaveFilt = mean(neuronWavesFiltered);
-neuronStdWaveFilt = std(neuronWavesFiltered);
+neuronMeanWaveFilt = meanWave;
+neuronStdWaveFilt = std(cds.units(2).spikes{:,2:end});
 
 % we basically want to use grad descent
 alpha = 0.01;
@@ -19,8 +17,6 @@ toc
 %
 figure;
 subplot(2,1,1)
-plot(neuronMeanWave,'k','linewidth',2);
-hold on
 plot(waves(numWaves,:),'r');
 subplot(2,1,2)
 plot(neuronMeanWaveFilt,'k','linewidth',1)

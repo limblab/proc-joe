@@ -1,6 +1,6 @@
 %% process stimulation artifacts:
 pwd = cd;
-folderpath= 'D:\Lab\Data\StimArtifact\Mihili\newAmpLowGain_20170420\chan61\';
+folderpath= 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Mihili_oldAmp\';
 % folderpath='D:\Lab\Data\StimArtifact\Chips_one\';
 functionName='processStimArtifact';
 
@@ -10,8 +10,7 @@ inputData.task='taskRW';
 inputData.ranBy='ranByTucker'; 
 inputData.array1='arrayS1'; 
 inputData.monkey='monkeyMihili';
-inputData.mapFile='mapFileD:\Lab\Data\MapFiles\Han_Left_S1\SN 6251-001459.cmp'; % chips mapfile location
-% inputData.mapFile = 'mapFileD:\Lab\Data\MapFiles\Chips_Left_S1\SN 6251-001455.cmp';
+inputData.mapFile='mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp'; % chips mapfile location
 inputData.badChList=0;
 inputData.interpulse=.000053;%in s
 inputData.pWidth1=.0002;
@@ -88,7 +87,9 @@ for waveNum = 1:numel(indexesToPlaceNeurons)
         nevData.waveforms = nevData.waveforms(sortTs,:);
         nevData.elec = nevData.elec(sortTs,:);
         disp('writing NEV file')
+        tic
         writeNEV(nevData, packetWidth, nevFilename, mapFilename, comments)
+        toc
     end
 
 %     clear outputDataFilteredTemp;
@@ -129,3 +130,16 @@ for spike = 1:1%size(cds.units,2)
         end
 %     end 
 end
+
+%% writeNev testing
+numSamples = 10000;
+nevData.ts = linspace(0,numSamples-1,numSamples);
+nevData.elec = 1+zeros(numSamples,1);
+nevData.waveforms = zeros(numSamples,48);
+packetWidth = 48*2 + 8;
+comments = '';
+nevFilename = 'testingNev';
+mapFilename = inputData.mapFile(8:end);
+tic
+writeNEV(nevData, packetWidth, nevFilename, mapFilename, comments)
+toc

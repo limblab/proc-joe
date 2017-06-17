@@ -1,9 +1,9 @@
 pwd=cd;
-folderpath = 'D:\Lab\proc-joe\StimulationArtifact\';
-filename = 'Han_20170516.nev';
+folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_processed\';
+filename = 'test-01';
 labnum = 6;
 monkey = 'monkeyHan';
-ranBy = 'ranByTucker';
+ranBy = 'ranByJoseph';
 array = 'arrayLeftS1';
 task = 'taskRW';
 cds=commonDataStructure();
