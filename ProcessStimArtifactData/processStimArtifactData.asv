@@ -36,8 +36,8 @@ function [outputFigures, outputData ] = processStimArtifactData(folderpath, inpu
     nevData = [];
     rawData = [];
     artifactDataTime = 7; % in ms
-    artifactData.artifact = zeros(5000,96,artifactDataTime*30000/1000);
-    artifactData.t = zeros(5000,1);
+    artifactData.artifact = zeros(10000,96,artifactDataTime*30000/1000);
+    artifactData.
     artifactDataIndex = 1;
     extraSeconds = 3;
      
@@ -271,14 +271,11 @@ function [outputFigures, outputData ] = processStimArtifactData(folderpath, inpu
 
         % store artifact data
         for art = 1:numel(artifactDataPre(i).stimOn)
-            if(artifactDataPre(i).stimOn(art) + artifactDataTime*30000/1000 <= size(cdsTemp.lfp,1))
-                artifactData.artifact(artifactIdx,:,:) = cdsTemp.lfp{artifactDataPre(i).stimOn(art):artifactDataPre(i).stimOn(art)+floor(artifactDataTime*30000/1000),2:end};
-                artifactData.t(artifactIdx,1) = artifactDataPre(i).stimOn/30000;
-                artifactIdx = artifactIdx + 1;
-            end
+            
+            
+            artifactIdx = artifactIdx + 1;
             if(artifactIdx > 0.7*size(artifactData,1))
-                artifactData.artifact(end+1:end+1000,:,:) = 0;
-                artifactData.t(end+1:end+1000,1) = 0;
+                artifactData(end+1:end+1000,:,:) = zeros(size(artifactData,2),size(artifactData,3));
             end
         end
         

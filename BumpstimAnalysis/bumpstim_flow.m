@@ -1,6 +1,6 @@
 %% load in processed data
 pwd = cd;
-folderpath= 'D:\Lab\Data\StimArtifact\Han\bumpstim\20170614\';
+folderpath= 'C:\Lab\Data\StimArtifact\Han\bumpstim\20170614\';
 mapFile = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 cd(folderpath)
 filelist = dir('*processed*');
