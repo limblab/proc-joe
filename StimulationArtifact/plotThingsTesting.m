@@ -1,6 +1,6 @@
 pwd=cd;
-folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_processed\';
-filename = 'test-01';
+folderpath = 'D:\Lab\Data\StimArtifact\Han\bumpstim\20170614\';
+filename = 'Han_20170614_CObumpstim_merged-s';
 labnum = 6;
 monkey = 'monkeyHan';
 ranBy = 'ranByJoseph';

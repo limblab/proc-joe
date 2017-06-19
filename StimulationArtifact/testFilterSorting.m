@@ -1,6 +1,6 @@
 %% process stimulation artifacts:
 pwd = cd;
-folderpath= 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Mihili_oldAmp\';
+folderpath= 'D:\Lab\Data\StimArtifact\Han\chanLots_20170516\';
 % folderpath='D:\Lab\Data\StimArtifact\Chips_one\';
 functionName='processStimArtifact';
 
@@ -133,7 +133,7 @@ end
 
 %% writeNev testing
 numSamples = 10000;
-nevData.ts = linspace(0,numSamples-1,numSamples);
+nevData.ts = linspace(0,60*60,numSamples);
 nevData.elec = 1+zeros(numSamples,1);
 nevData.waveforms = zeros(numSamples,48);
 packetWidth = 48*2 + 8;

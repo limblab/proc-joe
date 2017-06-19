@@ -1,10 +1,9 @@
 %% process stimulation artifacts:
 pwd = cd;
-folderpath= 'R:\data\Han_13B1\Raw\bumpstim\20170614\';
-% folderpath='D:\Lab\Data\StimArtifact\Chips_one\';
+folderpath= 'R:\data\Han_13B1\Raw\bumpstim\20170616\';
 functionName='processStimArtifactData';
 
-%%
+%% generates _cds and _crossings files
 warning('off')
 inputData.task='taskCO';
 inputData.ranBy='ranByJoseph'; 
@@ -25,3 +24,38 @@ inputData.useSyncLabel=[];
 dataStruct2 = runDataProcessing(functionName,folderpath,inputData);
 cd(pwd);
 warning('on')
+
+%% writeNev from _crossing file
+pwd = cd;
+cd(folderpath);
+fileList=dir('*_nevData*');
+load(fileList(1).name);
+packetWidth = 104;
+filename = strcat(fileList(1).name(1:end-14),'_merged');
+mapFilename = inputData.mapFile(8:end);
+comments = '';
+writeNEV(nevData, packetWidth, filename, mapFilename, comments )
+cd(pwd);
+%% sort *_merged and call it *_merged-s
+
+%% load in *_merged-s, save the units and move that to cds 
+pwd = cd;
+cd(folderpath);
+fileList=dir('*cds*');
+load(fileList(1).name);
+fileList = dir('*_merged-s.NEV*');
+filename = fileList(1).name;
+labnum = 6;
+monkey = 'monkeyHan';
+ranBy = 'ranByJoseph';
+array = 'arrayLeftS1';
+task = 'taskRW';
+spikes = commonDataStructure();
+spikes.file2cds([folderpath,filename],ranBy,array,monkey,labnum,'ignoreJumps',task);
+cds.units = spikes.units;
+clear spikes
+cd(folderpath)
+save(strcat(filename(1:end-10),'_processed'),'cds','-v7.3');
+cd(pwd);
+
+%% copy relevant file by hand to folder on local computer for further analysis
