@@ -3,12 +3,13 @@ function [] = plotRasterCtrHoldBump(cds,neuronNumber,ctrHoldBumpNoStimMask,ctrHo
 colorRect = 'r';
 rpLineLength = 0.33;
 verticalLine = 0;
-markerSize = 6;
+markerSize = 4;
 stimsPerBump = 10;
 trialLength = 0.3; % 200 ms -- 100ms of stim (10 stims * 10ms per stim)
 preTime = 0.15;
 postTime = 0.25;
-plotArtifactData = 0;
+plotSpikesNearArtifacts = 0;
+plotAllArtifacts = 0;
 spikesArtifact = [];
 plotTitle = 1;
 
@@ -20,14 +21,16 @@ for i = 1:2:size(varargin,2)
             times = varargin{i+1};
             preTime = times(1);
             postTime = times(2);
-        case 'plotArtifactData'
-            plotArtifactData = varargin{i+1};
+        case 'plotSpikesNearArtifacts'
+            plotSpikesNearArtifacts = varargin{i+1};
         case 'plotTitle'
             plotTitle = varargin{i+1};
+        case 'plotAllArtifacts'
+            plotAllArtifacts = varargin{i+1};
     end
 end
 
-figure('Position',[1123 324 639 608]);
+figure('Position',[823 124 639 608]);
 if(plotTitle)
     suptitle(num2str(neuronNumber));
 end
@@ -78,7 +81,7 @@ for cond = 1:2 % 1 = no stim, bump, 2 = stim bump
                     cds.units(neuronNumber).spikes.ts < trialStart + postTime;
             spikesPlot = cds.units(neuronNumber).spikes.ts(spikeMask) - trialStart;
             
-            if(cond == 2 && plotArtifactData == 1) % save spike data for plotting
+            if(cond == 2 && plotSpikesNearArtifacts == 1) % save spike data for plotting
                 spikesArtifact = [spikesArtifact;spikesPlot+trialStart];
             end
             % plot spike data
@@ -111,16 +114,16 @@ for cond = 1:2 % 1 = no stim, bump, 2 = stim bump
     ax.YTickLabel = {num2str(0),num2str(size(trialTable,1))};
 end
 
-% plot raw waveforms around the artifact data
-if(plotArtifactData == 1)
+%% plot raw waveforms around the artifact data
+if(plotSpikesNearArtifacts == 1)
     figure();
-    rowSubplot = 1;
-    colSubplot = 1;
+    rowSubplot = 5;
+    colSubplot = 5;
     numSubplots = rowSubplot*colSubplot;
-    wavesPerSubplot = 50;%ceil(size(spikesArtifact,1)/numSubplots);
+    wavesPerSubplot = ceil(size(spikesArtifact,1)/numSubplots);
     xData = (0:1:numel(cds.rawData.waveforms(1,:))-1)/30000*1000;
     subplotNum = 1;
-    for waveTs = 1:wavesPerSubplot
+    for waveTs = 1:size(spikesArtifact,1)
         subplot(rowSubplot,colSubplot,subplotNum);
         hold on
         waveIdx = find(cds.units(neuronNumber).spikes.ts == spikesArtifact(waveTs));
@@ -141,6 +144,60 @@ if(plotArtifactData == 1)
         ylabel('Voltage (\muV)')
         formatForLee(gcf);
     end
+end
+
+%% plot sample of artifacts with waveform and without waveform
+if(plotAllArtifacts)
+    chan = cds.units(neuronNumber).chan;
+    spikes = cds.units(neuronNumber).spikes.ts;
+    numArtifacts = size(cds.artifactData.artifact,1);
+    xData = ((0:1:size(cds.artifactData.artifact,3)-1)-30)/30000*1000;
+    maxArtifactsPerPlot = 5;
+    rowSubplot = 4; % must be an even integer
+    colSubplot = 5;
+    numArtifactsPerCond = maxArtifactsPerPlot*rowSubplot/2*colSubplot;
+    
+    figure();    
+    for artCond = 1:2
+        artifactsPlot = [];
+        if(artCond == 1) % plot sample of artifacts with spike afterwards
+            for art = 1:numArtifacts
+                artifactsMask = spikes >= cds.artifactData.t(art) & spikes <= cds.artifactData.t(art) + (size(cds.artifactData.artifact,3)-30)/30000;
+                if(sum(artifactsMask)>0)
+                    artifactsPlot(end+1,1) = art;
+                end
+            end
+        else % plot sample of artifacts without spike afterwards 
+            for art = 1:numArtifacts
+                artifactsMask = spikes >= cds.artifactData.t(art) & spikes <= cds.artifactData.t(art) + (size(cds.artifactData.artifact,3)-30)/30000;
+                
+                if(sum(artifactsMask)==0 && cds.artifactData.t(art) ~= 0)
+                    artifactsPlot(end+1,1) = art;
+                end
+            end
+        end
+        
+        % grab random sample from artifactsPlot
+        if(numel(artifactsPlot) > numArtifactsPerCond)
+            artifactsPlot = datasample(artifactsPlot,numArtifactsPerCond,'Replace',false);
+        end
+        
+        artCount = 1;
+        for sub = 1:rowSubplot/2*colSubplot
+            subplot(rowSubplot,colSubplot, sub+(rowSubplot/2*colSubplot)*(artCond-1))
+            
+            for p = 1:maxArtifactsPerPlot
+                if(artCount <= numel(artifactsPlot))
+                    plot(squeeze(squeeze(cds.artifactData.artifact(artifactsPlot(artCount),chan,:))))
+                end
+                hold on
+                artCount = artCount+1;
+            end
+            ylim([-500 500])
+        end
+        
+    end
+    
 end
 
 end

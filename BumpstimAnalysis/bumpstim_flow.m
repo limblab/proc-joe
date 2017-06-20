@@ -1,6 +1,6 @@
 %% load in processed data
 pwd = cd;
-folderpath= 'C:\Lab\Data\StimArtifact\Han\bumpstim\20170614\';
+folderpath= 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_processed\20170614\';
 mapFile = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 cd(folderpath)
 filelist = dir('*processed*');
@@ -12,12 +12,10 @@ end
 cd(pwd);
 if(cds.processed == 0)
     disp('This needs to be processed offline more')
-elseif(cds.processed == 1)
-    disp('no further processing necessary')
 end
 unitsRemove = [];
 %% make sure to include the stimulation electrode and mapfile data
-cds.stimElectrode = 'elec54';
+cds.stimElectrode = 'elec64';
 mapData=loadMapFile(mapFile);
 cds.posList = [mapData.row(:) mapData.col(:)];
 cds.elecList = mapData.label;
@@ -92,7 +90,7 @@ for nn = 1:numel(cds.units)
     end
 end
 
-%% remove units and save
+%% remove units
 if(cds.processed == 0)
     cds.unitsRaw = cds.units;
     cds.unitsRemove = unitsRemove;
@@ -124,16 +122,19 @@ filename = strcat(cds.meta.monkey,'_20170614_COBumpstim_Raster_neuronNumber');
 for nn = 1:numel(cds.units)
     if(cds.units(nn).ID ~= 0 && cds.units(nn).ID ~= 255)
         generateCOBumpstimRaster(cds,nn,'stimsPerBump',cds.stimsPerBump,'trialLength',[0.1,0.2],'plotTitle',0);
-        saveFigure(gcf,figDir,[filename,num2str(nn)]);
-        close all
+%         saveFigure(gcf,figDir,[filename,num2str(nn)]);
+%         close all
     end
 end
 
 %% look at single units more closely -- plot data around artifact for confirmation
-nn = 32;
+nn = 120;
 if(cds.units(nn).ID ~= 0 && cds.units(nn).ID ~= 255)
-    generateCOBumpstimRaster(cds,nn,'stimsPerBump',cds.stimsPerBump,'trialLength',[1,1],'plotArtifactData',1,'plotTitle',0);
+    % plot all artifacts to see if "spike" is an artifact
+    generateCOBumpstimRaster(cds,nn,'stimsPerBump',cds.stimsPerBump,'trialLength',[0.1,0.2],...
+        'plotSpikesNearArtifacts',0,'plotTitle',0,'plotAllArtifacts',1);
 end
+
 
 %% for every unit, do a PSTH 
 figDir = folderpath;
