@@ -1,6 +1,6 @@
 %% process stimulation artifacts:
 pwd = cd;
-folderpath= 'R:\data\Han_13B1\Raw\bumpstim\20170616\';
+folderpath= 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_processed\20170616\';
 functionName='processStimArtifactData';
 
 %% generates _cds and _crossings files
@@ -9,7 +9,7 @@ inputData.task='taskCO';
 inputData.ranBy='ranByJoseph'; 
 inputData.array1='arrayS1'; 
 inputData.monkey='monkeyHan';
-inputData.mapFile='mapFileD:\Lab\Data\MapFiles\Han_Left_S1\SN 6251-001459.cmp'; % chips mapfile location
+inputData.mapFile='mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp'; % chips mapfile location
 inputData.badChList=0;
 inputData.interpulse=.000053;%in s
 inputData.pWidth1=.0002;
@@ -25,15 +25,18 @@ dataStruct2 = runDataProcessing(functionName,folderpath,inputData);
 cd(pwd);
 warning('on')
 
-%% writeNev from _crossing file
+%% blank artifact and writeNev from _nevData file
 pwd = cd;
 cd(folderpath);
 fileList=dir('*_nevData*');
 load(fileList(1).name);
+fileList=dir('*_cds*');
+load(fileList(1).name);
 packetWidth = 104;
-filename = strcat(fileList(1).name(1:end-14),'_merged');
+filename = strcat(fileList(1).name(1:end-14),'_merged_testing');
 mapFilename = inputData.mapFile(8:end);
 comments = '';
+[nevData] = blankStimulationArtifact(cds,nevData);
 writeNEV(nevData, packetWidth, filename, mapFilename, comments )
 cd(pwd);
 %% sort *_merged and call it *_merged-s
