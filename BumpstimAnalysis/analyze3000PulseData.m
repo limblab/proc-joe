@@ -1,16 +1,19 @@
-% %% set file names 
-% folderpath = 'R:\data\Han_13B1\Raw\20170621_3000pulseTrials\';
-% pwd=cd;
-% cd(folderpath)
-% fileList = dir('*_cds_processed.mat');
-% 
-% %% load a cds
-% load(fileList(6).name);
-% cd(pwd);
+%% set file names 
+folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_20170621_3000stimuli\';
+pwd=cd;
+cd(folderpath)
+fileList = dir('*_cds_processed.mat');
+
+% load file
+load(fileList(6).name);
+cd(pwd);
 
 %% Raster for a given index in cds.units -- basic analysis
-nn = 9;
+figDir = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_20170621_3000stimuli\Summary Figures\chan56_30uA_250interpulse\';
+figPrefix = 'Han_20170621_chan56stim_30uA_250us_';
     
+nn = 48;
+
 timeBeforeStim = 10/1000; % 10 ms in seconds
 timeAfterStim = 20/1000; % 10 ms in seconds
 figure;
@@ -26,9 +29,12 @@ end
 
 ylabel('Stimuli')
 xlabel('Time after stimulation (ms)')
+ylim([0 3000])
 formatForLee(gcf);
+figName = strcat(figPrefix,'_chan',num2str(cds.units(nn).chan),'_raster');
+saveFigure(gcf,figDir,figName);
 % plot all neuron waves
-figure
+f=figure
 maxWavesPlot = 100;
 
 subplot(3,1,1) % non stim region waves
@@ -56,20 +62,21 @@ if(numel(waveIdx) > 0)
     plot(xDataWaves,wavesPlot)
 end
 
-ylim([-200 200])
+ylim([-300 300])
 
 ylabel('Voltage (\muV)')
-xlabel('Time after stimulation (ms)')
+xlabel('Time (ms)')
 formatForLee(gcf);
 
 
 subplot(3,1,2) % stimulation artifacts aligned to waveform
-timeAfterStim = 3/1000;
+timeAfterStim = 4/1000;
+timeBeforeStim = 0/1000;
 wavesPlot = [];
 spikeMask = zeros(numel(cds.units(nn).spikes.ts,1));
 artifactMask = zeros(numel(cds.stimOn),1);
 for st = 1:numel(cds.stimOn)
-    spikeMask = spikeMask | (cds.units(nn).spikes.ts < cds.stimOn(st) + timeAfterStim & cds.units(nn).spikes.ts > cds.stimOn(st));
+    spikeMask = spikeMask | (cds.units(nn).spikes.ts < cds.stimOn(st) + timeAfterStim & cds.units(nn).spikes.ts > cds.stimOn(st) + timeBeforeStim);
     if(sum((cds.units(nn).spikes.ts < cds.stimOn(st) + timeAfterStim & cds.units(nn).spikes.ts > cds.stimOn(st)))>0)
         artifactMask(st,1) = 1;
     end
@@ -88,33 +95,36 @@ if(numel(waveIdx) > 0)
     plot(xDataWaves,wavesPlot)
 end
 
-ylim([-200 200])
+ylim([-300 300])
 ylabel('Voltage (\muV)')
-xlabel('Time after stimulation (ms)')
+xlabel('Time (ms)')
 formatForLee(gcf);
 
 
 subplot(3,1,3) % aligned to stimulation artifact
-timeAfterArtifact = 5/1000;
+timeAfterArtifact = 8/1000;
 chan = cds.units(nn).chan;
 artifactsPlot = squeeze(cds.artifactData.artifact(artifactMask==1,chan,1:timeAfterArtifact*30000));
 xDataArtifact = ((1:size(artifactsPlot,2))-1)/30;
 
 plot(xDataArtifact,artifactsPlot)
-ylim([-200 200])
+ylim([-400 400])
 ylabel('Voltage (\muV)')
-xlabel('Time after stimulation (ms)')
+xlabel('Time (ms)')
 formatForLee(gcf);
+
+figName = strcat(figPrefix,'_chan',num2str(cds.units(nn).chan),'_waves');
+saveFigure(f,figDir,figName);
 
 % PSTH
 timeBeforeStim = 10/1000; % 10 ms in seconds
-timeAfterStim = 20/1000; % 10 ms in seconds
+timeAfterStim = 40/1000; % 10 ms in seconds
 binSize = 0.1/1000; % in seconds
 figure;
 for st = 1:numel(cds.stimOn)-1
     spikeMask = cds.units(nn).spikes.ts > cds.stimOn(st)-timeBeforeStim & cds.units(nn).spikes.ts < cds.stimOn(st)+timeAfterStim;
     spikesPlot = [spikesPlot;(cds.units(nn).spikes.ts(spikeMask) - cds.stimOn(st))*1000];
-    
+
     xlim([-1*timeBeforeStim*1000 timeAfterStim*1000])
     hold on
 end  
@@ -128,10 +138,13 @@ ylabel('Spike count')
 xlabel('Time after stimulation (ms)')
 formatForLee(gcf);
 
+figName = strcat(figPrefix,'_chan',num2str(cds.units(nn).chan),'_PSTH');
+saveFigure(gcf,figDir,figName);
+
 % latency bar plot (zoomed in more PSTH basically)
 figure;
 timeBeforeStim = -1/1000; % 10 ms in seconds
-timeAfterStim = 3/1000; % 10 ms in seconds
+timeAfterStim = 4/1000; % 10 ms in seconds
 binSize = 0.1/1000; % in seconds
 bE = (-1*timeBeforeStim:binSize:timeAfterStim)*1000;
 [bC,bE] = histcounts(spikesPlot,bE);
@@ -141,6 +154,9 @@ bar(bE(1:end-1) + (bE(2)-bE(1))/2, bC);
 ylabel('Spike count')
 xlabel('Time after stimulation (ms)')
 formatForLee(gcf);
+
+figName = strcat(figPrefix,'_chan',num2str(cds.units(nn).chan),'_PSTHzoomed');
+saveFigure(gcf,figDir,figName);
 
 % latency vs time since last spike
 figure;
@@ -162,7 +178,18 @@ plot(timeBetween,latency,'k.')
 ylabel('Latency (ms)')
 xlabel('Time since last action potential (ms)')
 
-%% position on array
+figName = strcat(figPrefix,'_chan',num2str(cds.units(nn).chan),'_PostStimInterval');
+saveFigure(gcf,figDir,figName);
 
+%% For a unit -- probability of eliciting a spike
+nn = 9;
+timeAfterStim = 5/1000;
+numEvoked = 0;
+for st = 1:numel(cds.stimOn)
+    spikeMask = (cds.units(nn).spikes.ts < cds.stimOn(st) + timeAfterStim & cds.units(nn).spikes.ts > cds.stimOn(st));
+    if(sum(spikeMask) > 0)
+        numEvoked = numEvoked + 1;
+    end
+end
 
 
