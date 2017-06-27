@@ -1,6 +1,9 @@
 function [ out ] = getRawDataIdx(unitTs,unitChan,rawTs,rawChan)
 % unitTs and unitChan are single numbers, rawTs and rawChan are all of them
 out = -1;
+unitTs = round(unitTs/0.001)*0.001;
+rawTs = round(rawTs/0.001)*0.001;
+
 rawIdx = find(unitTs == rawTs);
 
 if(numel(rawIdx) > 1)
