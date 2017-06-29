@@ -1,18 +1,26 @@
 %% set file names 
-folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_20170621_3000stimuli\';
+folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_20170628\';
 pwd=cd;
 cd(folderpath)
-fileList = dir('*_cds_processed.mat');
+fileList = dir('*_processed.mat');
 
 % load file
-load(fileList(6).name);
+load(fileList(1).name);
 cd(pwd);
 
+%% plot raster, waves, and PSTH for a give neuron number
+figDir = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_20170628\Summary Figures\';
+figPrefix = 'Han_20170628_chan56stim_30uA_';
+saveFigures = 0;
+
+nn = 101;
+
+plotRaster(cds,nn);
+
 %% Raster for a given index in cds.units -- basic analysis
-figDir = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_20170621_3000stimuli\Summary Figures\chan56_30uA_250interpulse\';
-figPrefix = 'Han_20170621_chan56stim_30uA_250us_';
+
     
-nn = 48;
+nn = 101;
 
 timeBeforeStim = 10/1000; % 10 ms in seconds
 timeAfterStim = 20/1000; % 10 ms in seconds
