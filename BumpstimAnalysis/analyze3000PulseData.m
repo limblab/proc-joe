@@ -6,23 +6,34 @@ cd(folderpath)
 fileList = dir('*_processed.mat');
 
 %% load file
-load(fileList(5).name);
+load(fileList(1).name);
 cd(pwd);
 
 %% plot raster, waves, and PSTH for a give neuron number
-figDir = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_20170628\Summary Figures\';
-figPrefix = 'Han_20170628_chan56stim_30uA_';
+% figDir = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_20170629\Summary Figures\';
+% figPrefix = 'Han_20170628_chan42stim_250us';
 saveFigures = 0;
 
-nn = 101;
+nn = 11;
 
-plotRaster(cds,nn);
+plotRasterStim(cds,nn,'makeFigure',1,'makeSubplots',0,'plotTitle',1,'waveformTypes',[1,2,3,4,5,6,7,8],...
+    'preTime',10/1000,'postTime',20/1000,'plotSpikeWaveforms',1,'timeAfterStimRawNoStim',20/1000,...
+    'timeAfterStimRawArtifact',5/1000,'plotArtifacts',1);
+
+% plotPSTHStim
+
+% plotLatencyVsSpikeTiming
+
+% probability of eliciting a spike
+
+% whole array analysis
+
 
 %% Raster for a given index in cds.units -- basic analysis
 figDir = 'D:\Lab\Data\StimArtifact\Han\20170622_3000pulses\Summary Figures\chan51stim_40uA_300us\';
 figPrefix = 'Han_20170621_chan51stim_40uA_300us_';
     
-nn = 101;
+nn = 9;
 
 timeBeforeStim = 10/1000; % 10 ms in seconds
 timeAfterStim = 20/1000; % 10 ms in seconds
@@ -41,6 +52,7 @@ ylabel('Stimuli')
 xlabel('Time after stimulation (ms)')
 ylim([0 3000])
 formatForLee(gcf);
+%%
 figName = strcat(figPrefix,'_chan',num2str(cds.units(nn).chan),'_raster');
 saveFigure(gcf,figDir,figName);
 % plot all neuron waves
