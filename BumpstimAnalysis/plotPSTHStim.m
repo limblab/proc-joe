@@ -1,5 +1,4 @@
-function [] = plotRasterStim(cds,neuronNumber,varargin)
-
+function [] = plotPSTHStim(cds,neuronNumber,varargin)
 colorRect = 'r';
 rpLineLength = 0.33;
 verticalLine = 0;
@@ -20,6 +19,8 @@ waveformTypesPlot = 1;
 if(waveformsSentExist)
     waveformTypesPlot = 1:1:numel(unique(cds.waveforms.waveSent));
 end
+
+binSize = 0.0002;
 
 % plot waves near artifact stuff
 plotSpikeWaveforms = 0;
@@ -66,6 +67,8 @@ for i = 1:2:size(varargin,2)
             colSubplotArtifact = varargin{i+1};
         case 'rowSubplotArtifact'
             rowSubplotArtifact = varargin{i+1};
+        case 'binSize'
+            binSize = varargin{i+1};
     end
 end
 
@@ -77,7 +80,6 @@ end
 %% extract data
 for i = 1:numWaveformTypes
     spikeTimeData{i} = [];
-    stimuliData{i} = [];
 end
 stimNum = zeros(numWaveformTypes,1);
 if(bumpTask) % plot things aligned to bump times and whatnot
@@ -91,16 +93,21 @@ else % get data after stimulations
             stimNum(cds.waveforms.waveSent(st)) = stimNum(cds.waveforms.waveSent(st)) + 1;
             if(~isempty(spikesPlot))
                 spikeTimeData{cds.waveforms.waveSent(st)}(end+1:end+numWaves) = spikesPlot';
-                stimuliData{cds.waveforms.waveSent(st)}(end+1:end+numWaves) = stimNum(cds.waveforms.waveSent(st));
             end
         else
             stimNum(1) = stimNum(1) + 1;
             spikeTimeData{1}(end+1:end+numWaves) = spikesPlot';
-            stimuliData{1}(end+1:end+numWaves) = stimNum(1);
         end
     end
 end
-%% plot data - stimuli data is y-axis. spike data is x-axis
+%% bin and plot data - stimuli data is y-axis. spike data is x-axis
+maxYLim = 0;
+% find y maximum y limit
+for fig = waveformTypesPlot
+    bE = -preTime:binSize:postTime;
+    [bC,~] = histcounts(spikeTimeData{fig},bE);
+    maxYLim = max(max(bC)*1.1,maxYLim);
+end
 
 for fig = waveformTypesPlot
     % deals with making figure
@@ -117,14 +124,17 @@ for fig = waveformTypesPlot
         end
     end
     
-    
+    % bin data
+    bE = -preTime:binSize:postTime;
+    [bC,bE] = histcounts(spikeTimeData{fig},bE);
+    bE = bE*1000;
     % plot actual data now
-    plot(spikeTimeData{fig}*1000,stimuliData{fig},'k.')
+    bar(bE(1:end-1)+(bE(2)-bE(1))/2,bC)
     
     % clean up graph
-    ylim([-3,max(stimuliData{fig})+1])
+    ylim([0,maxYLim])
     xlim([-preTime*1000,postTime*1000])
-    ylabel('Stimuli')
+    ylabel('Number of spikes')
     if(~waveformsSentExist || (waveformsSentExist && waveformsMakeSubplots && fig == numWaveformTypes))
         xlabel('Time after stimulation onset (ms)')  
     end
@@ -139,29 +149,7 @@ for fig = waveformTypesPlot
         end
     end
     formatForLee(gcf);
-    ax=gca;
-    ax.YTick = [0;max(stimuliData{fig})];
-    ax.YMinorTick = 'off';
-    ax.YTickLabel = {num2str(0),num2str(max(stimuliData{fig}))};
 end
-
-%% plot raw waveforms around the artifact data
-if(plotSpikeWaveforms == 1)
-    for fig = waveformTypesPlot
-        plotWaveformsStim(cds,neuronNumber,fig,'timeAfterStimRawNoStim',timeAfterStimRawNoStim,'timeAfterStimRawArtifact',timeAfterStimRawArtifact,...
-            'makeFigure',1,'plotTitle',plotTitle,'title',titleToPlot);
-    end
-end
-
-%% plot sample of artifacts with waveform and without waveform
-if(plotArtifacts)
-    for fig = waveformTypesPlot
-        plotArtifactsStim(cds,neuronNumber,fig,'plotTitle',plotTitle,'title',titleToPlot,'maxArtifactsPerPlot',maxArtifactsPerPlot,...
-            'rowSubplot',rowSubplotArtifact,'colSubplot',colSubplotArtifact);
-    end
-end
-
-
 
 end
 

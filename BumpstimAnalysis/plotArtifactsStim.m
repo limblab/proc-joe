@@ -30,7 +30,7 @@ end
 
 chan = cds.units(neuronNumber).chan;
 spikes = cds.units(neuronNumber).spikes.ts;
-numArtifacts = size(cds.artifactData.artifact,1);
+numArtifacts = numel(cds.stimOn);
 xData = ((0:1:size(cds.artifactData.artifact,3)-1)-30)/30000*1000;
 
 numArtifactsPerCond = maxArtifactsPerPlot*rowSubplot/2*colSubplot;
