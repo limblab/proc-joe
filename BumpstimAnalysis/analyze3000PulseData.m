@@ -1,5 +1,6 @@
 %% set file names 
-folderpath = 'D:\Lab\Data\StimArtifact\Han\20170629\';
+folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_20170628\';
+% folderpath = 'D:\Lab\Data\StimArtifact\Han\20170629\';
 
 pwd=cd;
 cd(folderpath)
@@ -28,12 +29,14 @@ nn = 48;
 plotPSTHStim(cds,nn,'binSize',0.2/1000,'makeFigure',1,'makeSubplots',0,'plotTitle',1,'waveformTypes',[1,2,3,4,5],...
     'preTime',10/1000,'postTime',20/1000,'saveFigure',saveFigures,'figDir',figDir,'figPrefix',figPrefix)
 
-% plotLatencyVsSpikeTiming
+%% plot latency vs time since last spike
+nn=10;
+plotLatencyVsSpikeTiming(cds,nn,'timeAfterStimulation',5/1000);
+
 
 % probability of eliciting a spike
 
 % whole array analysis
-
 
 %% Raster for a given index in cds.units -- basic analysis
 figDir = 'D:\Lab\Data\StimArtifact\Han\20170622_3000pulses\Summary Figures\chan51stim_40uA_300us\';
