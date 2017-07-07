@@ -485,7 +485,7 @@ for idx = 1:2
     if(idx==1)
         packetInfoWrite{end+1,1} = 0.1;
     else
-        packetInfoWrite{end+1,1} = ceil(30000*timeSpikes(end));
+        packetInfoWrite{end+1,1} = ceil(30000*timeSpikes(end))+1;
     end
     precision{end+1,1} = 'int32';
     % # data points, 4 bytes,
