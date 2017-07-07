@@ -1,12 +1,21 @@
 %% set file names 
 folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_20170706\';
-
+mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+% mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Mihili 12A3\Mihili Left PMd SN 6251-001460.cmp';
 pwd=cd;
 cd(folderpath)
 fileList = dir('*cds_processed.mat');
 
-%% load file
-load(fileList(1).name);
+%% load file and parse for stim electrode number
+fileNumber = 1;
+chanIdx = strfind(fileList(fileNumber).name,'chan');
+stimIdx = strfind(fileList(fileNumber).name,'stim');
+if(~isempty(chanIdx) && numel(chanIdx) == 1 && ~isempty(stimIdx) && numel(stimIdx) == 1)
+    stimElectrode = str2num(fileList(fileNumber).name(chanIdx+4:stimIdx-1));
+else % manually input stim electrode
+    stimElectrode = 17;
+end
+% load(fileList(fileNumber).name);
 cd(pwd);
 
 %% plot raster, waves, and PSTH for a give neuron number
@@ -20,6 +29,12 @@ plotRasterStim(cds,nn,'makeFigure',1,'makeSubplots',0,'plotTitle',1,'waveformTyp
     'preTime',10/1000,'postTime',30/1000,'plotSpikeWaveforms',1,'timeAfterStimRawNoStim',20/1000,...
     'timeAfterStimRawArtifact',9/1000,'plotArtifacts',1,'saveFigure',saveFigures,'figDir',figDir,'figPrefix',figPrefix,...
     'maxArtifactsPerPlot',5,'plotFiltered',1);
+
+% plot grid
+plotArrayMap(cds,nn,mapFileName,'numRows',10,'numCols',10,...
+    'stimElectrode',stimElectrode,'stimElectrodeColor','k','stimElectrodeLabel','string',...
+    'recordingElectrode',cds.units(nn).chan,'recordingElectrodeColor','k','recordingElectrodeLabel','string')
+
 
 %% plot PSTH
 saveFigures = 0;
