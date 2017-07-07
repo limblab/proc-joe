@@ -3,6 +3,7 @@ maxWavesPlot = 100;
 
 timeAfterStimRawNoStim = 20/1000;
 timeAfterStimRawArtifact = 5/1000;
+timeBeforeStimRawArtifact = 0/1000;
 makeFigure = 1;
 plotTitle = 0;
 titleToPlot = num2str(neuronNumber);
@@ -13,6 +14,8 @@ for i = 1:2:size(varargin,2)
             timeAfterStimRawNoStim = varargin{i+1};
         case 'timeAfterStimRawArtifact'
             timeAfterStimRawArtifact = varargin{i+1};
+        case 'timeBeforeStimRawArtifact'
+            timeBeforeStimRawArtifact = varargin{i+1};
         case 'makeFigure'
             makeFigure = varargin{i+1};
         case 'plotTitle'
@@ -75,7 +78,7 @@ wavesPlot = [];
 spikeMask = zeros(numel(cds.units(neuronNumber).spikes.ts,1));
 artifactMask = zeros(numel(cds.stimOn),1);
 for st = 1:numel(cds.stimOn)
-    spikeMask = spikeMask | (cds.units(neuronNumber).spikes.ts < cds.stimOn(st) + timeAfterStimRawArtifact & cds.units(neuronNumber).spikes.ts > cds.stimOn(st));
+    spikeMask = spikeMask | (cds.units(neuronNumber).spikes.ts < cds.stimOn(st) + timeAfterStimRawArtifact & cds.units(neuronNumber).spikes.ts > cds.stimOn(st) + timeBeforeStimRawArtifact);
 end
 
 waveIdx = find(spikeMask);

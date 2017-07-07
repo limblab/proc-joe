@@ -2,12 +2,17 @@ function [  ] = plotArtifactsStim( cds, neuronNumber, figNum, varargin )
 makeFigure = 1;
 plotTitle = 1;
 titleToPlot = '';
-maxArtifactsPerPlot = 5;
+maxArtifactsPerPlot = 20;
 rowSubplot = 4; % must be an even integer
 colSubplot = 5;
 waveformsSentExist = any(isfield(cds,'waveforms'));
+plotFiltered = 0;
+[bFilter,aFilter] = butter(6,[500]/(30000/2),'high');
+
 for i = 1:2:size(varargin,2)
     switch varargin{i}
+        case 'plotFiltered'
+            plotFiltered = varargin{i+1};
         case 'makeFigure'
             makeFigure = varargin{i+1};
         case 'plotTitle'
@@ -68,7 +73,14 @@ for artCond = 1:2
 
         for p = 1:maxArtifactsPerPlot
             if(artCount <= numel(artifactsPlot))
-                plot(squeeze(squeeze(cds.artifactData.artifact(artifactsPlot(artCount),chan,:))))
+                if(plotFiltered)
+                    stimData = squeeze(cds.artifactData.artifact(artifactsPlot(artCount),chan,:));
+                    stimData = [stimData;zeros(200,1)];
+                    stimDataPlot = fliplr(filter(bFilter,aFilter,fliplr(stimData')))';
+                    plot(stimDataPlot(1:end-200))
+                else
+                    plot(squeeze(cds.artifactData.artifact(artifactsPlot(artCount),chan,:)))
+                end
             end
             hold on
             artCount = artCount+1;

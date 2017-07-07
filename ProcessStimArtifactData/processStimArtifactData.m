@@ -133,55 +133,90 @@ function [outputFigures, outputData ] = processStimArtifactData(folderpath, inpu
         cdsTempDuration = cdsTemp.meta.duration;
 
         % merge cdsTemp with cds <- this one is everything but lfp + analog
-        if(i==1)
-            % rewrite everything into cds -- which is really not a
-            % commonDataStructure object but whatever
-            cds.offsets = [0];
-            cds.meta = cdsTemp.meta;
-            cds.meta.hasLfp = 0;
-            cds.kin = cdsTemp.kin;
-            cds.force = cdsTemp.force;
-            cds.lfp = {};
-            cds.emg = cdsTemp.emg;
-            cds.analog = {};
-            cds.stimOn = artifactDataPre.stimOn/30000;
-            cds.stimOff = artifactDataPre.stimOff/30000;
-            cds.triggers = cdsTemp.triggers;
-            cds.units = cdsTemp.units;
-            cds.trials = cdsTemp.trials;
-            cds.aliasList = cdsTemp.aliasList;
-            cds.operationLog = cdsTemp.operationLog;
-            cds.meta.duration = 0;
-        else     
-            % port over kin data
-            tempKin = cdsTemp.kin;
-            tempKin.t = tempKin.t + cds.meta.duration;
-            cdsKin = cds.kin;
-            cdsKin{end+1:end+size(tempKin,1),:} = tempKin{:,:};
-            cds.kin = cdsKin;
-            % port over stimOn and stimOff data
-            cds.stimOn = [cds.stimOn;artifactDataPre.stimOn/30000 + cds.meta.duration];
-            cds.stimOff = [cds.stimOff;artifactDataPre.stimOff/30000 + cds.meta.duration];
-            % port over trial data
-            tempTrials = cdsTemp.trials;
-            tempTrials.number = tempTrials.number + cds.trials.number(end);
-            tempTrials.startTime = tempTrials.startTime + cds.meta.duration;
-            tempTrials.endTime = tempTrials.endTime + cds.meta.duration;
-            tempTrials.tgtOnTime = tempTrials.tgtOnTime + cds.meta.duration;
-            tempTrials.goCueTime = tempTrials.goCueTime + cds.meta.duration;
-            tempTrials.bumpTime = tempTrials.bumpTime + cds.meta.duration;
-            tempTrials.stimTime = tempTrials.stimTime + cds.meta.duration;
-            cdsTrials = cds.trials;
-            cdsTrials(end+1:end+size(cdsTemp.trials,1),:) = tempTrials(:,:);
-            cds.trials = cdsTrials;
-            % update meta information
-            cds.offsets(end+1,1) = cds.meta.duration;
-            cds.meta.dataWindow(2) = cds.meta.dataWindow(2) + cdsTemp.meta.dataWindow(2);
-            cds.meta.numTrials = cds.meta.numTrials + cdsTemp.meta.numTrials;
-            cds.meta.numReward = cds.meta.numReward + cdsTemp.meta.numReward;
-            cds.meta.numAbort = cds.meta.numAbort + cdsTemp.meta.numAbort;
-            cds.meta.numFail = cds.meta.numFail + cds.meta.numFail;
-            cds.meta.numIncomplete = cds.meta.numIncomplete + cds.meta.numIncomplete;
+        if(strcmp(inputData.task,'taskCObump'))
+            if(i==1)
+                % rewrite everything into cds -- which is really not a
+                % commonDataStructure object but whatever
+                cds.offsets = [0];
+                cds.meta = cdsTemp.meta;
+                cds.meta.hasLfp = 0;
+                cds.kin = cdsTemp.kin;
+                cds.force = cdsTemp.force;
+                cds.lfp = {};
+                cds.emg = cdsTemp.emg;
+                cds.analog = {};
+                cds.stimOn = artifactDataPre.stimOn/30000;
+                cds.stimOff = artifactDataPre.stimOff/30000;
+                cds.triggers = cdsTemp.triggers;
+                cds.units = cdsTemp.units;
+                cds.trials = cdsTemp.trials;
+                cds.aliasList = cdsTemp.aliasList;
+                cds.operationLog = cdsTemp.operationLog;
+                cds.meta.duration = 0;
+            else     
+                % port over kin data
+                tempKin = cdsTemp.kin;
+                tempKin.t = tempKin.t + cds.meta.duration;
+                cdsKin = cds.kin;
+                cdsKin{end+1:end+size(tempKin,1),:} = tempKin{:,:};
+                cds.kin = cdsKin;
+                % port over stimOn and stimOff data
+                cds.stimOn = [cds.stimOn;artifactDataPre.stimOn/30000 + cds.meta.duration];
+                cds.stimOff = [cds.stimOff;artifactDataPre.stimOff/30000 + cds.meta.duration];
+                % port over trial data
+                tempTrials = cdsTemp.trials;
+                tempTrials.number = tempTrials.number + cds.trials.number(end);
+                tempTrials.startTime = tempTrials.startTime + cds.meta.duration;
+                tempTrials.endTime = tempTrials.endTime + cds.meta.duration;
+                tempTrials.tgtOnTime = tempTrials.tgtOnTime + cds.meta.duration;
+                tempTrials.goCueTime = tempTrials.goCueTime + cds.meta.duration;
+                tempTrials.bumpTime = tempTrials.bumpTime + cds.meta.duration;
+                tempTrials.stimTime = tempTrials.stimTime + cds.meta.duration;
+                cdsTrials = cds.trials;
+                cdsTrials(end+1:end+size(cdsTemp.trials,1),:) = tempTrials(:,:);
+                cds.trials = cdsTrials;
+                % update meta information
+                cds.offsets(end+1,1) = cds.meta.duration;
+                cds.meta.dataWindow(2) = cds.meta.dataWindow(2) + cdsTemp.meta.dataWindow(2);
+                cds.meta.numTrials = cds.meta.numTrials + cdsTemp.meta.numTrials;
+                cds.meta.numReward = cds.meta.numReward + cdsTemp.meta.numReward;
+                cds.meta.numAbort = cds.meta.numAbort + cdsTemp.meta.numAbort;
+                cds.meta.numFail = cds.meta.numFail + cds.meta.numFail;
+                cds.meta.numIncomplete = cds.meta.numIncomplete + cds.meta.numIncomplete;
+            end
+        else % ignore trial table completely
+            if(i==1)
+                % rewrite everything into cds -- which is really not a
+                % commonDataStructure object but whatever
+                cds.offsets = [0];
+                cds.meta = cdsTemp.meta;
+                cds.meta.hasLfp = 0;
+                cds.kin = cdsTemp.kin;
+                cds.force = cdsTemp.force;
+                cds.lfp = {};
+                cds.emg = cdsTemp.emg;
+                cds.analog = {};
+                cds.stimOn = artifactDataPre.stimOn/30000;
+                cds.stimOff = artifactDataPre.stimOff/30000;
+                cds.triggers = cdsTemp.triggers;
+                cds.units = cdsTemp.units;
+                cds.aliasList = cdsTemp.aliasList;
+                cds.operationLog = cdsTemp.operationLog;
+                cds.meta.duration = 0;
+            else     
+                % port over kin data
+                tempKin = cdsTemp.kin;
+                tempKin.t = tempKin.t + cds.meta.duration;
+                cdsKin = cds.kin;
+                cdsKin{end+1:end+size(tempKin,1),:} = tempKin{:,:};
+                cds.kin = cdsKin;
+                % port over stimOn and stimOff data
+                cds.stimOn = [cds.stimOn;artifactDataPre.stimOn/30000 + cds.meta.duration];
+                cds.stimOff = [cds.stimOff;artifactDataPre.stimOff/30000 + cds.meta.duration];                
+                % update meta information
+                cds.offsets(end+1,1) = cds.meta.duration;
+                cds.meta.dataWindow(2) = cds.meta.dataWindow(2) + cdsTemp.meta.dataWindow(2);
+            end
         end
         
         clear cdsTemp
