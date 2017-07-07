@@ -30,6 +30,8 @@ for i = 1:2:size(varargin,2)
             end
         case 'colSubplot'
             colSubplot = varargin{i+1};
+        case 'timeAfterStim'
+            timeAfterStim = varargin{i+1};
     end
 end
 
@@ -47,7 +49,7 @@ for artCond = 1:2
     artifactsPlot = [];
     if(artCond == 1) % plot sample of artifacts with spike afterwards
         for art = 1:numArtifacts
-            artifactsMask = spikes >= cds.artifactData.t(art) & spikes <= cds.artifactData.t(art) + (size(cds.artifactData.artifact,3)-30)/30000;
+            artifactsMask = spikes >= cds.artifactData.t(art) & spikes <= cds.artifactData.t(art) + timeAfterStim;
             if(sum(artifactsMask)>0 && ((waveformsSentExist && cds.waveforms.waveSent(art) == figNum) || ~waveformsSentExist))
                 artifactsPlot(end+1,1) = art;
             end

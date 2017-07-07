@@ -6,6 +6,7 @@ timeAfterStimRawArtifact = 5/1000;
 timeBeforeStimRawArtifact = 0/1000;
 makeFigure = 1;
 plotTitle = 0;
+alignWaves = 1;
 titleToPlot = num2str(neuronNumber);
 waveformsSentExist = any(isfield(cds,'waveforms'));
 for i = 1:2:size(varargin,2)
@@ -22,6 +23,8 @@ for i = 1:2:size(varargin,2)
             plotTitle = varargin{i+1};
         case 'title'
             titleToPlot = varargin{i+1};
+        case 'alignWaves'
+            alignWaves = varargin{i+1};
     end
 end
 % deals with making figure -- no fancy subplot stuff here

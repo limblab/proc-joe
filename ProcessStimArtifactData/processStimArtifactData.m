@@ -128,7 +128,6 @@ function [outputFigures, outputData ] = processStimArtifactData(folderpath, inpu
         end
         
         %% extract data from cdsTemp so that the rest of the code moves quicker hopefully
-        % need to propogate these changes
         cdsTempLFP = cdsTemp.lfp{:,:};
         cdsTempDuration = cdsTemp.meta.duration;
 
@@ -267,7 +266,7 @@ function [outputFigures, outputData ] = processStimArtifactData(folderpath, inpu
                 stimData(1:30*1,:) = 0; % blank the first millisecond
             else % data before ith stim up to ith-1 
                 stimData = cdsTempLFP(artifactDataPre.stimOn(stimIdx-1):artifactDataPre.stimOn(stimIdx),2:end);
-                stimData(1:30*1,ch) = 0; % blank the first millisecond
+                stimData(1:30*1,:) = 0; % blank the first millisecond
             end
             
             % filter backwards on all channels and threshold

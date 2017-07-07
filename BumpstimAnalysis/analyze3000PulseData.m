@@ -1,9 +1,9 @@
 %% set file names 
-folderpath = 'R:\data\Mihili_12A3\stimRecord\Mihili_20170706_stimRecord\chan59stim\';
+folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_20170706\';
 
 pwd=cd;
 cd(folderpath)
-fileList = dir('*all_processed.mat');
+fileList = dir('*cds_processed.mat');
 
 %% load file
 load(fileList(1).name);
@@ -14,17 +14,17 @@ figDir = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_20170629\Summary Fig
 figPrefix = 'Han_20170628_chan42stim_250us';
 saveFigures = 0;
 
-nn = 120;
+nn = 113;
 
 plotRasterStim(cds,nn,'makeFigure',1,'makeSubplots',0,'plotTitle',1,'waveformTypes',[1:1:numel(cds.waveforms.parameters)],...
     'preTime',10/1000,'postTime',30/1000,'plotSpikeWaveforms',1,'timeAfterStimRawNoStim',20/1000,...
     'timeAfterStimRawArtifact',9/1000,'plotArtifacts',1,'saveFigure',saveFigures,'figDir',figDir,'figPrefix',figPrefix,...
-    'maxArtifactsPerPlot',20,'plotFiltered',0);
+    'maxArtifactsPerPlot',5,'plotFiltered',1);
 
 %% plot PSTH
 saveFigures = 0;
 
-nn = 120;
+nn = 113;
 
 plotPSTHStim(cds,nn,'binSize',0.2/1000,'makeFigure',1,'makeSubplots',0,'plotTitle',1,'waveformTypes',[1:1:numel(cds.waveforms.parameters)],...
     'preTime',10/1000,'postTime',30/1000,'saveFigure',saveFigures,'figDir',figDir,'figPrefix',figPrefix)
