@@ -51,7 +51,6 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "app.h"
 #include <stdio.h>
 #include <xc.h>
-#include "i2c_noint.h"
 
 // *****************************************************************************
 // *****************************************************************************
@@ -344,6 +343,8 @@ void APP_Initialize(void) {
 
     
     /* set up i2c */
+    TRISBbits.TRISB9 = 1;
+	TRISBbits.TRISB8 = 1;
     i2c_setup();
     
     startTime = _CP0_GET_COUNT();

@@ -20,6 +20,7 @@
         </logicalFolder>
         <itemPath>../src/app.h</itemPath>
         <itemPath>../src/i2c_noint.h</itemPath>
+        <itemPath>../src/i2c_noint.c</itemPath>
       </logicalFolder>
       <logicalFolder name="f1" displayName="framework" projectFiles="true">
         <logicalFolder name="f5" displayName="driver" projectFiles="true">
@@ -134,7 +135,6 @@
         </logicalFolder>
         <itemPath>../src/app.c</itemPath>
         <itemPath>../src/main.c</itemPath>
-        <itemPath>../src/i2c_noint.c</itemPath>
       </logicalFolder>
       <logicalFolder name="f1" displayName="framework" projectFiles="true">
         <logicalFolder name="f2" displayName="driver" projectFiles="true">
