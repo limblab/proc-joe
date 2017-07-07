@@ -31,6 +31,8 @@ plotArtifacts = 0;
 maxArtifactsPerPlot = 5;
 rowSubplotArtifact = 4;
 colSubplotArtifact = 5;
+plotFiltered = 0;
+
 %% deal with varagin
 for i = 1:2:size(varargin,2)
     switch varargin{i}
@@ -66,6 +68,8 @@ for i = 1:2:size(varargin,2)
             colSubplotArtifact = varargin{i+1};
         case 'rowSubplotArtifact'
             rowSubplotArtifact = varargin{i+1};
+        case 'plotFiltered'
+            plotFiltered = varargin{i+1};
     end
 end
 
@@ -157,7 +161,7 @@ end
 if(plotArtifacts)
     for fig = waveformTypesPlot
         plotArtifactsStim(cds,neuronNumber,fig,'plotTitle',plotTitle,'title',titleToPlot,'maxArtifactsPerPlot',maxArtifactsPerPlot,...
-            'rowSubplot',rowSubplotArtifact,'colSubplot',colSubplotArtifact);
+            'rowSubplot',rowSubplotArtifact,'colSubplot',colSubplotArtifact,'plotFiltered',plotFiltered);
     end
 end
 

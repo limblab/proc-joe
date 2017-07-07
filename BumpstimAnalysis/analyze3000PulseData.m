@@ -1,5 +1,5 @@
 %% set file names 
-folderpath = 'D:\Lab\Data\StimArtifact\Han\20170629\';
+folderpath = 'D:\Lab\Data\StimArtifact\Mihili\20170630_stimrecord\';
 
 pwd=cd;
 cd(folderpath)
@@ -14,19 +14,20 @@ figDir = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_20170629\Summary Fig
 figPrefix = 'Han_20170628_chan42stim_250us';
 saveFigures = 0;
 
-nn = 10;
+nn = 6;
 
-plotRasterStim(cds,nn,'makeFigure',1,'makeSubplots',0,'plotTitle',1,'waveformTypes',[1,2,3,4,5],...
-    'preTime',10/1000,'postTime',20/1000,'plotSpikeWaveforms',1,'timeAfterStimRawNoStim',20/1000,...
-    'timeAfterStimRawArtifact',5/1000,'plotArtifacts',1,'saveFigure',saveFigures,'figDir',figDir,'figPrefix',figPrefix);
+plotRasterStim(cds,nn,'makeFigure',1,'makeSubplots',0,'plotTitle',1,'waveformTypes',[1,2,3,4],...
+    'preTime',10/1000,'postTime',30/1000,'plotSpikeWaveforms',1,'timeAfterStimRawNoStim',20/1000,...
+    'timeAfterStimRawArtifact',5/1000,'plotArtifacts',1,'saveFigure',saveFigures,'figDir',figDir,'figPrefix',figPrefix,...
+    'maxArtifactsPerPlot',20,'plotFiltered',0);
 
 %% plot PSTH
 saveFigures = 0;
 
-nn = 48;
+nn = 9;
 
 plotPSTHStim(cds,nn,'binSize',0.2/1000,'makeFigure',1,'makeSubplots',0,'plotTitle',1,'waveformTypes',[1,2,3,4,5],...
-    'preTime',10/1000,'postTime',20/1000,'saveFigure',saveFigures,'figDir',figDir,'figPrefix',figPrefix)
+    'preTime',10/1000,'postTime',30/1000,'saveFigure',saveFigures,'figDir',figDir,'figPrefix',figPrefix)
 
 % plotLatencyVsSpikeTiming
 
