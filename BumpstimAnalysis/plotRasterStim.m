@@ -97,14 +97,15 @@ else % get data after stimulations
         numWaves = sum(spikeMask==1);
         
         if(alignWaves) % align on positive deflection of filtered waveform, then add 4/30 ms to get to negative deflection of spike
-            spikeMaskIdx = find(spikeMask==1);
-            for spikeIdx = 1:numel(spikesPlot)
-                [~,maxIdx] = max(cds.units(neuronNumber).spikes{spikeMaskIdx(spikeIdx),2:end});
-                if(maxIdx > 10)
-                    offset = (28 - maxIdx)/30000;
-                    spikesPlot(spikeIdx) = spikesPlot(spikeIdx) - offset;
-                end
-            end
+%             spikeMaskIdx = find(spikeMask==1);
+%             for spikeIdx = 1:numel(spikesPlot)
+%                 [~,maxIdx] = max(cds.units(neuronNumber).spikes{spikeMaskIdx(spikeIdx),2:end});
+%                 if(maxIdx > 10)
+%                     offset = (28 - maxIdx)/30000;
+%                     spikesPlot(spikeIdx) = spikesPlot(spikeIdx) - offset;
+%                 end
+%             end
+            spikesPlot = spikesPlot + 4/30000;
         end
         
         if(waveformsSentExist)

@@ -1,10 +1,10 @@
 %% set file names 
-folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_20170706\';
+folderpath = 'D:\Lab\Data\StimArtifact\Han\20170706_stimRecord\';
 mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 % mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Mihili 12A3\Mihili Left PMd SN 6251-001460.cmp';
 pwd=cd;
 cd(folderpath)
-fileList = dir('*cds_processed.mat');
+fileList = dir('*all_processed.mat');
 
 %% load file and parse for stim electrode number
 fileNumber = 1;
@@ -15,7 +15,7 @@ if(~isempty(chanIdx) && numel(chanIdx) == 1 && ~isempty(stimIdx) && numel(stimId
 else % manually input stim electrode
     stimElectrode = 17;
 end
-% load(fileList(fileNumber).name);
+load(fileList(fileNumber).name);
 cd(pwd);
 
 %% plot raster, waves, and PSTH for a give neuron number
@@ -23,26 +23,27 @@ figDir = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_20170629\Summary Fig
 figPrefix = 'Han_20170628_chan42stim_250us';
 saveFigures = 0;
 
-nn = 113;
+nn = 108;
 
 plotRasterStim(cds,nn,'makeFigure',1,'makeSubplots',0,'plotTitle',1,'waveformTypes',[1:1:numel(cds.waveforms.parameters)],...
     'preTime',10/1000,'postTime',30/1000,'plotSpikeWaveforms',1,'timeAfterStimRawNoStim',20/1000,...
     'timeAfterStimRawArtifact',9/1000,'plotArtifacts',1,'saveFigure',saveFigures,'figDir',figDir,'figPrefix',figPrefix,...
-    'maxArtifactsPerPlot',5,'plotFiltered',1);
+    'maxArtifactsPerPlot',5,'plotFiltered',0);
 
 % plot grid
 plotArrayMap(cds,nn,mapFileName,'numRows',10,'numCols',10,...
     'stimElectrode',stimElectrode,'stimElectrodeColor','k','stimElectrodeLabel','string',...
     'recordingElectrode',cds.units(nn).chan,'recordingElectrodeColor','k','recordingElectrodeLabel','string')
 
+plotInterspikeIntervalHistogram(cds,nn,'xLim',[0,20],'binSize',0.2,'displayText',1);
 
 %% plot PSTH
 saveFigures = 0;
 
-nn = 113;
+nn = 108;
 
 plotPSTHStim(cds,nn,'binSize',0.2/1000,'makeFigure',1,'makeSubplots',0,'plotTitle',1,'waveformTypes',[1:1:numel(cds.waveforms.parameters)],...
-    'preTime',10/1000,'postTime',30/1000,'saveFigure',saveFigures,'figDir',figDir,'figPrefix',figPrefix)
+    'preTime',10/1000,'postTime',20/1000,'saveFigure',saveFigures,'figDir',figDir,'figPrefix',figPrefix)
 
 % plotLatencyVsSpikeTiming
 

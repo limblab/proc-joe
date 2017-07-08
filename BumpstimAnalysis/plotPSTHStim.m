@@ -88,6 +88,7 @@ else % get data after stimulations
     for st = 1:numel(cds.stimOn)
         spikeMask = cds.units(neuronNumber).spikes.ts > cds.stimOn(st)-preTime & cds.units(neuronNumber).spikes.ts < cds.stimOn(st)+postTime;
         spikesPlot = (cds.units(neuronNumber).spikes.ts(spikeMask) - cds.stimOn(st));
+        spikesPlot = spikesPlot + 4/30000;
         numWaves = sum(spikeMask==1);
         if(waveformsSentExist)
             stimNum(cds.waveforms.waveSent(st)) = stimNum(cds.waveforms.waveSent(st)) + 1;
