@@ -10,7 +10,7 @@ plotAllArtifacts = 0;
 spikesArtifact = [];
 plotTitle = 1;
 titleToPlot = '';
-stimsPerBump = -1;
+stimsPerTrain = -1;
 bumpTask = 0;
 makeFigure = 1;
 numWaveformTypes = 1;
@@ -40,8 +40,10 @@ for i = 1:2:size(varargin,2)
     switch varargin{i}
         case 'bumpTask'
             bumpTask = varargin{i+1};
-        case 'stimsPerBump'
-            stimsPerBump = varargin{i+1};
+        case 'stimsPerTrain'
+            stimsPerTrain = varargin{i+1};
+        case 'plotStimuli'
+            plotStimuli = varargin{i+1};
         case 'preTime'
             preTime = varargin{i+1};
         case 'postTime'
@@ -91,7 +93,7 @@ stimNum = zeros(numWaveformTypes,1);
 if(bumpTask) % plot things aligned to bump times and whatnot
     % write this later :D
 else % get data after stimulations
-    for st = 1:numel(cds.stimOn)
+    for st = 1:stimsPerTrain:numel(cds.stimOn)
         spikeMask = cds.units(neuronNumber).spikes.ts > cds.stimOn(st)-preTime & cds.units(neuronNumber).spikes.ts < cds.stimOn(st)+postTime;
         spikesPlot = (cds.units(neuronNumber).spikes.ts(spikeMask) - cds.stimOn(st));
         numWaves = sum(spikeMask==1);

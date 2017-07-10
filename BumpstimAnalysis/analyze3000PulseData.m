@@ -1,10 +1,10 @@
 %% set file names 
-folderpath = 'D:\Lab\Data\StimArtifact\Han\20170706_stimRecord\';
+folderpath = 'D:\Lab\Data\StimArtifact\Han\20170707_stimRecord\';
 mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 % mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Mihili 12A3\Mihili Left PMd SN 6251-001460.cmp';
 pwd=cd;
 cd(folderpath)
-fileList = dir('*all_processed.mat');
+fileList = dir('*_processed.mat');
 
 %% load file and parse for stim electrode number
 fileNumber = 1;
@@ -23,12 +23,12 @@ figDir = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_20170629\Summary Fig
 figPrefix = 'Han_20170628_chan42stim_250us';
 saveFigures = 0;
 
-nn = 108;
+nn = 10;
 
 plotRasterStim(cds,nn,'makeFigure',1,'makeSubplots',0,'plotTitle',1,'waveformTypes',[1:1:numel(cds.waveforms.parameters)],...
     'preTime',10/1000,'postTime',30/1000,'plotSpikeWaveforms',1,'timeAfterStimRawNoStim',20/1000,...
-    'timeAfterStimRawArtifact',9/1000,'plotArtifacts',1,'saveFigure',saveFigures,'figDir',figDir,'figPrefix',figPrefix,...
-    'maxArtifactsPerPlot',5,'plotFiltered',0);
+    'timeAfterStimRawArtifact',5/1000,'plotArtifacts',1,'saveFigure',saveFigures,'figDir',figDir,'figPrefix',figPrefix,...
+    'maxArtifactsPerPlot',5,'plotFiltered',0,'stimsPerTrain',1);
 
 % plot grid
 plotArrayMap(cds,nn,mapFileName,'numRows',10,'numCols',10,...
@@ -37,13 +37,17 @@ plotArrayMap(cds,nn,mapFileName,'numRows',10,'numCols',10,...
 
 plotInterspikeIntervalHistogram(cds,nn,'xLim',[0,20],'binSize',0.2,'displayText',1);
 
+%% plot artifacts
+plotArtifactsStim(cds,nn,2,'rowSubplot',5,'colSubplot',5,'maxArtifactsPerPlot',5,'plotArtifactsSeparated',0,'plotTitle',0,...
+    'plotFiltered',1,'randomSample',0)
+
 %% plot PSTH
 saveFigures = 0;
 
-nn = 108;
+nn = 10;
 
 plotPSTHStim(cds,nn,'binSize',0.2/1000,'makeFigure',1,'makeSubplots',0,'plotTitle',1,'waveformTypes',[1:1:numel(cds.waveforms.parameters)],...
-    'preTime',10/1000,'postTime',20/1000,'saveFigure',saveFigures,'figDir',figDir,'figPrefix',figPrefix)
+    'preTime',10/1000,'postTime',60/1000,'saveFigure',saveFigures,'figDir',figDir,'figPrefix',figPrefix)
 
 % plotLatencyVsSpikeTiming
 
