@@ -444,6 +444,7 @@ void APP_Tasks(void) {
             appData.state = APP_STATE_WAIT_FOR_WRITE_COMPLETE;
 
             
+            
             /* get data from NPA 201 sensor*/
             i2c_start();
             i2c_send(SENSOR_ADDRESS << 1); // write command
@@ -451,7 +452,7 @@ void APP_Tasks(void) {
             i2c_stop();
             
             int count = 1;
-            while(count < 200000)
+            while(count < 1000000)
             {
                 count = count + 1;
             }
@@ -464,7 +465,7 @@ void APP_Tasks(void) {
                 rbuf[dataCount] = i2c_recv();
                 i2c_ack(0);
             }
-            
+            i2c_stop();
             P = rbuf[1] << 8 & rbuf[2];
             T = rbuf[3] << 8 & rbuf[4];
             
@@ -472,7 +473,8 @@ void APP_Tasks(void) {
             Tconv = T/65535 * (85+40) - 40;
             
             /* print out P, T, Pconv, and Tconv */
-            len = sprintf(dataOut, "%.5f %.5f %.5f %.5f\r\n", P,T,Pconv,Tconv);
+            //len = sprintf(dataOut, "%.5f %.5f %.5f %.5f\r\n", P,T,Pconv,Tconv);
+            len =sprintf(dataOut,"%d\r\n",i);
             i++;
             if (appData.isReadComplete) {
                 USB_DEVICE_CDC_Write(USB_DEVICE_CDC_INDEX_0,

@@ -1,5 +1,5 @@
 function [  ] = plotWaveformsStim( cds, neuronNumber,figNum,varargin )
-maxWavesPlot = 100;
+maxWavesPlot = 500;
 
 timeAfterStimRawNoStim = 20/1000;
 timeAfterStimRawArtifact = 5/1000;
@@ -53,11 +53,11 @@ if(numel(waveIdx) > 0)
     for wave = 1:numel(waveIdx)
         rawIdx = getRawDataIdx(cds.units(neuronNumber).spikes.ts(waveIdx(wave)),cds.units(neuronNumber).chan,cds.rawData.ts,cds.rawData.elec);
         if(rawIdx ~= -1)
-            wavesPlot = [wavesPlot;cds.rawData.waveforms(rawIdx,:)];
+            wavesPlot = [wavesPlot;cds.rawData.waveforms(rawIdx,:)-mean(cds.rawData.waveforms(rawIdx,:))];
         end
     end
     xDataWaves = ((1:size(wavesPlot,2))-1)/30; % in ms
-    plot(xDataWaves,wavesPlot)
+    plot(xDataWaves,(wavesPlot))
 end
 
 ylim([-300 300])
