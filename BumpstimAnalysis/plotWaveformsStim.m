@@ -1,4 +1,4 @@
-function [  ] = plotWaveformsStim( cds, neuronNumber,figNum,varargin )
+function [  ] = plotWaveformsStim( cds, neuronNumber,chanNum,figNum,varargin )
 maxWavesPlot = 500;
 
 timeAfterStimRawNoStim = 20/1000;
@@ -9,6 +9,8 @@ plotTitle = 0;
 alignWaves = 1;
 titleToPlot = num2str(neuronNumber);
 waveformsSentExist = any(isfield(cds,'waveforms'));
+stimElectrode = -1;
+numChans = 1;
 for i = 1:2:size(varargin,2)
     switch varargin{i}
         case 'timeAfterStimRawNoStim'
@@ -25,11 +27,19 @@ for i = 1:2:size(varargin,2)
             titleToPlot = varargin{i+1};
         case 'alignWaves'
             alignWaves = varargin{i+1};
+        case 'stimElectrode'
+            stimElectrode = varargin{i+1};
     end
 end
 % deals with making figure -- no fancy subplot stuff here
 if(makeFigure)
     figure();
+end
+
+% chan list if necessary
+if(any(isfield(cds.waveforms,'chanSent')))
+    chanList = unique(cds.waveforms.chanSent);
+    numChans = numel(chanList);
 end
 
 % get and plot actual data now
@@ -38,7 +48,7 @@ subplot(2,1,1) % raw waves not near artifact
 wavesPlot = [];
 spikeMask = zeros(numel(cds.units(neuronNumber).spikes.ts,1));
 for st = 1:numel(cds.stimOn)
-    if(~waveformsSentExist || cds.waveforms.waveSent(st)==figNum)
+    if((~waveformsSentExist || cds.waveforms.waveSent(st)==figNum) && (~any(isfield(cds.waveforms,'chanSent')) || cds.waveforms.chanSent(st)==chanList(chanNum)))
         if(st==numel(cds.stimOn))
             spikeMask = spikeMask | (cds.units(neuronNumber).spikes.ts > cds.stimOn(st) + timeAfterStimRawNoStim);
         else
@@ -53,7 +63,7 @@ if(numel(waveIdx) > 0)
     for wave = 1:numel(waveIdx)
         rawIdx = getRawDataIdx(cds.units(neuronNumber).spikes.ts(waveIdx(wave)),cds.units(neuronNumber).chan,cds.rawData.ts,cds.rawData.elec);
         if(rawIdx ~= -1)
-            wavesPlot = [wavesPlot;cds.rawData.waveforms(rawIdx,:)-mean(cds.rawData.waveforms(rawIdx,:))];
+            wavesPlot = [wavesPlot;cds.rawData.waveforms(rawIdx,:)];
         end
     end
     xDataWaves = ((1:size(wavesPlot,2))-1)/30; % in ms
@@ -63,15 +73,19 @@ end
 ylim([-300 300])
 
 % deals with title requests
+% deals with title requests
 if(plotTitle)
     if(strcmp(titleToPlot,'') == 0)
         title(titleToPlot);
-    elseif(waveformsSentExist)
-        title(num2str(figNum));
+    elseif(numChans > 1 && waveformsSentExist)
+        title(strcat('Stim Chan: ',num2str(chanList(chanNum)),' Wave: ',num2str(figNum)));
+    elseif(numChans == 1 && waveformsSentExist)
+        title(strcat('Stim Chan: ',num2str(stimElectrode),' Wave: ',num2str(figNum)));
     else
-        title(num2str(neuronNumber));
+
     end
 end
+
 ylabel('Voltage (\muV)')
 formatForLee(gcf);
 
@@ -79,9 +93,10 @@ subplot(2,1,2) % waveforms near stimulation artifact
 
 wavesPlot = [];
 spikeMask = zeros(numel(cds.units(neuronNumber).spikes.ts,1));
-artifactMask = zeros(numel(cds.stimOn),1);
 for st = 1:numel(cds.stimOn)
-    spikeMask = spikeMask | (cds.units(neuronNumber).spikes.ts < cds.stimOn(st) + timeAfterStimRawArtifact & cds.units(neuronNumber).spikes.ts > cds.stimOn(st) + timeBeforeStimRawArtifact);
+    if((~waveformsSentExist || cds.waveforms.waveSent(st)==figNum) && (~any(isfield(cds.waveforms,'chanSent')) || cds.waveforms.chanSent(st)==chanList(chanNum)))
+        spikeMask = spikeMask | (cds.units(neuronNumber).spikes.ts < cds.stimOn(st) + timeAfterStimRawArtifact & cds.units(neuronNumber).spikes.ts > cds.stimOn(st) + timeBeforeStimRawArtifact);
+    end
 end
 
 waveIdx = find(spikeMask);

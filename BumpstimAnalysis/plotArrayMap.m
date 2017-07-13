@@ -67,10 +67,19 @@ if(~isempty(stimElectrode))
             rowElec = arrayMap.row(arrayMapIdx);
             colElec = arrayMap.col(arrayMapIdx);
             if(strcmpi(stimElectrodeLabel,'string'))
-                text(colElec+0.25,rowElec+0.5,'S','FontWeight','bold','fontsize',20,'color',stimElectrodeColor); 
+                if(numel(stimElectrodeColor) > 1)
+                    text(colElec+0.25,rowElec+0.5,'S','FontWeight','bold','fontsize',20,'color',stimElectrodeColor{stElec});
+                else
+                    text(colElec+0.25,rowElec+0.5,'S','FontWeight','bold','fontsize',20,'color',stimElectrodeColor);
+                end
             elseif(strcmpi(stimElectrodeLabel,'box'))
-                rectangle('Position',[colElec,rowElec,1,1],'EdgeColor',stimElectrodeColor,...
-                    'FaceColor',stimElectrodeColor,'linewidth',0.1);
+                if(numel(stimElectrodeColor) > 1)
+                    rectangle('Position',[colElec,rowElec,1,1],'EdgeColor',stimElectrodeColor{stElec},...
+                        'FaceColor',stimElectrodeColor,'linewidth',0.1);
+                else
+                    rectangle('Position',[colElec,rowElec,1,1],'EdgeColor',stimElectrodeColor,...
+                        'FaceColor',stimElectrodeColor,'linewidth',0.1);
+                end
             end
         end
     end
@@ -83,10 +92,21 @@ if(~isempty(recordingElectrode))
             rowElec = arrayMap.row(arrayMapIdx);
             colElec = arrayMap.col(arrayMapIdx);
             if(strcmpi(recordingElectrodeLabel,'string'))
-                text(colElec+0.25,rowElec+0.5,'R','FontWeight','bold','fontsize',20,'color',recordingElectrodeColor);  
+                if(numel(recordingElectrodeColor)>1)
+                    text(colElec+0.25,rowElec+0.5,'R','FontWeight','bold','fontsize',20,'color',recordingElectrodeColor{recElec});
+                else
+                    text(colElec+0.25,rowElec+0.5,'R','FontWeight','bold','fontsize',20,'color',recordingElectrodeColor);
+                end
             elseif(strcmpi(recordingElectrodeLabel,'box'))
                 rectangle('Position',[colElec,rowElec,1,1],'EdgeColor',recordingElectrodeColor,...
                     'FaceColor',recordingElectrodeColor,'linewidth',0.1);
+                if(numel(recordingElectrodeColor)>1)
+                    rectangle('Position',[colElec,rowElec,1,1],'EdgeColor',recordingElectrodeColor,...
+                        'FaceColor',recordingElectrodeColor{recElec},'linewidth',0.1);
+                else
+                    rectangle('Position',[colElec,rowElec,1,1],'EdgeColor',recordingElectrodeColor,...
+                        'FaceColor',recordingElectrodeColor,'linewidth',0.1);
+                end
             end
         end
     end

@@ -20,7 +20,7 @@ waveformTypesPlot = 1;
 if(waveformsSentExist)
     waveformTypesPlot = 1:1:numel(unique(cds.waveforms.waveSent));
 end
-chans = 1;
+chansPlot = 1;
 alignWaves = 1;
 
 % plot waves near artifact stuff
@@ -34,6 +34,9 @@ maxArtifactsPerPlot = 5;
 rowSubplotArtifact = 4;
 colSubplotArtifact = 5;
 plotFiltered = 0;
+
+%
+stimElectrode = -1;
 
 %% deal with varagin
 for i = 1:2:size(varargin,2)
@@ -77,7 +80,9 @@ for i = 1:2:size(varargin,2)
         case 'alignWaves'
             alignWaves = varargin{i+1};
         case 'chans'
-            chans = varargin{i+1};
+            chansPlot = varargin{i+1};
+        case 'stimElectrode'
+            stimElectrode = varargin{i+1};
     end
 end
 
@@ -86,18 +91,23 @@ if(waveformsSentExist)
     numWaveformTypes = numel(unique(cds.waveforms.waveSent));
 end
 
-% if(any(isfield(cds.waveforms.chanSent)))
-%     numChans = numel(unique(cds.waveforms.chanSent));
-% else
-%     numChans = 1;
-% end
+if(any(isfield(cds.waveforms,'chanSent')))
+    numChans = numel(unique(cds.waveforms.chanSent));
+    chanList = unique(cds.waveforms.chanSent);
+else
+    chanList = [-1];
+    numChans = 1;
+end
 
 %% extract data
-for i = 1:numWaveformTypes
-    spikeTimeData{i} = [];
-    stimuliData{i} = [];
+for c = 1:numChans
+    for i = 1:numWaveformTypes
+        spikeTimeData{c,i} = [];
+        stimuliData{c,i} = [];
+    end
 end
-stimNum = zeros(numWaveformTypes,1);
+stimNum = zeros(numChans,numWaveformTypes);
+
 if(bumpTask) % plot things aligned to bump times and whatnot
     % write this later :D
 else % get data after stimulations
@@ -119,15 +129,41 @@ else % get data after stimulations
         end
         
         if(waveformsSentExist)
-            stimNum(cds.waveforms.waveSent(st)) = stimNum(cds.waveforms.waveSent(st)) + 1;
+            if(any(isfield(cds.waveforms,'chanSent')))
+                chanNumber = find(unique(cds.waveforms.chanSent)==cds.waveforms.chanSent(st));
+                stimNum(chanNumber,cds.waveforms.waveSent(st)) = stimNum(chanNumber,cds.waveforms.waveSent(st))+1;
+            else
+                stimNum(1,cds.waveforms.waveSent(st)) = stimNum(1,cds.waveforms.waveSent(st)) + 1;
+            end
             if(~isempty(spikesPlot))
-                spikeTimeData{cds.waveforms.waveSent(st)}(end+1:end+numWaves) = spikesPlot';
-                stimuliData{cds.waveforms.waveSent(st)}(end+1:end+numWaves) = stimNum(cds.waveforms.waveSent(st));
+                if(any(isfield(cds.waveforms,'chanSent')))
+                    chanNumber = find(unique(cds.waveforms.chanSent)==cds.waveforms.chanSent(st));
+                    spikeTimeData{chanNumber,cds.waveforms.waveSent(st)}(end+1:end+numWaves) = spikesPlot';
+                    stimuliData{chanNumber,cds.waveforms.waveSent(st)}(end+1:end+numWaves) = stimNum(chanNumber,cds.waveforms.waveSent(st));
+                else
+                    spikeTimeData{1,cds.waveforms.waveSent(st)}(end+1:end+numWaves) = spikesPlot';
+                    stimuliData{1,cds.waveforms.waveSent(st)}(end+1:end+numWaves) = stimNum(1,cds.waveforms.waveSent(st));
+                end
             end
         else
-            stimNum(1) = stimNum(1) + 1;
-            spikeTimeData{1}(end+1:end+numWaves) = spikesPlot';
-            stimuliData{1}(end+1:end+numWaves) = stimNum(1);
+            if(any(isfield(cds.waveforms,'chanSent')))
+                chanNumber = find(unique(cds.waveforms.chanSent)==cds.waveforms.chanSent(st));
+                stimNum(chanNumber,1) = stimNum(chanNumber,1)+1;
+            else
+                stimNum(1,1) = stimNum(1,1) + 1;
+            end
+            
+            if(~isempty(spikesPlot))
+                if(any(isfield(cds.waveforms,'chanSent')))
+                    chanNumber = find(unique(cds.waveforms.chanSent)==cds.waveforms.chanSent(st));
+                    spikeTimeData{chanNumber,1}(end+1:end+numWaves) = spikesPlot';
+                    stimuliData{chanNumber,1}(end+1:end+numWaves) = stimNum(chanNumber,1);
+                else
+                    spikeTimeData{1}(end+1:end+numWaves) = spikesPlot';
+                    stimuliData{1}(end+1:end+numWaves) = stimNum(1,1);
+                end
+            end
+            
         end
     end
 end
@@ -135,54 +171,60 @@ end
 
 %% plot data - stimuli data is y-axis. spike data is x-axis
 
-for fig = waveformTypesPlot
-    % deals with making figure
-    if(makeFigure)
-        if(waveformsSentExist && waveformsMakeSubplots && fig == 1)
-            figure(); % make figure for the subplots
-            subplot(numWaveformTypes,1,fig);
-        elseif(waveformsSentExist && waveformsMakeSubplots)
-            subplot(numWaveformTypes,1,fig); % subplots
-        elseif(waveformsSentExist && ~waveformsMakeSubplots)
-            figure(); % figure for each waveform type
-        elseif(fig==1)
-            figure(); % figure for a single waveform type
+for chan = chansPlot
+    for fig = waveformTypesPlot
+        % deals with making figure
+        if(makeFigure)
+            if(waveformsSentExist && waveformsMakeSubplots && fig == 1)
+                figure(); % make figure for the subplots
+                subplot(numWaveformTypes,1,fig);
+            elseif(waveformsSentExist && waveformsMakeSubplots)
+                subplot(numWaveformTypes,1,fig); % subplots
+            elseif(waveformsSentExist && ~waveformsMakeSubplots)
+                figure(); % figure for each waveform type
+            elseif(fig==1)
+                figure(); % figure for a single waveform type
+            end
         end
-    end
-    
-    
-    % plot actual data now
-    plot(spikeTimeData{fig}*1000,stimuliData{fig},'k.')
-    
-    % clean up graph
-    ylim([-3,max(stimuliData{fig})+1])
-    xlim([-preTime*1000,postTime*1000])
-    ylabel('Stimuli')
-    if(~waveformsSentExist || (waveformsSentExist && waveformsMakeSubplots && fig == numWaveformTypes))
-        xlabel('Time after stimulation onset (ms)')  
-    end
-    % deals with title requests
-    if(plotTitle)
-        if(strcmp(titleToPlot,'') == 0)
-            title(titleToPlot);
-        elseif(waveformsSentExist)
-            title(num2str(fig));
-        else
-            title(num2str(neuronNumber));
-        end
-    end
-    formatForLee(gcf);
-    ax=gca;
-    ax.YTick = [0;max(stimuliData{fig})];
-    ax.YMinorTick = 'off';
-    ax.YTickLabel = {num2str(0),num2str(max(stimuliData{fig}))};
-end
 
+        % plot actual data now
+        plot(spikeTimeData{chan,fig}*1000,stimuliData{chan,fig},'k.')
+
+        % clean up graph
+        ylim([-3,max(stimuliData{chan,fig})+1])
+        xlim([-preTime*1000,postTime*1000])
+        ylabel('Stimuli')
+        if(~waveformsSentExist || (waveformsSentExist && waveformsMakeSubplots && fig == numWaveformTypes))
+            xlabel('Time after stimulation onset (ms)')  
+        end
+        
+        % deals with title requests
+        if(plotTitle)
+            if(strcmp(titleToPlot,'') == 0)
+                title(titleToPlot);
+            elseif(numChans > 1 && waveformsSentExist)
+                title(strcat('Stim Chan: ',num2str(chanList(chan)),' Wave: ',num2str(fig)));
+            elseif(numChans == 1 && waveformsSentExist)
+                title(strcat('Stim Chan: ',num2str(stimElectrode),' Wave: ',num2str(fig)));
+            else
+                
+            end
+        end
+        
+        formatForLee(gcf);
+        ax=gca;
+        ax.YTick = [0;max(stimuliData{chan,fig})];
+        ax.YMinorTick = 'off';
+        ax.YTickLabel = {num2str(0),num2str(max(stimuliData{chan,fig}))};
+    end
+end
 %% plot raw waveforms around the artifact data
 if(plotSpikeWaveforms == 1)
-    for fig = waveformTypesPlot
-        plotWaveformsStim(cds,neuronNumber,fig,'timeAfterStimRawNoStim',timeAfterStimRawNoStim,'timeAfterStimRawArtifact',timeAfterStimRawArtifact,...
-            'makeFigure',1,'plotTitle',plotTitle,'title',titleToPlot);
+    for chan = chansPlot
+        for fig = waveformTypesPlot
+            plotWaveformsStim(cds,neuronNumber,chan,fig,'timeAfterStimRawNoStim',timeAfterStimRawNoStim,'timeAfterStimRawArtifact',timeAfterStimRawArtifact,...
+                'makeFigure',1,'plotTitle',plotTitle,'title',titleToPlot,'stimElectrode',stimElectrode);
+        end
     end
 end
 
