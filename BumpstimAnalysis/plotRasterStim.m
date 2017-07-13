@@ -20,7 +20,7 @@ waveformTypesPlot = 1;
 if(waveformsSentExist)
     waveformTypesPlot = 1:1:numel(unique(cds.waveforms.waveSent));
 end
-
+chans = 1;
 alignWaves = 1;
 
 % plot waves near artifact stuff
@@ -76,6 +76,8 @@ for i = 1:2:size(varargin,2)
             plotFiltered = varargin{i+1};
         case 'alignWaves'
             alignWaves = varargin{i+1};
+        case 'chans'
+            chans = varargin{i+1};
     end
 end
 
@@ -83,6 +85,12 @@ end
 if(waveformsSentExist)
     numWaveformTypes = numel(unique(cds.waveforms.waveSent));
 end
+
+% if(any(isfield(cds.waveforms.chanSent)))
+%     numChans = numel(unique(cds.waveforms.chanSent));
+% else
+%     numChans = 1;
+% end
 
 %% extract data
 for i = 1:numWaveformTypes
