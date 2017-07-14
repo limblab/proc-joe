@@ -38,6 +38,11 @@ plotFiltered = 0;
 %
 stimElectrode = -1;
 
+% save stuff
+saveFigures = 0;
+figDir = '';
+figPrefix = '';
+
 %% deal with varagin
 for i = 1:2:size(varargin,2)
     switch varargin{i}
@@ -83,7 +88,17 @@ for i = 1:2:size(varargin,2)
             chansPlot = varargin{i+1};
         case 'stimElectrode'
             stimElectrode = varargin{i+1};
+        case 'saveFigures'
+            saveFigures = varargin{i+1};
+        case 'figDir'
+            figDir = varargin{i+1};
+        case 'figPrefix'
+            figPrefix = varargin{i+1};
     end
+end
+
+if(saveFigures && strcmp(figDir,''))
+    saveFigures = 0;
 end
 
 %% extract number of waveform types if applicable
@@ -95,7 +110,7 @@ if(any(isfield(cds.waveforms,'chanSent')))
     numChans = numel(unique(cds.waveforms.chanSent));
     chanList = unique(cds.waveforms.chanSent);
 else
-    chanList = [-1];
+    chanList = stimElectrode;
     numChans = 1;
 end
 
@@ -194,7 +209,7 @@ for chan = chansPlot
         ylim([-3,max(stimuliData{chan,fig})+1])
         xlim([-preTime*1000,postTime*1000])
         ylabel('Stimuli')
-        if(~waveformsSentExist || (waveformsSentExist && waveformsMakeSubplots && fig == numWaveformTypes))
+        if(~waveformsSentExist || ~waveformsMakeSubplots || fig == numWaveformTypes)
             xlabel('Time after stimulation onset (ms)')  
         end
         
@@ -216,6 +231,14 @@ for chan = chansPlot
         ax.YTick = [0;max(stimuliData{chan,fig})];
         ax.YMinorTick = 'off';
         ax.YTickLabel = {num2str(0),num2str(max(stimuliData{chan,fig}))};
+        if(~waveformsMakeSubplots && saveFigures)
+            fname = strcat(figPrefix,'nn',num2str(neuronNumber),'_chan',num2str(cds.units(neuronNumber).chan),'_stimChan',num2str(chanList(chan)),'_waveNum',num2str(fig),'_raster');
+            saveFiguresLab(gcf,figDir,fname);
+        end
+    end
+    if(waveformsMakeSubplots && saveFigures)
+        fname = strcat(figPrefix,'nn',num2str(neuronNumber),'_chan',num2str(cds.units(neuronNumber).chan),'_stimChan',num2str(chanList(chan)),'_waveNum',num2str(fig),'_raster');
+        saveFiguresLab(gcf,figDir,fname);
     end
 end
 %% plot raw waveforms around the artifact data
@@ -223,17 +246,40 @@ if(plotSpikeWaveforms == 1)
     for chan = chansPlot
         for fig = waveformTypesPlot
             plotWaveformsStim(cds,neuronNumber,chan,fig,'timeAfterStimRawNoStim',timeAfterStimRawNoStim,'timeAfterStimRawArtifact',timeAfterStimRawArtifact,...
-                'makeFigure',1,'plotTitle',plotTitle,'title',titleToPlot,'stimElectrode',stimElectrode);
+                'makeFigure',1,'plotTitle',plotTitle,'title',titleToPlot,'stimElectrode',stimElectrode,'saveFigures',saveFigures,...
+                'figDir',figDir,'figPrefix',figPrefix);
         end
     end
 end
 
-%% plot sample of artifacts with waveform and without waveform
+%% plot sample of artifacts with waveform and without waveform raw
 if(plotArtifacts)
-    for fig = waveformTypesPlot
-        plotArtifactsStim(cds,neuronNumber,fig,'plotTitle',plotTitle,'title',titleToPlot,...
-            'maxArtifactsPerPlot',maxArtifactsPerPlot,'timeAfterStim',timeAfterStimRawArtifact,...
-            'rowSubplot',rowSubplotArtifact,'colSubplot',colSubplotArtifact,'plotFiltered',plotFiltered);
+    if(numel(plotFiltered)==1)
+        for chan = chansPlot
+            for fig = waveformTypesPlot
+                plotArtifactsStim(cds,neuronNumber,chan,fig,'plotTitle',plotTitle,'title',titleToPlot,...
+                    'maxArtifactsPerPlot',maxArtifactsPerPlot,'timeAfterStim',timeAfterStimRawArtifact,...
+                    'rowSubplot',rowSubplotArtifact,'colSubplot',colSubplotArtifact,'plotFiltered',plotFiltered,...
+                    'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix);
+            end
+        end
+    else
+        for chan = chansPlot
+            for fig = waveformTypesPlot
+                plotArtifactsStim(cds,neuronNumber,chan,fig,'plotTitle',plotTitle,'title',titleToPlot,...
+                    'maxArtifactsPerPlot',maxArtifactsPerPlot,'timeAfterStim',timeAfterStimRawArtifact,...
+                    'rowSubplot',rowSubplotArtifact,'colSubplot',colSubplotArtifact,'plotFiltered',0,...
+                    'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix);
+            end
+        end
+        for chan = chansPlot
+            for fig = waveformTypesPlot
+                plotArtifactsStim(cds,neuronNumber,chan,fig,'plotTitle',plotTitle,'title',titleToPlot,...
+                    'maxArtifactsPerPlot',maxArtifactsPerPlot,'timeAfterStim',timeAfterStimRawArtifact,...
+                    'rowSubplot',rowSubplotArtifact,'colSubplot',colSubplotArtifact,'plotFiltered',1,...
+                    'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix);
+            end
+        end
     end
 end
 

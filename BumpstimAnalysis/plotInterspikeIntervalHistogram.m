@@ -5,6 +5,15 @@ makeFigure = 1;
 binSize = 0.1; % in ms
 xLimits = [0,10]; % in ms
 displayText = 1;
+
+%
+stimElectrode = -1;
+
+% save stuff
+saveFigures = 0;
+figDir = '';
+figPrefix = '';
+
 %% deal with varagin
 for i = 1:2:size(varargin,2)
     switch varargin{i}
@@ -20,7 +29,20 @@ for i = 1:2:size(varargin,2)
             xLimits = varargin{i+1};
         case 'displayText'
             displayText = varargin{i+1};
+        case 'stimElectrode'
+            stimElectrode = varargin{i+1};
+        case 'saveFigures'
+            saveFigures = varargin{i+1};
+        case 'figDir'
+            figDir = varargin{i+1};
+        case 'figPrefix'
+            figPrefix = varargin{i+1};
+        
     end
+end
+
+if(saveFigures && strcmp(figDir,''))
+    saveFigures = 0;
 end
 
 if(makeFigure)
@@ -42,6 +64,11 @@ formatForLee(gcf)
 if(displayText)
     percentageBelow = sum(interSpikeInterval < 1.7)/numel(interSpikeInterval)*100;
     disp(percentageBelow)
+end
+
+if(saveFigures)
+    fname = strcat(figPrefix,'nn',num2str(neuronNumber),'_chan',num2str(cds.units(neuronNumber).chan),'_ISI');
+    saveFiguresLab(gcf,figDir,fname);
 end
 
 end

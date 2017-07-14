@@ -15,6 +15,12 @@ stimElectrodeLabel = 'string';
 recordingElectrode = [];
 recordingElectrodeColor = 'k';
 recordingElectrodeLabel = 'string';
+
+% save stuff
+saveFigures = 0;
+figDir = '';
+figPrefix = '';
+
 %% deal with varagin
 for i = 1:2:size(varargin,2)
     switch varargin{i}
@@ -38,7 +44,17 @@ for i = 1:2:size(varargin,2)
             recordingElectrodeColor = varargin{i+1};
         case 'recordingElectrodeLabel'
             recordingElectrodeLabel = varargin{i+1};
+        case 'saveFigures'
+            saveFigures = varargin{i+1};
+        case 'figDir'
+            figDir = varargin{i+1};
+        case 'figPrefix'
+            figPrefix = varargin{i+1};
     end
+end
+
+if(saveFigures && strcmp(figDir,''))
+    saveFigures = 0;
 end
 
 %% load map file
@@ -110,6 +126,13 @@ if(~isempty(recordingElectrode))
             end
         end
     end
+end
+
+ax = gca;
+set(ax,'Visible','off')
+if(saveFigures)
+    fname = strcat(figPrefix,'nn',num2str(neuronNumber),'_chan',num2str(cds.units(neuronNumber).chan),'_arrayMap');
+    saveFiguresLab(gcf,figDir,fname);
 end
 
 end

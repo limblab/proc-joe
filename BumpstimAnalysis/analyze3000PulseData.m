@@ -1,6 +1,6 @@
 %% set file names 
 
-folderpath = 'D:\Lab\Data\StimArtifact\Mihili\20170712_stimRecord\';
+folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_20170712\';
 % mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Mihili 12A3\Mihili Left PMd SN 6251-001460.cmp';
 pwd=cd;
@@ -20,41 +20,76 @@ load(fileList(fileNumber).name);
 cd(pwd);
 
 %% plot raster, waves, and PSTH for a give neuron number
-figDir = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_20170629\Summary Figures\';
-figPrefix = 'Han_20170628_chan42stim_250us';
+figDir = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Mihili_20170712\Summary Figures\';
+figPrefix = 'Mihili_20170712_';
 saveFigures = 0;
 
-nn = 124;
+nn = 65;
 
 plotRasterStim(cds,nn,'makeFigure',1,'makeSubplots',0,'plotTitle',1,'waveformTypes',[1:1:numel(cds.waveforms.parameters)],...
-    'chans',[1:1:numel(unique(cds.waveforms.chanSent))],'preTime',10/1000,'postTime',30/1000,'plotSpikeWaveforms',1,'timeAfterStimRawNoStim',20/1000,...
-    'timeAfterStimRawArtifact',5/1000,'plotArtifacts',1,'saveFigure',saveFigures,'figDir',figDir,'figPrefix',figPrefix,...
+    'chans',[1:1:numel(unique(cds.waveforms.chanSent))],'preTime',10/1000,'postTime',60/1000,'plotSpikeWaveforms',1,'timeAfterStimRawNoStim',20/1000,...
+    'timeAfterStimRawArtifact',5/1000,'plotArtifacts',1,'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix,...
     'maxArtifactsPerPlot',5,'plotFiltered',0,'stimsPerTrain',1,'stimElectrode',stimElectrode);
 
-% plot grid
+%% plot grid
 plotArrayMap(cds,nn,mapFileName,'numRows',10,'numCols',10,...
     'stimElectrode',[13,42,57,70],'stimElectrodeColor',{'k','r','b','g'},'stimElectrodeLabel','string',...
-    'recordingElectrode',cds.units(nn).chan,'recordingElectrodeColor','k','recordingElectrodeLabel','string')
+    'recordingElectrode',cds.units(nn).chan,'recordingElectrodeColor','k','recordingElectrodeLabel','string',...
+    'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix)
+% 
 
-plotInterspikeIntervalHistogram(cds,nn,'xLim',[0,20],'binSize',0.2,'displayText',1);
+% plotInterspikeIntervalHistogram(cds,nn,'xLim',[0,20],'binSize',0.2,'displayText',1,...
+%     'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix);
 
 %% plot artifacts
-plotArtifactsStim(cds,nn,2,'rowSubplot',5,'colSubplot',5,'maxArtifactsPerPlot',5,'plotArtifactsSeparated',0,'plotTitle',0,...
+nn = 65;
+
+plotArtifactsStim(cds,nn,2,1,'rowSubplot',2,'colSubplot',1,'maxArtifactsPerPlot',50,'plotArtifactsSeparated',1,'plotTitle',0,...
     'plotFiltered',1,'randomSample',0)
 
 %% plot PSTH
 saveFigures = 0;
+plotPSTHStim(cds,nn,'binSize',0.2/1000,'makeFigure',1,'makeSubplots',0,'plotTitle',1,'waveformTypes',[1:1:numel(cds.waveforms.parameters)],...
+            'chans',[1:1:numel(unique(cds.waveforms.chanSent))],'preTime',10/1000,'postTime',60/1000,'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix)
 
 % nn = 10;
 
-plotPSTHStim(cds,nn,'binSize',0.2/1000,'makeFigure',1,'makeSubplots',0,'plotTitle',1,'waveformTypes',[1:1:numel(cds.waveforms.parameters)],...
-    'preTime',10/1000,'postTime',60/1000,'saveFigure',saveFigures,'figDir',figDir,'figPrefix',figPrefix)
 
 % plotLatencyVsSpikeTiming
 
 % probability of eliciting a spike
 
 % whole array analysis
+
+%% make all and save all
+figDir = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Mihili_20170713\Summary Figures\';
+figPrefix = 'Mihili_20170713_';
+saveFigures = 1;
+stimElectrode = [57];
+% stimElectrode = [13,42,57,70];
+for nn =107:size(cds.units,2)
+    if(cds.units(nn).ID ~= 0 && cds.units(nn).ID ~= 255)
+
+        plotRasterStim(cds,nn,'makeFigure',1,'makeSubplots',0,'plotTitle',1,'waveformTypes',[1:1:numel(cds.waveforms.parameters)],...
+            'chans',[1:1:numel(unique(cds.waveforms.chanSent))],'preTime',10/1000,'postTime',30/1000,'plotSpikeWaveforms',1,'timeAfterStimRawNoStim',20/1000,...
+            'timeAfterStimRawArtifact',5/1000,'plotArtifacts',1,'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix,...
+            'maxArtifactsPerPlot',5,'plotFiltered',[0,1],'stimsPerTrain',1,'stimElectrode',stimElectrode);
+        
+        plotArrayMap(cds,nn,mapFileName,'numRows',10,'numCols',10,...
+            'stimElectrode',stimElectrode,'stimElectrodeColor',{'k','r','b','g'},'stimElectrodeLabel','string',...
+            'recordingElectrode',cds.units(nn).chan,'recordingElectrodeColor','k','recordingElectrodeLabel','string',...
+            'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix)
+
+        plotInterspikeIntervalHistogram(cds,nn,'xLim',[0,20],'binSize',0.2,'displayText',1,...
+            'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix);
+        
+        plotPSTHStim(cds,nn,'binSize',0.2/1000,'makeFigure',1,'makeSubplots',0,'plotTitle',1,'waveformTypes',[1:1:numel(cds.waveforms.parameters)],...
+            'chans',[1:1:numel(unique(cds.waveforms.chanSent))],'preTime',10/1000,'postTime',30/1000,'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix)
+
+        
+        close all
+   end
+end
 
 
 %% Raster for a given index in cds.units -- basic analysis
