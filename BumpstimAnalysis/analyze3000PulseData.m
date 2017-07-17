@@ -1,8 +1,9 @@
 %% set file names 
 
-folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_20170712\';
-% mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
-mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Mihili 12A3\Mihili Left PMd SN 6251-001460.cmp';
+% folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_20170712\';
+folderpath = 'D:\Lab\Data\StimArtifact\Mihili\20170712_stimRecord\';
+mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+% mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Mihili 12A3\Mihili Left PMd SN 6251-001460.cmp';
 pwd=cd;
 cd(folderpath)
 fileList = dir('*_processed.mat');
@@ -48,9 +49,11 @@ plotArtifactsStim(cds,nn,2,1,'rowSubplot',2,'colSubplot',1,'maxArtifactsPerPlot'
     'plotFiltered',1,'randomSample',0)
 
 %% plot PSTH
+nn=124;
 saveFigures = 0;
 plotPSTHStim(cds,nn,'binSize',0.2/1000,'makeFigure',1,'makeSubplots',0,'plotTitle',1,'waveformTypes',[1:1:numel(cds.waveforms.parameters)],...
-            'chans',[1:1:numel(unique(cds.waveforms.chanSent))],'preTime',10/1000,'postTime',60/1000,'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix)
+            'chans',[1:1:numel(unique(cds.waveforms.chanSent))],'preTime',10/1000,'postTime',60/1000,'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix,...
+            'plotLine',1,'plotAllOnOneFigure',1,'lineColor',{'k','r','b','g'})
 
 % nn = 10;
 

@@ -1,8 +1,4 @@
 function [] = plotPSTHStim(cds,neuronNumber,varargin)
-colorRect = 'r';
-rpLineLength = 0.33;
-verticalLine = 0;
-markerSize = 4;
 preTime = 10/1000; % in seconds
 postTime = 20/1000; % in seconds
 plotAllArtifacts = 0;
@@ -19,7 +15,9 @@ waveformTypesPlot = 1;
 if(waveformsSentExist)
     waveformTypesPlot = 1:1:numel(unique(cds.waveforms.waveSent));
 end
-
+plotLine = 0;
+lineColor = 'k';
+lineWidth = 2;
 binSize = 0.0002;
 
 % plot waves near artifact stuff
@@ -41,6 +39,10 @@ alignWaves = 1;
 saveFigures = 0;
 figDir = '';
 figPrefix = '';
+
+plotAllOnOneFigure = 0;
+makeLegend = 0;
+legStr = '';
 
 %% deal with varagin
 for i = 1:2:size(varargin,2)
@@ -89,6 +91,18 @@ for i = 1:2:size(varargin,2)
             figDir = varargin{i+1};
         case 'figPrefix'
             figPrefix = varargin{i+1};
+        case 'plotLine'
+            plotLine = varargin{i+1};
+        case 'lineColor'
+            lineColor = varargin{i+1};
+        case 'lineWidth'
+            lineWidth = varargin{i+1};
+        case 'plotAllOnOneFigure'
+            plotAllOnOneFigure = varargin{i+1};
+        case 'makeLegend'
+            makeLegend = varargin{i+1};
+        case 'legendString'
+            legStr = varargin{i+1};
     end
 end
 
@@ -161,7 +175,11 @@ for chan = chansPlot
     for fig = waveformTypesPlot
         % deals with making figure
         if(makeFigure)
-            if(waveformsSentExist && waveformsMakeSubplots && fig == 1)
+            if(plotAllOnOneFigure && ((numel(waveformTypesPlot)>1 && fig == 1) || (numel(waveformTypesPlot) == 1 && chan == 1)))
+                figure();
+            elseif(plotAllOnOneFigure && ~((numel(waveformTypesPlot)>1 && fig == 1) || (numel(waveformTypesPlot) == 1 && chan == 1)))
+                % do not make figure
+            elseif(waveformsSentExist && waveformsMakeSubplots && fig == 1)
                 figure(); % make figure for the subplots
                 subplot(numWaveformTypes,1,fig);
             elseif(waveformsSentExist && waveformsMakeSubplots)
@@ -178,8 +196,24 @@ for chan = chansPlot
         [bC,bE] = histcounts(spikeTimeData{chan,fig},bE);
         bE = bE*1000;
         % plot actual data now
-        bar(bE(1:end-1)+(bE(2)-bE(1))/2,bC)
-
+        if(plotLine)
+            if(iscell(lineColor))
+                lc = lineColor{chan*fig};
+            else
+                lc = lineColor;
+            end
+            plot(bE(1:end-1)+(bE(2)-bE(1))/2,bC,'color',lc,'linewidth',lineWidth);
+        else
+            bar(bE(1:end-1)+(bE(2)-bE(1))/2,bC)
+        end
+        if(plotAllOnOneFigure)
+            hold on
+        end
+        
+        if(makeLegend && ~isempty(legStr))
+            l=legend(legStr);
+            set(l,'box','off');
+        end
         % clean up graph
         ylim([0,maxYLim])
         xlim([-preTime*1000,postTime*1000])
