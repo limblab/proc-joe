@@ -168,8 +168,8 @@ for artCond = 1:maxArtCond
                 if(artCount <= numel(artifactsPlot))
                     if(plotFiltered)
                         stimData = squeeze(cds.artifactData.artifact(artifactsPlot(artCount),neuronChan,:));
-                        stimData = [stimData;zeros(200,1)];
-                        stimDataPlot = fliplr(filter(bFilter,aFilter,fliplr(stimData')))';
+                        stimData = [stimData;mean(stimData(end-20:end))*ones(200,1)];
+                        stimDataPlot(:) = fliplr(filter(bFilter,aFilter,fliplr(stimData')))';
                         plot((0:1:(numel(stimDataPlot)-201))/30,stimDataPlot(1:end-200)/0.254)
 %                         [coeff,score] = pca(squeeze(cds.artifactData.artifact(artifactsPlot(artCount),:,:))');
 %                         coeff(:,1:4) = 0;
@@ -189,7 +189,9 @@ for artCond = 1:maxArtCond
                 hold on
                 artCount = artCount+1;
             end
-            ylim([-1200 1200])
+%             plot((stimDataPlot(1:end-200,:) - mean(stimDataPlot(1:end-200,:),2)))
+
+%             ylim([-1200 1200])
             xlabel('Time after stimulation onset (ms)')
             ylabel('Voltage (\muV)')
             formatForLee(gcf)

@@ -43,6 +43,7 @@ figPrefix = '';
 plotAllOnOneFigure = 0;
 makeLegend = 0;
 legStr = '';
+plotStimOn = 0;
 
 %% deal with varagin
 for i = 1:2:size(varargin,2)
@@ -103,6 +104,9 @@ for i = 1:2:size(varargin,2)
             makeLegend = varargin{i+1};
         case 'legendString'
             legStr = varargin{i+1};
+        case 'plotStimOn'
+            plotStimOn = varargin{i+1};
+            
     end
 end
 
@@ -213,6 +217,10 @@ for chan = chansPlot
         if(makeLegend && ~isempty(legStr))
             l=legend(legStr);
             set(l,'box','off');
+        end
+        if(plotStimOn)
+            hold on
+            plot([0,0],[-1000,maxYLim*10],'r','linewidth',1.5)
         end
         % clean up graph
         ylim([0,maxYLim])

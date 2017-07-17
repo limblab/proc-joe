@@ -343,8 +343,8 @@ void APP_Initialize(void) {
 
     
     /* set up i2c */
-    TRISBbits.TRISB9 = 1;
-	TRISBbits.TRISB8 = 1;
+    ANSELBbits.ANSB2 = 0;
+    ANSELBbits.ANSB3 = 0;
     i2c_setup();
     
     startTime = _CP0_GET_COUNT();
@@ -447,31 +447,40 @@ void APP_Tasks(void) {
             
             /* get data from NPA 201 sensor*/
             i2c_start();
-            i2c_send(SENSOR_ADDRESS << 1); // write command
+            i2c_send(SENSOR_ADDRESS << 1 & 0); // write command
             i2c_send(READ_PRESSURE_DATA); // 
             i2c_stop();
             
-            int count = 1;
-            while(count < 1000000)
+            /*int count = 1;
+            while(count < 50000)
             {
                 count = count + 1;
-            }
+            }*/
             
-            i2c_start();
+            /*i2c_start();
             i2c_send(SENSOR_ADDRESS << 1 & 1);
+            
             int dataCount;
             for(dataCount = 0; dataCount < 5; dataCount++)
             {
                 rbuf[dataCount] = i2c_recv();
-                i2c_ack(0);
+                if(dataCount == 4)
+                {    
+                    // do nothing
+                }
+                else
+                {
+                    i2c_ack(0);
+                }
             }
             i2c_stop();
+            
             P = rbuf[1] << 8 & rbuf[2];
             T = rbuf[3] << 8 & rbuf[4];
             
             Pconv = P/65535 * (1260-260) + 260;
             Tconv = T/65535 * (85+40) - 40;
-            
+            */
             /* print out P, T, Pconv, and Tconv */
             //len = sprintf(dataOut, "%.5f %.5f %.5f %.5f\r\n", P,T,Pconv,Tconv);
             len =sprintf(dataOut,"%d\r\n",i);
