@@ -1,4 +1,4 @@
-function [probOut] = getProbabilityOfDetection(cds,neuronNumber,varargin)
+function [probOut] = getProbabilityOfResponse(cds,neuronNumber,varargin)
 
 lowTime = 0/1000;
 highTime = 5/1000;
@@ -95,7 +95,7 @@ for c = 1:numChans
     for w = 1:numWaveformTypes
         baseline = sum(spikeTimeData{c,w} < min(0,lowTime))/(min(0,lowTime)+preTime); % spikes/ms
         ROI = sum(spikeTimeData{c,w} > lowTime & spikeTimeData{c,w} < highTime)/(highTime-lowTime); % spikes/ms
-        prob(c,w) = (ROI - baseline)/numel(cds.stimOn);
+        prob(c,w) = ((ROI - baseline)*(highTime-lowTime))/sum(cds.waveforms.waveSent == w & cds.waveforms.chanSent == chanList(c));
     end
 end
 
