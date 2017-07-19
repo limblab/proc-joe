@@ -12,6 +12,7 @@ lineWidth = 1;
 plotAllOnOneFigure = 0;
 plotStimOn = 1;
 plotStimChan = 1;
+plotProbabilityText = 0;
 for i = 1:2:numel(varargin)
     switch varargin{i}
         case 'plotLine'
@@ -34,6 +35,8 @@ for i = 1:2:numel(varargin)
             plotStimOn = varargin{i+1};
         case 'plotStimChan'
             plotStimChan = varargin{i+1};
+        case 'plotProbabilityText'
+            plotProbabilityText = varargin{i+1};
     end
 end
 
@@ -51,6 +54,7 @@ for c = 1:numel(chans)
             if(cds.units(nn).ID~=0 && cds.units(nn).ID~=255)
                 posIdx=find(mapData.chan==cds.units(nn).chan);
                 eRow=posList(posIdx,1);
+                eRow = 11 - eRow;
                 eCol=posList(posIdx,2);
                 h=subplot(10,10,10*(eRow-1)+eCol);
                 plottedHere(eRow,eCol) = 1;
@@ -68,6 +72,17 @@ for c = 1:numel(chans)
                 set(gca,'XMinorTick','off')
                 set(gca,'YTick',[]);
                 set(gca,'YMinorTick','off')
+                if(plotProbabilityText)
+                    prob = getProbabilityOfResponse(cds,nn,'peakPeriod','automatic','preTime',20/1000,'postTime',60/1000,...
+                        'chans',chans(c),'waveformTypes',waveformTypes(wave));
+                    if(prob > 0)
+                        
+                        ax = gca;
+                        XLIM = ax.XLim;
+                        YLIM = ax.YLim;
+                        text(XLIM(2)*0.75,YLIM(2)*1.25,strcat(num2str(round(prob*100,1)),'%'),'color','b')
+                    end
+                end
             end
         end
         
@@ -102,6 +117,7 @@ for c = 1:numel(chans)
             stimChan = chanSent(chans(c));
             posIdx=find(mapData.chan==stimChan);
             eRow=posList(posIdx,1);
+            eRow = 11 - eRow;
             eCol=posList(posIdx,2);
             h=subplot(10,10,10*(eRow-1)+eCol);
             hold on
