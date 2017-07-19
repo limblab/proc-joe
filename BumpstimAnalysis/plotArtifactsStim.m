@@ -163,7 +163,7 @@ for artCond = 1:maxArtCond
         end
     else
         for sub = 1:rowSubplot*colSubplot
-%             subplot(rowSubplot,colSubplot, sub)
+            subplot(rowSubplot,colSubplot, sub)
             for p = 1:maxArtifactsPerPlot
                 if(artCount <= numel(artifactsPlot))
                     if(plotFiltered)
@@ -188,6 +188,7 @@ for artCond = 1:maxArtCond
                 end
                 hold on
                 artCount = artCount+1;
+                ylim([-400,400])
             end
 %             plot((stimDataPlot(1:end-200,:) - mean(stimDataPlot(1:end-200,:),2)))
 

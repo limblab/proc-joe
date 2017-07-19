@@ -55,9 +55,10 @@ probOut = getDoublePeakProbability(cds,nn,'peak1Period',[0,3]/1000,'peak2Period'
     'chans',[1:1:numel(unique(cds.waveforms.chanSent))],'waveformTypes',[1:1:numel(cds.waveforms.parameters)])
 
 %% plot artifacts
-nn = 124;
+nn = 36;
 
-plotArtifactsStim(cds,nn,3,1,'rowSubplot',2,'colSubplot',1,'maxArtifactsPerPlot',20,'plotArtifactsSeparated',1,'plotTitle',0,...
+plotArtifactsStim(cds,nn,1,1,'rowSubplot',6,'colSubplot',6,...
+    'maxArtifactsPerPlot',5,'plotArtifactsSeparated',0,'plotTitle',0,...
     'plotFiltered',1,'randomSample',1)
 
 %% plot PSTH
