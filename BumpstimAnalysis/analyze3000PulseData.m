@@ -1,6 +1,6 @@
 %% set file names 
 
-folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Mihili_20170713\';
+folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Mihili_20170712\';
 % folderpath = 'D:\Lab\Data\StimArtifact\Mihili\20170713_stimRecord\';
 % mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 % mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Mihili 12A3\Mihili Left PMd SN 6251-001460.cmp';
@@ -50,16 +50,18 @@ nn=124;
 probOut = getProbabilityOfResponse(cds,nn,'peakPeriod','automatic','preTime',20/1000,'postTime',60/1000,...
     'chans',[1:1:numel(unique(cds.waveforms.chanSent))],'waveformTypes',[1:1:numel(cds.waveforms.parameters)])
 
-%% double peak dependence
-probOut = getDoublePeakProbability(cds,nn,'peak1Period',[0,3]/1000,'peak2Period',[3,6]/1000,'preTime',20/1000,'postTime',60/1000,...
+%% double peak dependence -- if applicable
+% nn=99;
+nn = 80;
+[probActual,probExpected] = getDoublePeakProbability(cds,nn,'peakPeriod1',[3,4]/1000,'peakPeriod2',[4.3,5.5]/1000,'preTime',20/1000,'postTime',60/1000,...
     'chans',[1:1:numel(unique(cds.waveforms.chanSent))],'waveformTypes',[1:1:numel(cds.waveforms.parameters)])
 
 %% plot artifacts
-nn = 36;
+nn = 2;
 
-plotArtifactsStim(cds,nn,1,1,'rowSubplot',6,'colSubplot',6,...
-    'maxArtifactsPerPlot',5,'plotArtifactsSeparated',0,'plotTitle',0,...
-    'plotFiltered',1,'randomSample',1)
+plotArtifactsStim(cds,nn,1,1,'rowSubplot',3,'colSubplot',3,...
+    'maxArtifactsPerPlot',8,'plotArtifactsSeparated',0,'plotTitle',0,...
+    'plotFiltered',1,'randomSample',1,'templateSubtract',1,'plotXRange',[1,60])
 
 %% plot PSTH
 nn=124;
