@@ -12,12 +12,15 @@ timeAfterStim = 5/1000;
 plotArtifactsSeparated = 1;
 randomSample = 1;
 stimElectrode = -1;
+templateSubtract = 0;
 
 % save stuff
 saveFigures = 0;
 figDir = '';
 figPrefix = '';
 
+rangeProvided = 0;
+plotXRange = [];
 for i = 1:2:size(varargin,2)
     switch varargin{i}
         case 'plotFiltered'
@@ -53,6 +56,14 @@ for i = 1:2:size(varargin,2)
             figDir = varargin{i+1};
         case 'figPrefix'
             figPrefix = varargin{i+1};
+        case 'plotXRange'
+            rangeProvided = 1;
+            plotXRange = varargin{i+1};
+            if(plotXRange(2) < 21)
+                plotXRange(2) = 21;
+            end
+        case 'templateSubtract'
+            templateSubtract = varargin{i+1};
     end
 end
 
@@ -133,25 +144,9 @@ for artCond = 1:maxArtCond
 
             for p = 1:maxArtifactsPerPlot
                 if(artCount <= numel(artifactsPlot))
-                    if(plotFiltered)
-                        stimData = squeeze(cds.artifactData.artifact(artifactsPlot(artCount),neuronChan,:));
-                        stimData = [stimData;zeros(200,1)];
-                        stimDataPlot = fliplr(filter(bFilter,aFilter,fliplr(stimData')))';
-                        plot((0:1:(numel(stimDataPlot)-201))/30,stimDataPlot(1:end-200)/0.254)
-%                         [coeff,score] = pca(squeeze(cds.artifactData.artifact(artifactsPlot(artCount),:,:))');
-%                         coeff(:,1:4) = 0;
-%                         artifact=coeff*score';
-%                         stimData = artifact(chan,:)';
-                                             
-%                         stimData = artifact(:,artifactsPlot(artCount));
-%                         
-%                         stimData = [stimData;zeros(200,1)];
-%                         stimDataPlot = fliplr(filter(bFilter,aFilter,fliplr(stimData')))';
-%                         plot((0:1:(numel(stimDataPlot)-201))/30,stimDataPlot(1:end-200))   
-                    else
-                        plot((0:1:(numel(squeeze(cds.artifactData.artifact(artifactsPlot(artCount),neuronChan,:)))-1))/30,...
-                            squeeze(cds.artifactData.artifact(artifactsPlot(artCount),neuronChan,:))/0.254)
-                    end
+                    plotStimDataArtifactStim(cds,artifactsPlot,artCount,neuronChan,rangeProvided,plotXRange,plotFiltered,...
+                        bFilter,aFilter,templateSubtract,waveformsSentExist,figNum,chanList,chanNum)
+
                 end
                 hold on
                 artCount = artCount+1;
@@ -163,31 +158,15 @@ for artCond = 1:maxArtCond
         end
     else
         for sub = 1:rowSubplot*colSubplot
-%             subplot(rowSubplot,colSubplot, sub)
+            subplot(rowSubplot,colSubplot, sub)
             for p = 1:maxArtifactsPerPlot
                 if(artCount <= numel(artifactsPlot))
-                    if(plotFiltered)
-                        stimData = squeeze(cds.artifactData.artifact(artifactsPlot(artCount),neuronChan,:));
-                        stimData = [stimData;mean(stimData(end-20:end))*ones(200,1)];
-                        stimDataPlot(:) = fliplr(filter(bFilter,aFilter,fliplr(stimData')))';
-                        plot((0:1:(numel(stimDataPlot)-201))/30,stimDataPlot(1:end-200)/0.254)
-%                         [coeff,score] = pca(squeeze(cds.artifactData.artifact(artifactsPlot(artCount),:,:))');
-%                         coeff(:,1:4) = 0;
-%                         artifact=coeff*score';
-%                         stimData = artifact(chan,:)';
-% %                         
-%                         stimData = artifact(:,artifactsPlot(artCount));
-%                         
-%                         stimData = [stimData;zeros(200,1)];
-%                         stimDataPlot = fliplr(filter(bFilter,aFilter,fliplr(stimData')))';
-%                         plot((0:1:(numel(stimDataPlot)-201))/30,stimDataPlot(1:end-200))
-                    else
-                        plot((0:1:(numel(squeeze(cds.artifactData.artifact(artifactsPlot(artCount),neuronChan,:)))-1))/30,...
-                            squeeze(cds.artifactData.artifact(artifactsPlot(artCount),neuronChan,:))/0.254)
-                    end
+                    plotStimDataArtifactStim(cds,artifactsPlot,artCount,neuronChan,rangeProvided,plotXRange,plotFiltered,...
+                        bFilter,aFilter,templateSubtract,waveformsSentExist,figNum,chanList,chanNum)
                 end
                 hold on
                 artCount = artCount+1;
+%                 ylim([-400,400])
             end
 %             plot((stimDataPlot(1:end-200,:) - mean(stimDataPlot(1:end-200,:),2)))
 
@@ -223,4 +202,55 @@ end
 
 
 end
+
+function [] = plotStimDataArtifactStim(cds,artifactsPlot,artCount,neuronChan,rangeProvided,plotXRange,plotFiltered,bFilter,aFilter,templateSubtract,waveformsSentExist,figNum,chanList,chanNum)
+
+if(plotFiltered)
+    if(rangeProvided)
+        stimData = squeeze(cds.artifactData.artifact(artifactsPlot(artCount),neuronChan,plotXRange(1):plotXRange(2)));
+    else
+        stimData = squeeze(cds.artifactData.artifact(artifactsPlot(artCount),neuronChan,:));
+    end
+    stimData = [stimData;mean(stimData(end-20:end))*ones(200,1)];
+    stimData = fliplr(filter(bFilter,aFilter,fliplr(stimData')))';
+    if(templateSubtract)
+        templateIdx = [];
+        for a = 1:size(cds.stimOn,1)
+            if(((waveformsSentExist && cds.waveforms.waveSent(a) == figNum) || ~waveformsSentExist) && (~any(isfield(cds.waveforms,'chanSent')) || cds.waveforms.chanSent(a)==chanList(chanNum)))
+                templateIdx(end+1,1) = a;
+            end
+        end
+        templateData = squeeze(cds.artifactData.artifact(templateIdx,neuronChan,plotXRange(1):plotXRange(2)));
+        templateData = [templateData,mean(templateData(:,end-20:end),2).*ones(size(templateData,1),200)];
+        templateData = fliplr(filter(bFilter,aFilter,fliplr(templateData)')');
+        template = mean(templateData);
+        stimData(1:numel(template),1) = stimData(1:numel(template),1) - template';
+    end
+    plot((0:1:(numel(stimData)-201))/30,stimData(1:end-200)/0.254)
+%     [coeff,score] = pca(squeeze(cds.artifactData.artifact(artifactsPlot(artCount),:,:))');
+%     coeff(:,1:4) = 0;
+%     artifact=coeff*score';
+%     stimData = artifact(chan,:)';
+% 
+%     stimData = artifact(:,artifactsPlot(artCount));
+% 
+%     stimData = [stimData;zeros(200,1)];
+%     stimDataPlot = fliplr(filter(bFilter,aFilter,fliplr(stimData')))';
+%     plot((0:1:(numel(stimDataPlot)-201))/30,stimDataPlot(1:end-200))
+else    
+    if(rangeProvided)
+        plot((0:1:(numel(squeeze(cds.artifactData.artifact(artifactsPlot(artCount),neuronChan,plotXRange(1):plotXRange(2))))-1))/30,...
+            squeeze(cds.artifactData.artifact(artifactsPlot(artCount),neuronChan,plotXRange(1):plotXRange(2)))/0.254)
+    else
+        plot((0:1:(numel(squeeze(cds.artifactData.artifact(artifactsPlot(artCount),neuronChan,:)))-1))/30,...
+            squeeze(cds.artifactData.artifact(artifactsPlot(artCount),neuronChan,:))/0.254)
+    end
+end
+
+
+
+end
+
+
+
 

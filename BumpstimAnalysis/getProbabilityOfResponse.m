@@ -14,12 +14,17 @@ chans = 1;
 stimElectrode = -1;
 bumpTask = 0;
 alignWaves = 1;
+autoPeakPeriod = 0;
 for i = 1:2:numel(varargin)
     switch varargin{i}
         case 'peakPeriod'
-            temp = varargin{i+1};
-            lowTime = temp(1);
-            highTime = temp(2);
+            if(~strcmp('automatic',varargin{i+1}))
+                temp = varargin{i+1};
+                lowTime = temp(1);
+                highTime = temp(2);
+            else
+                autoPeakPeriod = 1;
+            end
         case 'waveformTypes'
             waveformTypes = varargin{i+1};
         case 'chans'
@@ -93,6 +98,19 @@ end
 prob = zeros(numChans,numWaveformTypes);
 for c = 1:numChans
     for w = 1:numWaveformTypes
+        if(autoPeakPeriod) % get high time and low time automatically
+            % bin data
+            binSize = 0.0002;
+            bE = -preTime:binSize:postTime;
+            [bC,~] = histcounts(spikeTimeData{c,w},bE);
+            % find peak in PSTH between 0 and 5ms
+            zeroBin = floor(preTime/binSize);
+            [~,peakIdx] = max(bC(zeroBin:zeroBin+ceil(0.005/binSize)));
+            peakIdx = peakIdx + zeroBin - 1;
+            % set high and low time
+            lowTime = bE(peakIdx)-0.001;
+            highTime = bE(peakIdx)+0.001;
+        end
         baseline = sum(spikeTimeData{c,w} < min(0,lowTime))/(min(0,lowTime)+preTime); % spikes/ms
         ROI = sum(spikeTimeData{c,w} > lowTime & spikeTimeData{c,w} < highTime)/(highTime-lowTime); % spikes/ms
         prob(c,w) = ((ROI - baseline)*(highTime-lowTime))/sum(cds.waveforms.waveSent == w & cds.waveforms.chanSent == chanList(c));

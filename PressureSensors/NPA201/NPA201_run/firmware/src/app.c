@@ -446,11 +446,11 @@ void APP_Tasks(void) {
             
             
             /* get data from NPA 201 sensor*/
-            i2c_start();
+            /*i2c_start();
             i2c_send(SENSOR_ADDRESS << 1 & 0); // write command
             i2c_send(READ_PRESSURE_DATA); // 
             i2c_stop();
-            
+            */
             /*int count = 1;
             while(count < 50000)
             {

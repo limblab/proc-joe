@@ -106,7 +106,7 @@ for i = 1:2:size(varargin,2)
             legStr = varargin{i+1};
         case 'plotStimOn'
             plotStimOn = varargin{i+1};
-            
+        
     end
 end
 

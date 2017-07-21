@@ -1,9 +1,11 @@
 %% set file names 
 
-% folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Mihili_20170713\';
-folderpath = 'D:\Lab\Data\StimArtifact\Mihili\20170713_stimRecord\';
+folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Mihili_20170712\';
+% folderpath = 'D:\Lab\Data\StimArtifact\Mihili\20170713_stimRecord\';
 % mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
-mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Mihili 12A3\Mihili Left PMd SN 6251-001460.cmp';
+% mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Mihili 12A3\Mihili Left PMd SN 6251-001460.cmp';
+mapFileName = 'C:\Users\Joseph\Desktop\Mihili Left PMd SN 6251-001460.cmp';
+
 pwd=cd;
 cd(folderpath)
 fileList = dir('*_processed.mat');
@@ -25,8 +27,8 @@ figDir = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Mihili_20170712\Summary 
 figPrefix = 'Mihili_20170712_';
 saveFigures = 0;
 
-nn = 109;
-
+nn = 3;
+%%
 plotRasterStim(cds,nn,'makeFigure',1,'makeSubplots',0,'plotTitle',1,'waveformTypes',[1:1:numel(cds.waveforms.parameters)],...
     'chans',[1:1:numel(unique(cds.waveforms.chanSent))],'preTime',10/1000,'postTime',60/1000,'plotSpikeWaveforms',1,'timeAfterStimRawNoStim',20/1000,...
     'timeAfterStimRawArtifact',5/1000,'plotArtifacts',1,'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix,...
@@ -44,22 +46,25 @@ plotInterspikeIntervalHistogram(cds,nn,'xLim',[0,20],'binSize',0.2,'displayText'
     'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix);
 
 %% probability of eliciting a response
-% nn=15;
-probOut = getProbabilityOfResponse(cds,nn,'peakPeriod',[0,3]/1000,'preTime',20/1000,'postTime',60/1000,...
+nn=124;
+probOut = getProbabilityOfResponse(cds,nn,'peakPeriod','automatic','preTime',20/1000,'postTime',60/1000,...
     'chans',[1:1:numel(unique(cds.waveforms.chanSent))],'waveformTypes',[1:1:numel(cds.waveforms.parameters)])
 
-%% double peak dependence
-probOut = getDoublePeakProbability(cds,nn,'peak1Period',[0,3]/1000,'peak2Period',[3,6]/1000,'preTime',20/1000,'postTime',60/1000,...
+%% double peak dependence -- if applicable
+% nn=99;
+nn = 80;
+[probActual,probExpected] = getDoublePeakProbability(cds,nn,'peakPeriod1',[3,4]/1000,'peakPeriod2',[4.3,5.5]/1000,'preTime',20/1000,'postTime',60/1000,...
     'chans',[1:1:numel(unique(cds.waveforms.chanSent))],'waveformTypes',[1:1:numel(cds.waveforms.parameters)])
 
 %% plot artifacts
-nn = 92;
+nn = 2;
 
-plotArtifactsStim(cds,nn,2,1,'rowSubplot',1,'colSubplot',1,'maxArtifactsPerPlot',40,'plotArtifactsSeparated',0,'plotTitle',0,...
-    'plotFiltered',1,'randomSample',0)
+plotArtifactsStim(cds,nn,1,1,'rowSubplot',3,'colSubplot',3,...
+    'maxArtifactsPerPlot',8,'plotArtifactsSeparated',0,'plotTitle',0,...
+    'plotFiltered',1,'randomSample',1,'templateSubtract',1,'plotXRange',[1,60])
 
 %% plot PSTH
-% nn=65;
+nn=124;
 saveFigures = 0;
 plotPSTHStim(cds,nn,'binSize',0.2/1000,'makeFigure',1,'makeSubplots',0,'plotTitle',1,'waveformTypes',[1:1:numel(cds.waveforms.parameters)],...
             'chans',[1:1:numel(unique(cds.waveforms.chanSent))],'preTime',10/1000,'postTime',60/1000,'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix,...
@@ -68,7 +73,7 @@ plotPSTHStim(cds,nn,'binSize',0.2/1000,'makeFigure',1,'makeSubplots',0,'plotTitl
 %% whole array analysis
 
 plotPSTHStimWholeArray(cds,mapFileName,'preTime',10/1000,'postTime',30/1000,'binSize',0.0002,...
-    'waveformTypes',1,'chans',1,'plotLine',1,'lineWidth',0.5,'plotStimOn',1,'plotStimChan',1);
+    'waveformTypes',4,'chans',1,'plotLine',1,'lineWidth',0.5,'plotStimOn',1,'plotStimChan',1,'plotProbabilityText',1);
 
 
 
