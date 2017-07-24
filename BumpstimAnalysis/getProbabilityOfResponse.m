@@ -107,9 +107,15 @@ for c = 1:numChans
             zeroBin = floor(preTime/binSize);
             [~,peakIdx] = max(bC(zeroBin:zeroBin+ceil(0.005/binSize)));
             peakIdx = peakIdx + zeroBin - 1;
-            % set high and low time
-            lowTime = bE(peakIdx)-0.001;
-            highTime = bE(peakIdx)+0.001;
+            % get baseline rate
+            baselineRate = bC(1:zeroBin-floor(0.003/binSize)); % preTime to -3ms
+            % set high and low time based on baseline firing rate
+            lowTemp = find(bC(1:peakIdx) < baselineRate);
+            lowTime = bE(lowTemp(end));
+            highTemp = find(bC(peakIdx:end) < baselineRate);
+            highTime = highTemp(1);
+%             lowTime = bE(peakIdx)-0.001;
+%             highTime = bE(peakIdx)+0.001;
         end
         baseline = sum(spikeTimeData{c,w} < min(0,lowTime))/(min(0,lowTime)+preTime); % spikes/ms
         ROI = sum(spikeTimeData{c,w} > lowTime & spikeTimeData{c,w} < highTime)/(highTime-lowTime); % spikes/ms

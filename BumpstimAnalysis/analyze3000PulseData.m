@@ -22,6 +22,10 @@ end
 load(fileList(fileNumber).name);
 cd(pwd);
 
+figDir = '';
+figPrefix = '';
+saveFigures = 0;
+
 %% plot raster, waves, and PSTH for a give neuron number
 figDir = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Mihili_20170712\Summary Figures\';
 figPrefix = 'Mihili_20170712_';
@@ -68,7 +72,7 @@ nn=124;
 saveFigures = 0;
 plotPSTHStim(cds,nn,'binSize',0.2/1000,'makeFigure',1,'makeSubplots',0,'plotTitle',1,'waveformTypes',[1:1:numel(cds.waveforms.parameters)],...
             'chans',[1:1:numel(unique(cds.waveforms.chanSent))],'preTime',10/1000,'postTime',60/1000,'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix,...
-            'plotLine',1,'plotAllOnOneFigure',0,'lineColor',{'k','r','b','g','m'})
+            'plotLine',0,'plotAllOnOneFigure',0,'lineColor',{'k','r','b','g','m'})
 
 %% whole array analysis
 
