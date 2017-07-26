@@ -151,9 +151,9 @@ for artCond = 1:maxArtCond
                 hold on
                 artCount = artCount+1;
             end
-            ylim([-1200 1200])
-            xlabel('Time after stimulation onset (ms)')
-            ylabel('Voltage (\muV)')
+            ylim([-400 400])
+%             xlabel('Time after stimulation onset (ms)')
+%             ylabel('Voltage (\muV)')
             formatForLee(gcf)
         end
     else
@@ -170,9 +170,9 @@ for artCond = 1:maxArtCond
             end
 %             plot((stimDataPlot(1:end-200,:) - mean(stimDataPlot(1:end-200,:),2)))
 
-%             ylim([-1200 1200])
-            xlabel('Time after stimulation onset (ms)')
-            ylabel('Voltage (\muV)')
+            ylim([-400 400])
+%             xlabel('Time after stimulation onset (ms)')
+%             ylabel('Voltage (\muV)')
             formatForLee(gcf)
         end
     end

@@ -233,6 +233,8 @@ for chan = chansPlot
         if(plotTitle)
             if(strcmp(titleToPlot,'') == 0)
                 title(titleToPlot);
+            elseif(plotAllOnOneFigure)
+                % no title
             elseif(numChans > 1 && waveformsSentExist)
                 title(strcat('Stim Chan: ',num2str(chanList(chan)),' Wave: ',num2str(fig)));
             elseif(numChans == 1 && waveformsSentExist)
@@ -244,18 +246,21 @@ for chan = chansPlot
         
         formatForLee(gcf);
         
-        if(~waveformsMakeSubplots && saveFigures)
+        if(~waveformsMakeSubplots && saveFigures && ~plotAllOnOneFigure)
             fname = strcat(figPrefix,'nn',num2str(neuronNumber),'_chan',num2str(cds.units(neuronNumber).chan),'_stimChan',num2str(chanList(chan)),'_waveNum',num2str(fig),'_PSTH');
             saveFiguresLab(gcf,figDir,fname);
         end
     end
     
-    if(waveformsMakeSubplots && saveFigures)
+    if(waveformsMakeSubplots && saveFigures && ~plotAllOnOneFigure)
         fname = strcat(figPrefix,'nn',num2str(neuronNumber),'_chan',num2str(cds.units(neuronNumber).chan),'_stimChan',num2str(chanList(chan)),'_waveNum',num2str(fig),'_PSTH');
         saveFiguresLab(gcf,figDir,fname);
     end
 end
-
+if(saveFigures && plotAllOnOneFigure)
+    fname = strcat(figPrefix,'nn',num2str(neuronNumber),'_chan',num2str(cds.units(neuronNumber).chan),'_PSTHall');
+    saveFiguresLab(gcf,figDir,fname);
+end
 
 
 

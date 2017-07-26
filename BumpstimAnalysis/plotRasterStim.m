@@ -2,8 +2,10 @@ function [] = plotRasterStim(cds,neuronNumber,varargin)
 
 colorRect = 'r';
 rpLineLength = 0.33;
+linewidth = 1;
 verticalLine = 0;
-markerSize = 4;
+markersize = 2;
+markerstyle = 'dot';
 preTime = 10/1000; % in seconds
 postTime = 20/1000; % in seconds
 plotAllArtifacts = 0;
@@ -94,6 +96,14 @@ for i = 1:2:size(varargin,2)
             figDir = varargin{i+1};
         case 'figPrefix'
             figPrefix = varargin{i+1};
+        case 'markerstyle'
+            markerstyle = varargin{i+1};
+        case 'linewidth'
+            linewidth = varargin{i+1};
+        case 'linelength'
+            rpLineLength = varargin{i+1};
+        case 'markersize'
+            markersize = varargin{i+1};
     end
 end
 
@@ -203,8 +213,14 @@ for chan = chansPlot
         end
 
         % plot actual data now
-        plot(spikeTimeData{chan,fig}*1000,stimuliData{chan,fig},'k.')
-
+        if(strcmpi(markerstyle,'line'))
+            plot([spikeTimeData{chan,fig}',spikeTimeData{chan,fig}']'*1000,...
+                [stimuliData{chan,fig}'-rpLineLength,stimuliData{chan,fig}'+rpLineLength]',...
+                'k','linewidth',linewidth)
+            
+        else % default is the 'dot' case
+            plot(spikeTimeData{chan,fig}*1000,stimuliData{chan,fig},'k.','markersize',markersize)
+        end
         % clean up graph
         ylim([-3,max(stimuliData{chan,fig})+1])
         xlim([-preTime*1000,postTime*1000])
@@ -241,7 +257,7 @@ for chan = chansPlot
         saveFiguresLab(gcf,figDir,fname);
     end
 end
-%% plot raw waveforms around the artifact data
+%% plot raw waveforms around the artifact
 if(plotSpikeWaveforms == 1)
     for chan = chansPlot
         for fig = waveformTypesPlot
