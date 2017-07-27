@@ -4,7 +4,7 @@ out = -1;
 unitTs = round(unitTs/0.001)*0.001;
 rawTs = round(rawTs/0.001)*0.001;
 
-rawIdx = find(unitTs >= rawTs-0.001 & unitTs <= rawTs+0.001);
+rawIdx = find(unitTs == rawTs);
 
 if(numel(rawIdx) > 1)
     for i = 1:numel(rawIdx)

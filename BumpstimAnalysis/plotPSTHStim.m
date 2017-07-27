@@ -45,6 +45,9 @@ makeLegend = 0;
 legStr = '';
 plotStimOn = 0;
 
+plotOnlyStimuliWithResponse = 0;
+plotAllStimuli = 1;
+plotOnlyStimuliWithoutResponse = 0;
 %% deal with varagin
 for i = 1:2:size(varargin,2)
     switch varargin{i}
@@ -106,6 +109,20 @@ for i = 1:2:size(varargin,2)
             legStr = varargin{i+1};
         case 'plotStimOn'
             plotStimOn = varargin{i+1};
+        case 'plotStimuliGroup'
+            if(strcmpi(varargin{i+1},'responsive'))
+                plotOnlyStimuliWithResponse = 1;
+                plotAllStimuli = 0;
+                plotOnlyStimuliWithoutResponse = 0;
+            elseif(strcmpi(varargin{i+1},'nonResponsive'))
+                plotOnlyStimuliWithResponse = 0;
+                plotAllStimuli = 0;
+                plotOnlyStimuliWithoutResponse = 1;
+            else % default case
+                plotOnlyStimuliWithResponse = 0;
+                plotAllStimuli = 1;
+                plotOnlyStimuliWithoutResponse = 0;
+            end
         
     end
 end
@@ -136,7 +153,20 @@ else % get data after stimulations
     for st = 1:numel(cds.stimOn)
         spikeMask = cds.units(neuronNumber).spikes.ts > cds.stimOn(st)-preTime & cds.units(neuronNumber).spikes.ts < cds.stimOn(st)+postTime;
         spikesPlot = (cds.units(neuronNumber).spikes.ts(spikeMask) - cds.stimOn(st));
-        if(alignWaves)
+       
+        if(plotOnlyStimuliWithResponse) % check if spikesPlot has a spike within a specified amount of time -- if not, remove
+            mask = spikesPlot > 0 & spikesPlot < min(5/1000,timeAfterStimRawArtifact);
+            if(sum(mask) == 0)
+                spikesPlot = [];
+            end
+        elseif(plotOnlyStimuliWithoutResponse)
+            mask = spikesPlot > 0 & spikesPlot < min(5/1000,timeAfterStimRawArtifact);
+            if(sum(mask) ~= 0)
+                spikesPlot = [];
+            end
+        end
+        
+        if(alignWaves && ~isempty(spikesPlot))
             spikesPlot = spikesPlot + 4/30000;
         end
         numWaves = sum(spikeMask==1);
@@ -172,6 +202,7 @@ for chan = chansPlot
     for fig = waveformTypesPlot
         bE = -preTime:binSize:postTime;
         [bC,~] = histcounts(spikeTimeData{chan,fig},bE);
+        bC = bC/binSize/size(spikeTimeData{chan,fig},2);
         maxYLim = max(max(bC)*1.1,maxYLim);
     end
 end
@@ -199,6 +230,7 @@ for chan = chansPlot
         bE = -preTime:binSize:postTime;
         [bC,bE] = histcounts(spikeTimeData{chan,fig},bE);
         bE = bE*1000;
+        bC = bC/binSize/size(spikeTimeData{chan,fig},2);
         % plot actual data now
         if(plotLine)
             if(iscell(lineColor))
@@ -225,7 +257,7 @@ for chan = chansPlot
         % clean up graph
         ylim([0,maxYLim])
         xlim([-preTime*1000,postTime*1000])
-        ylabel('Number of spikes')
+        ylabel('Average Firing Rate (spikes/s)')
         if(~waveformsSentExist || ~waveformsMakeSubplots || fig == numWaveformTypes)
             xlabel('Time after stimulation onset (ms)')  
         end

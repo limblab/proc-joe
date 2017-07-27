@@ -92,7 +92,7 @@ else
     maxArtCond = 1;
 end
 
-if(makeFigure && ~plotArtifactsSeparated)
+if(makeFigure)
     figure();   
 end
 

@@ -1,10 +1,10 @@
 function [] = plotRasterStim(cds,neuronNumber,varargin)
 
 colorRect = 'r';
-rpLineLength = 0.33;
+lineLength = 1;
 linewidth = 1;
 verticalLine = 0;
-markersize = 2;
+markersize = 4;
 markerstyle = 'dot';
 preTime = 10/1000; % in seconds
 postTime = 20/1000; % in seconds
@@ -35,8 +35,8 @@ plotArtifacts = 0;
 maxArtifactsPerPlot = 5;
 rowSubplotArtifact = 4;
 colSubplotArtifact = 5;
-plotFiltered = 0;
-
+plotArtifactFiltered = 0;
+plotWaveformFiltered = 0;
 %
 stimElectrode = -1;
 
@@ -44,6 +44,12 @@ stimElectrode = -1;
 saveFigures = 0;
 figDir = '';
 figPrefix = '';
+
+
+maxWavesPlot = 100;
+plotOnlyStimuliWithResponse = 0;
+plotAllStimuli = 1;
+plotOnlyStimuliWithoutResponse = 0;
 
 %% deal with varagin
 for i = 1:2:size(varargin,2)
@@ -82,8 +88,10 @@ for i = 1:2:size(varargin,2)
             colSubplotArtifact = varargin{i+1};
         case 'rowSubplotArtifact'
             rowSubplotArtifact = varargin{i+1};
-        case 'plotFiltered'
-            plotFiltered = varargin{i+1};
+        case 'plotArtifactsFiltered'
+            plotArtifactFiltered = varargin{i+1};
+        case 'plotWaveformsFiltered'
+            plotWaveformFiltered = varargin{i+1};
         case 'alignWaves'
             alignWaves = varargin{i+1};
         case 'chans'
@@ -101,11 +109,28 @@ for i = 1:2:size(varargin,2)
         case 'linewidth'
             linewidth = varargin{i+1};
         case 'linelength'
-            rpLineLength = varargin{i+1};
+            lineLength = max(0.1,min(1,varargin{i+1}));
         case 'markersize'
             markersize = varargin{i+1};
+        case 'maxWaveformsPlot'
+            maxWavesPlot = varargin{i+1};
+        case 'plotStimuliGroup'
+            if(strcmpi(varargin{i+1},'responsive'))
+                plotOnlyStimuliWithResponse = 1;
+                plotAllStimuli = 0;
+                plotOnlyStimuliWithoutResponse = 0;
+            elseif(strcmpi(varargin{i+1},'nonResponsive'))
+                plotOnlyStimuliWithResponse = 0;
+                plotAllStimuli = 0;
+                plotOnlyStimuliWithoutResponse = 1;
+            else % default case
+                plotOnlyStimuliWithResponse = 0;
+                plotAllStimuli = 1;
+                plotOnlyStimuliWithoutResponse = 0;
+            end
     end
 end
+
 
 if(saveFigures && strcmp(figDir,''))
     saveFigures = 0;
@@ -139,6 +164,17 @@ else % get data after stimulations
     for st = 1:stimsPerTrain:numel(cds.stimOn)
         spikeMask = cds.units(neuronNumber).spikes.ts > cds.stimOn(st)-preTime & cds.units(neuronNumber).spikes.ts < cds.stimOn(st)+postTime;
         spikesPlot = (cds.units(neuronNumber).spikes.ts(spikeMask) - cds.stimOn(st));
+        if(plotOnlyStimuliWithResponse) % check if spikesPlot has a spike within a specified amount of time -- if not, remove
+            mask = spikesPlot > 0 & spikesPlot < min(5/1000,timeAfterStimRawArtifact);
+            if(sum(mask) == 0)
+                spikesPlot = [];
+            end
+        elseif(plotOnlyStimuliWithoutResponse)
+            mask = spikesPlot > 0 & spikesPlot < min(5/1000,timeAfterStimRawArtifact);
+            if(sum(mask) ~= 0)
+                spikesPlot = [];
+            end
+        end
         numWaves = sum(spikeMask==1);
         
         if(alignWaves) % align on positive deflection of filtered waveform, then add 4/30 ms to get to negative deflection of spike
@@ -169,6 +205,13 @@ else % get data after stimulations
                     spikeTimeData{1,cds.waveforms.waveSent(st)}(end+1:end+numWaves) = spikesPlot';
                     stimuliData{1,cds.waveforms.waveSent(st)}(end+1:end+numWaves) = stimNum(1,cds.waveforms.waveSent(st));
                 end
+            elseif(isempty(spikesPlot) && (plotOnlyStimuliWithResponse || plotOnlyStimuliWithoutResponse)) % decrement stimNum
+                if(any(isfield(cds.waveforms,'chanSent')))
+                    chanNumber = find(unique(cds.waveforms.chanSent)==cds.waveforms.chanSent(st));
+                    stimNum(chanNumber,cds.waveforms.waveSent(st)) = stimNum(chanNumber,cds.waveforms.waveSent(st))-1;
+                else
+                    stimNum(1,cds.waveforms.waveSent(st)) = stimNum(1,cds.waveforms.waveSent(st))-1;
+                end
             end
         else
             if(any(isfield(cds.waveforms,'chanSent')))
@@ -186,6 +229,13 @@ else % get data after stimulations
                 else
                     spikeTimeData{1}(end+1:end+numWaves) = spikesPlot';
                     stimuliData{1}(end+1:end+numWaves) = stimNum(1,1);
+                end
+            elseif(isempty(spikesPlot) && (plotOnlyStimuliWithResponse || plotOnlyStimuliWithoutResponse)) % decrement stimNum
+                if(any(isfield(cds.waveforms,'chanSent')))
+                    chanNumber = find(unique(cds.waveforms.chanSent)==cds.waveforms.chanSent(st));
+                    stimNum(chanNumber,cds.waveforms.waveSent(st)) = stimNum(chanNumber,cds.waveforms.waveSent(st))-1;
+                else
+                    stimNum(1,cds.waveforms.waveSent(st)) = stimNum(1,cds.waveforms.waveSent(st))-1;
                 end
             end
             
@@ -215,7 +265,7 @@ for chan = chansPlot
         % plot actual data now
         if(strcmpi(markerstyle,'line'))
             plot([spikeTimeData{chan,fig}',spikeTimeData{chan,fig}']'*1000,...
-                [stimuliData{chan,fig}'-rpLineLength,stimuliData{chan,fig}'+rpLineLength]',...
+                [stimuliData{chan,fig}'-lineLength/2,stimuliData{chan,fig}'+lineLength/2]',...
                 'k','linewidth',linewidth)
             
         else % default is the 'dot' case
@@ -263,37 +313,22 @@ if(plotSpikeWaveforms == 1)
         for fig = waveformTypesPlot
             plotWaveformsStim(cds,neuronNumber,chan,fig,'timeAfterStimRawNoStim',timeAfterStimRawNoStim,'timeAfterStimRawArtifact',timeAfterStimRawArtifact,...
                 'makeFigure',1,'plotTitle',plotTitle,'title',titleToPlot,'stimElectrode',stimElectrode,'saveFigures',saveFigures,...
-                'figDir',figDir,'figPrefix',figPrefix);
+                'figDir',figDir,'figPrefix',figPrefix,'plotFiltered',plotWaveformFiltered,'maxWaveformsPlot',maxWavesPlot);
         end
     end
 end
 
 %% plot sample of artifacts with waveform and without waveform raw
 if(plotArtifacts)
-    if(numel(plotFiltered)==1)
-        for chan = chansPlot
-            for fig = waveformTypesPlot
-                plotArtifactsStim(cds,neuronNumber,chan,fig,'plotTitle',plotTitle,'title',titleToPlot,...
-                    'maxArtifactsPerPlot',maxArtifactsPerPlot,'timeAfterStim',timeAfterStimRawArtifact,...
-                    'rowSubplot',rowSubplotArtifact,'colSubplot',colSubplotArtifact,'plotFiltered',plotFiltered,...
-                    'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix);
-            end
-        end
-    else
-        for chan = chansPlot
-            for fig = waveformTypesPlot
-                plotArtifactsStim(cds,neuronNumber,chan,fig,'plotTitle',plotTitle,'title',titleToPlot,...
-                    'maxArtifactsPerPlot',maxArtifactsPerPlot,'timeAfterStim',timeAfterStimRawArtifact,...
-                    'rowSubplot',rowSubplotArtifact,'colSubplot',colSubplotArtifact,'plotFiltered',0,...
-                    'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix);
-            end
-        end
-        for chan = chansPlot
-            for fig = waveformTypesPlot
-                plotArtifactsStim(cds,neuronNumber,chan,fig,'plotTitle',plotTitle,'title',titleToPlot,...
-                    'maxArtifactsPerPlot',maxArtifactsPerPlot,'timeAfterStim',timeAfterStimRawArtifact,...
-                    'rowSubplot',rowSubplotArtifact,'colSubplot',colSubplotArtifact,'plotFiltered',1,...
-                    'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix);
+    for pAF = plotArtifactFiltered
+        if(pAF == 0 || pAF == 1)
+            for chan = chansPlot
+                for fig = waveformTypesPlot
+                    plotArtifactsStim(cds,neuronNumber,chan,fig,'plotTitle',plotTitle,'title',titleToPlot,...
+                        'maxArtifactsPerPlot',maxArtifactsPerPlot,'timeAfterStim',timeAfterStimRawArtifact,...
+                        'rowSubplot',rowSubplotArtifact,'colSubplot',colSubplotArtifact,'plotFiltered',plotArtifactFiltered,...
+                        'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix);
+                end
             end
         end
     end
