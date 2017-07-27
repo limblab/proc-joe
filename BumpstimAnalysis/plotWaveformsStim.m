@@ -17,6 +17,7 @@ adjustForResolution = 1;
 saveFigures = 0;
 figDir = '';
 figPrefix = '';
+plotFiltered = 0;
 
 for i = 1:2:size(varargin,2)
     switch varargin{i}
@@ -44,6 +45,8 @@ for i = 1:2:size(varargin,2)
             figDir = varargin{i+1};
         case 'figPrefix'
             figPrefix = varargin{i+1};
+        case 'plotFiltered'
+            plotFiltered = varargin{i+1};
     end
 end
 
@@ -84,9 +87,13 @@ waveIdx = find(spikeMask);
 waveIdx = datasample(waveIdx,min(maxWavesPlot,numel(waveIdx)),'Replace',false);
 if(numel(waveIdx) > 0)
     for wave = 1:numel(waveIdx)
-        rawIdx = getRawDataIdx(cds.units(neuronNumber).spikes.ts(waveIdx(wave)),cds.units(neuronNumber).chan,cds.rawData.ts,cds.rawData.elec);
-        if(rawIdx ~= -1)
-            wavesPlot = [wavesPlot;cds.rawData.waveforms(rawIdx,:)];
+        if(plotFiltered)
+            wavesPlot = [wavesPlot;cds.units(neuronNumber).spikes{waveIdx(wave),2:end}];
+        else
+            rawIdx = getRawDataIdx(cds.units(neuronNumber).spikes.ts(waveIdx(wave)),cds.units(neuronNumber).chan,cds.rawData.ts,cds.rawData.elec);
+            if(rawIdx ~= -1)
+                wavesPlot = [wavesPlot;cds.rawData.waveforms(rawIdx,:)];
+            end
         end
     end
     xDataWaves = ((1:size(wavesPlot,2))-1)/30; % in ms
@@ -129,9 +136,13 @@ waveIdx = find(spikeMask);
 waveIdx = datasample(waveIdx,min(maxWavesPlot,numel(waveIdx)),'Replace',false);
 if(numel(waveIdx) > 0)
     for wave = 1:min(maxWavesPlot,numel(waveIdx))
-        rawIdx = getRawDataIdx(cds.units(neuronNumber).spikes.ts(waveIdx(wave)),cds.units(neuronNumber).chan,cds.rawData.ts,cds.rawData.elec);
-        if(rawIdx ~= -1)
-            wavesPlot = [wavesPlot;cds.rawData.waveforms(rawIdx,:)];
+        if(plotFiltered)
+            wavesPlot = [wavesPlot;cds.units(neuronNumber).spikes{waveIdx(wave),2:end}];
+        else
+            rawIdx = getRawDataIdx(cds.units(neuronNumber).spikes.ts(waveIdx(wave)),cds.units(neuronNumber).chan,cds.rawData.ts,cds.rawData.elec);
+            if(rawIdx ~= -1)
+                wavesPlot = [wavesPlot;cds.rawData.waveforms(rawIdx,:)];
+            end
         end
     end
     xDataWaves = ((1:size(wavesPlot,2))-1)/30; % in ms
