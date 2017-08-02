@@ -339,36 +339,53 @@ function [outputFigures, outputData ] = processStimArtifactData(folderpath, inpu
         spikeChan = zeros(10000,1);    
         spikeNum = 1;
         disp('filtering and thresholding')
-        for ch = 2:size(cdsTempLFP,2)
-            
+        for ch = (1:size(cdsTempLFP,2)-1)      
+            stimData = [];
+            stimDataSizes = [];
             for stimIdx = 1:numel(artifactDataPre.stimOn)+1
-                stimData = [];
                 if(numel(artifactDataPre.stimOn) == 0)
-                    stimData = cdsTempLFP(:,2:end);
+                    stimDataTemp = cdsTempLFP(:,ch+1);
                 elseif(stimIdx == 1) % all data before first stim
-                    stimData = cdsTempLFP(1:artifactDataPre.stimOn(stimIdx),2:end);
+                    stimDataTemp = cdsTempLFP(1:artifactDataPre.stimOn(stimIdx),ch+1);
                 elseif(stimIdx == numel(artifactDataPre.stimOn) + 1) % all data after last stim
-                    stimData = cdsTempLFP(artifactDataPre.stimOn(stimIdx-1):end,2:end);
+                    stimDataTemp = cdsTempLFP(artifactDataPre.stimOn(stimIdx-1):end,ch+1);
     %                 % perform pca step
     %                 [coeff,score] = pca(stimData);
     %                 coeff(:,1:4) = 0;
     %                 stimData = coeff*score';
     %                 stimData = stimData';
-                    if(~inputData.templateSubtract)
-                        stimData(1:30*1,:) = 0; % blank the first millisecond
-                    end
+%                     if(~inputData.templateSubtract)
+%                         stimData(1:30*1,:) = 0; % blank the first millisecond
+%                     end
                 else % data before ith stim up to ith-1 
-                    stimData = cdsTempLFP(artifactDataPre.stimOn(stimIdx-1):artifactDataPre.stimOn(stimIdx),2:end);
+                    stimDataTemp = cdsTempLFP(artifactDataPre.stimOn(stimIdx-1):artifactDataPre.stimOn(stimIdx),ch+1);
                     % perform pca step
     %                 [coeff,score] = pca(stimData);
     %                 coeff(:,1:4) = 0;
     %                 stimData = coeff*score';
     %                 stimData = stimData';
-                    if(~inputData.templateSubtract)
-                        stimData(1:30*1,:) = 0; % blank the first millisecond
-                    end
+%                     if(~inputData.templateSubtract)
+%                         stimData(1:30*1,:) = 0; % blank the first millisecond
+%                     end
                 end
-            
+                
+                
+                % join stimDataTemp with stimData
+                stimDataTemp = stimDataTemp';
+                stimDataSizes(end+1,1) = size(stimDataTemp,2);
+                if(stimIdx == 1)
+                    stimData = stimDataTemp;
+                elseif(size(stimDataTemp,2) > size(stimData,2))
+                    
+                elseif(size(stimDataTemp,2) < size(stimData,2))
+                    numPad = size(stimData,2) - size(stimDataTemp,2);
+                    stimDataTemp(1,end+1:end+numPad) = mean(stimDataTemp(end-10:end));
+                    stimData(end+1,:) = stimDataTemp;
+                else
+                    stimData(end+1,:) = stimDataTemp;   
+                end
+                    
+            end
                 % filter backwards on all channels and threshold
                 stimDataTemp = [stimData(:,ch);mean(stimData(end-20:end,ch))*ones(numZeros,1)];
                 
