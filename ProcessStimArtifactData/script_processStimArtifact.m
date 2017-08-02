@@ -14,12 +14,20 @@ inputData.pWidth1=.0002;
 inputData.pWidth2=.0002;
 % functionName='processStimArtifactData';
 MERGE_FILES = 0;
+<<<<<<< HEAD
 inputData.templateSubtract = 1;
 inputData.templateSize = 99/1000;
 inputData.templateBlankPeriod = floor(0.4*30);
 inputData.artifactDataTime = 10; % in ms
 inputData.interpolateValue = 5;
 inputData.thresholdMult = 3;
+=======
+inputData.noSyncIntended = 0;
+inputData.templateSubtract = 1;
+inputData.templateSize = 99/1000;
+inputData.templateBlankPeriod = floor(0.6*30);
+inputData.artifactDataTime = 10; % in ms
+>>>>>>> c610ac4c1c60d716c65d53f5769cf2ab0b9f23fb
 %% generates _cds and _nevData files, also writes nev file
 cd(folderpath)
 fileList = dir('*.nev');
