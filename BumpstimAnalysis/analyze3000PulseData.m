@@ -1,6 +1,6 @@
 %% set file names 
 
-folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Mihili_20170717\';
+folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Mihili_20170721\';
 % folderpath = 'D:\Lab\Data\StimArtifact\Mihili\20170713_stimRecord\';
 % mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Mihili 12A3\Mihili Left PMd SN 6251-001460.cmp';
@@ -34,7 +34,7 @@ saveFigures = 0;
 
 
 %%
-nn = 99;
+nn = 106;
 plotWaveforms = 0;
 plotArtifacts = 0;
 plotRasterStim(cds,nn,'plotSpikeWaveforms',plotWaveforms,'plotArtifacts',plotArtifacts,'stimsPerTrain',1,...
@@ -69,20 +69,24 @@ nn = 80;
     'chans',[1:1:numel(unique(cds.waveforms.chanSent))],'waveformTypes',[1:1:numel(cds.waveforms.parameters)])
 
 %% plot artifacts
-nn = 112;
+nn = 37;
 
-plotArtifactsStim(cds,nn,1,1,'rowSubplot',4,'colSubplot',6,...
+plotArtifactsStim(cds,nn,1,1,'rowSubplot',2,'colSubplot',1,...
     'maxArtifactsPerPlot',4,'plotArtifactsSeparated',1,'plotTitle',0,...
-    'plotFiltered',1,'randomSample',1,'templateSubtract',1,'plotXRange',[1,300])
+    'plotFiltered',[0],'randomSample',0,'templateSubtract',1,'plotXRange',[1,300])
+
+plotArtifactsStim(cds,nn,1,1,'rowSubplot',2,'colSubplot',1,...
+    'maxArtifactsPerPlot',4,'plotArtifactsSeparated',1,'plotTitle',0,...
+    'plotFiltered',[1],'randomSample',0,'templateSubtract',1,'plotXRange',[1,300])
 
 %% plot PSTH
-nn=99;
+nn=112;
 saveFigures = 0;
 groups = {'all','responsive','nonResponsive'};
 plotPSTHStim(cds,nn,'binSize',0.2/1000,'makeFigure',1,'makeSubplots',0,'plotTitle',1,'waveformTypes',[1:1:numel(cds.waveforms.parameters)],...
-        'chans',[1:1:numel(unique(cds.waveforms.chanSent))],'preTime',10/1000,'postTime',60/1000,'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix,...
+        'chans',[1:1:numel(unique(cds.waveforms.chanSent))],'preTime',10/1000,'postTime',90/1000,'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix,...
         'plotLine',0,'plotAllOnOneFigure',0,'lineColor',{'k','r','b','g','m'},...
-        'plotStimuliGroup','all')
+        'plotStimuliGroup','responsive')
 
 %% whole array analysis
 
