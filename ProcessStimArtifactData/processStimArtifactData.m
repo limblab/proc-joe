@@ -31,11 +31,7 @@ function [outputFigures, outputData ] = processStimArtifactData(folderpath, inpu
     filterParams.a = aFilter;
     filterParams.order = 6;
     filterParams.type = 'high';
-<<<<<<< HEAD
 
-=======
-    thresholdMult = 3.5;
->>>>>>> c610ac4c1c60d716c65d53f5769cf2ab0b9f23fb
     % variables to store spike information   
     preOffset = 27;
     postOffset = 20;
@@ -344,11 +340,8 @@ function [outputFigures, outputData ] = processStimArtifactData(folderpath, inpu
         spikeNum = 1;
         disp('filtering and thresholding')
         for ch = (1:size(cdsTempLFP,2)-1)      
-<<<<<<< HEAD
             
             %% build stim data matrix for this channel
-=======
->>>>>>> c610ac4c1c60d716c65d53f5769cf2ab0b9f23fb
             stimData = [];
             stimDataSizes = [];
             for stimIdx = 1:numel(artifactDataPre.stimOn)+1
@@ -385,25 +378,17 @@ function [outputFigures, outputData ] = processStimArtifactData(folderpath, inpu
                 if(stimIdx == 1)
                     stimData = stimDataTemp;
                 elseif(size(stimDataTemp,2) > size(stimData,2))
-<<<<<<< HEAD
                     numPad = size(stimDataTemp,2) - size(stimData,2);
                     stimData(:,end+1:numPad) = mean(stimData(:,end-10:end),2);
                     stimData(end+1,:) = stimDataTemp;
                 elseif(size(stimDataTemp,2) < size(stimData,2))
                     numPad = size(stimData,2) - size(stimDataTemp,2);
                     stimDataTemp(1,end+1:end+numPad) = mean(stimDataTemp(1,end-10:end));
-=======
-                    
-                elseif(size(stimDataTemp,2) < size(stimData,2))
-                    numPad = size(stimData,2) - size(stimDataTemp,2);
-                    stimDataTemp(1,end+1:end+numPad) = mean(stimDataTemp(end-10:end));
->>>>>>> c610ac4c1c60d716c65d53f5769cf2ab0b9f23fb
                     stimData(end+1,:) = stimDataTemp;
                 else
                     stimData(end+1,:) = stimDataTemp;   
                 end
                     
-<<<<<<< HEAD
             end
             
             
@@ -492,32 +477,6 @@ function [outputFigures, outputData ] = processStimArtifactData(folderpath, inpu
                 stimData = stimDataAll(stimIdx,1:stimDataSizes(stimIdx));
                 stimData = stimData';           
                 %% get threshold and threshold crossings
-=======
-            end
-                % filter backwards on all channels and threshold
-                stimDataTemp = [stimData(:,ch);mean(stimData(end-20:end,ch))*ones(numZeros,1)];
-                
-                stimDataTemp = fliplr(filter(bFilter,aFilter,fliplr(stimDataTemp')))';
-                stimData(:,ch) = stimDataTemp(1:end-numZeros);
-                if(inputData.templateSubtract && stimIdx~=1)
-                    stimChan = find(unique(waveforms.chanSent) == waveforms.chanSent(stimIdx-1));
-                    if(size(stimData,1) > size(templateAll,3))
-                        stimData(1:templateSize,ch) = stimData(1:templateSize,ch) - squeeze(templateAll(stimChan,ch,:));
-                    end
-                end
-                if(inputData.templateSubtract && any(isfield(inputData,'templateBlankPeriod')))
-                    stimData(1:inputData.templateBlankPeriod,ch) = 0;
-                else
-                    stimData(1:30*1,ch) = 0;
-                end
-                threshold = thresholdMult*thresholdAll(ch);
-                if(threshold < 1)
-                    threshold = 100000;
-                end
-                
-                
-                %% get threshold crossings
->>>>>>> c610ac4c1c60d716c65d53f5769cf2ab0b9f23fb
 %                 threshold = abs(rms(stimData(max(1,numel(stimData(:,ch))-10):end,ch))*thresholdMult);
                 threshold = inputData.thresholdMult*thresholdAll(ch);
                 thresholdCrossings = find(stimData(:,1)>threshold);
@@ -527,17 +486,6 @@ function [outputFigures, outputData ] = processStimArtifactData(folderpath, inpu
                 for cross = 1:numel(thresholdCrossings)
                     if(stimData(thresholdCrossings(cross),1) > maxAmplitude || ...
                             ~(thresholdCrossings(cross)+postOffset <= numel(stimData(:,1)) && thresholdCrossings(cross)-preOffset > 0))
-                        crossingsMask(cross) = 0;
-                    end
-                end
-                thresholdCrossings = thresholdCrossings(crossingsMask(:) == 1);
-                
-                
-                % remove potential artifacts and too close to beginning
-                crossingsMask = ones(numel(thresholdCrossings),1);
-                for cross = 1:numel(thresholdCrossings)
-                    if(stimData(thresholdCrossings(cross),ch) > maxAmplitude || ...
-                            ~(thresholdCrossings(cross)+postOffset <= numel(stimData(:,ch)) && thresholdCrossings(cross)-preOffset > 0))
                         crossingsMask(cross) = 0;
                     end
                 end
