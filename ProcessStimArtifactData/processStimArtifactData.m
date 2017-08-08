@@ -31,7 +31,7 @@ function [outputFigures, outputData ] = processStimArtifactData(folderpath, inpu
     filterParams.a = aFilter;
     filterParams.order = 6;
     filterParams.type = 'high';
-
+    thresholdMult = 3.5;
     % variables to store spike information   
     preOffset = 27;
     postOffset = 20;
@@ -146,7 +146,6 @@ function [outputFigures, outputData ] = processStimArtifactData(folderpath, inpu
                 end
             end
         end
-        
         %% fix stim times if more than one pulse sent per wave
         if(inputData.moreThanOnePulsePerWave)
             stimOnTemp = [];
@@ -273,7 +272,7 @@ function [outputFigures, outputData ] = processStimArtifactData(folderpath, inpu
         end
         
         clear cdsTemp
-        %% use stim times to filter backwards
+
         % get template if applicable
         if(inputData.templateSubtract && exist(waveformFilename)~=0)
             % need to know stimulated channels
@@ -339,244 +338,133 @@ function [outputFigures, outputData ] = processStimArtifactData(folderpath, inpu
         spikeChan = zeros(10000,1);    
         spikeNum = 1;
         disp('filtering and thresholding')
-        channelsStimulated = unique(waveforms.chanSent);
-        for channelSent = 1:numel(channelsStimulated)
-            disp(num2str(channelSent))
-            for waveSent = 1:numel(waveforms.parameters)
-                disp(num2str(waveSent))
-                for ch = (1:size(cdsTempLFP,2)-1)      
-%                     ch=2;
-                    %% build stim data matrix for this channel
-                    stimData = [];
-                    stimDataSizes = [];
-                    for stimIdx = 1:numel(artifactDataPre.stimOn)+1
-                        if((stimIdx == 1 && channelSent == 1 && waveSent == 1) || ... 
-                                (stimIdx~=1 && waveforms.chanSent(stimIdx-1) == channelsStimulated(channelSent) && waveforms.waveSent(stimIdx-1) == waveSent))
-                            if(numel(artifactDataPre.stimOn) == 0)
-                                stimDataTemp = cdsTempLFP(:,ch+1);
-                            elseif(stimIdx == 1) % all data before first stim
-                                stimDataTemp = cdsTempLFP(1:artifactDataPre.stimOn(stimIdx),ch+1);
-                            elseif(stimIdx == numel(artifactDataPre.stimOn) + 1) % all data after last stim
-                                stimDataTemp = cdsTempLFP(artifactDataPre.stimOn(stimIdx-1):end,ch+1);
-                %                 % perform pca step
-                %                 [coeff,score] = pca(stimData);
-                %                 coeff(:,1:4) = 0;
-                %                 stimData = coeff*score';
-                %                 stimData = stimData';
-            %                     if(~inputData.templateSubtract)
-            %                         stimData(1:30*1,:) = 0; % blank the first millisecond
-            %                     end
-                            else % data before ith stim up to ith-1 
-                                stimDataTemp = cdsTempLFP(artifactDataPre.stimOn(stimIdx-1):artifactDataPre.stimOn(stimIdx),ch+1);
-                                % perform pca step
-                %                 [coeff,score] = pca(stimData);
-                %                 coeff(:,1:4) = 0;
-                %                 stimData = coeff*score';
-                %                 stimData = stimData';
-            %                     if(~inputData.templateSubtract)
-            %                         stimData(1:30*1,:) = 0; % blank the first millisecond
-            %                     end
-                            end
-
-                            % join stimDataTemp with stimData
-                            stimDataTemp = stimDataTemp';
-                            stimDataSizes(end+1,1) = size(stimDataTemp,2);
-                            if(stimIdx == 1 || isempty(stimData))
-                                stimData = stimDataTemp;
-                            elseif(size(stimDataTemp,2) > size(stimData,2))
-                                numPad = size(stimDataTemp,2) - size(stimData,2);
-                                for numPadIdx = 1:numPad
-                                    stimData(:,end+1) = mean(stimData(:,end-10:end),2);
-                                end
-                                stimData(end+1,:) = stimDataTemp;
-                            elseif(size(stimDataTemp,2) < size(stimData,2))
-                                numPad = size(stimData,2) - size(stimDataTemp,2);
-                                stimDataTemp(1,end+1:end+numPad) = mean(stimDataTemp(:,end-10:end));
-                                stimData(end+1,:) = stimDataTemp;
-                            else
-                                stimData(end+1,:) = stimDataTemp;   
-                            end
-                        end
+        for ch = 2:size(cdsTempLFP,2)
+            for stimIdx = 1:numel(artifactDataPre.stimOn)+1
+                stimData = [];
+                if(numel(artifactDataPre.stimOn) == 0)
+                    stimData = cdsTempLFP(:,2:end);
+                elseif(stimIdx == 1) % all data before first stim
+                    stimData = cdsTempLFP(1:artifactDataPre.stimOn(stimIdx),2:end);
+                elseif(stimIdx == numel(artifactDataPre.stimOn) + 1) % all data after last stim
+                    stimData = cdsTempLFP(artifactDataPre.stimOn(stimIdx-1):end,2:end);
+    %                 % perform pca step
+    %                 [coeff,score] = pca(stimData);
+    %                 coeff(:,1:4) = 0;
+    %                 stimData = coeff*score';
+    %                 stimData = stimData';
+                    if(~inputData.templateSubtract)
+                        stimData(1:30*1,:) = 0; % blank the first millisecond
                     end
-
-
-                    %% filter backwards for all stimulations on this channel
-                    stimDataPad = stimData;
-                    stimDataPad(:,end+1:end+numZeros) = repmat(mean(stimDataPad,2),1,numZeros);
-                    stimDataFilt = fliplr(filter(bFilter,aFilter,fliplr(stimDataPad)')');
-                    stimDataFilt = stimDataFilt(:,1:end-numZeros);
-                    clear stimDataPad
-                    clear stimData
-                    
-                    %% spline interpolate for all stimulations on this channel
-                    xFilt = 1:1:size(stimDataFilt,2);
-                    xQuery = 1:1/inputData.interpolateValue:size(stimDataFilt,2);
-                    stimDataSplined = zeros(size(stimDataFilt,1),inputData.artifactDataTime*30*inputData.interpolateValue + size(stimDataFilt,2) - inputData.artifactDataTime*30);
-                    for a = 1:size(stimDataFilt,1)
-                        splineTemp = spline(xFilt(1:inputData.artifactDataTime*30),stimDataFilt(a,1:inputData.artifactDataTime*30),xQuery(1:inputData.artifactDataTime*30*inputData.interpolateValue));
-                        stimDataSplined(a,:) = [splineTemp,stimDataFilt(a,inputData.artifactDataTime*30+1:end)];
+                else % data before ith stim up to ith-1 
+                    stimData = cdsTempLFP(artifactDataPre.stimOn(stimIdx-1):artifactDataPre.stimOn(stimIdx),2:end);
+                    % perform pca step
+    %                 [coeff,score] = pca(stimData);
+    %                 coeff(:,1:4) = 0;
+    %                 stimData = coeff*score';
+    %                 stimData = stimData';
+                    if(~inputData.templateSubtract)
+                        stimData(1:30*1,:) = 0; % blank the first millisecond
                     end
-                    clear stimDataFilt
-                    
-                    %% find template
-                    template = mean(stimDataSplined);
-
-                    %% shift in time
-                    resGain = inputData.interpolateValue;
-                    resBound = 5;
-                    stimDataShifted = stimDataSplined;
-                    clear stimDataSplined
-                    sse = [];
-                    shift = zeros(size(stimDataShifted,1),1);
-                    for w = 1:size(stimDataShifted,1)
-                        % test every possible shift value, pick best
-                        for shiftValue = (-resGain*resBound+1):1:(resGain*resBound)
-                            testWave = stimDataShifted(w,1:inputData.artifactDataTime*30*inputData.interpolateValue);
-                            testWave = circshift(testWave,shiftValue);
-                            if(shiftValue < 0)
-                                testWave(end+shiftValue:end) = 0;
-                            else
-                                testWave(1:shiftValue) = 0;
-                            end
-                            sse(shiftValue+resGain*resBound) = sum((testWave-template(1:numel(testWave))).^2);
-                        end
-                        sse(sse==0) = max(sse);
-                        [~,minIdx] = min(sse);
-                        shift(w) = minIdx-resGain*resBound;
-                        stimDataShifted(w,:) = circshift(stimDataShifted(w,:),shift(w));
-                        if(shift(w) < 0)
-                            stimDataShifted(end+shift(w):end) = 0;
+                end
+            
+                % filter backwards on all channels and threshold
+                stimDataTemp = [stimData(:,ch);mean(stimData(end-20:end,ch))*ones(numZeros,1)];
+                
+                stimDataTemp = fliplr(filter(bFilter,aFilter,fliplr(stimDataTemp')))';
+                stimData(:,ch) = stimDataTemp(1:end-numZeros);
+                if(inputData.templateSubtract && stimIdx~=1)
+                    stimChan = find(unique(waveforms.chanSent) == waveforms.chanSent(stimIdx-1));
+                    if(size(stimData,1) > size(templateAll,3))
+                        stimData(1:templateSize,ch) = stimData(1:templateSize,ch) - squeeze(templateAll(stimChan,ch,:));
+                    end
+                end
+                if(inputData.templateSubtract && any(isfield(inputData,'templateBlankPeriod')))
+                    stimData(1:inputData.templateBlankPeriod,ch) = 0;
+                else
+                    stimData(1:30*1,ch) = 0;
+                end
+                threshold = thresholdMult*thresholdAll(ch);
+                if(threshold < 1)
+                    threshold = 100000;
+                end
+                
+                
+                %% get threshold crossings
+%                 threshold = abs(rms(stimData(max(1,numel(stimData(:,ch))-10):end,ch))*thresholdMult);
+                thresholdCrossings = find(stimData(:,ch)>threshold);
+                
+                % remove potential artifacts and too close to beginning
+                crossingsMask = ones(numel(thresholdCrossings),1);
+                for cross = 1:numel(thresholdCrossings)
+                    if(stimData(thresholdCrossings(cross),ch) > maxAmplitude || ...
+                            ~(thresholdCrossings(cross)+postOffset <= numel(stimData(:,ch)) && thresholdCrossings(cross)-preOffset > 0))
+                        crossingsMask(cross) = 0;
+                    end
+                end
+                thresholdCrossings = thresholdCrossings(crossingsMask(:) == 1);
+                
+                
+                % remove chains -- find best spot
+                idx = 2;
+                chain = [1];
+                crossingsKeep = [];
+                while idx <= numel(thresholdCrossings)
+                    if(thresholdCrossings(idx) == thresholdCrossings(idx-1)+1) % store in chain
+                        chain = [chain;idx];
+                    elseif(~isempty(chain)) % broke a chain, store minidx, update idx, empty chain
+                        [~,maxIdx] = max(stimData(thresholdCrossings(chain)));
+%                         [~,maxIdx] = max(chain);
+                        if(isempty(crossingsKeep))
+                            crossingsKeep = [thresholdCrossings(maxIdx+chain(1)-1)];
                         else
-                            stimDataShifted(1:shift(w)) = 0;
+                            crossingsKeep = [crossingsKeep;thresholdCrossings(maxIdx+chain(1)-1)];
+                        end
+                        chain = [idx];
+                    end
+                    idx = idx+1;
+                end
+                if(numel(thresholdCrossings) > 0)
+                    thresholdCrossings = [crossingsKeep;thresholdCrossings(end)];
+                end
+                
+                % go through and weed out ones that are too close to each other
+                % prioritize backwards in time
+                crossingsMask = ones(numel(thresholdCrossings),1);
+                for cross = numel(thresholdCrossings):-1:2
+                    if(crossingsMask(cross) == 1) % check time beforehand to see if one is too close
+                        crossCheck = cross-1;
+                        while crossCheck >= 1 && thresholdCrossings(crossCheck) >= thresholdCrossings(cross) - max(preOffset,postOffset)
+                            crossingsMask(crossCheck) = 0;
+                            crossCheck = crossCheck-1;
                         end
                     end
-                    %% scale amplitude
-                    stimDataScaled = stimDataShifted;
-        %             clear stimDataShifted
-                    sse = [];
-                    scaleValues = (0.8:0.01:1.2)';
-                    for w = 1:size(stimDataScaled,1)
-                        % test every possible shift value, pick best
-                        testWave = scaleValues*stimDataScaled(w,1:inputData.artifactDataTime*30*inputData.interpolateValue);
-                        sse = sum((testWave-repmat(template(1,1:size(testWave,2)),size(testWave,1),1)).^2');
-                        [~,minIdx] = min(sse);
-                        scale(w) = scaleValues(minIdx);
-                        stimDataScaled(w,:) = scaleValues(minIdx)*stimDataScaled(w,:);
+                end  
+                thresholdCrossings = thresholdCrossings(crossingsMask(:) == 1);
+
+                % store thresholdCrossing data
+                for cross = 1:numel(thresholdCrossings)
+                    if(stimIdx == 1)
+                        spikeTimes(spikeNum) = (thresholdCrossings(cross) - 1)/30000; % this is in seconds
+                        
+                    else
+                        spikeTimes(spikeNum) = (artifactDataPre.stimOn(stimIdx-1) + thresholdCrossings(cross) - 1)/30000; % this is in secondss
+                        
                     end
-                    %% find template
-                    template = mean(stimDataScaled);
+                    spikeChan(spikeNum) = ch;
+                    spikeWaves(spikeNum,:) = stimData(thresholdCrossings(cross)-preOffset:thresholdCrossings(cross)+postOffset,ch);
+                    spikeNum = spikeNum + 1;
 
-                    %% subtract template
-                    stimDataAll = stimDataScaled - template;
-
-                    %% unscale
-                    try
-                        stimDataAll = stimDataAll./scale';
-                    catch
-                        disp('Warning: something minor happened');
+                    if(spikeNum > 0.67*numel(spikeTimes))
+                        spikeTimes = [spikeTimes;zeros(1000,1)];
+                        spikeWaves = [spikeWaves; zeros(1000,lengthWave)];
+                        spikeChan = [spikeChan; zeros(1000,1)];
                     end
-                    %% unshift
-                    for a = 1:size(stimDataAll,1)
-                        stimDataAll(w,:) = circshift(stimDataAll(w,:),-1*shift(w));
-                        if(-1*shift(w) < 0)
-                            stimDataAll(end+shift(w):end) = 0;
-                        else
-                            stimDataAll(1:shift(w)) = 0;
-                        end
-                    end
-
-                    %% downsample
-                    stimDataAll = [downsample(stimDataAll(:,1:inputData.artifactDataTime*30*inputData.interpolateValue)',inputData.interpolateValue)',stimDataAll(:,inputData.artifactDataTime*30*inputData.interpolateValue+1:end)];
-
-                    %% blank
-                    stimDataAll(:,1:inputData.templateBlankPeriod) = 0;
-
-                    %% for each stim idx
-                    stimDataIdx = 0;
-                    for stimIdx = 1:numel(artifactDataPre.stimOn)+1
-                        if((stimIdx == 1 && channelSent == 1 && waveSent == 1) || ... 
-                                (stimIdx~=1 && waveforms.chanSent(stimIdx-1) == channelsStimulated(channelSent) && waveforms.waveSent(stimIdx-1) == waveSent))
-                            stimDataIdx = stimDataIdx + 1;
-                            %% remove excess data from joining
-                            stimData = stimDataAll(stimDataIdx,1:stimDataSizes(stimDataIdx));
-                            stimData = stimData';           
-                            %% get threshold and threshold crossings
-            %                 threshold = abs(rms(stimData(max(1,numel(stimData(:,ch))-10):end,ch))*thresholdMult);
-                            threshold = inputData.thresholdMult*thresholdAll(ch);
-                            thresholdCrossings = find(stimData(:,1)>threshold);
-
-                            % remove potential artifacts and too close to beginning
-                            crossingsMask = ones(numel(thresholdCrossings),1);
-                            for cross = 1:numel(thresholdCrossings)
-                                if(stimData(thresholdCrossings(cross),1) > maxAmplitude || ...
-                                        ~(thresholdCrossings(cross)+postOffset <= numel(stimData(:,1)) && thresholdCrossings(cross)-preOffset > 0))
-                                    crossingsMask(cross) = 0;
-                                end
-                            end
-                            thresholdCrossings = thresholdCrossings(crossingsMask(:) == 1);
-
-
-                            % remove chains -- find best spot
-                            idx = 2;
-                            chain = [1];
-                            crossingsKeep = [];
-                            while idx <= numel(thresholdCrossings)
-                                if(thresholdCrossings(idx) == thresholdCrossings(idx-1)+1) % store in chain
-                                    chain = [chain;idx];
-                                elseif(~isempty(chain)) % broke a chain, store minidx, update idx, empty chain
-                                    [~,maxIdx] = max(stimData(thresholdCrossings(chain)));
-            %                         [~,maxIdx] = max(chain);
-                                    if(isempty(crossingsKeep))
-                                        crossingsKeep = [thresholdCrossings(maxIdx+chain(1)-1)];
-                                    else
-                                        crossingsKeep = [crossingsKeep;thresholdCrossings(maxIdx+chain(1)-1)];
-                                    end
-                                    chain = [idx];
-                                end
-                                idx = idx+1;
-                            end
-                            if(numel(thresholdCrossings) > 0)
-                                thresholdCrossings = [crossingsKeep;thresholdCrossings(end)];
-                            end
-
-                            % go through and weed out ones that are too close to each other
-                            % prioritize backwards in time
-                            crossingsMask = ones(numel(thresholdCrossings),1);
-                            for cross = numel(thresholdCrossings):-1:2
-                                if(crossingsMask(cross) == 1) % check time beforehand to see if one is too close
-                                    crossCheck = cross-1;
-                                    while crossCheck >= 1 && thresholdCrossings(crossCheck) >= thresholdCrossings(cross) - max(preOffset,postOffset)
-                                        crossingsMask(crossCheck) = 0;
-                                        crossCheck = crossCheck-1;
-                                    end
-                                end
-                            end  
-                            thresholdCrossings = thresholdCrossings(crossingsMask(:) == 1);
-
-                            % store thresholdCrossing data
-                            for cross = 1:numel(thresholdCrossings)
-                                if(stimIdx == 1)
-                                    spikeTimes(spikeNum) = (thresholdCrossings(cross) - 1)/30000; % this is in seconds
-
-                                else
-                                    spikeTimes(spikeNum) = (artifactDataPre.stimOn(stimIdx-1) + thresholdCrossings(cross) - 1)/30000; % this is in secondss
-
-                                end
-                                spikeChan(spikeNum) = ch;
-                                spikeWaves(spikeNum,:) = stimData(thresholdCrossings(cross)-preOffset:thresholdCrossings(cross)+postOffset,1);
-                                spikeNum = spikeNum + 1;
-
-                                if(spikeNum > 0.67*numel(spikeTimes))
-                                    spikeTimes = [spikeTimes;zeros(1000,1)];
-                                    spikeWaves = [spikeWaves; zeros(1000,lengthWave)];
-                                    spikeChan = [spikeChan; zeros(1000,1)];
-                                end
-                            end
-                        end
-                    end % stim idx for
-               end % end channel for
-            end
-        end
+                end
+                 
+                
+            end % end channel for
+        end % end stimOn for
+        
         % store spike data
         disp('storing data')
         spikeTimes = spikeTimes(1:spikeNum-1,1);
@@ -656,4 +544,3 @@ function [outputFigures, outputData ] = processStimArtifactData(folderpath, inpu
     save(strcat(fileList(1).name(1:end-4),'_cds.mat'),'cds','-v7.3');
     save(strcat(fileList(1).name(1:end-4),'_nevData.mat'),'nevData','-v7.3');
 end
-

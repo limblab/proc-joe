@@ -151,7 +151,7 @@ function [outputFigures, outputData ] = processStimArtifactData(folderpath, inpu
         if(inputData.moreThanOnePulsePerWave)
             stimOnTemp = [];
             for stimIdx = 1:numel(artifactDataPre.stimOn)
-                stimOnTemp = [stimOnTemp; artifactDataPre.stimOn(stimIdx) + 1/inputData.pulseFrequency*30000*(0:1:inputData.numPulses)'];
+                stimOnTemp = [stimOnTemp; artifactDataPre.stimOn(stimIdx) + 1/inputData.pulseFrequency*30000*(0:1:(inputData.numPulses-1))'];
             end
             artifactDataPre.stimOn = stimOnTemp;
             artifactDataPre.stimOff = artifactDataPre.stimOn + 2;

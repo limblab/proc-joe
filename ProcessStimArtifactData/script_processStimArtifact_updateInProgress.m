@@ -38,7 +38,7 @@ else
     endIndex = numel(fileList);
 end
 
-for f = 2:endIndex
+for f = 1:endIndex
     warning('off')
     inputData.stimsPerBump = 1;
     if(~MERGE_FILES)
@@ -52,7 +52,7 @@ for f = 2:endIndex
     inputData.lab=6;
     inputData.useSyncLabel=[];
 % dataStruct2 = runDataProcessing(functionName,folderpath,inputData)
-    processStimArtifactData(folderpath,inputData);
+    processStimArtifactData_updateInProgress(folderpath,inputData);
     
 end
 
