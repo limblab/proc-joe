@@ -14,10 +14,11 @@ inputData.pWidth1=.0002;
 inputData.pWidth2=.0002;
 % functionName='processStimArtifactData';
 MERGE_FILES = 0;
-inputData.templateSubtract = 1;
+inputData.templateSubtract = 1; % should always be 1, not sure what will happen if its not 1
+inputData.newTemplateSubtractionMethod = 1;
 inputData.templateSize = 9/1000;
-inputData.templateBlankPeriod = floor(0.4*30);
-inputData.artifactDataTime = 10; % in ms
+inputData.templateBlankPeriod = floor(0.1*30); % in points apparently
+inputData.artifactDataTime = 9; % in ms
 inputData.interpolateValue = 5;
 inputData.thresholdMult = 3;
 
