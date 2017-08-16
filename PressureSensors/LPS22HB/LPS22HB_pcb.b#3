@@ -159,6 +159,10 @@
 <wire x1="3.85" y1="5.4" x2="0" y2="5.4" width="0" layer="20"/>
 <wire x1="0" y1="5.4" x2="0" y2="0" width="0" layer="20"/>
 <text x="2.2" y="1.95" size="0.254" layer="22" rot="MR90">100nF</text>
+<wire x1="0.1" y1="5.3" x2="0.1" y2="0.1" width="0.15" layer="21"/>
+<wire x1="0.1" y1="0.1" x2="3.75" y2="0.1" width="0.15" layer="21"/>
+<wire x1="3.75" y1="0.1" x2="3.75" y2="5.3" width="0.15" layer="21"/>
+<wire x1="3.75" y1="5.3" x2="0.1" y2="5.3" width="0.15" layer="21"/>
 </plain>
 <libraries>
 <library name="wirepad_08-045">

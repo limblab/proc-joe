@@ -205,7 +205,7 @@ end
 
 function [] = plotStimDataArtifactStim(cds,artifactsPlot,artCount,neuronChan,rangeProvided,plotXRange,plotFiltered,bFilter,aFilter,templateSubtract,waveformsSentExist,figNum,chanList,chanNum)
 
-if(plotFiltered)
+if(plotFiltered && ~any(isfield(cds.artifactData,'artifactProcessed')))
     if(rangeProvided)
         stimData = squeeze(cds.artifactData.artifact(artifactsPlot(artCount),neuronChan,plotXRange(1):plotXRange(2)));
     else
@@ -237,6 +237,14 @@ if(plotFiltered)
 %     stimData = [stimData;zeros(200,1)];
 %     stimDataPlot = fliplr(filter(bFilter,aFilter,fliplr(stimData')))';
 %     plot((0:1:(numel(stimDataPlot)-201))/30,stimDataPlot(1:end-200))
+elseif(plotFiltered && any(isfield(cds.artifactData,'artifactProcessed')))
+    if(rangeProvided)
+        plot((0:1:(numel(squeeze(cds.artifactData.artifactProcessed(artifactsPlot(artCount),neuronChan,plotXRange(1):plotXRange(2))))-1))/30,...
+            squeeze(cds.artifactData.artifactProcessed(artifactsPlot(artCount),neuronChan,plotXRange(1):plotXRange(2)))/0.254)
+    else
+        plot((0:1:(numel(squeeze(cds.artifactData.artifactProcessed(artifactsPlot(artCount),neuronChan,:)))-1))/30,...
+            squeeze(cds.artifactData.artifactProcessed(artifactsPlot(artCount),neuronChan,:))/0.254)
+    end
 else    
     if(rangeProvided)
         plot((0:1:(numel(squeeze(cds.artifactData.artifact(artifactsPlot(artCount),neuronChan,plotXRange(1):plotXRange(2))))-1))/30,...

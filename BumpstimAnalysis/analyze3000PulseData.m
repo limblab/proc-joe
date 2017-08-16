@@ -1,6 +1,6 @@
 %% set file names 
 
-folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Mihili_20170721\';
+folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Mihili_20170811_bumpstim\';
 % folderpath = 'D:\Lab\Data\StimArtifact\Mihili\20170713_stimRecord\';
 % mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Mihili 12A3\Mihili Left PMd SN 6251-001460.cmp';
@@ -17,7 +17,7 @@ stimIdx = strfind(fileList(fileNumber).name,'stim');
 if(~isempty(chanIdx) && numel(chanIdx) == 1 && ~isempty(stimIdx) && numel(stimIdx) == 1)
     stimElectrode = str2num(fileList(fileNumber).name(chanIdx+4:stimIdx-1));
 else % manually input stim electrode
-    stimElectrode = -1;
+    stimElectrode = 57;
 end
 load(fileList(fileNumber).name);
 cd(pwd);
@@ -34,12 +34,12 @@ saveFigures = 0;
 
 
 %%
-nn = 106;
+nn = 42;
 plotWaveforms = 0;
-plotArtifacts = 0;
-plotRasterStim(cds,nn,'plotSpikeWaveforms',plotWaveforms,'plotArtifacts',plotArtifacts,'stimsPerTrain',1,...
+plotArtifacts = 1;
+plotRasterStim(cds,nn,'plotSpikeWaveforms',plotWaveforms,'plotArtifacts',plotArtifacts,'stimsPerTrain',10,...
     'waveformTypes',[1:1:numel(cds.waveforms.parameters)],'chans',[1:1:numel(unique(cds.waveforms.chanSent))],...
-    'preTime',20/1000,'postTime',60/1000,'timeAfterStimRawNoStim',20/1000,'timeAfterStimRawArtifact',5/1000,...
+    'preTime',20/1000,'postTime',80/1000,'timeAfterStimRawNoStim',20/1000,'timeAfterStimRawArtifact',5/1000,...
     'markerstyle','dot','linelength',1,'linewidth',1.5,...
     'makeFigure',1,'makeSubplots',0,'plotTitle',1,...        
     'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix,...

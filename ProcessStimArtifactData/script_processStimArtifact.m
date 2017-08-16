@@ -17,7 +17,7 @@ MERGE_FILES = 0;
 inputData.noSyncIntended = 0;
 inputData.templateSubtract = 1;
 inputData.templateSize = 99/1000;
-inputData.templateBlankPeriod = floor(0.6*30);
+inputData.templateBlankPeriod = floor(0.6*30); % in points apparently
 inputData.artifactDataTime = 10; % in ms
 
 inputData.moreThanOnePulsePerWave = 1;

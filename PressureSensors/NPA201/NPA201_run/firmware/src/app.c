@@ -64,10 +64,10 @@ int len, i = 0;
 int startTime = 0;
 
 // i2c data
-const int SENSOR_ADDRESS = 0x27;
+const int SENSOR_ADDRESS = 0b1011100;
 const int READ_DELAY = 25; // 20 ms is recommended
 const int READ_PRESSURE_DATA = 0xAC;
-
+const int WHO_AM_I = 0b00001111;
 float P;
 float T;
 float Pconv;
@@ -443,8 +443,17 @@ void APP_Tasks(void) {
             appData.isWriteComplete = false;
             appData.state = APP_STATE_WAIT_FOR_WRITE_COMPLETE;
 
+            rbuf[0] = i;
+            i2c_start();
+            i2c_send(SENSOR_ADDRESS << 1 | 0); // write
+            i2c_send(WHO_AM_I);
+            i2c_restart();
+            i2c_send(SENSOR_ADDRESS << 0 | 1); // read
             
-            
+            int out = i2c_recv();
+            //out = 1;
+            i2c_ack(1);
+            i2c_stop();
             /* get data from NPA 201 sensor*/
             /*i2c_start();
             i2c_send(SENSOR_ADDRESS << 1 & 0); // write command
@@ -483,7 +492,7 @@ void APP_Tasks(void) {
             */
             /* print out P, T, Pconv, and Tconv */
             //len = sprintf(dataOut, "%.5f %.5f %.5f %.5f\r\n", P,T,Pconv,Tconv);
-            len =sprintf(dataOut,"%d\r\n",i);
+            len =sprintf(dataOut,"%i\r\n",out);
             i++;
             if (appData.isReadComplete) {
                 USB_DEVICE_CDC_Write(USB_DEVICE_CDC_INDEX_0,
