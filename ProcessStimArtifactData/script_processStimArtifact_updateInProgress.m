@@ -1,6 +1,6 @@
 %% process stimulation artifacts:
 pwd = cd;
-folderpath= 'R:\data\Mihili_12A3\stimRecord\Mihili_20170808_bumpstim\';
+folderpath= 'R:\data\Mihili_12A3\stimRecord\Mihili_20170721_stimRecord\';
 inputData.mapFile='mapFileR:\limblab\lab_folder\Animal-Miscellany\Mihili 12A3\Mihili Left PMd SN 6251-001460.cmp'; % chips mapfile location
 % inputData.mapFile='mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 % inputData.mapFile='mapFileR:\limblab\lab_folder\Animal-Miscellany\Mihili 12A3\Mihili Left M1 SN 1025-001452.cmp';
@@ -22,7 +22,7 @@ inputData.artifactDataTime = 9; % in ms
 inputData.interpolateValue = 5;
 inputData.thresholdMult = 3;
 
-inputData.moreThanOnePulsePerWave = 1;
+inputData.moreThanOnePulsePerWave = 0;
 inputData.numPulses = 10;
 inputData.pulseFrequency = 100;
 
