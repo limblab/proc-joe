@@ -565,13 +565,6 @@
 <package name="VIA">
 <pad name="P$1" x="0" y="0" drill="0.5" diameter="0.8128"/>
 </package>
-<package name="LPPB051NFFN-RC">
-<pad name="P$1" x="0" y="0" drill="0.5"/>
-<pad name="P$2" x="-1.27" y="0" drill="0.5"/>
-<pad name="P$3" x="-2.54" y="0" drill="0.5"/>
-<pad name="P$4" x="-3.81" y="0" drill="0.5"/>
-<pad name="P$5" x="-5.08" y="0" drill="0.5"/>
-</package>
 </packages>
 <symbols>
 <symbol name="MIS-019-01-H-D">
@@ -769,17 +762,6 @@
 </symbol>
 <symbol name="VIA">
 <pin name="P$1" x="-5.08" y="0" length="middle"/>
-</symbol>
-<symbol name="LPPB051NFFN-RC">
-<pin name="P$1" x="-5.08" y="5.08" length="middle"/>
-<pin name="P$2" x="-5.08" y="2.54" length="middle"/>
-<pin name="P$3" x="-5.08" y="0" length="middle"/>
-<pin name="P$4" x="-5.08" y="-2.54" length="middle"/>
-<pin name="P$5" x="-5.08" y="-5.08" length="middle"/>
-<wire x1="-2.54" y1="7.62" x2="-2.54" y2="-7.62" width="0.254" layer="94"/>
-<wire x1="-2.54" y1="-7.62" x2="2.54" y2="-7.62" width="0.254" layer="94"/>
-<wire x1="2.54" y1="-7.62" x2="2.54" y2="7.62" width="0.254" layer="94"/>
-<wire x1="2.54" y1="7.62" x2="-2.54" y2="7.62" width="0.254" layer="94"/>
 </symbol>
 </symbols>
 <devicesets>
@@ -1034,25 +1016,6 @@
 <device name="" package="VIA">
 <connects>
 <connect gate="G$1" pin="P$1" pad="P$1"/>
-</connects>
-<technologies>
-<technology name=""/>
-</technologies>
-</device>
-</devices>
-</deviceset>
-<deviceset name="LPPB051NFFN-RC">
-<gates>
-<gate name="G$1" symbol="LPPB051NFFN-RC" x="0" y="0"/>
-</gates>
-<devices>
-<device name="" package="LPPB051NFFN-RC">
-<connects>
-<connect gate="G$1" pin="P$1" pad="P$1"/>
-<connect gate="G$1" pin="P$2" pad="P$2"/>
-<connect gate="G$1" pin="P$3" pad="P$3"/>
-<connect gate="G$1" pin="P$4" pad="P$4"/>
-<connect gate="G$1" pin="P$5" pad="P$5"/>
 </connects>
 <technologies>
 <technology name=""/>
