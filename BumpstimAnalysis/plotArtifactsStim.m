@@ -213,19 +213,19 @@ if(plotFiltered && ~any(isfield(cds.artifactData,'artifactProcessed')))
     end
     stimData = [stimData;mean(stimData(end-20:end))*ones(200,1)];
     stimData = fliplr(filter(bFilter,aFilter,fliplr(stimData')))';
-    if(templateSubtract)
-        templateIdx = [];
-        for a = 1:size(cds.stimOn,1)
-            if(((waveformsSentExist && cds.waveforms.waveSent(a) == figNum) || ~waveformsSentExist) && (~any(isfield(cds.waveforms,'chanSent')) || cds.waveforms.chanSent(a)==chanList(chanNum)))
-                templateIdx(end+1,1) = a;
-            end
-        end
-        templateData = squeeze(cds.artifactData.artifact(templateIdx,neuronChan,plotXRange(1):plotXRange(2)));
-        templateData = [templateData,mean(templateData(:,end-20:end),2).*ones(size(templateData,1),200)];
-        templateData = fliplr(filter(bFilter,aFilter,fliplr(templateData)')');
-        template = mean(templateData);
-        stimData(1:numel(template),1) = stimData(1:numel(template),1) - template';
-    end
+%     if(templateSubtract)
+%         templateIdx = [];
+%         for a = 1:size(cds.stimOn,1)
+%             if(((waveformsSentExist && cds.waveforms.waveSent(a) == figNum) || ~waveformsSentExist) && (~any(isfield(cds.waveforms,'chanSent')) || cds.waveforms.chanSent(a)==chanList(chanNum)))
+%                 templateIdx(end+1,1) = a;
+%             end
+%         end
+%         templateData = squeeze(cds.artifactData.artifact(templateIdx,neuronChan,plotXRange(1):plotXRange(2)));
+%         templateData = [templateData,mean(templateData(:,end-20:end),2).*ones(size(templateData,1),200)];
+%         templateData = fliplr(filter(bFilter,aFilter,fliplr(templateData)')');
+%         template = mean(templateData);
+%         stimData(1:numel(template),1) = stimData(1:numel(template),1) - template';
+%     end
     plot((0:1:(numel(stimData)-201))/30,stimData(1:end-200)/0.254)
 %     [coeff,score] = pca(squeeze(cds.artifactData.artifact(artifactsPlot(artCount),:,:))');
 %     coeff(:,1:4) = 0;

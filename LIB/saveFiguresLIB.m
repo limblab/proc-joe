@@ -1,4 +1,4 @@
-function [] = saveFiguresLab( figHandle, targetDirectory,filename )
+function [] = saveFiguresLIB( figHandle, targetDirectory,filename )
 % saves figHandle to targetDirectory/... as a PDF, EPS, FIG, and PNG
 
 % check if targetDirectory ends with filesep

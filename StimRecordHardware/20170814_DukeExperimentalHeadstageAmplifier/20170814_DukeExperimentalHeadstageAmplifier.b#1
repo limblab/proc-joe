@@ -568,9 +568,9 @@ Please make sure your boards conform to these design rules.</description>
 </polygon>
 <contactref element="HEADSTAGE" pad="35"/>
 <contactref element="HEADSTAGE" pad="34"/>
-<wire x1="37.299" y1="1.905" x2="37.299" y2="4.445" width="0.2032" layer="1"/>
-<wire x1="37.299" y1="4.445" x2="37.426" y2="4.572" width="0.2032" layer="1"/>
-<wire x1="37.426" y1="4.572" x2="40.347" y2="4.572" width="0.2032" layer="1"/>
+<wire x1="37.299" y1="1.905" x2="37.299" y2="5.08" width="0.2032" layer="1"/>
+<wire x1="37.299" y1="5.08" x2="37.426" y2="5.207" width="0.2032" layer="1"/>
+<wire x1="37.426" y1="5.207" x2="40.347" y2="4.572" width="0.2032" layer="1"/>
 <via x="40.347" y="4.572" extent="1-16" drill="0.35"/>
 <wire x1="40.347" y1="4.572" x2="36.156" y2="4.572" width="0.2032" layer="16"/>
 <wire x1="36.156" y1="4.572" x2="36.156" y2="2.921" width="0.2032" layer="16"/>
