@@ -2,6 +2,12 @@ function [ figHandle ] = plotRasterLIB(xData,yData,optsPlotInput,optsSaveInput)
 % takes in a set of data, plots that data with a bunch of parameters for
 % making plots pretty and whatnot, returns figure handle
 
+
+    %% deal with both sets of options
+
+    optsPlot = configureOptionsPlot(optsPlotInput,xData,yData);
+    optsSave = configureOptionsSave(optsSaveInput);
+    
     figHandle = '';
     %% reshape data to column vectors
     if(min(size(xData)) > 1 || min(size(yData))>1 || max(size(xData)) ~= max(size(yData)))
@@ -14,12 +20,6 @@ function [ figHandle ] = plotRasterLIB(xData,yData,optsPlotInput,optsSaveInput)
     if(~iscolumn(yData))
         yData = yData';
     end
-
-    %% deal with both sets of options
-
-    optsPlot = configureOptionsPlot(optsPlotInput,xData,yData);
-    optsSave = configureOptionsSave(optsSaveInput);
-    
 
     %% deal with making plot
     if(optsPlot.MAKE_FIGURE)
@@ -37,8 +37,12 @@ function [ figHandle ] = plotRasterLIB(xData,yData,optsPlotInput,optsSaveInput)
     end
 
     % deal with plot things
-    figHandle.CurrentAxes.XLim = optsPlot.X_LIMITS;
-    figHandle.CurrentAxes.YLim = optsPlot.Y_LIMITS;
+    if(strcmpi(optsPlot.X_LIMITS,'')~=1)
+        figHandle.CurrentAxes.XLim = optsPlot.X_LIMITS;
+    end
+    if(strcmpi(optsPlot.Y_LIMITS,'')~=1)
+        figHandle.CurrentAxes.YLim = optsPlot.Y_LIMITS;
+    end
     if(strcmpi(optsPlot.TITLE,'')~=1)
         title(optsPlot.TITLE);
     end
@@ -104,52 +108,16 @@ function [optsPlot] = configureOptionsPlot(optsPlotInput,xData,yData)
     optsPlot.MARKER_SIZE = 4;
     
     %% check if in optsPlot and optsPlotInput, overwrite if so
-    inputFieldnames = fieldnames(optsPlotInput);
-    for fn = 1:numel(inputFieldnames)
-       if(isfield(optsPlot,inputFieldnames{fn}))
-           optsPlot.(inputFieldnames{fn}) = optsPlotInput.(inputFieldnames{fn});
-       end
-    end
-    
-%     
-%     for o = 1:2:numel(optsPlotInput)
-%         switch optsPlotInput{o}
-%             case 'makeFigure'
-%                 optsPlot.MAKE_FIGURE = optsPlotInput{o+1};
-%             case 'XLabel'
-%                 optsPlot.X_LABEL = optsPlotInput{o+1};
-%             case 'YLabel'
-%                 optsPlot.Y_LABEL = optsPlotInput{o+1};
-%             case 'XLimits'
-%                 optsPlot.X_LIMITS = optsPlotInput{o+1};
-%             case 'YLimits'
-%                 optsPlot.Y_LIMITS = optsPlotInput{o+1};
-%             case 'XTick'
-%                 optsPlot.X_TICK = optsPlotInput{o+1};
-%             case 'YTick'
-%                 optsPlot.Y_TICK = optsPlotInput{o+1};
-%             case 'XMinorTick'
-%                 optsPlot.X_MINOR_TICK = optsPlotInput{o+1};
-%             case 'YMinorTick'
-%                 optsPlot.Y_MINOR_TICK = optsPlotInput{o+1};
-%             case 'XTickLabel'
-%                 optsPlot.XTickLabel = optsPlotInput{o+1};
-%             case 'YTickLabel'
-%                 optsPlot.YTickLabel = optsPlots{o+1}:
-%             case 'MarkerStyle'
-%                 optsPlot.MARKER_STYLE = optsPlotInput{o+1};
-%             case 'Title'
-%                 optsPlot.TITLE = optsPlotInput{o+1};
-%             case 'MarkerColor'
-%                 optsPlot.MARKER_COLOR = optsPlotInput{o+1};
-%             case 'MarkerSize'
-%                 optsPlot.MARKER_SIZE = optsPlotInput{o+1};
-%             case 'LineLength'
-%                 optsPlot.LINELENGTH = optsPlotInput{o+1};
-%             case 'LineWidth'
-%                 optsPlot.LINEWIDTH = optsPlotInput{o+1};
-%         end
-%     end
+     try
+        inputFieldnames = fieldnames(optsPlotInput);
+        for fn = 1:numel(inputFieldnames)
+           if(isfield(optsPlot,inputFieldnames{fn}))
+               optsPlot.(inputFieldnames{fn}) = optsPlotInput.(inputFieldnames{fn});
+           end
+        end
+     catch
+         % do nothing, [] was inputted which means use default setting
+     end
 end
 
 function [optsSave] = configureOptionsSave(optsSaveInput)
@@ -159,22 +127,14 @@ function [optsSave] = configureOptionsSave(optsSaveInput)
     optsSave.FIGURE_NAME = '';
 
     %% check if in optsSave and optsSaveInput, overwrite if so
-    inputFieldnames = fieldnames(optsSaveInput);
-    for fn = 1:numel(inputFieldnames)
-       if(isfield(optsSave,inputFieldnames{fn}))
-           optsSave.(inputFieldnames{fn}) = optsSaveInput.(inputFieldnames{fn});
-       end
+    try
+        inputFieldnames = fieldnames(optsSaveInput);
+        for fn = 1:numel(inputFieldnames)
+           if(isfield(optsSave,inputFieldnames{fn}))
+               optsSave.(inputFieldnames{fn}) = optsSaveInput.(inputFieldnames{fn});
+           end
+        end
+    catch
+        % do nothing, [] was inputted which means use default setting
     end
-    
-%     for o = 1:2:numel(optsSaveInput)
-%         switch optsSaveInput{o}
-%             case 'SaveFigure'
-%                 optsSave.FIGURE_SAVE = optsSaveInput{o+1};
-%             case 'FigureDirectory'
-%                 optsSave.FIGURE_DIR = optsSaveInput{o+1};
-%             case 'FigureName'
-%                optsSave.FIGURE_NAME = optsSaveInput{o+1};
-%         end
-%     end
-
 end

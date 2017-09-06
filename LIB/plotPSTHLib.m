@@ -108,13 +108,16 @@ function [optsPlot] = configureOptionsPlot(optsPlotInput,xData,yData)
     optsPlot.NUM_PLOTS = 1;
     optsPlot.WIDTH = 0.9;
     %% check if in optsPlot and optsPlotInput, overwrite if so
-    inputFieldnames = fieldnames(optsPlotInput);
-    for fn = 1:numel(inputFieldnames)
-       if(isfield(optsPlot,inputFieldnames{fn}))
-           optsPlot.(inputFieldnames{fn}) = optsPlotInput.(inputFieldnames{fn});
-       end
+    try
+        inputFieldnames = fieldnames(optsPlotInput);
+        for fn = 1:numel(inputFieldnames)
+           if(isfield(optsPlot,inputFieldnames{fn}))
+               optsPlot.(inputFieldnames{fn}) = optsPlotInput.(inputFieldnames{fn});
+           end
+        end
+    catch
+        % do nothing, [] was inputted which means use default setting
     end
-    
     
     if(~iscell(optsPlot.EDGE_COLOR))
         optsPlot.EDGE_COLOR = {optsPlot.EDGE_COLOR};
@@ -123,45 +126,6 @@ function [optsPlot] = configureOptionsPlot(optsPlotInput,xData,yData)
         optsPlot.FACE_COLOR = {optsPlot.FACE_COLOR};
     end
     
-%     
-%     for o = 1:2:numel(optsPlotInput)
-%         switch optsPlotInput{o}
-%             case 'makeFigure'
-%                 optsPlot.MAKE_FIGURE = optsPlotInput{o+1};
-%             case 'XLabel'
-%                 optsPlot.X_LABEL = optsPlotInput{o+1};
-%             case 'YLabel'
-%                 optsPlot.Y_LABEL = optsPlotInput{o+1};
-%             case 'XLimits'
-%                 optsPlot.X_LIMITS = optsPlotInput{o+1};
-%             case 'YLimits'
-%                 optsPlot.Y_LIMITS = optsPlotInput{o+1};
-%             case 'XTick'
-%                 optsPlot.X_TICK = optsPlotInput{o+1};
-%             case 'YTick'
-%                 optsPlot.Y_TICK = optsPlotInput{o+1};
-%             case 'XMinorTick'
-%                 optsPlot.X_MINOR_TICK = optsPlotInput{o+1};
-%             case 'YMinorTick'
-%                 optsPlot.Y_MINOR_TICK = optsPlotInput{o+1};
-%             case 'XTickLabel'
-%                 optsPlot.XTickLabel = optsPlotInput{o+1};
-%             case 'YTickLabel'
-%                 optsPlot.YTickLabel = optsPlots{o+1}:
-%             case 'MarkerStyle'
-%                 optsPlot.MARKER_STYLE = optsPlotInput{o+1};
-%             case 'Title'
-%                 optsPlot.TITLE = optsPlotInput{o+1};
-%             case 'MarkerColor'
-%                 optsPlot.MARKER_COLOR = optsPlotInput{o+1};
-%             case 'MarkerSize'
-%                 optsPlot.MARKER_SIZE = optsPlotInput{o+1};
-%             case 'LineLength'
-%                 optsPlot.LINELENGTH = optsPlotInput{o+1};
-%             case 'LineWidth'
-%                 optsPlot.LINEWIDTH = optsPlotInput{o+1};
-%         end
-%     end
 end
 
 function [optsSave] = configureOptionsSave(optsSaveInput)
@@ -171,22 +135,16 @@ function [optsSave] = configureOptionsSave(optsSaveInput)
     optsSave.FIGURE_NAME = '';
 
     %% check if in optsSave and optsSaveInput, overwrite if so
-    inputFieldnames = fieldnames(optsSaveInput);
-    for fn = 1:numel(inputFieldnames)
-       if(isfield(optsSave,inputFieldnames{fn}))
-           optsSave.(inputFieldnames{fn}) = optsSaveInput.(inputFieldnames{fn});
-       end
+    try
+        inputFieldnames = fieldnames(optsSaveInput);
+        for fn = 1:numel(inputFieldnames)
+           if(isfield(optsSave,inputFieldnames{fn}))
+               optsSave.(inputFieldnames{fn}) = optsSaveInput.(inputFieldnames{fn});
+           end
+        end
+    catch
+        % do nothing, [] was inputted which means use default setting
     end
-    
-%     for o = 1:2:numel(optsSaveInput)
-%         switch optsSaveInput{o}
-%             case 'SaveFigure'
-%                 optsSave.FIGURE_SAVE = optsSaveInput{o+1};
-%             case 'FigureDirectory'
-%                 optsSave.FIGURE_DIR = optsSaveInput{o+1};
-%             case 'FigureName'
-%                optsSave.FIGURE_NAME = optsSaveInput{o+1};
-%         end
-%     end
+end
 
 end
