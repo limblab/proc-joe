@@ -73,6 +73,15 @@ function [ figHandle ] = plotRasterLIB(xData,yData,optsPlotInput,optsSaveInput)
     if(strcmpi(optsPlot.Y_TICK_LABEL,'')~=1)
         set(gca,'YTickLabel',optsPlot.Y_TICK_LABEL);
     end
+    
+    % dividing lines if prompted
+    if(strcmpi(optsPlot.DIVIDING_LINES,'')~=1)
+        for idx = 1:numel(optsPlot.DIVIDING_LINES)
+            hold on
+            yVal = optsPlot.DIVIDING_LINES(idx);
+            plot([figHandle.CurrentAxes.XLim],[yVal, yVal],'-','Color',optsPlot.DIVIDING_LINES_COLORS{idx});
+        end
+    end
     % format for lee
     formatForLee(figHandle);
 
@@ -106,18 +115,32 @@ function [optsPlot] = configureOptionsPlot(optsPlotInput,xData,yData)
     optsPlot.MARKER_STYLE = '.';
     optsPlot.MARKER_COLOR = 'k';
     optsPlot.MARKER_SIZE = 4;
-    
+    optsPlot.DIVIDING_LINES = '';
+    optsPlot.DIVIDING_LINES_COLORS = '';
     %% check if in optsPlot and optsPlotInput, overwrite if so
-     try
+    try
         inputFieldnames = fieldnames(optsPlotInput);
         for fn = 1:numel(inputFieldnames)
            if(isfield(optsPlot,inputFieldnames{fn}))
                optsPlot.(inputFieldnames{fn}) = optsPlotInput.(inputFieldnames{fn});
            end
         end
-     catch
-         % do nothing, [] was inputted which means use default setting
-     end
+    catch
+     % do nothing, [] was inputted which means use default setting
+    end
+     
+    if(numel(optsPlot.DIVIDING_LINES) > numel(optsPlot.DIVIDING_LINES_COLORS))
+        diff = numel(optsPlot.DIVIDING_LINES) - optsPlot.DIVIDING_LINES_COLORS;
+        for d = 1:diff
+            optsPlot.DIVIDING_LINES_COLORS{end+1,1} = 'k';
+        end
+    elseif(iscell(optsPlot.DIVIDING_LINES) && ~iscell(optsPlot.DIVIDING_LINES_COLORS,'')==1)
+        diff = numel(optsPlot.DIVIDING_LINES);
+        for d = 1:diff
+            optsPlot.DIVIDING_LINES_COLORS{end+1,1} = 'k';
+        end
+    end
+    
 end
 
 function [optsSave] = configureOptionsSave(optsSaveInput)

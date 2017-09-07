@@ -34,7 +34,7 @@ saveFigures = 0;
 
 
 %%
-nn = 93;
+nn = 30;
 plotWaveforms = 0;
 plotArtifacts = 1;
 plotRasterStim(cds,nn,'plotSpikeWaveforms',plotWaveforms,'plotArtifacts',plotArtifacts,'stimsPerTrain',1,...

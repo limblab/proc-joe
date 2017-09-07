@@ -36,7 +36,8 @@ for chan = 1:numel(unique(cds.waveforms.chanSent))
 end
 %% 2. compare non-stim and stim trials to see response long-term (raster -- will need to be able to specify time window and center)
 neuronNumber = 93;
-optsTask.TRIAL_LIST = {'ctrHoldBump';'ctrHoldBumpStim'}; % set to trials used
+optsTask = [];
+% optsTask.TRIAL_LIST = {'ctrHoldBump';'ctrHoldBumpStim'}; % set to trials used
 optsPlot = [];
 optsSave = [];
 
