@@ -39,7 +39,7 @@ void loop()
 	Serial.print("P=");
 	Serial.print(lps22hb.readPressure());
 	Serial.print(" mbar, T=");
-	Serial.print(lps22hb.readTemperature());
+	Serial.print((lps22hb.readTemperature()-42.5f)*480.0f);
 	Serial.println("C");
 	delay(300);
 }

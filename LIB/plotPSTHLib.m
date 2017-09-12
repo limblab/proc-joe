@@ -146,5 +146,3 @@ function [optsSave] = configureOptionsSave(optsSaveInput)
         % do nothing, [] was inputted which means use default setting
     end
 end
-
-end

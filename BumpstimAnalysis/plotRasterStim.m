@@ -266,8 +266,8 @@ for chan = chansPlot
         
         % plot related information
         optsPlot.MAKE_FIGURE = 0;
-        optsPlot.X_LIMS = [-preTime*1000,postTime*1000];
-        optsPlot.Y_LIMS = [-3,max(stimuliData{chan,fig})+1];
+        optsPlot.X_LIMITS = [-preTime*1000,postTime*1000];
+        optsPlot.Y_LIMITS = [-3,max(stimuliData{chan,fig})+1];
         if(~waveformsSentExist || ~waveformsMakeSubplots || fig == numWaveformTypes)
             optsPlot.X_LABEL = 'Time after stimulation onset (ms)';
         else
