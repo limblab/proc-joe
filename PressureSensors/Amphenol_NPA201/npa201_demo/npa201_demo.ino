@@ -12,8 +12,6 @@ void setup() {
   digitalWrite(13, HIGH);        //switches sensor on
   Serial.begin(9600);  // start serial for output
   Wire.begin();
-  Serial.println("Amphenol Advanced Sensors");
-  Serial.println("Arduino NPA-201 Monitor");
 }
 
 
@@ -35,8 +33,8 @@ void NPA201ReadData()
   //Temperature_Value = TempData/65535 * (85+40) - 40   (°C)
   // additional calculations to make values reasonable based on accuracy
 
-  pressure =  (float) ((bb << 8) | cc) / 65535 * 1000 + 260;
-  pressure = round(pressure);
+  pressure =  (float) ((bb << 8) | cc) / 65535.0 * 1000.0 + 260;
+  //pressure = round(pressure);
 
   temperature =  (float) ((dd << 8) | ee) / 65535 * 125 - 40;
   temperature = round(temperature * 10);
@@ -47,8 +45,7 @@ void loop() {
   // put your main code here, to run repeatedly:
   NPA201ReadData();
   
-  Serial.print(int (pressure)); Serial.print("  "); Serial.print("hPa"); Serial.print("  ");
-  Serial.print(temperature); Serial.print("  "); Serial.println("C");
+  Serial.println((pressure));
 
-  delay(500);
+  delay(10);
 }

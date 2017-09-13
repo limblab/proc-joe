@@ -79,7 +79,9 @@ function [ figHandle ] = plotRasterLIB(xData,yData,optsPlotInput,optsSaveInput)
         for idx = 1:numel(optsPlot.DIVIDING_LINES)
             hold on
             yVal = optsPlot.DIVIDING_LINES(idx);
-            plot([figHandle.CurrentAxes.XLim],[yVal, yVal],'-','Color',optsPlot.DIVIDING_LINES_COLORS{idx});
+            plot([-10000,10000],[yVal, yVal],'-','Color',optsPlot.DIVIDING_LINES_COLORS{idx},'linewidth',2);
+            xlim([figHandle.CurrentAxes.XLim])
+            ylim([figHandle.CurrentAxes.YLim])
         end
     end
     % format for lee

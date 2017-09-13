@@ -35,18 +35,25 @@ for chan = 1:numel(unique(cds.waveforms.chanSent))
     end
 end
 %% 2. compare non-stim and stim trials to see response long-term (raster -- will need to be able to specify time window and center)
-neuronNumber = 93;
+neuronNumber = 11;
 optsTask = [];
-% optsTask.TRIAL_LIST = {'ctrHoldBump';'ctrHoldBumpStim'}; % set to trials used
+optsTask.TRIAL_LIST = {'ctrHoldBump','ctrHoldBumpStim'}; % set to trials used
+optsTask.ZERO_MARKER = 'bumpTime';
+optsTask.COMBINE = {'bumpDir'};
+optsTask.IGNORE = {'tgtDir'};
+optsTask.PLOT_STIM_TIME = 1;
+optsTask.STIM_PER_CODE = 10;
+optsTask.STIM_FREQ = 100;
 optsPlot = [];
 optsSave = [];
 
 plotRasterBumpstim(cds,neuronNumber,optsTask,optsPlot,optsSave);
 % across entire trial
+
 %% 3. same as above as a PSTH/line PSTH. 
 
-neuronNumber = 101;
-optsTask.TRIAL_LIST = {'ctrHoldBump';'ctrHoldBumpStim'}; % set to trials used
+neuronNumber = 11;
+optsTask.TRIAL_LIST = {'noBump'}; % set to trials used
 optsPlot = [];
 optsSave = [];
 

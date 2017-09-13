@@ -34,8 +34,8 @@ saveFigures = 0;
 
 
 %%
-nn = 28;
-plotWaveforms = 1;
+nn = 11;
+plotWaveforms = 0;
 plotArtifacts = 0;
 plotRasterStim(cds,nn,'plotSpikeWaveforms',plotWaveforms,'plotArtifacts',plotArtifacts,'stimsPerTrain',10,...
     'waveformTypes',[1:1:numel(unique(cds.waveforms.waveSent))],'chans',[1:1:numel(unique(cds.waveforms.chanSent))],...
