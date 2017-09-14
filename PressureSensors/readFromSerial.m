@@ -17,7 +17,7 @@ try
         if(~ishandle(h))
             continue;
         end
-        plot(yData)
+        plot(yData,'k','linewidth',3)
         ylim([950,1300])
         drawnow
     end
