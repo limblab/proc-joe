@@ -84,6 +84,17 @@ function [ figHandle ] = plotRasterLIB(xData,yData,optsPlotInput,optsSaveInput)
             ylim([figHandle.CurrentAxes.YLim])
         end
     end
+    
+    % plot stim times if prompted
+    if(optsPlot.PLOT_STIM_TIME == 1 && ~isempty(optsPlot.STIM_DATA_X) && ~isempty(optsPlot.STIM_DATA_Y))
+        if(strcmpi(optsPlot.MARKER_STYLE,'line')==0) % normal plot routine
+            plot(optsPlot.STIM_DATA_X,optsPlot.STIM_DATA_Y,'.','marker',optsPlot.MARKER_STYLE,'color',optsPlot.STIM_DATA_COLOR,'markersize',optsPlot.MARKER_SIZE);
+        else % plot as vertical lines
+            plot([optsPlot.STIM_DATA_X,optsPlot.STIM_DATA_X],...
+                [optsPlot.STIM_DATA_Y-0.5,optsPlot.STIM_DATA_Y+0.5],...
+                optsPlot.STIM_DATA_COLOR,'linewidth',optsPlot.LINE_WIDTH)
+        end
+    end
     % format for lee
     formatForLee(figHandle);
 
@@ -114,11 +125,17 @@ function [optsPlot] = configureOptionsPlot(optsPlotInput,xData,yData)
     optsPlot.Y_TICK_LABEL = '';
     optsPlot.LINE_STYLE = '';
     optsPlot.TITLE = '';
+    optsPlot.LINE_WIDTH = 1;
     optsPlot.MARKER_STYLE = '.';
     optsPlot.MARKER_COLOR = 'k';
     optsPlot.MARKER_SIZE = 4;
     optsPlot.DIVIDING_LINES = '';
     optsPlot.DIVIDING_LINES_COLORS = '';
+    optsPlot.PLOT_STIM_TIME = 0;
+    optsPlot.STIM_DATA_X = [];
+    optsPlot.STIM_DATA_Y = [];
+    optsPlot.STIM_DATA_COLOR = 'r';
+    
     %% check if in optsPlot and optsPlotInput, overwrite if so
     try
         inputFieldnames = fieldnames(optsPlotInput);

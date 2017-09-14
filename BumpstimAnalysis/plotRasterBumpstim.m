@@ -8,10 +8,7 @@ function [ figureHandle ] = plotRasterBumpstim( cds,neuronNumber,optsTaskInput,o
     optsTask = configureOptionsTask(optsTaskInput,cds);
     
     figureHandle = '';
-    if(isfield(cds,'stimOn'))
-        optsPlot.STIM_DATA_X = zeros(numel(cds.stimOn),1);
-        optsPlot.STIM_DATA_Y = zeros(numel(cds.stimOn),1);
-    end
+    
     
     %% set nan's in cds.trials.stimCode to -1 and bumpDir
     cds.trials.stimCode(isnan(cds.trials.stimCode)) = -1;
@@ -30,7 +27,12 @@ function [ figureHandle ] = plotRasterBumpstim( cds,neuronNumber,optsTaskInput,o
     %% extract data
     spikeTimeData = cell(numel(optsTask.TRIAL_LIST),numel(optsTask.TARGET_DIRECTIONS),numel(optsTask.BUMP_DIRECTIONS),numel(optsTask.STIM_CODE));
     trialCounter = zeros(numel(optsTask.TRIAL_LIST),numel(optsTask.TARGET_DIRECTIONS),numel(optsTask.BUMP_DIRECTIONS),numel(optsTask.STIM_CODE));
+    if(isfield(cds,'stimOn'))
+        stimData = cell(numel(optsTask.TRIAL_LIST),numel(optsTask.TARGET_DIRECTIONS),numel(optsTask.BUMP_DIRECTIONS),numel(optsTask.STIM_CODE));
+    end
     
+    stimIdxStart = 1;
+    stimIdxEnd = 100;
     for trialNum = 1:size(cds.trials,1)
         if(cds.trials.result(trialNum) == 'R' && ~isnan(cds.trials.tgtOnTime(trialNum)) && ~isnan(cds.trials.movePeriod(trialNum))) % if a reward trial and not a corrupted trial
             taskString = '';
@@ -68,7 +70,20 @@ function [ figureHandle ] = plotRasterBumpstim( cds,neuronNumber,optsTaskInput,o
                 end  
                 
                 % populate stim times if available
-                if(cds.trials.stimCode ~= -1) 
+                if(cds.trials.stimCode(trialNum) ~= -1) 
+                    % for each stim on time, if its within trial start and end
+                    % time, store it
+
+                    for stimIdx = stimIdxStart:min(numel(cds.stimOn),stimIdxEnd)
+                        if(cds.stimOn(stimIdx) > cds.trials.startTime(trialNum) && cds.stimOn(stimIdx) < cds.trials.endTime(trialNum))
+                            stimData{cellIdx(1),cellIdx(2),cellIdx(3),cellIdx(4)}(end+1,1) = cds.stimOn(stimIdx) - cds.trials.(optsTask.ZERO_MARKER)(trialNum);
+                            stimData{cellIdx(1),cellIdx(2),cellIdx(3),cellIdx(4)}(end,2) = trialCounter(cellIdx(1),cellIdx(2),cellIdx(3),cellIdx(4));
+                            stimIdxStart = stimIdx;
+                            stimIdxEnd = stimIdxStart + 100;
+                        end
+                    end
+                    
+                end
             end
         end
     end
@@ -81,6 +96,7 @@ function [ figureHandle ] = plotRasterBumpstim( cds,neuronNumber,optsTaskInput,o
                     if(trialCounter(trialList,tgtDir,bumpDir,stimCode) < 3)
                         trialCounter(trialList,tgtDir,bumpDir,stimCode) = 0;
                         spikeTimeData{trialList,tgtDir,bumpDir,stimCode} = [];
+                        stimData{trialList,tgtDir,bumpDir,stimCode} = [];   
                     end
                 end
             end
@@ -93,7 +109,8 @@ function [ figureHandle ] = plotRasterBumpstim( cds,neuronNumber,optsTaskInput,o
             case 'tgtDir'
                 combineData = cell(numel(optsTask.TRIAL_LIST),1,numel(optsTask.BUMP_DIRECTIONS),numel(optsTask.STIM_CODE));
                 spikeTimeDataTemp = cell(numel(optsTask.TRIAL_LIST),1,numel(optsTask.BUMP_DIRECTIONS),numel(optsTask.STIM_CODE));
-
+                stimDataTemp = cell(numel(optsTask.TRIAL_LIST),1,numel(optsTask.BUMP_DIRECTIONS),numel(optsTask.STIM_CODE));
+                
                 for trialList = 1:numel(optsTask.TRIAL_LIST)
                     for bumpDir = 1:numel(optsTask.BUMP_DIRECTIONS)
                         for stimCode = 1:numel(optsTask.STIM_CODE)
@@ -106,6 +123,13 @@ function [ figureHandle ] = plotRasterBumpstim( cds,neuronNumber,optsTaskInput,o
                                     else
                                          spikeTimeDataTemp{trialList,1,bumpDir,stimCode} = spikeTimeData{trialList,tgtDir,bumpDir,stimCode}(:,:);
                                     end
+                                    
+                                    if(~isempty(stimDataTemp{trialList,1,bumpDir,stimCode}))
+                                        stimDataTemp{trialList,1,bumpDir,stimCode} = [stimDataTemp{trialList,1,bumpDir,stimCode};...
+                                            stimData{trialList,tgtDir,bumpDir,stimCode}(:,1),stimData{trialList,tgtDir,bumpDir,stimCode}(:,2)+stimDataTemp{trialList,1,bumpDir,stimCode}(end,2)];
+                                    else
+                                        stimDataTemp{trialList,1,bumpDir,stimCode} = stimData{trialList,tgtDir,bumpDir,stimCode}(:,:);
+                                    end
                                 end
                             end
                         end
@@ -113,11 +137,15 @@ function [ figureHandle ] = plotRasterBumpstim( cds,neuronNumber,optsTaskInput,o
                 end
 
                 spikeTimeData = spikeTimeDataTemp;
+                stimData = stimDataTemp;
                 clear spikeTimeDataTemp;
+                clear stimDataTemp;
+                
             case 'bumpDir'
                 combineData = cell(numel(optsTask.TRIAL_LIST),numel(optsTask.TARGET_DIRECTIONS),1,numel(optsTask.STIM_CODE));
                 spikeTimeDataTemp = cell(numel(optsTask.TRIAL_LIST),numel(optsTask.TARGET_DIRECTIONS),1,numel(optsTask.STIM_CODE));
-
+                stimDataTemp = cell(numel(optsTask.TRIAL_LIST),numel(optsTask.TARGET_DIRECTIONS),1,numel(optsTask.STIM_CODE));
+                
                 for trialList = 1:numel(optsTask.TRIAL_LIST)
                     for tgtDir = 1:numel(optsTask.TARGET_DIRECTIONS)
                         for stimCode = 1:numel(optsTask.STIM_CODE)
@@ -130,6 +158,12 @@ function [ figureHandle ] = plotRasterBumpstim( cds,neuronNumber,optsTaskInput,o
                                     else
                                          spikeTimeDataTemp{trialList,tgtDir,1,stimCode} = spikeTimeData{trialList,tgtDir,bumpDir,stimCode}(:,:);
                                     end
+                                    if(~isempty(stimDataTemp{trialList,tgtDir,1,stimCode}))
+                                        stimDataTemp{trialList,tgtDir,1,stimCode} = [stimDataTemp{trialList,tgtDir,1,stimCode};...
+                                            stimData{trialList,tgtDir,bumpDir,stimCode}(:,1),stimData{trialList,tgtDir,bumpDir,stimCode}(:,2)+stimDataTemp{trialList,tgtDir,1,stimCode}(end,2)];
+                                    else
+                                        stimDataTemp{trialList,tgtDir,1,stimCode} = stimData{trialList,tgtDir,bumpDir,stimCode}(:,:);
+                                    end
                                 end
                             end
                         end
@@ -137,7 +171,9 @@ function [ figureHandle ] = plotRasterBumpstim( cds,neuronNumber,optsTaskInput,o
                 end
 
                 spikeTimeData = spikeTimeDataTemp;
+                stimData = stimDataTemp;
                 clear spikeTimeDataTemp
+                clear stimDataTemp;
         end
     end
 %     spikeTimeData = cell(numel(optsTask.TRIAL_LIST),numel(optsTask.TARGET_DIRECTIONS),numel(optsTask.BUMP_DIRECTIONS),numel(optsTask.STIM_CODE));
@@ -161,9 +197,14 @@ function [ figureHandle ] = plotRasterBumpstim( cds,neuronNumber,optsTaskInput,o
                         % if plot stim times and stim code is ~= -1, put
                         % stim times into optsPlot. Sort in time for each
                         % grouping
-                        if(optsTask.PLOT_STIM_TIME && optsTask.STIM_CODE ~= -1)
+                        if(optsTask.PLOT_STIM_TIME && optsTask.STIM_CODE(stimCode) ~= -1)
+                            optsPlot.PLOT_STIM_TIME = 1;
+                            optsPlot.STIM_DATA_X = stimData{trial,tgtDir,bumpDir,stimCode}(:,1);
+                            optsPlot.STIM_DATA_Y = stimData{trial,tgtDir,bumpDir,stimCode}(:,2);
                             
-                             
+                            % sort trials within a combined group by
+                            % initial stim time
+                            
                             
                         end
                         

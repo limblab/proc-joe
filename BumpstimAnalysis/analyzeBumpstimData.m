@@ -41,9 +41,8 @@ optsTask.TRIAL_LIST = {'ctrHoldBump','ctrHoldBumpStim'}; % set to trials used
 optsTask.ZERO_MARKER = 'bumpTime';
 optsTask.COMBINE = {'bumpDir'};
 optsTask.IGNORE = {'tgtDir'};
-optsTask.PLOT_STIM_TIME = 1;
-optsTask.STIM_PER_CODE = 10;
-optsTask.STIM_FREQ = 100;
+optsTask.PLOT_STIM_TIME = 0;
+
 optsPlot = [];
 optsSave = [];
 
