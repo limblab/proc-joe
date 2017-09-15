@@ -202,35 +202,62 @@ function [ figureHandle ] = plotRasterBumpstim( cds,neuronNumber,optsTaskInput,o
                             optsPlot.STIM_DATA_X = stimData{trial,tgtDir,bumpDir,stimCode}(:,1);
                             optsPlot.STIM_DATA_Y = stimData{trial,tgtDir,bumpDir,stimCode}(:,2);
                             
-                            % sort trials within a combined group by
-                            % initial stim time
+                            % only plot 1st stimulation time
+                            [optsPlot.STIM_DATA_Y,xIdx,~] = unique(optsPlot.STIM_DATA_Y,'first');
+                            optsPlot.STIM_DATA_X = optsPlot.STIM_DATA_X(xIdx);
                             
-                            
+                            %% sort trials within a combined group by
+                            if(~isempty(optsTask.COMBINE))
+                                combineMarkers = combineData{trial,tgtDir,bumpDir,stimCode};
+                            else
+                                combineMarkers = [];
+                            end
+                            for cMark = 1:numel(combineMarkers)+1
+                                % initial stim time (stim_data_y)
+                                if(cMark == 1 && isempty(combineMarkers))
+                                    [optsPlot.STIM_DATA_X,sortIdx] = sort(optsPlot.STIM_DATA_X);
+                                    offset = 0;
+                                elseif(cMark == 1)
+                                    [optsPlot.STIM_DATA_X(1:combineMarkers(1)-1),sortIdx] = sort(optsPlot.STIM_DATA_X(1:combineMarkers(1)-1));
+                                    offset = 0;
+                                elseif(cMark == numel(combineMarkers) + 1)
+                                    [optsPlot.STIM_DATA_X(combineMarkers(cMark-1):end),sortIdx] = sort(optsPlot.STIM_DATA_X(combineMarkers(cMark-1):end));
+                                    offset = combineMarkers(cMark-1);
+                                else
+                                    [optsPlot.STIM_DATA_X(combineMarkers(cMark-1):combineMarkers(cMark)-1),sortIdx] = sort(optsPlot.STIM_DATA_X(combineMarkers(cMark-1):combineMarkers(cMark)-1));
+                                    offset = combineMarkers(cMark-1);
+                                end
+                                % sort yData according to sortIdx
+                                yDataTemp = yData;
+                                for idx = 1:max(sortIdx)
+                                    yDataTemp(yData==idx+offset) = sortIdx(idx)+offset;
+                                end
+                                yData = yDataTemp;
+                            end
+                                    
                         end
                         
                         % if x limit is not specified, come up with one
                         % based on task start and end time
-                        if(strcmpi(optsPlot.X_LIMITS,'')==1)
-                            trialMask = cds.trials.result == 'R' & ~isnan(cds.trials.tgtOnTime) & ~isnan(cds.trials.movePeriod) & ~isnan(cds.trials.(optsTask.ZERO_MARKER));
-                            trialLengths = cds.trials.endTime(trialMask) - cds.trials.startTime(trialMask);
-                            [~,minTrialIdx] = min(trialLengths);
-                            temp = find(trialMask); minTrialIdx = temp(minTrialIdx);
-                            xlimits(1,1) = cds.trials.startTime(minTrialIdx) - cds.trials.(optsTask.ZERO_MARKER)(minTrialIdx);
-                            xlimits(1,2) = cds.trials.endTime(minTrialIdx) - cds.trials.(optsTask.ZERO_MARKER)(minTrialIdx);
-                            % round xlimits and expand a bit
-                            xlimits = round(xlimits,1);
-                            xlimits = [xlimits(1,1)-0.2,xlimits(1,2)+0.2];
-                            optsPlot.X_LIMITS = xlimits;
-                        end
+                        trialMask = cds.trials.result == 'R' & ~isnan(cds.trials.tgtOnTime) & ~isnan(cds.trials.movePeriod) & ~isnan(cds.trials.(optsTask.ZERO_MARKER));
+                        trialLengths = cds.trials.endTime(trialMask) - cds.trials.startTime(trialMask);
+                        [~,minTrialIdx] = min(trialLengths);
+                        temp = find(trialMask); minTrialIdx = temp(minTrialIdx);
+                        xlimits(1,1) = cds.trials.startTime(minTrialIdx) - cds.trials.(optsTask.ZERO_MARKER)(minTrialIdx);
+                        xlimits(1,2) = cds.trials.endTime(minTrialIdx) - cds.trials.(optsTask.ZERO_MARKER)(minTrialIdx);
+                        % round xlimits and expand a bit
+                        xlimits = round(xlimits,1);
+                        xlimits = [xlimits(1,1)-0.2,xlimits(1,2)+0.2];
+                        optsPlot.X_LIMITS = xlimits;
                         
                         % if y limit is not specified, come up with one
                         % based on the dimensions of yData
-                        if(strcmpi(optsPlot.Y_LIMITS,'')==1)
-                            ylimits(1,1) = -0.8;
-                            ylimits(1,2) = max(yData) + 0.8;
-                            optsPlot.Y_LIMITS = ylimits;
-                        end
+                        ylimits(1,1) = -0.8;
+                        ylimits(1,2) = max(yData) + 0.8;
+                        optsPlot.Y_LIMITS = ylimits;
+                        
                         plotRasterLIB(xData,yData,optsPlot,optsSave);
+                        
                     end
                 end
             end

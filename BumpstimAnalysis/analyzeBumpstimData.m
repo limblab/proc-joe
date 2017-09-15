@@ -1,7 +1,7 @@
 %% set file names 
 
-folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_20170614_bumpstim\';
-% folderpath = 'D:\Lab\Data\StimArtifact\Mihili\20170713_stimRecord\';
+% folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_20170614_bumpstim\';
+folderpath = 'D:\Lab\Data\StimArtifact\Han\bumpstim\20170614\';
 % mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Mihili 12A3\Mihili Left PMd SN 6251-001460.cmp';
 % mapFileName = 'C:\Users\Joseph\Desktop\Mihili Left PMd SN 6251-001460.cmp';
@@ -51,11 +51,16 @@ plotRasterBumpstim(cds,neuronNumber,optsTask,optsPlot,optsSave);
 
 %% 3. same as above as a PSTH/line PSTH. 
 
-neuronNumber = 11;
-optsTask.TRIAL_LIST = {'noBump'}; % set to trials used
-optsPlot = [];
-optsSave = [];
+%% need to fix the combine statement, and the binning
 
-plotRasterBumpstim(cds,neuronNumber,optsTask,optsPlot,optsSave);
+neuronNumber = 11;
+optsTask.TRIAL_LIST = {'ctrHoldBump'}; % set to trials used
+optsTask.ZERO_MARKER = 'bumpTime';
+optsTask.COMBINE = {'bumpDir'};
+optsTask.IGNORE = {'tgtDir'};
+optsTask.BIN_SIZE = 20/1000;
+
+optsSave = [];
+plotPSTHBumpstim(cds,neuronNumber,optsTask,optsPlot,optsSave);
 % 4. assess ability to record directly after stimluation
 

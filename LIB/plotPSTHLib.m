@@ -1,8 +1,9 @@
-function [ figHandle ] = plotPSTHLib(xData,yData,optsPlotInput,optsSaveInput)
+function [ figHandle ] = plotPSTHLIB(xData,yData,optsPlotInput,optsSaveInput)
 % takes in a set of data, plots that data with a bunch of parameters for
 % making plots pretty and whatnot, returns figure handle
 % data is a column vector
 
+% data comes in as histogram data
     figHandle = '';
     %% deal with both sets of options
     optsPlot = configureOptionsPlot(optsPlotInput,xData,yData);

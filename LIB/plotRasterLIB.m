@@ -37,12 +37,6 @@ function [ figHandle ] = plotRasterLIB(xData,yData,optsPlotInput,optsSaveInput)
     end
 
     % deal with plot things
-    if(strcmpi(optsPlot.X_LIMITS,'')~=1)
-        figHandle.CurrentAxes.XLim = optsPlot.X_LIMITS;
-    end
-    if(strcmpi(optsPlot.Y_LIMITS,'')~=1)
-        figHandle.CurrentAxes.YLim = optsPlot.Y_LIMITS;
-    end
     if(strcmpi(optsPlot.TITLE,'')~=1)
         title(optsPlot.TITLE);
     end
@@ -80,8 +74,6 @@ function [ figHandle ] = plotRasterLIB(xData,yData,optsPlotInput,optsSaveInput)
             hold on
             yVal = optsPlot.DIVIDING_LINES(idx);
             plot([-10000,10000],[yVal, yVal],'-','Color',optsPlot.DIVIDING_LINES_COLORS{idx},'linewidth',2);
-            xlim([figHandle.CurrentAxes.XLim])
-            ylim([figHandle.CurrentAxes.YLim])
         end
     end
     
@@ -95,6 +87,15 @@ function [ figHandle ] = plotRasterLIB(xData,yData,optsPlotInput,optsSaveInput)
                 optsPlot.STIM_DATA_COLOR,'linewidth',optsPlot.LINE_WIDTH)
         end
     end
+    
+    % do x and y limits last
+    if(strcmpi(optsPlot.X_LIMITS,'')~=1)
+        figHandle.CurrentAxes.XLim = optsPlot.X_LIMITS;
+    end
+    if(strcmpi(optsPlot.Y_LIMITS,'')~=1)
+        figHandle.CurrentAxes.YLim = optsPlot.Y_LIMITS;
+    end
+    
     % format for lee
     formatForLee(figHandle);
 
