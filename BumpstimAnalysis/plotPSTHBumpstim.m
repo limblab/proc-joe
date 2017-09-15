@@ -32,6 +32,9 @@ function [ figureHandle ] = plotPSTHBumpstim( cds,neuronNumber,optsTaskInput,opt
     
     stimIdxStart = 1;
     stimIdxEnd = 100;
+    binMin = -1;
+    binMax = 1;
+    
     for trialNum = 1:size(cds.trials,1)
         if(cds.trials.result(trialNum) == 'R' && ~isnan(cds.trials.tgtOnTime(trialNum)) && ~isnan(cds.trials.movePeriod(trialNum))) % if a reward trial and not a corrupted trial
             taskString = '';
@@ -39,15 +42,15 @@ function [ figureHandle ] = plotPSTHBumpstim( cds,neuronNumber,optsTaskInput,opt
             if(cds.trials.ctrHoldBump(trialNum) && cds.trials.stimCode(trialNum)==-1 && sum(strcmpi(optsTask.TRIAL_LIST,'ctrHoldBump')) > 0)
                 taskString = 'ctrHoldBump';
             elseif(cds.trials.ctrHoldBump(trialNum) && cds.trials.stimCode(trialNum)~=-1 && sum(strcmpi(optsTask.TRIAL_LIST,'ctrHoldBumpStim')) > 0)
-                taskString = 'ctrHoldBumpStim';
+                taskString = 'ctrHoldBump';
             elseif(cds.trials.delayBump(trialNum) && cds.trials.stimCode(trialNum)==-1 && sum(strcmpi(optsTask.TRIAL_LIST,'delayBump')) > 0)
                 taskString = 'delayBump';
             elseif(cds.trials.delayBump(trialNum) && cds.trials.stimCode(trialNum)~=-1 && sum(strcmpi(optsTask.TRIAL_LIST,'delayBumpStim')) > 0)
-                taskString = 'delayBumpStim';
+                taskString = 'delayBump';
             elseif(cds.trials.moveBump(trialNum) && cds.trials.stimCode(trialNum)==-1 && sum(strcmpi(optsTask.TRIAL_LIST,'moveBump')) > 0)
                 taskString = 'moveBump';
             elseif(cds.trials.moveBump(trialNum) && cds.trials.stimCode(trialNum)~=-1 && sum(strcmpi(optsTask.TRIAL_LIST,'moveBumpStim')) > 0)
-                taskString = 'moveBumpStim';
+                taskString = 'moveBump';
             elseif(~cds.trials.ctrHoldBump(trialNum) && ~cds.trials.delayBump(trialNum) && ~cds.trials.moveBump(trialNum) && sum(strcmpi(optsTask.TRIAL_LIST,'noBump')) > 0)
                 taskString = 'noBump';
             end
@@ -65,8 +68,10 @@ function [ figureHandle ] = plotPSTHBumpstim( cds,neuronNumber,optsTaskInput,opt
                 spikeTimes = cds.units(neuronNumber).spikes.ts(spikeMask) - cds.trials.(optsTask.ZERO_MARKER)(trialNum);
                 if(~isempty(spikeTimes))
                     spikeTimeData{cellIdx(1),cellIdx(2),cellIdx(3),cellIdx(4)}(end+1:end+numel(spikeTimes),:) = ...
-                        [spikeTimes,trialCounter(cellIdx(1),cellIdx(2),cellIdx(3),cellIdx(4))*ones(numel(spikeTimes),1)];
+                        [spikeTimes];
                 end  
+                binMin = min(binMin,min(spikeTimes));
+                binMax = max(binMax,max(spikeTimes));
                 
                 % populate stim times if available
                 if(cds.trials.stimCode(trialNum) ~= -1) 
@@ -88,7 +93,7 @@ function [ figureHandle ] = plotPSTHBumpstim( cds,neuronNumber,optsTaskInput,opt
     end
     
     %% remove combinations that had too few trials
-     for trialList = 1:numel(optsTask.TRIAL_LIST)
+    for trialList = 1:numel(optsTask.TRIAL_LIST)
         for tgtDir = 1:numel(optsTask.TARGET_DIRECTIONS)
             for bumpDir = 1:numel(optsTask.BUMP_DIRECTIONS)
                 for stimCode = 1:numel(optsTask.STIM_CODE)
@@ -100,13 +105,28 @@ function [ figureHandle ] = plotPSTHBumpstim( cds,neuronNumber,optsTaskInput,opt
                 end
             end
         end
-     end
+    end
+    %% Bin data
+    binMin = binMin - mod(binMin,optsTask.BIN_SIZE) - 4*optsTask.BIN_SIZE;
+    binMax = binMax - mod(binMax,optsTask.BIN_SIZE) + 4*optsTask.BIN_SIZE;
+    % make sure that 0 is an edge of a bin
+    bins = binMin:optsTask.BIN_SIZE:binMax;
+    for trialList = 1:numel(optsTask.TRIAL_LIST)
+        for tgtDir = 1:numel(optsTask.TARGET_DIRECTIONS)
+            for bumpDir = 1:numel(optsTask.BUMP_DIRECTIONS)
+                for stimCode = 1:numel(optsTask.STIM_CODE)
+                    if(~isempty(spikeTimeData{trialList,tgtDir,bumpDir,stimCode})) % make sure to normalize by # trials
+                        spikeTimeData{trialList,tgtDir,bumpDir,stimCode} = histcounts(spikeTimeData{trialList,tgtDir,bumpDir,stimCode},bins)/trialCounter(trialList,tgtDir,bumpDir,stimCode)/optsTask.BIN_SIZE;
+                    end
+                end
+            end
+        end
+    end
     
     %% Combine data from same bumpDir or tgtDir according to optsTask.COMBINE
     for c = 1:numel(optsTask.COMBINE)
         switch optsTask.COMBINE{c}
             case 'tgtDir'
-                combineData = cell(numel(optsTask.TRIAL_LIST),1,numel(optsTask.BUMP_DIRECTIONS),numel(optsTask.STIM_CODE));
                 spikeTimeDataTemp = cell(numel(optsTask.TRIAL_LIST),1,numel(optsTask.BUMP_DIRECTIONS),numel(optsTask.STIM_CODE));
                 stimDataTemp = cell(numel(optsTask.TRIAL_LIST),1,numel(optsTask.BUMP_DIRECTIONS),numel(optsTask.STIM_CODE));
                 
@@ -116,18 +136,17 @@ function [ figureHandle ] = plotPSTHBumpstim( cds,neuronNumber,optsTaskInput,opt
                             for tgtDir = 1:numel(optsTask.TARGET_DIRECTIONS)
                                 if(~isempty(spikeTimeData{trialList,tgtDir,bumpDir,stimCode}))
                                     if(~isempty(spikeTimeDataTemp{trialList,1,bumpDir,stimCode}))
-                                        combineData{trialList,1,bumpDir,stimCode}(end+1,1) = spikeTimeDataTemp{trialList,1,bumpDir,stimCode}(end,2);
                                         spikeTimeDataTemp{trialList,1,bumpDir,stimCode} = [spikeTimeDataTemp{trialList,1,bumpDir,stimCode};...
-                                            spikeTimeData{trialList,tgtDir,bumpDir,stimCode}(:,1),spikeTimeData{trialList,tgtDir,bumpDir,stimCode}(:,2)+spikeTimeDataTemp{trialList,1,bumpDir,stimCode}(end,2)];
+                                            spikeTimeData{trialList,tgtDir,bumpDir,stimCode}];
                                     else
-                                         spikeTimeDataTemp{trialList,1,bumpDir,stimCode} = spikeTimeData{trialList,tgtDir,bumpDir,stimCode}(:,:);
+                                         spikeTimeDataTemp{trialList,1,bumpDir,stimCode} = spikeTimeData{trialList,tgtDir,bumpDir,stimCode};
                                     end
                                     
                                     if(~isempty(stimDataTemp{trialList,1,bumpDir,stimCode}))
                                         stimDataTemp{trialList,1,bumpDir,stimCode} = [stimDataTemp{trialList,1,bumpDir,stimCode};...
-                                            stimData{trialList,tgtDir,bumpDir,stimCode}(:,1),stimData{trialList,tgtDir,bumpDir,stimCode}(:,2)+stimDataTemp{trialList,1,bumpDir,stimCode}(end,2)];
+                                            stimData{trialList,tgtDir,bumpDir,stimCode}];
                                     else
-                                        stimDataTemp{trialList,1,bumpDir,stimCode} = stimData{trialList,tgtDir,bumpDir,stimCode}(:,:);
+                                        stimDataTemp{trialList,1,bumpDir,stimCode} = stimData{trialList,tgtDir,bumpDir,stimCode};
                                     end
                                 end
                             end
@@ -141,7 +160,6 @@ function [ figureHandle ] = plotPSTHBumpstim( cds,neuronNumber,optsTaskInput,opt
                 clear stimDataTemp;
                 
             case 'bumpDir'
-                combineData = cell(numel(optsTask.TRIAL_LIST),numel(optsTask.TARGET_DIRECTIONS),1,numel(optsTask.STIM_CODE));
                 spikeTimeDataTemp = cell(numel(optsTask.TRIAL_LIST),numel(optsTask.TARGET_DIRECTIONS),1,numel(optsTask.STIM_CODE));
                 stimDataTemp = cell(numel(optsTask.TRIAL_LIST),numel(optsTask.TARGET_DIRECTIONS),1,numel(optsTask.STIM_CODE));
                 
@@ -151,17 +169,16 @@ function [ figureHandle ] = plotPSTHBumpstim( cds,neuronNumber,optsTaskInput,opt
                             for bumpDir = 1:numel(optsTask.BUMP_DIRECTIONS)
                                 if(~isempty(spikeTimeData{trialList,tgtDir,bumpDir,stimCode}))
                                     if(~isempty(spikeTimeDataTemp{trialList,tgtDir,1,stimCode}))
-                                        combineData{trialList,tgtDir,1,stimCode}(end+1,1) = spikeTimeDataTemp{trialList,tgtDir,1,stimCode}(end,2);
                                         spikeTimeDataTemp{trialList,tgtDir,1,stimCode} = [spikeTimeDataTemp{trialList,tgtDir,1,stimCode};...
-                                            spikeTimeData{trialList,tgtDir,bumpDir,stimCode}(:,1),spikeTimeData{trialList,tgtDir,bumpDir,stimCode}(:,2)+spikeTimeDataTemp{trialList,tgtDir,1,stimCode}(end,2)];
+                                            spikeTimeData{trialList,tgtDir,bumpDir,stimCode}];
                                     else
-                                         spikeTimeDataTemp{trialList,tgtDir,1,stimCode} = spikeTimeData{trialList,tgtDir,bumpDir,stimCode}(:,:);
+                                         spikeTimeDataTemp{trialList,tgtDir,1,stimCode} = spikeTimeData{trialList,tgtDir,bumpDir,stimCode};
                                     end
                                     if(~isempty(stimDataTemp{trialList,tgtDir,1,stimCode}))
                                         stimDataTemp{trialList,tgtDir,1,stimCode} = [stimDataTemp{trialList,tgtDir,1,stimCode};...
-                                            stimData{trialList,tgtDir,bumpDir,stimCode}(:,1),stimData{trialList,tgtDir,bumpDir,stimCode}(:,2)+stimDataTemp{trialList,tgtDir,1,stimCode}(end,2)];
+                                            stimData{trialList,tgtDir,bumpDir,stimCode}];
                                     else
-                                        stimDataTemp{trialList,tgtDir,1,stimCode} = stimData{trialList,tgtDir,bumpDir,stimCode}(:,:);
+                                        stimDataTemp{trialList,tgtDir,1,stimCode} = stimData{trialList,tgtDir,bumpDir,stimCode};
                                     end
                                 end
                             end
@@ -173,10 +190,38 @@ function [ figureHandle ] = plotPSTHBumpstim( cds,neuronNumber,optsTaskInput,opt
                 stimData = stimDataTemp;
                 clear spikeTimeDataTemp
                 clear stimDataTemp;
+            case 'stimCode'
+                spikeTimeDataTemp = cell(numel(optsTask.TRIAL_LIST),numel(optsTask.TARGET_DIRECTIONS),numel(optsTask.BUMP_DIRECTIONS),1);
+                stimDataTemp = cell(numel(optsTask.TRIAL_LIST),numel(optsTask.TARGET_DIRECTIONS),numel(optsTask.BUMP_DIRECTIONS),1);
+                
+                for trialList = 1:numel(optsTask.TRIAL_LIST)
+                    for tgtDir = 1:numel(optsTask.TARGET_DIRECTIONS)
+                        for bumpDir = 1:numel(optsTask.BUMP_DIRECTIONS)
+                            for stimCode = 1:numel(optsTask.STIM_CODE)
+                                if(~isempty(spikeTimeData{trialList,tgtDir,bumpDir,stimCode}))
+                                    if(~isempty(spikeTimeDataTemp{trialList,tgtDir,bumpDir,1}))
+                                        spikeTimeDataTemp{trialList,tgtDir,bumpDir,1} = [spikeTimeDataTemp{trialList,tgtDir,bumpDir,1};...
+                                            spikeTimeData{trialList,tgtDir,bumpDir,stimCode}];
+                                    else
+                                         spikeTimeDataTemp{trialList,tgtDir,bumpDir,1} = spikeTimeData{trialList,tgtDir,bumpDir,stimCode}(:,:);
+                                    end
+                                    if(~isempty(stimDataTemp{trialList,tgtDir,bumpDir,1}))
+                                        stimDataTemp{trialList,tgtDir,bumpDir,1} = [stimDataTemp{trialList,tgtDir,bumpDir,1};...
+                                            stimData{trialList,tgtDir,bumpDir,stimCode}];
+                                    elseif(~isempty(stimData{trialList,tgtDir,bumpDir,stimCode}))
+                                        stimDataTemp{trialList,tgtDir,bumpDir,1} = stimData{trialList,tgtDir,bumpDir,stimCode};
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+                spikeTimeData = spikeTimeDataTemp;
+                stimData = stimDataTemp;
+                clear spikeTimeDataTemp
+                clear stimDataTemp;
         end
-    end
-%     spikeTimeData = cell(numel(optsTask.TRIAL_LIST),numel(optsTask.TARGET_DIRECTIONS),numel(optsTask.BUMP_DIRECTIONS),numel(optsTask.STIM_CODE));
- 
+    end 
     
     %% now that we have the spike times, we can make rasters (yay)
     for trial = 1:size(spikeTimeData,1)
@@ -185,8 +230,10 @@ function [ figureHandle ] = plotPSTHBumpstim( cds,neuronNumber,optsTaskInput,opt
                 for stimCode = 1:size(spikeTimeData,4)
                     % check to make sure there are trials
                     if(~isempty(spikeTimeData{trial,tgtDir,bumpDir,stimCode}))
-                        optsPlot.TITLE = strcat(optsTask.TRIAL_LIST{trial},' Target: ',num2str(optsTask.TARGET_DIRECTIONS(tgtDir)),...
-                            ' Bump: ',num2str(optsTask.BUMP_DIRECTIONS(bumpDir)),' Stim: ',num2str(optsTask.STIM_CODE(stimCode)));
+                        if(optsPlot.PLOT_TITLE)
+                            optsPlot.TITLE = strcat(optsTask.TRIAL_LIST{trial},' Target: ',num2str(optsTask.TARGET_DIRECTIONS(tgtDir)),...
+                                ' Bump: ',num2str(optsTask.BUMP_DIRECTIONS(bumpDir)),' Stim: ',num2str(optsTask.STIM_CODE(stimCode)));
+                        end
                         
                         if(strcmpi(optsTask.BIN_SIZE,'')==1)
                             optsTask.BIN_SIZE = 1/1000;
@@ -194,30 +241,31 @@ function [ figureHandle ] = plotPSTHBumpstim( cds,neuronNumber,optsTaskInput,opt
                         
                         %%%%%%%
                         %% fix this so that 0 is an edge of a bin
-                        xData = min(spikeTimeData{trial,tgtDir,bumpDir,stimCode}(:,1)):optsTask.BIN_SIZE:max(spikeTimeData{trial,tgtDir,bumpDir,stimCode}(:,1));
-                        yData = histcounts(spikeTimeData{trial,tgtDir,bumpDir,stimCode}(:,1),xData);
-                        xData = xData(1:end-1) + (xData(2)-xData(1))/2;
+                        xData = bins(1:end-1) + (bins(2)-bins(1))/2;
+                        yData = spikeTimeData{trial,tgtDir,bumpDir,stimCode};
+                        xData = repmat(xData,size(yData,1),1);
                         
                         % if x limit is not specified, come up with one
                         % based on task start and end time
-                        trialMask = cds.trials.result == 'R' & ~isnan(cds.trials.tgtOnTime) & ~isnan(cds.trials.movePeriod) & ~isnan(cds.trials.(optsTask.ZERO_MARKER));
-                        trialLengths = cds.trials.endTime(trialMask) - cds.trials.startTime(trialMask);
-                        [~,minTrialIdx] = min(trialLengths);
-                        temp = find(trialMask); minTrialIdx = temp(minTrialIdx);
-                        xlimits(1,1) = cds.trials.startTime(minTrialIdx) - cds.trials.(optsTask.ZERO_MARKER)(minTrialIdx);
-                        xlimits(1,2) = cds.trials.endTime(minTrialIdx) - cds.trials.(optsTask.ZERO_MARKER)(minTrialIdx);
-                        % round xlimits and expand a bit
-                        xlimits = round(xlimits,1);
-                        xlimits = [xlimits(1,1)-0.2,xlimits(1,2)+0.2];
-                        optsPlot.X_LIMITS = xlimits;
-                        
+                        if(~optsPlot.xLimitFlag)
+                            trialMask = cds.trials.result == 'R' & ~isnan(cds.trials.tgtOnTime) & ~isnan(cds.trials.movePeriod) & ~isnan(cds.trials.(optsTask.ZERO_MARKER));
+                            trialLengths = cds.trials.endTime(trialMask) - cds.trials.startTime(trialMask);
+                            [~,minTrialIdx] = min(trialLengths);
+                            temp = find(trialMask); minTrialIdx = temp(minTrialIdx);
+                            xlimits(1,1) = cds.trials.startTime(minTrialIdx) - cds.trials.(optsTask.ZERO_MARKER)(minTrialIdx);
+                            xlimits(1,2) = cds.trials.endTime(minTrialIdx) - cds.trials.(optsTask.ZERO_MARKER)(minTrialIdx);
+                            % round xlimits and expand a bit
+                            xlimits = round(xlimits,1);
+                            xlimits = [xlimits(1,1)-0.2,xlimits(1,2)+0.2];
+                            optsPlot.X_LIMITS = xlimits;
+                        end
                         % if y limit is not specified, come up with one
                         % based on the dimensions of yData
-                        ylimits(1,1) = -0.8;
-                        ylimits(1,2) = max(yData) + 0.8;
-                        optsPlot.Y_LIMITS = ylimits;
-                        
-                        plotPSTHLIB(xData',yData',optsPlot,optsSave);
+%                         ylimits(1,1) = 0;
+%                         ylimits(1,2) = max(yData) + 0.8;
+%                         optsPlot.Y_LIMITS = ylimits;
+                        optsPlot.NUM_PLOTS = size(yData,1);
+                        figureHandle{end+1} = plotPSTHLIB(xData',yData',optsPlot,optsSave);
                     end
                 end
             end
@@ -225,7 +273,28 @@ function [ figureHandle ] = plotPSTHBumpstim( cds,neuronNumber,optsTaskInput,opt
     end
     
     
-    
+    %% if optsTask.SAME_Y_LIMITS, then set all figure handles to the same y limits
+    if(optsTask.SAME_Y_LIMITS)
+        maxYLim = -10000;
+        for fig = 1:numel(figureHandle)
+            maxYLim = max(maxYLim,figureHandle{fig}.CurrentAxes.YLim(2));
+        end
+        for fig = 1:numel(figureHandle)
+            figureHandle{fig}.CurrentAxes.YLim = [0,maxYLim];
+        end
+    end
+    %% if optsTask.SAME_X_LIMITS, then set all figure handles to the same x limits
+    if(optsTask.SAME_X_LIMITS)
+        maxXLim = -10000;
+        minXLim = 10000;
+        for fig = 1:numel(figureHandle)
+            maxXLim = max(maxXLim,figureHandle{fig}.CurrentAxes.XLim(2));
+            minXLim = min(minXLim,figureHandle{fig}.CurrentAxes.XLim(1));
+        end
+        for fig = 1:numel(figureHandle)
+            figureHandle{fig}.CurrentAxes.XLim = [minXLim,maxXLim];
+        end
+    end
 end
 
 
@@ -243,11 +312,14 @@ function [optsPlot] = configureOptionsPlot(optsPlotInput)
     optsPlot.Y_MINOR_TICK = '';
     optsPlot.X_TICK_LABEL = '';
     optsPlot.Y_TICK_LABEL = '';
-    optsPlot.LINE_STYLE = '';
+    optsPlot.BAR_STYLE = 'bar';
+    optsPlot.LINE_STYLE = '-';
     optsPlot.TITLE = '';
     optsPlot.MARKER_STYLE = '.';
     optsPlot.MARKER_COLOR = 'k';
     optsPlot.MARKER_SIZE = 4;
+    optsPlot.LEGEND_STRING = '';
+    optsPlot.PLOT_TITLE = 1;
     
     %% check if in optsPlot and optsPlotInput, overwrite if so
     try
@@ -259,6 +331,12 @@ function [optsPlot] = configureOptionsPlot(optsPlotInput)
         end
     catch
         % do nothing, [] was inputted which means use default setting
+    end
+    
+    if(strcmpi(optsPlot.X_LIMITS,'')~=1)
+        optsPlot.xLimitFlag = 1;
+    else
+        optsPlot.xLimitFlag = 0;
     end
 end
 
@@ -294,6 +372,8 @@ function [optsTask] = configureOptionsTask(optsTaskInput,cds)
     optsTask.IGNORE = {};
     optsTask.PLOT_STIM_TIME = 0;
     optsTask.BIN_SIZE = '';
+    optsTask.SAME_Y_LIMITS = 0;
+    optsTask.SAME_X_LIMITS = 0;
     
     if(sum(cds.trials.ctrHoldBump==1 & isnan(cds.trials.stimCode)) > 0)
         optsTask.TRIAL_LIST{end+1,1} = 'ctrHoldBump';

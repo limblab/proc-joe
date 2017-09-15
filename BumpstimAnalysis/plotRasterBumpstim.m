@@ -40,15 +40,15 @@ function [ figureHandle ] = plotRasterBumpstim( cds,neuronNumber,optsTaskInput,o
             if(cds.trials.ctrHoldBump(trialNum) && cds.trials.stimCode(trialNum)==-1 && sum(strcmpi(optsTask.TRIAL_LIST,'ctrHoldBump')) > 0)
                 taskString = 'ctrHoldBump';
             elseif(cds.trials.ctrHoldBump(trialNum) && cds.trials.stimCode(trialNum)~=-1 && sum(strcmpi(optsTask.TRIAL_LIST,'ctrHoldBumpStim')) > 0)
-                taskString = 'ctrHoldBumpStim';
+                taskString = 'ctrHoldBump';
             elseif(cds.trials.delayBump(trialNum) && cds.trials.stimCode(trialNum)==-1 && sum(strcmpi(optsTask.TRIAL_LIST,'delayBump')) > 0)
                 taskString = 'delayBump';
             elseif(cds.trials.delayBump(trialNum) && cds.trials.stimCode(trialNum)~=-1 && sum(strcmpi(optsTask.TRIAL_LIST,'delayBumpStim')) > 0)
-                taskString = 'delayBumpStim';
+                taskString = 'delayBump';
             elseif(cds.trials.moveBump(trialNum) && cds.trials.stimCode(trialNum)==-1 && sum(strcmpi(optsTask.TRIAL_LIST,'moveBump')) > 0)
                 taskString = 'moveBump';
             elseif(cds.trials.moveBump(trialNum) && cds.trials.stimCode(trialNum)~=-1 && sum(strcmpi(optsTask.TRIAL_LIST,'moveBumpStim')) > 0)
-                taskString = 'moveBumpStim';
+                taskString = 'moveBump';
             elseif(~cds.trials.ctrHoldBump(trialNum) && ~cds.trials.delayBump(trialNum) && ~cds.trials.moveBump(trialNum) && sum(strcmpi(optsTask.TRIAL_LIST,'noBump')) > 0)
                 taskString = 'noBump';
             end
@@ -174,6 +174,40 @@ function [ figureHandle ] = plotRasterBumpstim( cds,neuronNumber,optsTaskInput,o
                 stimData = stimDataTemp;
                 clear spikeTimeDataTemp
                 clear stimDataTemp;
+            case 'stimCode'
+                combineData = cell(numel(optsTask.TRIAL_LIST),numel(optsTask.TARGET_DIRECTIONS),numel(optsTask.BUMP_DIRECTIONS),1);
+                combineData(:,:,:,:) = {0};
+                spikeTimeDataTemp = cell(numel(optsTask.TRIAL_LIST),numel(optsTask.TARGET_DIRECTIONS),numel(optsTask.BUMP_DIRECTIONS),1);
+                stimDataTemp = cell(numel(optsTask.TRIAL_LIST),numel(optsTask.TARGET_DIRECTIONS),numel(optsTask.BUMP_DIRECTIONS),1);
+                
+                for trialList = 1:numel(optsTask.TRIAL_LIST)
+                    for tgtDir = 1:numel(optsTask.TARGET_DIRECTIONS)
+                        for bumpDir = 1:numel(optsTask.BUMP_DIRECTIONS)
+                            for stimCode = 1:numel(optsTask.STIM_CODE)
+                                if(~isempty(spikeTimeData{trialList,tgtDir,bumpDir,stimCode}))
+                                    if(~isempty(spikeTimeDataTemp{trialList,tgtDir,bumpDir,1}))
+                                        combineData{trialList,tgtDir,bumpDir,1}(end+1,1) = spikeTimeDataTemp{trialList,tgtDir,bumpDir,1}(end,2);
+                                        spikeTimeDataTemp{trialList,tgtDir,bumpDir,1} = [spikeTimeDataTemp{trialList,tgtDir,bumpDir,1};...
+                                            spikeTimeData{trialList,tgtDir,bumpDir,stimCode}(:,1),spikeTimeData{trialList,tgtDir,bumpDir,stimCode}(:,2)+spikeTimeDataTemp{trialList,tgtDir,bumpDir,1}(end,2)];
+                                    else
+                                         spikeTimeDataTemp{trialList,tgtDir,bumpDir,1} = spikeTimeData{trialList,tgtDir,bumpDir,stimCode}(:,:);
+                                    end
+                                    if(~isempty(stimDataTemp{trialList,tgtDir,bumpDir,1}))
+                                        stimDataTemp{trialList,tgtDir,bumpDir,1} = [stimDataTemp{trialList,tgtDir,bumpDir,1};...
+                                            stimData{trialList,tgtDir,bumpDir,stimCode}(:,1),stimData{trialList,tgtDir,bumpDir,stimCode}(:,2)+stimDataTemp{trialList,tgtDir,bumpDir,1}(end,2)];
+                                    elseif(~isempty(stimData{trialList,tgtDir,bumpDir,stimCode}))
+                                        stimDataTemp{trialList,tgtDir,bumpDir,1} = [stimData{trialList,tgtDir,bumpDir,stimCode}(:,1),...
+                                            stimData{trialList,tgtDir,bumpDir,stimCode}(:,2) + combineData{trialList,tgtDir,bumpDir,1}(end)];
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+                spikeTimeData = spikeTimeDataTemp;
+                stimData = stimDataTemp;
+                clear spikeTimeDataTemp
+                clear stimDataTemp;
         end
     end
 %     spikeTimeData = cell(numel(optsTask.TRIAL_LIST),numel(optsTask.TARGET_DIRECTIONS),numel(optsTask.BUMP_DIRECTIONS),numel(optsTask.STIM_CODE));
@@ -189,20 +223,27 @@ function [ figureHandle ] = plotRasterBumpstim( cds,neuronNumber,optsTaskInput,o
                         optsPlot.TITLE = strcat(optsTask.TRIAL_LIST{trial},' Target: ',num2str(optsTask.TARGET_DIRECTIONS(tgtDir)),...
                             ' Bump: ',num2str(optsTask.BUMP_DIRECTIONS(bumpDir)),' Stim: ',num2str(optsTask.STIM_CODE(stimCode)));
                         if(~isempty(optsTask.COMBINE))
+                            % remove 0 entry if there
+                            if(~isempty(combineData{trial,tgtDir,bumpDir,stimCode}) && combineData{trial,tgtDir,bumpDir,stimCode}(1) == 0)
+                                combineData{trial,tgtDir,bumpDir,stimCode} = combineData{trial,tgtDir,bumpDir,stimCode}(2:end);
+                            end
+                            
                             optsPlot.DIVIDING_LINES = combineData{trial,tgtDir,bumpDir,stimCode};
-                            optsPlot.DIVIDING_LINES_COLORS = {'r','b',[0 0.7 0],'m','k'};
+                            optsPlot.DIVIDING_LINES_COLORS = {'r','b',[0 0.6 0],'m','k'};
                         end
                         xData = spikeTimeData{trial,tgtDir,bumpDir,stimCode}(:,1);
                         yData = spikeTimeData{trial,tgtDir,bumpDir,stimCode}(:,2);
-                        % if plot stim times and stim code is ~= -1, put
+                        
+                        % if plot stim times, put
                         % stim times into optsPlot. Sort in time for each
                         % grouping
-                        if(optsTask.PLOT_STIM_TIME && optsTask.STIM_CODE(stimCode) ~= -1)
+                        if(optsTask.PLOT_STIM_TIME && ~isempty(stimData{trial,tgtDir,bumpDir,stimCode}))
                             optsPlot.PLOT_STIM_TIME = 1;
                             optsPlot.STIM_DATA_X = stimData{trial,tgtDir,bumpDir,stimCode}(:,1);
                             optsPlot.STIM_DATA_Y = stimData{trial,tgtDir,bumpDir,stimCode}(:,2);
                             
                             % only plot 1st stimulation time
+                            
                             [optsPlot.STIM_DATA_Y,xIdx,~] = unique(optsPlot.STIM_DATA_Y,'first');
                             optsPlot.STIM_DATA_X = optsPlot.STIM_DATA_X(xIdx);
                             
@@ -212,6 +253,18 @@ function [ figureHandle ] = plotRasterBumpstim( cds,neuronNumber,optsTaskInput,o
                             else
                                 combineMarkers = [];
                             end
+                            
+                            % reformat stim data if necessary
+                            if(~isempty(optsPlot.STIM_DATA_Y) && max(optsPlot.STIM_DATA_Y) ~= size(optsPlot.STIM_DATA_Y,1))
+                                newStimDataY = [1:1:max(yData)]';
+                                newStimDataX = [-10000*ones(max(yData),1)];
+                                newStimDataX(optsPlot.STIM_DATA_Y) = optsPlot.STIM_DATA_X;
+                                optsPlot.STIM_DATA_X = newStimDataX;
+                                optsPlot.STIM_DATA_Y = newStimDataY;
+                            end
+
+                            % sort trials by stim time within a combined
+                            % trial
                             for cMark = 1:numel(combineMarkers)+1
                                 % initial stim time (stim_data_y)
                                 if(cMark == 1 && isempty(combineMarkers))
@@ -237,25 +290,39 @@ function [ figureHandle ] = plotRasterBumpstim( cds,neuronNumber,optsTaskInput,o
                                     
                         end
                         
+                        
                         % if x limit is not specified, come up with one
                         % based on task start and end time
-                        trialMask = cds.trials.result == 'R' & ~isnan(cds.trials.tgtOnTime) & ~isnan(cds.trials.movePeriod) & ~isnan(cds.trials.(optsTask.ZERO_MARKER));
-                        trialLengths = cds.trials.endTime(trialMask) - cds.trials.startTime(trialMask);
-                        [~,minTrialIdx] = min(trialLengths);
-                        temp = find(trialMask); minTrialIdx = temp(minTrialIdx);
-                        xlimits(1,1) = cds.trials.startTime(minTrialIdx) - cds.trials.(optsTask.ZERO_MARKER)(minTrialIdx);
-                        xlimits(1,2) = cds.trials.endTime(minTrialIdx) - cds.trials.(optsTask.ZERO_MARKER)(minTrialIdx);
-                        % round xlimits and expand a bit
-                        xlimits = round(xlimits,1);
-                        xlimits = [xlimits(1,1)-0.2,xlimits(1,2)+0.2];
-                        optsPlot.X_LIMITS = xlimits;
+                        if(~optsPlot.xLimitFlag)
+                            trialMask = cds.trials.result == 'R' & ~isnan(cds.trials.tgtOnTime) & ~isnan(cds.trials.movePeriod) & ~isnan(cds.trials.(optsTask.ZERO_MARKER));
+                            trialLengths = cds.trials.endTime(trialMask) - cds.trials.startTime(trialMask);
+                            [~,minTrialIdx] = min(trialLengths);
+                            temp = find(trialMask); minTrialIdx = temp(minTrialIdx);
+                            xLimits(1,1) = cds.trials.startTime(minTrialIdx) - cds.trials.(optsTask.ZERO_MARKER)(minTrialIdx);
+                            xLimits(1,2) = cds.trials.endTime(minTrialIdx) - cds.trials.(optsTask.ZERO_MARKER)(minTrialIdx);
+                            % round xlimits and expand a bit
+                            xLimits = round(xLimits,1);
+                            xLimits = [xLimits(1,1)-0.3,xLimits(1,2)+0.3];
+                            optsPlot.X_LIMITS = xLimits;
+                        end
+                        % remove data that is before or after the xlimits
+                        yData = yData(xData > optsPlot.X_LIMITS(1) & xData < optsPlot.X_LIMITS(2));
+                        xData = xData(xData > optsPlot.X_LIMITS(1) & xData < optsPlot.X_LIMITS(2));
                         
                         % if y limit is not specified, come up with one
                         % based on the dimensions of yData
-                        ylimits(1,1) = -0.8;
-                        ylimits(1,2) = max(yData) + 0.8;
-                        optsPlot.Y_LIMITS = ylimits;
+                        if(~optsPlot.yLimitFlag)
+                            yLimits(1,1) = -0.8;
+                            yLimits(1,2) = max(yData) + 0.8;
+                            optsPlot.Y_LIMITS = yLimits;
+                        end
                         
+                        if(~isempty(combineData{trial,tgtDir,bumpDir,stimCode}))
+                            optsPlot.Y_TICK = [1,combineData{trial,tgtDir,bumpDir,stimCode}',max(yData)];
+                        else
+                            optsPlot.Y_TICK = [1,max(yData)];
+                        end
+                        optsPlot.Y_MINOR_TICK = 'off';
                         plotRasterLIB(xData,yData,optsPlot,optsSave);
                         
                     end
@@ -299,6 +366,17 @@ function [optsPlot] = configureOptionsPlot(optsPlotInput)
         end
     catch
         % do nothing, [] was inputted which means use default setting
+    end
+    
+    if(strcmpi(optsPlot.X_LIMITS,'')~=1)
+        optsPlot.xLimitFlag = 1;
+    else
+        optsPlot.xLimitFlag = 0;
+    end
+    if(strcmpi(optsPlot.Y_LIMITS,'')~=1)
+        optsPlot.yLimitFlag = 1;
+    else
+        optsPlot.yLimitFlag = 0;
     end
 end
 

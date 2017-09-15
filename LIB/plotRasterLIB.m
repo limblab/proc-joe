@@ -31,9 +31,9 @@ function [ figHandle ] = plotRasterLIB(xData,yData,optsPlotInput,optsSaveInput)
     if(strcmpi(optsPlot.MARKER_STYLE,'line')==0) % normal plot routine
         plot(xData,yData,'.','marker',optsPlot.MARKER_STYLE,'color',optsPlot.MARKER_COLOR,'markersize',optsPlot.MARKER_SIZE);
     else % plot as vertical lines
-        plot([xData,xData],...
-            [yData-optsPlot.LINE_LENGTH/2,yData+optsPlot.LINE_LENGTH/2]',...
-            optsPlot.MARKER_COLOR,'linewidth',optsPlot.LINE_WIDTH)
+        plot([xData.';xData.';nan(1,length(xData))],...
+            [(yData-optsPlot.LINE_LENGTH/2).';(yData+optsPlot.LINE_LENGTH/2).';nan(1,length(yData))],...
+            'color',optsPlot.MARKER_COLOR,'linewidth',optsPlot.LINE_WIDTH)
     end
 
     % deal with plot things
@@ -45,20 +45,6 @@ function [ figHandle ] = plotRasterLIB(xData,yData,optsPlotInput,optsSaveInput)
     end
     if(strcmpi(optsPlot.Y_LABEL,'')~=1)
         ylabel(optsPlot.Y_LABEL);
-    end
-
-    if(strcmpi(optsPlot.X_TICK,'')~=1)
-        set(gca,'XTick',optsPlot.X_TICK);
-    end
-    if(strcmpi(optsPlot.Y_TICK,'')~=1)
-        set(gca,'YTick',optsPlot.Y_TICK);
-    end
-
-    if(strcmpi(optsPlot.X_MINOR_TICK,'')~=1)
-        set(gca,'XMinorTick',optsPlot.X_MINOR_TICK);
-    end
-    if(strcmpi(optsPlot.Y_MINOR_TICK,'')~=1)
-        set(gca,'YMinorTick',optsPlot.Y_MINOR_TICK);
     end
 
     if(strcmpi(optsPlot.X_TICK_LABEL,'')~=1)
@@ -82,9 +68,9 @@ function [ figHandle ] = plotRasterLIB(xData,yData,optsPlotInput,optsSaveInput)
         if(strcmpi(optsPlot.MARKER_STYLE,'line')==0) % normal plot routine
             plot(optsPlot.STIM_DATA_X,optsPlot.STIM_DATA_Y,'.','marker',optsPlot.MARKER_STYLE,'color',optsPlot.STIM_DATA_COLOR,'markersize',optsPlot.MARKER_SIZE);
         else % plot as vertical lines
-            plot([optsPlot.STIM_DATA_X,optsPlot.STIM_DATA_X],...
-                [optsPlot.STIM_DATA_Y-0.5,optsPlot.STIM_DATA_Y+0.5],...
-                optsPlot.STIM_DATA_COLOR,'linewidth',optsPlot.LINE_WIDTH)
+            plot([optsPlot.STIM_DATA_X.';optsPlot.STIM_DATA_X.';nan(1,length(optsPlot.STIM_DATA_X))],...
+                [(optsPlot.STIM_DATA_Y-optsPlot.LINE_LENGTH/2).';(optsPlot.STIM_DATA_Y+optsPlot.LINE_LENGTH/2).';nan(1,length(optsPlot.STIM_DATA_Y))],...
+                'color',optsPlot.STIM_DATA_COLOR,'linewidth',optsPlot.STIM_LINE_WIDTH)
         end
     end
     
@@ -99,6 +85,21 @@ function [ figHandle ] = plotRasterLIB(xData,yData,optsPlotInput,optsSaveInput)
     % format for lee
     formatForLee(figHandle);
 
+    
+    if(strcmpi(optsPlot.X_TICK,'')~=1)
+        set(gca,'XTick',optsPlot.X_TICK);
+    end
+    if(strcmpi(optsPlot.Y_TICK,'')~=1)
+        set(gca,'YTick',optsPlot.Y_TICK);
+    end
+
+    if(strcmpi(optsPlot.X_MINOR_TICK,'')~=1)
+        set(gca,'XMinorTick',optsPlot.X_MINOR_TICK);
+    end
+    if(strcmpi(optsPlot.Y_MINOR_TICK,'')~=1)
+        set(gca,'YMinorTick',optsPlot.Y_MINOR_TICK);
+    end
+    
     %% deal with saving plot
     if(optsSave.FIGURE_SAVE && strcmpi(optsSave.FIGURE_NAME,'')~=1 && strcmpi(optsSave.FIGURE_DIR,'')~=1)
         saveFiguresLIB(figHandle,optsSave.FIGURE_DIR,optsSave.FIGURE_NAME);
@@ -125,8 +126,9 @@ function [optsPlot] = configureOptionsPlot(optsPlotInput,xData,yData)
     optsPlot.X_TICK_LABEL = '';
     optsPlot.Y_TICK_LABEL = '';
     optsPlot.LINE_STYLE = '';
+    optsPlot.LINE_LENGTH = 1;
     optsPlot.TITLE = '';
-    optsPlot.LINE_WIDTH = 1;
+    optsPlot.LINE_WIDTH = 0.1;
     optsPlot.MARKER_STYLE = '.';
     optsPlot.MARKER_COLOR = 'k';
     optsPlot.MARKER_SIZE = 4;
@@ -136,6 +138,7 @@ function [optsPlot] = configureOptionsPlot(optsPlotInput,xData,yData)
     optsPlot.STIM_DATA_X = [];
     optsPlot.STIM_DATA_Y = [];
     optsPlot.STIM_DATA_COLOR = 'r';
+    optsPlot.STIM_LINE_WIDTH = 1.2;
     
     %% check if in optsPlot and optsPlotInput, overwrite if so
     try

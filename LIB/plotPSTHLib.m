@@ -3,7 +3,10 @@ function [ figHandle ] = plotPSTHLIB(xData,yData,optsPlotInput,optsSaveInput)
 % making plots pretty and whatnot, returns figure handle
 % data is a column vector
 
-% data comes in as histogram data
+% data comes in as histogram data, yData and xData must have same shape.
+% rows are data, columns are different plots.
+
+
     figHandle = '';
     %% deal with both sets of options
     optsPlot = configureOptionsPlot(optsPlotInput,xData,yData);
@@ -33,8 +36,6 @@ function [ figHandle ] = plotPSTHLIB(xData,yData,optsPlotInput,optsSaveInput)
         hold on
     end
     % deal with plot things
-    figHandle.CurrentAxes.XLim = optsPlot.X_LIMITS;
-    figHandle.CurrentAxes.YLim = optsPlot.Y_LIMITS;
     if(strcmpi(optsPlot.TITLE,'')~=1)
         title(optsPlot.TITLE);
     end
@@ -72,6 +73,15 @@ function [ figHandle ] = plotPSTHLIB(xData,yData,optsPlotInput,optsSaveInput)
         l=legend(optsPlot.LEGEND_STRING);
         set(l,'box',optsPlot.LEGEND_BOX);
     end
+    
+    % do x and y limits last
+    if(strcmpi(optsPlot.X_LIMITS,'')~=1)
+        figHandle.CurrentAxes.XLim = optsPlot.X_LIMITS;
+    end
+    if(strcmpi(optsPlot.Y_LIMITS,'')~=1)
+        figHandle.CurrentAxes.YLim = optsPlot.Y_LIMITS;
+    end
+    
     % format for lee
     formatForLee(figHandle);
 
@@ -100,8 +110,8 @@ function [optsPlot] = configureOptionsPlot(optsPlotInput,xData,yData)
     optsPlot.Y_TICK_LABEL = '';
     optsPlot.TITLE = '';
     optsPlot.BAR_STYLE = 'bar';
-    optsPlot.EDGE_COLOR= 'k';
-    optsPlot.FACE_COLOR = 'k';
+    optsPlot.EDGE_COLOR= {'k','r',[0 0.6 0],'b','m'};
+    optsPlot.FACE_COLOR = {'k','r',[0 0.6 0],'b','m'};
     optsPlot.LINE_WIDTH = 1;
     optsPlot.LINE_STYLE = '-';
     optsPlot.LEGEND_STRING = '';
