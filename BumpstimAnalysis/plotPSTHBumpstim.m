@@ -5,7 +5,7 @@ function [ figureHandle ] = plotPSTHBumpstim( cds,neuronNumber,optsTaskInput,opt
     optsPlot = configureOptionsPlot(optsPlotInput);
     optsSave = configureOptionsSave(optsSaveInput);
     optsTask = configureOptionsTask(optsTaskInput,cds);
-    
+    optsSave.FIGURE_NAMES = {};
     figureHandle = '';
     
     
@@ -265,6 +265,12 @@ function [ figureHandle ] = plotPSTHBumpstim( cds,neuronNumber,optsTaskInput,opt
 %                         ylimits(1,2) = max(yData) + 0.8;
 %                         optsPlot.Y_LIMITS = ylimits;
                         optsPlot.NUM_PLOTS = size(yData,1);
+                        
+                        if(optsSave.FIGURE_SAVE)
+                            optsSave.FIGURE_NAMES{end+1,1} = strcat(optsSave.FIGURE_NAME_PREFIX,'nn',num2str(neuronNumber),'_chan',num2str(cds.units(neuronNumber).chan),...
+                                '_PSTH_','_stimCode',num2str(optsTask.STIM_CODE(stimCode)),'_bumpDir',num2str(optsTask.BUMP_DIRECTIONS(bumpDir)),'_tgtDir',num2str(optsTask.TARGET_DIRECTIONS));
+                        end
+                        
                         figureHandle{end+1} = plotPSTHLIB(xData',yData',optsPlot,optsSave);
                     end
                 end
@@ -293,6 +299,13 @@ function [ figureHandle ] = plotPSTHBumpstim( cds,neuronNumber,optsTaskInput,opt
         end
         for fig = 1:numel(figureHandle)
             figureHandle{fig}.CurrentAxes.XLim = [minXLim,maxXLim];
+        end
+    end
+    
+    if(optsSave.FIGURE_SAVE)
+        for fig = 1:numel(figureHandle)
+            figure(figureHandle{fig});
+            saveFiguresLIB(gcf,optsSave.FIGURE_DIR,optsSave.FIGURE_NAMES{fig});
         end
     end
 end
@@ -345,6 +358,7 @@ function [optsSave] = configureOptionsSave(optsSaveInput)
     optsSave.FIGURE_SAVE = 0;
     optsSave.FIGURE_DIR = '';
     optsSave.FIGURE_NAME = '';
+    optsSave.FIGURE_NAME_PREFIX = '';
 
     %% check if in optsSave and optsSaveInput, overwrite if so
     try

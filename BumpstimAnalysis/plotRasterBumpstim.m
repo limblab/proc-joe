@@ -323,6 +323,11 @@ function [ figureHandle ] = plotRasterBumpstim( cds,neuronNumber,optsTaskInput,o
                             optsPlot.Y_TICK = [1,max(yData)];
                         end
                         optsPlot.Y_MINOR_TICK = 'off';
+                        
+                        if(optsSave.FIGURE_SAVE)
+                            optsSave.FIGURE_NAME = strcat(optsSave.FIGURE_NAME_PREFIX,'nn',num2str(neuronNumber),'_chan',num2str(cds.units(neuronNumber).chan),...
+                                '_raster_','_stimCode',num2str(optsTask.STIM_CODE(stimCode)),'_bumpDir',num2str(optsTask.BUMP_DIRECTIONS(bumpDir)),'_tgtDir',num2str(optsTask.TARGET_DIRECTIONS(tgtDir)));
+                        end
                         plotRasterLIB(xData,yData,optsPlot,optsSave);
                         
                     end
@@ -385,7 +390,8 @@ function [optsSave] = configureOptionsSave(optsSaveInput)
     optsSave.FIGURE_SAVE = 0;
     optsSave.FIGURE_DIR = '';
     optsSave.FIGURE_NAME = '';
-
+    optsSave.FIGURE_NAME_PREFIX = '';
+    
     %% check if in optsSave and optsSaveInput, overwrite if so
     try
         inputFieldnames = fieldnames(optsSaveInput);
