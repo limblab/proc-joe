@@ -25,22 +25,14 @@ void setup()
   pinMode(A5,INPUT);
   
 	Serial.begin(9600);
-	Serial.println("IoTech LPS22HB Arduino Test");
 	
 	lps22hb.begin(0x5C);
 
-	Serial.print("Who Am I? 0x");
-	Serial.print(lps22hb.whoAmI(), HEX);
-	Serial.println(" (expected: 0xB1)");
 }
 
 void loop()
 {
-	Serial.print("P=");
-	Serial.print(lps22hb.readPressure());
-	Serial.print(" mbar, T=");
-	Serial.print((lps22hb.readTemperature()-42.5f)*480.0f);
-	Serial.println("C");
-	delay(300);
+	Serial.println(lps22hb.readPressure());
+	delay(100);
 }
 

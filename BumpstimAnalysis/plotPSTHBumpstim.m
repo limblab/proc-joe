@@ -223,6 +223,22 @@ function [ figureHandle ] = plotPSTHBumpstim( cds,neuronNumber,optsTaskInput,opt
         end
     end 
     
+    %% if combine_subtract, then combine the stim codes into one array for later
+    if(optsTask.COMBINE_SUBTRACT)
+        for trial = 1:size(spikeTimeData,1)
+            for tgtDir = 1:size(spikeTimeData,2)
+                for bumpDir = 1:size(spikeTimeData,3)
+                    if(~isempty(spikeTimeData{trial,tgtDir,bumpDir,1}) && ~isempty(spikeTimeData{trial,tgtDir,bumpDir,2}))
+                        spikeTimeData{trial,tgtDir,bumpDir,1} = [spikeTimeData{trial,tgtDir,bumpDir,2} - spikeTimeData{trial,tgtDir,bumpDir,1}];
+                        spikeTimeData{trial,tgtDir,bumpDir,2} = [];
+                    end
+                end
+            end
+        end
+        
+    end
+    
+    
     %% now that we have the spike times, we can make rasters (yay)
     for trial = 1:size(spikeTimeData,1)
         for tgtDir = 1:size(spikeTimeData,2)
@@ -282,11 +298,18 @@ function [ figureHandle ] = plotPSTHBumpstim( cds,neuronNumber,optsTaskInput,opt
     %% if optsTask.SAME_Y_LIMITS, then set all figure handles to the same y limits
     if(optsTask.SAME_Y_LIMITS)
         maxYLim = -10000;
-        for fig = 1:numel(figureHandle)
-            maxYLim = max(maxYLim,figureHandle{fig}.CurrentAxes.YLim(2));
+        minYLim = 0;
+        if(optsTask.COMBINE_SUBTRACT)
+            minYLim = 10000;
         end
         for fig = 1:numel(figureHandle)
-            figureHandle{fig}.CurrentAxes.YLim = [0,maxYLim];
+            maxYLim = max(maxYLim,figureHandle{fig}.CurrentAxes.YLim(2));
+            if(optsTask.COMBINE_SUBTRACT)
+                minYLim = min(minYLim,figureHandle{fig}.CurrentAxes.YLim(1));
+            end
+        end
+        for fig = 1:numel(figureHandle)
+            figureHandle{fig}.CurrentAxes.YLim = [minYLim,maxYLim];
         end
     end
     %% if optsTask.SAME_X_LIMITS, then set all figure handles to the same x limits
@@ -327,6 +350,7 @@ function [optsPlot] = configureOptionsPlot(optsPlotInput)
     optsPlot.Y_TICK_LABEL = '';
     optsPlot.BAR_STYLE = 'bar';
     optsPlot.LINE_STYLE = '-';
+    optsPlot.LINE_WIDTH = 1;
     optsPlot.TITLE = '';
     optsPlot.MARKER_STYLE = '.';
     optsPlot.MARKER_COLOR = 'k';
@@ -383,6 +407,7 @@ function [optsTask] = configureOptionsTask(optsTaskInput,cds)
     optsTask.STIM_CODE = [-1;unique(cds.trials.stimCode(~isnan(cds.trials.stimCode)))];
     optsTask.ZERO_MARKER = 'goCueTime'; % needs to be a field in cds.trials
     optsTask.COMBINE = {'bumpDir'};
+    optsTask.COMBINE_SUBTRACT = 0;
     optsTask.IGNORE = {};
     optsTask.PLOT_STIM_TIME = 0;
     optsTask.BIN_SIZE = '';
