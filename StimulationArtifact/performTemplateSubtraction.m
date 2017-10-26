@@ -7,10 +7,11 @@ for art = 1:numel(outputData.artifactData)
     templateCathodal = mean(data(:,1:2:end,:),2);
     templateAnodal = mean(data(:,2:2:end,:),2); % mean across the 100 electrodes, results in a 96x1xnumPoints template
     
-    data(:,1:2:end,:) = data(:,1:2:end,:)-repmat(templateCathodal,1,size(data,2)/2,1);
-    data(:,2:2:end,:) = data(:,2:2:end,:)-repmat(templateAnodal,1,size(data,2)/2,1);
+    data(:,1:2:end,:) = data(:,1:2:end,:)-repmat(templateCathodal,1,ceil(size(data,2)/2),1);
+    data(:,2:2:end,:) = data(:,2:2:end,:)-repmat(templateAnodal,1,floor(size(data,2)/2),1);
     outputData.artifactData(art).artifact = data; 
+    outputData.templateCathodal = templateCathodal;
+    outputData.templateAnodal = templateAnodal;
 end
 
 end
-

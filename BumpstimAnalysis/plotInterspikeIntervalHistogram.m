@@ -68,7 +68,7 @@ end
 
 if(saveFigures)
     fname = strcat(figPrefix,'nn',num2str(neuronNumber),'_chan',num2str(cds.units(neuronNumber).chan),'_ISI');
-    saveFiguresLab(gcf,figDir,fname);
+    saveFiguresLIB(gcf,figDir,fname);
 end
 
 end

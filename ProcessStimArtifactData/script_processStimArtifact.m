@@ -1,6 +1,6 @@
 %% process stimulation artifacts:
 pwd = cd;
-folderpath= 'R:\data\Han_13B1\Raw\headstageTesting_20170929\';
+folderpath= 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20171017_dukeBoard_stimRecord\';
 % inputData.mapFile='mapFileR:\limblab\lab_folder\Animal-Miscellany\Mihili 12A3\Mihili Left PMd SN 6251-001460.cmp'; % chips mapfile location
 inputData.mapFile='mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 % inputData.mapFile='mapFileR:\limblab\lab_folder\Animal-Miscellany\Mihili 12A3\Mihili Left M1 SN 1025-001452.cmp';
@@ -35,7 +35,7 @@ inputData.thresholdMult = 3.5;
 
 %% generates _cds and _nevData files, also writes nev file
 cd(folderpath)
-fileList = dir('*.nev');
+fileList = dir('*1Hz*.nev');
 if(MERGE_FILES)
     endIndex = 1;
 else
@@ -47,7 +47,7 @@ save(strcat(fileList(1).name(1:end-4),'_inputData.mat'),'inputData');
 
 artifactData = cell(endIndex,1);
 % process data
-for f = 1:endIndex 
+for f = 1:endIndex
     warning('off')
     inputData.stimsPerBump = 1;
     if(~MERGE_FILES)
@@ -63,6 +63,7 @@ for f = 1:endIndex
 %     processStimArtifactData(folderpath,inputData);
     artifactData{f}.artifact = extractArtifactData(folderpath,inputData);
     artifactData{f}.fileName = fileList(f).name;
+%     extractSpikingInfo(folderpath,inputData)
 end
 
 % save('','artifactData')

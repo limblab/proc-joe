@@ -22,6 +22,30 @@ function [ figHandle ] = plotRasterLIB(xData,yData,optsPlotInput,optsSaveInput)
     end
 
     %% deal with making plot
+    %% sort data if requested
+    if(strcmpi(optsPlot.SORT_DATA,'no')~=1)
+        switch optsPlot.SORT_DATA
+            case 'postStimuliTime'
+                xDataShort = xData;
+                xDataShort(xData <= 0) = 100000;
+                yDataShort = yData;
+                [xDataShort,sortIdx] = sort(xDataShort);
+                yDataShort = yDataShort(sortIdx);
+                sortIdx = unique(yDataShort,'stable');
+                yDataSorted = yData;
+                xDataSorted = xData;
+                counter = 1;
+                for sIdx = 1:numel(sortIdx)
+                    yDataSorted(counter:counter+sum(yData==sortIdx(sIdx))-1) = sIdx;
+                    xDataSorted(counter:counter+sum(yData==sortIdx(sIdx))-1) = xData(yData==sortIdx(sIdx));
+                    counter = counter+sum(yData==sortIdx(sIdx));
+                end
+                yData = yDataSorted;
+                xData = xDataSorted;
+        end
+
+    end
+    
     if(optsPlot.MAKE_FIGURE)
         figHandle = figure();
     else
@@ -131,7 +155,7 @@ function [optsPlot] = configureOptionsPlot(optsPlotInput,xData,yData)
     optsPlot.LINE_WIDTH = 1.2;
     optsPlot.MARKER_STYLE = '.';
     optsPlot.MARKER_COLOR = 'k';
-    optsPlot.MARKER_SIZE = 4;
+    optsPlot.MARKER_SIZE = 3;
     optsPlot.DIVIDING_LINES = '';
     optsPlot.DIVIDING_LINES_COLORS = '';
     optsPlot.PLOT_STIM_TIME = 0;
@@ -139,6 +163,7 @@ function [optsPlot] = configureOptionsPlot(optsPlotInput,xData,yData)
     optsPlot.STIM_DATA_Y = [];
     optsPlot.STIM_DATA_COLOR = 'r';
     optsPlot.STIM_LINE_WIDTH = 1.2;
+    optsPlot.SORT_DATA = 'no'; % postStimuliTime
     
     %% check if in optsPlot and optsPlotInput, overwrite if so
     try

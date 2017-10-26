@@ -61,7 +61,7 @@ for c = 1:numel(chans)
                 
                 plotPSTHStim(cds,nn,'binSize',binSize,'makeFigure',0,'makeSubplots',0,'plotTitle',0,'waveformTypes',waveformTypes(wave),...
                         'chans',chans(c),'preTime',preTime,'postTime',postTime,'lineColor',lineColor,'plotLine',plotLine,'plotStimOn',plotStimOn,...
-                        'lineWidth',lineWidth)
+                        'lineWidth',lineWidth);
 
                 % remove axes
                 set(gca,'XTickLabel',[])

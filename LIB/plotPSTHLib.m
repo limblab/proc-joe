@@ -118,6 +118,7 @@ function [optsPlot] = configureOptionsPlot(optsPlotInput,xData,yData)
     optsPlot.LEGEND_BOX = 'off';
     optsPlot.NUM_PLOTS = 1;
     optsPlot.WIDTH = 0.9;
+    optsPlot.BAR_COLOR = 'k';
     %% check if in optsPlot and optsPlotInput, overwrite if so
     try
         inputFieldnames = fieldnames(optsPlotInput);

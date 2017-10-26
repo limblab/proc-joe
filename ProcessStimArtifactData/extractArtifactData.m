@@ -177,9 +177,10 @@ function [artifact] = extractArtifactData(folderpath, inputData)
         end
         cdsTempDuration = cdsTemp.meta.duration;
         
-        artifact = zeros(numel(artifactDataPre.stimOn)-1,32,1000);
-        for st = 1:numel(artifactDataPre.stimOn)-1
-            artifact(st,:,:) = squeeze(cdsTempLFP(artifactDataPre.stimOn(st)-99:artifactDataPre.stimOn(st)+900,2:33)');
+        artifact = zeros(numel(artifactDataPre.stimOn)-1,33,10000);
+        for st = 1:min(100,numel(artifactDataPre.stimOn)-1)
+            artifact(st,1:32,:) = squeeze(cdsTempLFP(artifactDataPre.stimOn(st)-999:artifactDataPre.stimOn(st)+9000,2:33)');
+            artifact(st,33,:) = squeeze(cdsTemp.analog{1,1}.ainp15(artifactDataPre.stimOn(st)-999:artifactDataPre.stimOn(st)+9000));
         end
     end
 

@@ -58,10 +58,10 @@ for removalStepIdx = 1:size(removalSteps,1)
                 filterOrder = str2num(filterStr(orderIdx(1)+5:u));
             end
             outputDataTemp = performFilteringStep(outputDataTemp, inputData, highPass, lowPass, filterOrder, folderpath);
-        elseif(stepOrder(step) == '1') % curve fitting step
-            outputDataTemp = performCurveFittingStep(outputData);
+        elseif(stepOrder(step) == '1') % templateSubtraction fitting step
+            outputDataTemp = performTemplateSubtraction(outputDataTemp);
         elseif(stepOrder(step) == '2') % pca step
-            outputDataTemp = performPCAStep(outputData);
+            outputDataTemp = performPCAStep(outputDataTemp,str2num(removalSteps{removalStepIdx,4}));
         end
     end
     

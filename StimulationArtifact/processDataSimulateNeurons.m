@@ -1,6 +1,6 @@
 %% process stimulation artifacts:
 pwd = cd;
-folderpath='D:\Lab\Data\StimArtifact\Mihili\';
+folderpath='C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Mihili_20170413_highHeadRoom\';
 % folderpath='D:\Lab\Data\StimArtifact\Chips_one\';
 functionName='processStimArtifact';
 
@@ -9,16 +9,16 @@ inputData.task='taskRW';
 inputData.ranBy='ranByTucker'; 
 inputData.array1='arrayPMD'; 
 inputData.monkey='monkeyMihili';
-inputData.mapFile='mapFileD:\Lab\Data\MapFiles\Mihili_Left_M1\Mihili Left M1 SN 1025-001452.cmp'; % chips mapfile location
+inputData.mapFile = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Mihili 12A3\Mihili Left PMd SN 6251-001460.cmp';
 % inputData.mapFile = 'mapFileD:\Lab\Data\MapFiles\Chips_Left_S1\SN 6251-001455.cmp';
 inputData.badChList=0;
 inputData.interpulse=.000053;%in s
 inputData.pWidth1=.0002;
 inputData.pWidth2=.0002;
 
-inputData.windowSize=30*8;%in points
+inputData.windowSize=30*10;%in points
 inputData.presample=100;%in points
-inputData.plotRange=0.5;%in mV
+inputData.plotRange=0.8;%in mV
 inputData.lab=6;
 inputData.useSyncLabel=[];
 
@@ -27,15 +27,31 @@ cd(pwd);
 
 
 %% run all for different positions of the waveform
-% indexesToPlaceNeurons = [110,112,115,120,130];
-indexesToPlaceNeurons = [10];
-ampWave = 0/8;
-tolerance = 2;
+% indexesToPlaceNeurons = [125:5:250];
+
+indexesToPlaceNeurons = [120:10:160];
+% indexesToPlaceNeurons = [10];
+ampWave = 100;
+tolerance = 5;
 thresholdMult = -2;
+percentChannels = 1.0;
+jitter = 20;
+removalSteps = {'','','','';...
+    '2','','','1';...
+    '2','','','2';...
+    '2','','','3';...
+    '2','','','4';...
+    '2','','','5';...
+    '2','','','6'};
 % removalSteps = {'','','','';...
+%     '0','High750_Order6','','';...
+%     '0','High750_Order4','','';...
+%     '0','High500_Order6','','';...
+%     '0','High500_Order4','','';...
 %     '0','High250_Order6','','';...
-%     '0','High500_Order6','',''};
-removalSteps = {'0','High250_Order6','',''};
+%     '0','High250_Order4','','';...
+%     '0','High100_Order6','','';...
+%     '0','High100_Order4','',''};
 removalSteps = buildRemovalAttemptName(removalSteps);
 
 clear results;
@@ -54,17 +70,16 @@ for waveNum = 1:numel(indexesToPlaceNeurons)
     outputData.eList = eList; clear eList;
     outputData.posList = posList; clear posList;
     inputData = temp;
-    
+
     % add neuron like waveforms to the artifact data
     % add waves after the artifact -- data point inputData.presample and beyond
     numWaves = 1;
-        disp('hi')
 
-    outputData.artifactData.artifact = outputData.artifactData.artifact(:,1:2,:);
-    outputData = addArtificialNeurons(outputData, neuronMeanWave, ampWave, waveIdx, numWaves);
+    outputData.artifactData.artifact = outputData.artifactData.artifact(:,:,:);
+    outputData = addArtificialNeurons(outputData, neuronMeanWave, ampWave, waveIdx, numWaves, percentChannels, jitter);
     % perform artifact removal step
     outputDataFilteredTemp = removeArtifacts(outputData,inputData,removalSteps,folderpath);
-    
+
     % try to recover waves and store data
     for tempIdx = 1:numel(outputDataFilteredTemp)
         outputDataFiltered{tempIdx,waveNum} = ... 
@@ -73,11 +88,11 @@ for waveNum = 1:numel(indexesToPlaceNeurons)
     end
     clear outputDataFilteredTemp;
 end
-
+       
 %% plot percent found for each removal attempt
 sampRate = 30000;
 figure;
-xData = [];
+xData =[];
 yData = [];
 legendStr = {};
 for removalAttempt = 1:size(outputDataFiltered,1)
@@ -90,7 +105,7 @@ for removalAttempt = 1:size(outputDataFiltered,1)
 
 end
 ylim([0 1]);
-xlabel('Time after stimulation (ms)');
+xlabel('Time after stimulation onset (ms)');
 ylabel('Percent found')
 xlim([xData(1)*1000,xData(end)*1000])
 l=legend(legendStr,'interpreter','none');

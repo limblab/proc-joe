@@ -46,6 +46,4 @@ void loop() {
   NPA201ReadData();
   
   Serial.println((pressure));
-
-  delay(10);
 }

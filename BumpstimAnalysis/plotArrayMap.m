@@ -132,7 +132,7 @@ ax = gca;
 set(ax,'Visible','off')
 if(saveFigures)
     fname = strcat(figPrefix,'nn',num2str(neuronNumber),'_chan',num2str(cds.units(neuronNumber).chan),'_arrayMap');
-    saveFiguresLab(gcf,figDir,fname);
+    saveFiguresLIB(gcf,figDir,fname);
 end
 
 end
