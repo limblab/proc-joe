@@ -71,7 +71,41 @@ function [outputFigures, outputData ] = processStimArtifactData(folderpath, inpu
         useSync=true;
         aIdx=[];
         syncIdx=[];
-        if isempty(inputData.useSyncLabel)
+        noAnalog = 0; % unless Joe screws up
+        
+        if isempty(inputData.useSyncLabel) && isempty(cdsTemp.analog) % Joe really fucked up, try to find stim times from artifact
+            % stimulation artifact should be present at the site of
+            % stimulation. detect artifact, move back in time a bit and
+            % there we go
+            noAnalog = 1;
+            artifactDataPre.stimOn = [];
+            cdsTempLFP = cdsTemp.lfp{:,:}; % move to a matrix because its faster
+            stimChan = 42;
+%             [bHigh,aHigh] = butter(2,100/(30000/2),'high');
+%             cdsTempLFPData = cdsTemp.lfp{:,stimChan+1};
+            for stimIdx = 1:numel(waveforms.chanSent)
+                % find artifact in the stimulated channel at least
+                % 100ms after the previous artifact
+                if(stimIdx == 1)
+                    railIdx = find(abs(cdsTempLFP(:,stimChan+1)) > 2500);
+                else
+                    railIdx = find(abs(cdsTempLFP(:,stimChan+1)) > 2500);
+                    railIdx = railIdx(railIdx > artifactDataPre.stimOn(end) + 30*98);
+                end
+                
+                % find time where data is between -500 and 500 then move back in time that much or at most 10 data points
+
+                if(~isempty(railIdx))
+                    railIdx = railIdx(1);
+                    
+                    notArtifact = find(abs(cdsTempLFP(railIdx-30:railIdx,stimChan+1)) < 2000);
+                    artifactDataPre.stimOn(end+1,1) = max(railIdx-7,railIdx-30+max(find(notArtifact(1:end-2) == notArtifact(2:end-1)-1 & notArtifact(2:end-1) == notArtifact(3:end)-1)))-2;
+                end
+                
+            end
+            
+            artifactDataPre.stimOff = artifactDataPre.stimOn + 20;
+        elseif isempty(inputData.useSyncLabel)
         %look for sync under the label sync
             for j=1:numel(cdsTemp.analog)
                 syncIdx=find(strcmp(cdsTemp.analog{j}.Properties.VariableNames,'sync'));
@@ -128,7 +162,9 @@ function [outputFigures, outputData ] = processStimArtifactData(folderpath, inpu
             end
         end
         %% use sync to get stim times:
-        if(noSync && noSyncIntended)
+        if(noAnalog)
+            % do nothing. This is taken care of above. Stupid Joe
+        elseif(noSync && noSyncIntended)
             artifactDataPre.stimOn = [];
         elseif(noSync)
             artifactDataPre.stimOn = [];
@@ -167,8 +203,13 @@ function [outputFigures, outputData ] = processStimArtifactData(folderpath, inpu
             waveforms.parameters{1,1} = [];
             save(waveformFilename,'waveforms','-v7.3');
         end
+        
         %% extract data from cdsTemp so that the rest of the code moves quicker - table operations are slow af
         cdsTempLFP = cdsTemp.lfp{:,:};
+        % if the duke board is connected, then get the data from thecorrect analog pin
+        if(inputData.dukeBoardChannel > 0)
+            cdsTempLFP(:,inputData.dukeBoardChannel+1) = -1*cdsTemp.analog{1,1}.(inputData.dukeBoardLabel)*1000/100;
+        end
         if(cdsTempLFP(end,1) > cdsTemp.meta.duration-0.01) % apparently need to remove data?
             timeRemove = cdsTempLFP(end,1) - cdsTemp.meta.duration + 0.2;
             pointsRemove = timeRemove*30000;
@@ -406,7 +447,7 @@ function [outputFigures, outputData ] = processStimArtifactData(folderpath, inpu
                 if(inputData.templateSubtract && any(isfield(inputData,'blankPeriod')))
                     stimData(1:max(1,inputData.blankPeriod),ch) = 0;
                 else
-                    stimData(1:30*1,ch) = 0;
+%                     stimData(1:30*1,ch) = 0;
                 end
                 threshold = thresholdMult*thresholdAll(ch);
                 if(abs(threshold) < 1)
@@ -415,7 +456,7 @@ function [outputFigures, outputData ] = processStimArtifactData(folderpath, inpu
                 
                 %% get threshold crossings
 %                 threshold = abs(rms(stimData(max(1,numel(stimData(:,ch))-10):end,ch))*thresholdMult);
-                thresholdCrossings = find(stimData(:,ch)>threshold);
+                thresholdCrossings = find(stimData(:,ch)>abs(threshold));
                 
                 % remove potential artifacts and too close to beginning/end
                 % of stim data
@@ -561,7 +602,7 @@ function [outputFigures, outputData ] = processStimArtifactData(folderpath, inpu
         clear spikeWaves
         
         % store artifact data
-        for art = 1:numel(artifactDataPre.stimOn)
+        for art = 1:inputData.artifactSkip:numel(artifactDataPre.stimOn)
             if(artifactDataPre.stimOn(art) + artifactDataTime*30000/1000 <= size(cdsTempLFP,1))
                 artifactData.artifact(artifactDataIndex,:,:) = cdsTempLFP(artifactDataPre.stimOn(art):artifactDataPre.stimOn(art)+floor(artifactDataTime*30000/1000)-1,2:end)';
                 if(i==1)
