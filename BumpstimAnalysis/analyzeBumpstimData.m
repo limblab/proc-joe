@@ -35,7 +35,7 @@ for chan = 1:numel(unique(cds.waveforms.chanSent))
     end
 end
 %% 2. compare non-stim and stim trials to see response long-term (raster -- will need to be able to specify time window and center)
-for neuronNumber = 35:size(cds.units,2)
+for neuronNumber = 1:size(cds.units,2)
     if(cds.units(neuronNumber).ID ~= 0 && cds.units(neuronNumber).ID ~= 255)
         try
             optsSave.FIGURE_SAVE = 1;
