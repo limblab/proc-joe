@@ -8,18 +8,18 @@ function [ neuronsTotal, neuronsFound, thresholdCrossings ] = thresholdData(data
 neuronsFound = 0;
 crossingIdx = [-1];
 
-threshold = rms(data(end-100:end))*-4;
+threshold = rms(data(end-200:end))*-3.5;
 % find threshold based on last (inputData.presample) data points
 windowData = data(inputData.presample:end);
 for i = 1:numel(windowData)
-    if(windowData(i) < threshold)
+    if(abs(windowData(i)) > abs(threshold))
         crossingIdx(end+1,1) = i+inputData.presample-1;
     end
 end
 
 crossingIdx = unique(crossingIdx); % remove duplicates
 % remove indexes with long strings of crossings
-maxLength = 5;
+maxLength = 10;
 i = 2;
 currentChainLength = 1;
 while i < numel(crossingIdx)
@@ -52,7 +52,7 @@ end
 % remove magnitudes that are too large
 i=1;
 while i <= numel(crossingIdx)
-    if(abs(data(crossingIdx(i))-mean(data(inputData.presample+100:end))) > 100)
+    if(abs(data(crossingIdx(i))-mean(data(inputData.presample+100:end))) > 400)
         if(i == 1 && numel(crossingIdx) > 1)
             crossingIdx = crossingIdx(2:end);
         elseif(i == 1)

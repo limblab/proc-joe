@@ -571,10 +571,39 @@
 <pad name="P$3" x="-2.54" y="0" drill="0.5"/>
 <pad name="P$4" x="-3.81" y="0" drill="0.5"/>
 <pad name="P$5" x="-5.08" y="0" drill="0.5"/>
-<wire x1="-5.842" y1="0.889" x2="-5.842" y2="-0.889" width="0.127" layer="21"/>
-<wire x1="-5.842" y1="-0.889" x2="0.762" y2="-0.889" width="0.127" layer="21"/>
-<wire x1="0.762" y1="-0.889" x2="0.762" y2="0.889" width="0.127" layer="21"/>
-<wire x1="0.762" y1="0.889" x2="-5.842" y2="0.889" width="0.127" layer="21"/>
+</package>
+<package name="LPS33HW">
+<smd name="GND" x="0" y="0" dx="0.7" dy="0.7" layer="1"/>
+<smd name="P$1" x="-1.325" y="0.3" dx="0.425" dy="0.525" layer="1" rot="R90"/>
+<smd name="P$2" x="-1.325" y="-0.3" dx="0.425" dy="0.525" layer="1" rot="R90"/>
+<smd name="P$3" x="-0.6" y="-1.325" dx="0.425" dy="0.525" layer="1" rot="R180"/>
+<smd name="P$4" x="0" y="-1.325" dx="0.425" dy="0.525" layer="1" rot="R180"/>
+<smd name="P$5" x="0.6" y="-1.325" dx="0.425" dy="0.525" layer="1" rot="R180"/>
+<smd name="P$6" x="1.325" y="-0.3" dx="0.425" dy="0.525" layer="1" rot="R270"/>
+<smd name="P$7" x="1.325" y="0.3" dx="0.425" dy="0.525" layer="1" rot="R270"/>
+<smd name="P$8" x="0.6" y="1.325" dx="0.425" dy="0.525" layer="1" rot="R180"/>
+<smd name="P$9" x="0" y="1.325" dx="0.425" dy="0.525" layer="1" rot="R180"/>
+<smd name="P$10" x="-0.6" y="1.325" dx="0.425" dy="0.525" layer="1" rot="R180"/>
+<circle x="-1.325" y="1.275" radius="0.302075" width="0.1016" layer="21"/>
+<wire x1="-1.8" y1="1.8" x2="1.8" y2="1.8" width="0.1016" layer="21"/>
+<wire x1="1.8" y1="1.8" x2="1.8" y2="-1.8" width="0.1016" layer="21"/>
+<wire x1="1.8" y1="-1.8" x2="-1.8" y2="-1.8" width="0.1016" layer="21"/>
+<wire x1="-1.8" y1="-1.8" x2="-1.8" y2="1.8" width="0.1016" layer="21"/>
+</package>
+<package name="AMPHENOL_NPA201_EDGEMOUNT">
+<smd name="P$1" x="0.975" y="-0.725" dx="0.4" dy="0.6" layer="1" rot="R180"/>
+<smd name="P$2" x="0.325" y="-0.725" dx="0.4" dy="0.6" layer="1"/>
+<smd name="P$3" x="-0.325" y="-0.725" dx="0.4" dy="0.6" layer="1"/>
+<smd name="P$4" x="-0.975" y="-0.725" dx="0.4" dy="0.6" layer="1"/>
+<smd name="P$5" x="-0.975" y="-0.725" dx="0.4" dy="0.6" layer="16" rot="R180"/>
+<smd name="P$6" x="-0.325" y="-0.725" dx="0.4" dy="0.6" layer="16" rot="R180"/>
+<smd name="P$7" x="0.325" y="-0.725" dx="0.4" dy="0.6" layer="16" rot="R180"/>
+<smd name="P$8" x="0.975" y="-0.725" dx="0.4" dy="0.6" layer="16" rot="R180"/>
+<circle x="1.13" y="-1.283" radius="0.0559" width="0.127" layer="21"/>
+<text x="-1.24" y="-0.34" size="0.254" layer="21">Edge</text>
+</package>
+<package name="WIREPAD_0,5/0,3">
+<pad name="P$1" x="0" y="0" drill="0.3" diameter="0.5"/>
 </package>
 </packages>
 <symbols>
@@ -680,7 +709,7 @@
 <wire x1="12.7" y1="-12.7" x2="12.7" y2="7.62" width="0.254" layer="94"/>
 <wire x1="12.7" y1="7.62" x2="-10.16" y2="7.62" width="0.254" layer="94"/>
 </symbol>
-<symbol name="WIREPAD_0,8/0,45">
+<symbol name="WIREPAD">
 <pin name="P$1" x="-5.08" y="0" length="middle"/>
 <wire x1="-7.62" y1="2.54" x2="-2.54" y2="-2.54" width="0.254" layer="94"/>
 <wire x1="-7.62" y1="-2.54" x2="-2.54" y2="2.54" width="0.254" layer="94"/>
@@ -784,6 +813,23 @@
 <wire x1="-2.54" y1="-7.62" x2="2.54" y2="-7.62" width="0.254" layer="94"/>
 <wire x1="2.54" y1="-7.62" x2="2.54" y2="7.62" width="0.254" layer="94"/>
 <wire x1="2.54" y1="7.62" x2="-2.54" y2="7.62" width="0.254" layer="94"/>
+</symbol>
+<symbol name="LPS33HW">
+<pin name="1.VDD_IO" x="-15.24" y="10.16" length="middle"/>
+<pin name="2.SCL" x="-15.24" y="5.08" length="middle"/>
+<pin name="3.RES" x="-15.24" y="0" length="middle"/>
+<pin name="4.SDA" x="-15.24" y="-5.08" length="middle"/>
+<pin name="5.SDO" x="-15.24" y="-10.16" length="middle"/>
+<pin name="6.CS" x="15.24" y="-10.16" length="middle" rot="R180"/>
+<pin name="7.INT" x="15.24" y="-5.08" length="middle" rot="R180"/>
+<pin name="8.GND" x="15.24" y="0" length="middle" rot="R180"/>
+<pin name="9.GND" x="15.24" y="5.08" length="middle" rot="R180"/>
+<pin name="10.VDD" x="15.24" y="10.16" length="middle" rot="R180"/>
+<wire x1="-12.7" y1="12.7" x2="-12.7" y2="-12.7" width="0.254" layer="94"/>
+<wire x1="-12.7" y1="-12.7" x2="12.7" y2="-12.7" width="0.254" layer="94"/>
+<wire x1="12.7" y1="-12.7" x2="12.7" y2="12.7" width="0.254" layer="94"/>
+<wire x1="12.7" y1="12.7" x2="-12.7" y2="12.7" width="0.254" layer="94"/>
+<pin name="0.GND" x="0" y="-15.24" length="middle" rot="R90"/>
 </symbol>
 </symbols>
 <devicesets>
@@ -911,14 +957,37 @@
 <technology name=""/>
 </technologies>
 </device>
+<device name="EDGEMOUNT" package="AMPHENOL_NPA201_EDGEMOUNT">
+<connects>
+<connect gate="G$1" pin="1.GND" pad="P$1"/>
+<connect gate="G$1" pin="2.NC" pad="P$2"/>
+<connect gate="G$1" pin="3.SDA" pad="P$3"/>
+<connect gate="G$1" pin="4.SCL" pad="P$4"/>
+<connect gate="G$1" pin="5.NC" pad="P$5"/>
+<connect gate="G$1" pin="6.VDD" pad="P$6"/>
+<connect gate="G$1" pin="7.GND" pad="P$7"/>
+<connect gate="G$1" pin="8.VDD" pad="P$8"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
 </devices>
 </deviceset>
-<deviceset name="WIREPAD_0,8/0,45">
+<deviceset name="WIREPAD">
 <gates>
-<gate name="G$1" symbol="WIREPAD_0,8/0,45" x="2.54" y="0"/>
+<gate name="G$1" symbol="WIREPAD" x="2.54" y="0"/>
 </gates>
 <devices>
 <device name="" package="WIREPAD_0,8/0,45">
+<connects>
+<connect gate="G$1" pin="P$1" pad="P$1"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+<device name="WIREPAD_0,5/0,3" package="WIREPAD_0,5/0,3">
 <connects>
 <connect gate="G$1" pin="P$1" pad="P$1"/>
 </connects>
@@ -1057,6 +1126,31 @@
 <connect gate="G$1" pin="P$3" pad="P$3"/>
 <connect gate="G$1" pin="P$4" pad="P$4"/>
 <connect gate="G$1" pin="P$5" pad="P$5"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="LPS33HW">
+<gates>
+<gate name="G$1" symbol="LPS33HW" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="LPS33HW">
+<connects>
+<connect gate="G$1" pin="0.GND" pad="GND"/>
+<connect gate="G$1" pin="1.VDD_IO" pad="P$1"/>
+<connect gate="G$1" pin="10.VDD" pad="P$10"/>
+<connect gate="G$1" pin="2.SCL" pad="P$2"/>
+<connect gate="G$1" pin="3.RES" pad="P$3"/>
+<connect gate="G$1" pin="4.SDA" pad="P$4"/>
+<connect gate="G$1" pin="5.SDO" pad="P$5"/>
+<connect gate="G$1" pin="6.CS" pad="P$6"/>
+<connect gate="G$1" pin="7.INT" pad="P$7"/>
+<connect gate="G$1" pin="8.GND" pad="P$8"/>
+<connect gate="G$1" pin="9.GND" pad="P$9"/>
 </connects>
 <technologies>
 <technology name=""/>

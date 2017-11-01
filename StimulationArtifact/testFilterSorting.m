@@ -1,6 +1,6 @@
 %% process stimulation artifacts:
 pwd = cd;
-folderpath= 'D:\Lab\Data\StimArtifact\Han\chanLots_20170516\';
+folderpath= 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_20170621_3000stimuli\';
 % folderpath='D:\Lab\Data\StimArtifact\Chips_one\';
 functionName='processStimArtifact';
 
@@ -30,14 +30,14 @@ warning('on')
 % indexesToPlaceNeurons = [110,112,115,120,130];
 indexesToPlaceNeurons = [80];
 ampWave = 150/8;
-tolerance = 2;
+tolerance = 3;
 thresholdMult = 4;
 preOffset = 33;
 postOffset = 14; % these two should add up to 48-1?
-% removalSteps = {'','','','';...
-%     '0','High250_Order6','','';...
-%     '0','High500_Order6','',''};
-removalSteps = {'0','High500_Order6','',''};
+removalSteps = {'','','','';...
+    '0','High250_Order6','','';...
+    '0','High500_Order6','',''};
+% removalSteps = {'0','High500_Order6','',''};
 removalSteps = buildRemovalAttemptName(removalSteps);
 
 clear results;

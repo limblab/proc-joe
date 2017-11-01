@@ -81,7 +81,7 @@ end
 
 neuronChan = cds.units(neuronNumber).chan;
 spikes = cds.units(neuronNumber).spikes.ts;
-numArtifacts = numel(cds.stimOn);
+numArtifacts = size(cds.artifactData.artifact,1);
 xData = ((0:1:size(cds.artifactData.artifact,3)-1)-30)/30000*1000;
 
 if(plotArtifactsSeparated)
@@ -113,7 +113,7 @@ for artCond = 1:maxArtCond
             end
         else % plot sample of artifacts without spike afterwards 
             for art = 1:numArtifacts
-                artifactsMask = spikes >= cds.artifactData.t(art) & spikes <= cds.artifactData.t(art) + (size(cds.artifactData.artifact,3)-30)/30000;
+                artifactsMask = spikes >= cds.artifactData.t(art) & spikes <= cds.artifactData.t(art) + timeAfterStim;
 
                 if(sum(artifactsMask)==0 && cds.artifactData.t(art) ~= 0 && ((waveformsSentExist && cds.waveforms.waveSent(art) == figNum) || ~waveformsSentExist) && (~any(isfield(cds.waveforms,'chanSent')) || cds.waveforms.chanSent(art)==chanList(chanNum)))
                     artifactsPlot(end+1,1) = art;
@@ -151,7 +151,7 @@ for artCond = 1:maxArtCond
                 hold on
                 artCount = artCount+1;
             end
-            ylim([-400 400])
+%             ylim([-400 400])
 %             xlabel('Time after stimulation onset (ms)')
 %             ylabel('Voltage (\muV)')
             formatForLee(gcf)
@@ -166,11 +166,11 @@ for artCond = 1:maxArtCond
                 end
                 hold on
                 artCount = artCount+1;
-                ylim([-400,400])
+%                 ylim([-400,400])
             end
 %             plot((stimDataPlot(1:end-200,:) - mean(stimDataPlot(1:end-200,:),2)))
 
-            ylim([-400 400])
+%             ylim([-400 400])
 %             xlabel('Time after stimulation onset (ms)')
 %             ylabel('Voltage (\muV)')
             formatForLee(gcf)
@@ -197,7 +197,7 @@ if(saveFigures)
     else
         fname = strcat(figPrefix,'nn',num2str(neuronNumber),'_chan',num2str(cds.units(neuronNumber).chan),'_stimChan',num2str(chanList(chanNum)),'_waveNum',num2str(figNum),'_artifactDataRaw');
     end
-    saveFiguresLab(gcf,figDir,fname);
+    saveFiguresLIB(gcf,figDir,fname);
 end
 
 

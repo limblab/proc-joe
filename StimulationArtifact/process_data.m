@@ -1,6 +1,6 @@
 %% process stimulation artifacts:
 pwd = cd;
-folderpath='C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\stimTesting\20170625\';
+folderpath='C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_20170621_3000stimuli\';
 functionName='processStimArtifact';
 
 %%

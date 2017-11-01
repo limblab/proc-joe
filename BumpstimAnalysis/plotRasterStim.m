@@ -5,7 +5,7 @@ lineLength = 1;
 linewidth = 1;
 verticalLine = 0;
 markersize = 4;
-markerstyle = 'dot';
+markerStyle = 'dot';
 preTime = 10/1000; % in seconds
 postTime = 20/1000; % in seconds
 plotAllArtifacts = 0;
@@ -28,7 +28,7 @@ alignWaves = 1;
 % plot waves near artifact stuff
 plotSpikeWaveforms = 0;
 timeAfterStimRawNoStim = 20/1000;
-timeAfterStimRawArtifact = 5/1000;
+timeAfterStimRawArtifact = 10/1000;
 
 % plot artifact sample
 plotArtifacts = 0;
@@ -51,6 +51,8 @@ plotOnlyStimuliWithResponse = 0;
 plotAllStimuli = 1;
 plotOnlyStimuliWithoutResponse = 0;
 
+
+sortData = 'no';
 %% deal with varagin
 for i = 1:2:size(varargin,2)
     switch varargin{i}
@@ -105,7 +107,7 @@ for i = 1:2:size(varargin,2)
         case 'figPrefix'
             figPrefix = varargin{i+1};
         case 'markerstyle'
-            markerstyle = varargin{i+1};
+            markerStyle = varargin{i+1};
         case 'linewidth'
             linewidth = varargin{i+1};
         case 'linelength'
@@ -128,6 +130,8 @@ for i = 1:2:size(varargin,2)
                 plotAllStimuli = 1;
                 plotOnlyStimuliWithoutResponse = 0;
             end
+        case 'sortData'
+            sortData = varargin{i+1};
     end
 end
 
@@ -165,12 +169,12 @@ else % get data after stimulations
         spikeMask = cds.units(neuronNumber).spikes.ts > cds.stimOn(st)-preTime & cds.units(neuronNumber).spikes.ts < cds.stimOn(st)+postTime;
         spikesPlot = (cds.units(neuronNumber).spikes.ts(spikeMask) - cds.stimOn(st));
         if(plotOnlyStimuliWithResponse) % check if spikesPlot has a spike within a specified amount of time -- if not, remove
-            mask = spikesPlot > 0 & spikesPlot < min(5/1000,timeAfterStimRawArtifact);
+            mask = spikesPlot > 0 & spikesPlot < min(18/1000,timeAfterStimRawArtifact);
             if(sum(mask) == 0)
                 spikesPlot = [];
             end
         elseif(plotOnlyStimuliWithoutResponse)
-            mask = spikesPlot > 0 & spikesPlot < min(5/1000,timeAfterStimRawArtifact);
+            mask = spikesPlot > 0 & spikesPlot < min(18/1000,timeAfterStimRawArtifact);
             if(sum(mask) ~= 0)
                 spikesPlot = [];
             end
@@ -244,6 +248,7 @@ else % get data after stimulations
 end
 
 
+
 %% plot data - stimuli data is y-axis. spike data is x-axis
 
 for chan = chansPlot
@@ -264,10 +269,34 @@ for chan = chansPlot
         xData = spikeTimeData{chan,fig}*1000;
         yData = stimuliData{chan,fig};
         
+%         %% sort data if requested
+%         if(strcmpi(sortData,'no')~=1)
+%             switch sortData
+%                 case 'postStimuliTime'
+%                     xDataShort = xData;
+%                     xDataShort(xData <= 0) = 100000;
+%                     yDataShort = yData;
+%                     [xDataShort,sortIdx] = sort(xDataShort);
+%                     yDataShort = yDataShort(sortIdx);
+%                     sortIdx = unique(yDataShort,'stable');
+%                     yDataSorted = yData;
+%                     xDataSorted = xData;
+%                     counter = 1;
+%                     for sIdx = 1:numel(sortIdx)
+%                         yDataSorted(counter:counter+sum(yData==sortIdx(sIdx))-1) = sIdx;
+%                         xDataSorted(counter:counter+sum(yData==sortIdx(sIdx))-1) = xData(yData==sortIdx(sIdx));
+%                         counter = counter+sum(yData==sortIdx(sIdx));
+%                     end
+%                     yData = yDataSorted;
+%                     xData = xDataSorted;
+%             end
+%         
+%         end
+        optsPlot.SORT_DATA = sortData;
         % plot related information
         optsPlot.MAKE_FIGURE = 0;
         optsPlot.X_LIMITS = [-preTime*1000,postTime*1000];
-        optsPlot.Y_LIMITS = [-3,max(stimuliData{chan,fig})+1];
+        optsPlot.Y_LIMITS = [-3,stimNum(chan,fig)+1];
         if(~waveformsSentExist || ~waveformsMakeSubplots || fig == numWaveformTypes)
             optsPlot.X_LABEL = 'Time after stimulation onset (ms)';
         else
@@ -286,9 +315,9 @@ for chan = chansPlot
                 % no title??
             end
         end
-        optsPlot.Y_TICK = [0;max(stimuliData{chan,fig})];
+        optsPlot.Y_TICK = [0;max(stimNum(chan,fig))];
         optsPlot.Y_MINOR_TICK = 'off';
-        optsPlot.Y_TICK_LABEL = {num2str(0),num2str(max(stimuliData{chan,fig}))};
+        optsPlot.Y_TICK_LABEL = {num2str(0),num2str(stimNum(chan,fig))};
         
         optsSave.FIGURE_SAVE = saveFigures;
         optsSave.FIGURE_DIR = figDir;
@@ -297,6 +326,8 @@ for chan = chansPlot
         else
             optsSave.FIGURE_NAME = '';
         end
+        
+        optsPlot.MARKER_STYLE = markerStyle;
         % plot Raster
         plotRasterLIB(xData,yData,optsPlot,optsSave);
 %         % plot actual data now

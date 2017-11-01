@@ -91,7 +91,8 @@ for st = 1:numel(cds.stimOn)
 end
 
 waveIdx = find(spikeMask);
-waveIdx = datasample(waveIdx,min(maxWavesPlot,numel(waveIdx)),'Replace',false);
+% waveIdx = datasample(waveIdx,min(maxWavesPlot,numel(waveIdx)),'Replace',false);
+waveIdx = waveIdx(1:min(maxWavesPlot,numel(waveIdx)));
 if(numel(waveIdx) > 0)
     for wave = 1:numel(waveIdx)
         if(numel(plotFiltered) > 1)
@@ -221,7 +222,7 @@ if(saveFigures)
             elseif(i==2) % filtered
                 fname = strcat(figPrefix,'nn',num2str(neuronNumber),'_chan',num2str(cds.units(neuronNumber).chan),'_stimChan',num2str(chanList(chanNum)),'_waveNum',num2str(figNum),'_rawWaveforms');
             end
-            saveFiguresLab(gcf,figDir,fname);
+            saveFiguresLIB(fig(i),figDir,fname);
         end
     else
         if(plotFiltered)
@@ -229,7 +230,7 @@ if(saveFigures)
         else
             fname = strcat(figPrefix,'nn',num2str(neuronNumber),'_chan',num2str(cds.units(neuronNumber).chan),'_stimChan',num2str(chanList(chanNum)),'_waveNum',num2str(figNum),'_rawWaveforms');
         end
-        saveFiguresLab(gcf,figDir,fname);
+        saveFiguresLIB(gcf,figDir,fname);
     end
 end
 

@@ -13,30 +13,32 @@ neuronWaves(:,:,:,:) = zeros(artNum,size(outputDataFiltered.artifactData(1).arti
 stimChanel = [];
 
 % try to recover waves
-tic
+% tic
 for art = 1:numel(outputDataFiltered.artifactData)
     stimChannel(art) = outputDataFiltered.artifactData(art).stimChannel;
     for i = 1:numel(outputDataFiltered.eList) 
         % check if bad channel
         if(sum(inputData.badChList-i == 0) == 0)
             for j = 1:size(outputDataFiltered.artifactData(art).artifact,2)
-                % threshold based on rms (-4*rms)                       
-                [total,numFound, thresholdCrossings] = thresholdData(squeeze(outputDataFiltered.artifactData(art).artifact(i,j,:)),...
-                    outputDataFiltered.artifactData(art).fakeWaveTimes(i,j,:), abs(outputDataFiltered.artifactData(art).threshold(i,j))*thresholdMult,tolerance,shift,inputData);
+                if(outputDataFiltered.artifactData(art).fakeWaveTimes(i,j,1) ~= -1)
+                    % threshold based on rms (-4*rms)                       
+                    [total,numFound, thresholdCrossings] = thresholdData(squeeze(outputDataFiltered.artifactData(art).artifact(i,j,:)),...
+                        outputDataFiltered.artifactData(art).fakeWaveTimes(i,j,:), abs(outputDataFiltered.artifactData(art).threshold(i,j))*thresholdMult,tolerance,shift,inputData);
 
-                neuronsTotal(art,i,j) = total;
-                neuronsFound(art,i,j) = numFound;
-                fakeWaveTime = outputDataFiltered.artifactData(art).fakeWaveTimes(i,j)+shift; % shift by an amount based on the filter
-                neuronWaves(art,i,j,:) = outputDataFiltered.artifactData(art).artifact(i,j,fakeWaveTime-14+shift:fakeWaveTime+33+shift);
-                thresholdCrossings(art,i,j) = numel(thresholdCrossings);
-                electrodeStimCounter = electrodeStimCounter+1;
+                    neuronsTotal(art,i,j) = total;
+                    neuronsFound(art,i,j) = numFound;
+                    fakeWaveTime = outputDataFiltered.artifactData(art).fakeWaveTimes(i,j)+shift; % shift by an amount based on the filter
+                    neuronWaves(art,i,j,:) = outputDataFiltered.artifactData(art).artifact(i,j,fakeWaveTime-14+shift:fakeWaveTime+33+shift);
+                    thresholdCrossings(art,i,j) = numel(thresholdCrossings);
+                    electrodeStimCounter = electrodeStimCounter+1;
+                end
             end
         end
     end
     percentFound(art) = sum(sum(neuronsFound(art,:,:)))/sum(sum(neuronsTotal(art,:,:)));
     meanThresholdCrossings(art) = sum(sum(thresholdCrossings(art,:,:)))/electrodeStimCounter;
 end
-toc
+% toc
 recoveredStruct.percentFound = percentFound;
 recoveredStruct.meanThresholdCrossings = meanThresholdCrossings;
 recoveredStruct.neuronsFound = neuronsFound;

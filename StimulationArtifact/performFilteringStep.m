@@ -26,12 +26,10 @@ if(~doNothing && ~noFilter) % filter and save png and .mat file
     % plot results and save png
 %     plotArtifactsAllStimChannels(outputDataFiltered,inputData,folderpath,'Name',filterStruct.name,'noPlots',1);
 %     save(strcat(folderpath,filesep,'Raw_Figures',filesep,filterStruct.name(2:end)),'outputDataFiltered','inputData');
-    close all
 elseif(~doNothing && noFilter) % no filter, save .mat file
 %     plotArtifactsAllStimChannels(outputData,inputData,folderpath,'Name','_noFilter','noPlots',1);
     outputDataFiltered = outputData;
 %     save(strcat(folderpath,filesep,'Raw_Figures',filesep,'noFilter'),'outputDataFiltered','inputData');
-    close all
 end          
 
 % % make sure to remove bad channels from summary statistic
