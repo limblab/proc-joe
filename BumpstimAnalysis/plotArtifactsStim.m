@@ -82,6 +82,8 @@ end
 neuronChan = cds.units(neuronNumber).chan;
 spikes = cds.units(neuronNumber).spikes.ts;
 numArtifacts = size(cds.artifactData.artifact,1);
+artMult = numel(cds.stimOn)/size(cds.artifactData.artifact,1); % I no longer keep all artifacts, this moves the counter forwards
+% artMult = 10;
 xData = ((0:1:size(cds.artifactData.artifact,3)-1)-30)/30000*1000;
 
 if(plotArtifactsSeparated)
@@ -106,8 +108,9 @@ for artCond = 1:maxArtCond
     if(plotArtifactsSeparated)
         if(artCond == 1) % plot sample of artifacts with spike afterwards
             for art = 1:numArtifacts
+                
                 artifactsMask = spikes >= cds.artifactData.t(art) & spikes <= cds.artifactData.t(art) + timeAfterStim;
-                if(sum(artifactsMask)>0 && ((waveformsSentExist && cds.waveforms.waveSent(art) == figNum) || ~waveformsSentExist) && (~any(isfield(cds.waveforms,'chanSent')) || cds.waveforms.chanSent(art)==chanList(chanNum)))
+                 if(sum(artifactsMask)>0 && ((waveformsSentExist && cds.waveforms.waveSent(1+(art-1)*artMult) == figNum) || ~waveformsSentExist) && (~any(isfield(cds.waveforms,'chanSent')) || cds.waveforms.chanSent(1+(art-1)*artMult)==chanList(chanNum)))
                     artifactsPlot(end+1,1) = art;
                 end
             end
@@ -115,14 +118,14 @@ for artCond = 1:maxArtCond
             for art = 1:numArtifacts
                 artifactsMask = spikes >= cds.artifactData.t(art) & spikes <= cds.artifactData.t(art) + timeAfterStim;
 
-                if(sum(artifactsMask)==0 && cds.artifactData.t(art) ~= 0 && ((waveformsSentExist && cds.waveforms.waveSent(art) == figNum) || ~waveformsSentExist) && (~any(isfield(cds.waveforms,'chanSent')) || cds.waveforms.chanSent(art)==chanList(chanNum)))
+                if(sum(artifactsMask)==0 && cds.artifactData.t(art) ~= 0 && ((waveformsSentExist && cds.waveforms.waveSent(1+(art-1)*artMult) == figNum) || ~waveformsSentExist) && (~any(isfield(cds.waveforms,'chanSent')) || cds.waveforms.chanSent(1+(art-1)*artMult)==chanList(chanNum)))
                     artifactsPlot(end+1,1) = art;
                 end
             end
         end
     else
         for art = 1:numArtifacts
-            if(((waveformsSentExist && cds.waveforms.waveSent(art) == figNum) || ~waveformsSentExist) && (~any(isfield(cds.waveforms,'chanSent')) || cds.waveforms.chanSent(art)==chanList(chanNum)))
+            if(((waveformsSentExist && cds.waveforms.waveSent(art) == figNum) || ~waveformsSentExist) && (~any(isfield(cds.waveforms,'chanSent')) || cds.waveforms.chanSent(1+(art-1)*artMult)==chanList(chanNum)))
                 artifactsPlot(end+1,1) = art;
             end
         end
@@ -151,7 +154,7 @@ for artCond = 1:maxArtCond
                 hold on
                 artCount = artCount+1;
             end
-%             ylim([-400 400])
+            ylim([-400 400])
 %             xlabel('Time after stimulation onset (ms)')
 %             ylabel('Voltage (\muV)')
             formatForLee(gcf)
@@ -166,11 +169,11 @@ for artCond = 1:maxArtCond
                 end
                 hold on
                 artCount = artCount+1;
-%                 ylim([-400,400])
+                ylim([-400,400])
             end
 %             plot((stimDataPlot(1:end-200,:) - mean(stimDataPlot(1:end-200,:),2)))
 
-%             ylim([-400 400])
+            ylim([-400 400])
 %             xlabel('Time after stimulation onset (ms)')
 %             ylabel('Voltage (\muV)')
             formatForLee(gcf)

@@ -1,4 +1,4 @@
-function [bE,bC,bCVar] = plotPSTHStim(cds,neuronNumber,varargin)
+function [outputData] = plotPSTHStim(cds,neuronNumber,varargin)
 preTime = 10/1000; % in seconds
 postTime = 20/1000; % in seconds
 plotAllArtifacts = 0;
@@ -154,7 +154,8 @@ end
 %% extract data
 for c = 1:numChans
     for i = 1:numWaveformTypes
-        spikeTimeData{c,i} = [];
+        spikeTrialTimes{c,i} = [];
+        spikeTrueTimes{c,i} = [];
         stimuliData{c,i} = [];
     end
 end
@@ -201,10 +202,12 @@ else % get data after stimulations
             if(~isempty(spikesPlot))
                 if(any(isfield(cds.waveforms,'chanSent')))
                     chanNumber = find(unique(cds.waveforms.chanSent)==cds.waveforms.chanSent(st));
-                    spikeTimeData{chanNumber,cds.waveforms.waveSent(st)}(end+1:end+numWaves) = spikesPlot';
+                    spikeTrialTimes{chanNumber,cds.waveforms.waveSent(st)}(end+1:end+numWaves) = spikesPlot';
+                    spikeTrueTimes{chanNumber,cds.waveforms.waveSent(st)}(end+1:end+numWaves) = spikesPlot' + cds.stimOn(st);
                     stimuliData{chanNumber,cds.waveforms.waveSent(st)}(end+1:end+numWaves) = stimNum(chanNumber,cds.waveforms.waveSent(st));
                 else
-                    spikeTimeData{1,cds.waveforms.waveSent(st)}(end+1:end+numWaves) = spikesPlot';
+                    spikeTrialTimes{1,cds.waveforms.waveSent(st)}(end+1:end+numWaves) = spikesPlot';
+                    spikeTrueTimes{1,cds.waveforms.waveSent(st)}(end+1:end+numWaves) = spikesPlot' + cds.stimOn(st);
                     stimuliData{1,cds.waveforms.waveSent(st)}(end+1:end+numWaves) = stimNum(1,cds.waveforms.waveSent(st));
                 end
             elseif(isempty(spikesPlot) && (plotOnlyStimuliWithResponse || plotOnlyStimuliWithoutResponse)) % decrement stimNum
@@ -226,10 +229,12 @@ else % get data after stimulations
             if(~isempty(spikesPlot))
                 if(any(isfield(cds.waveforms,'chanSent')))
                     chanNumber = find(unique(cds.waveforms.chanSent)==cds.waveforms.chanSent(st));
-                    spikeTimeData{chanNumber,1}(end+1:end+numWaves) = spikesPlot';
+                    spikeTrialTimes{chanNumber,1}(end+1:end+numWaves) = spikesPlot';
+                    spikeTrueTimes{chanNumber,1}(end+1:end+numWaves) = spikesPlot' + cds.stimOn(st);
                     stimuliData{chanNumber,1}(end+1:end+numWaves) = stimNum(chanNumber,1);
                 else
-                    spikeTimeData{1}(end+1:end+numWaves) = spikesPlot';
+                    spikeTrialTimes{1}(end+1:end+numWaves) = spikesPlot';
+                    spikeTrueTimes{1}(end+1:end+numWaves) = spikesPlot' + cds.stimOn(st);
                     stimuliData{1}(end+1:end+numWaves) = stimNum(1,1);
                 end
             elseif(isempty(spikesPlot) && (plotOnlyStimuliWithResponse || plotOnlyStimuliWithoutResponse)) % decrement stimNum
@@ -245,30 +250,37 @@ else % get data after stimulations
     end
 end
 
+outputData.spikeTrialTimes = spikeTrialTimes;
+outputData.spikeTrueTimes = spikeTrueTimes;
+outputData.stimData = stimuliData;
+outputData.numStims = stimNum;
+
 %% bin data and find max y lim
 maxYLim = 0;
 for chan = chansPlot
     for fig = waveformTypesPlot
         % bin data
         bE{chan,fig} = -preTime:binSize:postTime;
-        [bC{chan,fig},bE{chan,fig}] = histcounts(spikeTimeData{chan,fig},bE{chan,fig});
+        [bC{chan,fig},bE{chan,fig}] = histcounts(spikeTrialTimes{chan,fig},bE{chan,fig});
         bE{chan,fig} = bE{chan,fig}*1000;
-        bC{chan,fig} = bC{chan,fig}/binSize/stimNum(chan,fig);
+        bC{chan,fig} = bC{chan,fig}/stimNum(chan,fig);
         maxYLim = max(max(bC{chan,fig})*1.1,maxYLim);
         % compute a variance for the data from preTime to -2/1000 and for
         % the data from 1.5/1000 to 5/1000
         firingRateStimuli = zeros(sum(cds.waveforms.waveSent == fig & cds.waveforms.chanSent == chanList(chan)),2);
         for i = 1:sum(cds.waveforms.waveSent == fig & cds.waveforms.chanSent == chanList(chan))
-            firingRateStimuli(i,1) = numel(find(stimuliData{chan,fig} == i & spikeTimeData{chan,fig} > -preTime & spikeTimeData{chan,fig} < 0))/(preTime);
-            firingRateStimuli(i,2) = numel(find(stimuliData{chan,fig} == i & spikeTimeData{chan,fig} < 5/1000 & spikeTimeData{chan,fig} > 0.5/1000))/(4.5/1000);
+            firingRateStimuli(i,1) = numel(find(stimuliData{chan,fig} == i & spikeTrialTimes{chan,fig} > -preTime & spikeTrialTimes{chan,fig} < 0))/(preTime);
+            firingRateStimuli(i,2) = numel(find(stimuliData{chan,fig} == i & spikeTrialTimes{chan,fig} < 5/1000 & spikeTrialTimes{chan,fig} > 0.5/1000))/(4.5/1000);
         end
         
         bCVar{chan,fig} = [mean(firingRateStimuli(:,1)),mean(firingRateStimuli(:,2));...
             var(firingRateStimuli(:,1)),var(firingRateStimuli(:,2))];
-        
     end
 end
 
+outputData.bC = bC;
+outputData.bE = bE;
+boutputData.bCVar = bCVar;
 
 %% plot data - stimuli data is y-axis. spike data is x-axis
 if(~noPlot)
@@ -339,7 +351,7 @@ if(~noPlot)
             end      
             optsPlot.Y_LIMITS = [0,maxYLim];
             optsPlot.X_LIMITS = [-preTime*1000,postTime*1000];
-            optsPlot.Y_LABEL = 'Average Firing Rate (spikes/s)';
+            optsPlot.Y_LABEL = 'Average number of spikes';
             if(~waveformsSentExist || ~waveformsMakeSubplots || fig == numWaveformTypes)
                 optsPlot.X_LABEL = 'Time after stimulation onset (ms)';
             end

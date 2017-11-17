@@ -87,7 +87,7 @@ function [ figHandle ] = plotPSTHLIB(xData,yData,optsPlotInput,optsSaveInput)
 
     %% deal with saving plot
     if(optsSave.FIGURE_SAVE && strcmpi(optsSave.FIGURE_NAME,'')~=1 && strcmpi(optsSave.FIGURE_DIR,'')~=1)
-        saveFiguresLIB(figHandle,optsSave.FIGURE_DIR,optsSave.FIGURE_NAME);
+        saveFiguresLIB(figHandle,optsSave.FIGURE_DIR,strcat(optsSave.FIGURE_NAME));
     end
 
 

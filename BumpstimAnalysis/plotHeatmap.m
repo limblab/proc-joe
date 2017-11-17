@@ -132,6 +132,8 @@ for c = 1:numel(chans)
         figure;        
         % create ROWSxCOLS grid
         surface(zeros(11,11))
+        ax = gca;
+        ax.Children(1).LineWidth = 1.5;
         colormap([1,1,1]);
         f=gcf;
         ax = gca;
@@ -141,8 +143,8 @@ for c = 1:numel(chans)
         for rowElec = 1:size(data,1)
             for colElec = 1:size(data,2)
                 if(isnan(data(rowElec,colElec)))
-                    plot([colElec,colElec+1],[rowElec,rowElec+1],'k','linewidth',2);
-                    plot([colElec+1,colElec],[rowElec,rowElec+1],'k','linewidth',2);
+%                     plot([colElec,colElec+1],[rowElec,rowElec+1],'k','linewidth',2);
+%                     plot([colElec+1,colElec],[rowElec,rowElec+1],'k','linewidth',2);
                 else
                     colorIdx = floor(size(colors,1)*((data(rowElec,colElec)-minData)/(maxData-minData)));
                     if(colorIdx < 1)
@@ -165,11 +167,11 @@ for c = 1:numel(chans)
         eCol=posList(posIdx,2);
         
         % plot box
-        plot([eCol,eCol+1,eCol+1,eCol,eCol],[eRow,eRow,eRow+1,eRow+1,eRow],'m','linewidth',2)
+        plot([eCol,eCol+1,eCol+1,eCol,eCol],[eRow,eRow,eRow+1,eRow+1,eRow],'m','linewidth',3)
         % plot magenta x
         if(isnan(data(eRow,eCol)))
-            plot([eCol,eCol+1],[eRow,eRow+1],'m','linewidth',2);
-            plot([eCol+1,eCol],[eRow,eRow+1],'m','linewidth',2);
+            plot([eCol,eCol+1],[eRow,eRow+1],'m','linewidth',3);
+            plot([eCol+1,eCol],[eRow,eRow+1],'m','linewidth',3);
         end
         set(gca,'Visible','off')
         

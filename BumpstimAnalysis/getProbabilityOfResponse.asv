@@ -4,14 +4,14 @@ function [probOut] = getProbabilityOfResponse(arrayData,opts)
     binSize = mean(diff(arrayData{1}.bE{1,1})); % in ms
     %% calculate probability of detection
     for arrayDataIdx = 1:numel(arrayData)
-        meanSpikesEvoked_all = zeros(size(arrayData{arrayDataIdx}.bC));
-        normNumStimsResponsive = zeros(size(arrayData{arrayDataIdx}.bC));
-        meanSpikesEvoked_responsive = zeros(size(arrayData{arrayDataIdx}.bC));
+        meanNumStimsWithResponse = zeros(size(arrayData{arrayDataIdx}.bC));
+        meanNumStimsEvokedAll = zeros(size(arrayData{arrayDataIdx}.bC));
+        meanNumStimsEvokedResponsive = zeros(size(arrayData{arrayDataIdx}.bC));
         
         
-        for c = 1:size(arrayData{arrayDataIdx},1)
-            for w = 1:1:size(arrayData{arrayDataIdx},2)
-                if(opts.AUTOMATIC_WINDOW) % get high time and low time automatically
+        for c = 1:size(arrayData{arrayDataIdx,1})
+            for w = 1:1:size(arrayData{arrayDataIdx,2})
+                if(autoPeakPeriod) % get high time and low time automatically
                     % find bin with edge at zero 
                     zeroBin = find(arrayData{arrayDataIdx}.bE{c,w} == 0);
 
@@ -32,25 +32,25 @@ function [probOut] = getProbabilityOfResponse(arrayData,opts)
                 end
                 
                 % get numSpikesEvoked/numStims for all stimulations
-                baseline = sum(arrayData{arrayDataIdx}.spikeTrialTimes{c,w} < min(opts.BASELINE_TIME))/(arrayData{arrayDataIdx}.bE{c,w}(1)-opts.BASELINE_TIME); % mean spikes/ms
+                baseline = sum(arrayData{arrayDataIdx}.spikeTrialTimes{c,w} < min(opts.BASELINE_TIME))/(arrayData{arrayDataIdx}.bE(1)-opts.BASELINE_TIME); % mean spikes/ms
                 ROI = sum(arrayData{arrayDataIdx}.spikeTrialTimes{c,w} > opts.WINDOW(1) & arrayData{arrayDataIdx}.spikeTrialTimes{c,w} < opts.WINDOW(2))/(opts.WINDOW(2)-opts.WINDOW(1)); % mean spikes/ms
-                meanSpikesEvoked_all(c,w) = (ROI - baseline)*(opts.WINDOW(2)-opts.WINDOW(1));
+                meanNumStimsEvokedAll(c,w) = (ROI - baseline)*(opts.WINDOW(2)-opts.WINDOW(1));
 
                 % get numSpikesEvoked/numStims for only those with a
                 % response
                 % get num stimulations with response / num stimulations
                 stimsWithResponse = unique(arrayData{arrayDataIdx}.stimData{c,w}(arrayData{arrayDataIdx}.spikeTrialTimes{c,w} > opts.WINDOW(1) & arrayData{arrayDataIdx}.spikeTrialTimes{c,w} < opts.WINDOW(2)));
                 
-                normNumStimsResponsive(c,w) = (numel(stimsWithResponse)-baseline*diff(opts.WINDOW))/(arrayData{arrayDataIdx}.numStims(c,w)-baseline*diff(opts.WINDOW));
+                meanNumStimsWithResponse = (numel(stimsWithResponse)-baseline*diff(opts.WINDOW))/(arrayData{arrayDataIdx}.numStim(c,w)-baseline*diff(opts.WINDOW));
                 
-                meanSpikesEvoked_responsive(c,w) = meanSpikesEvoked_all(c,w)*arrayData{arrayDataIdx}.numStims(c,w)/numel(stimsWithResponse);
+                
+                meanNumStimsEvokedResponsive(c,w) = meanNumStimsEvokedAll*arrayData{arrayDataIdx}.numStims(c,w)/numel(unique(arrayData{arrayDataIdx}.stimData{c,w));
                 
             end
         end
     end
-    probOut.meanSpikesEvoked_all = meanSpikesEvoked_all;
-    probOut.normNumStimsResponsive = normNumStimsResponsive;
-    probOut.meanSpikesEvokedResponsive = meanSpikesEvoked_responsive;
+    probOut = prob(chans,waveformTypes);
+
 end
 
 
