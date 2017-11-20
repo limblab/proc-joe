@@ -38,9 +38,11 @@ function [outputData] = getCountsAcrossArray(cds,opts)
                     'chans',opts.CHANNEL_IDX,'preTime',opts.PRE_TIME,'postTime',opts.POST_TIME,'noPlot',1);
 
                 % put counts and row/col info into outputData
-
-                outputData{outputDataIdx}.bC = data.bC(:);
-                outputData{outputDataIdx}.bE = data.bE(:);
+                outputData{outputDataIdx}.parameters = cds.waveforms.parameters;
+                outputData{outputDataIdx}.chanSent = unique(cds.waveforms.chanSent);
+                
+                outputData{outputDataIdx}.bC = data.bC;
+                outputData{outputDataIdx}.bE = data.bE;
                 if(opts.SPIKE_DATA)
                     outputData{outputDataIdx}.spikeTrialTimes = data.spikeTrialTimes;
                     outputData{outputDataIdx}.spikeTrueTimes = data.spikeTrueTimes;

@@ -280,7 +280,7 @@ end
 
 outputData.bC = bC;
 outputData.bE = bE;
-boutputData.bCVar = bCVar;
+outputData.bCVar = bCVar;
 
 %% plot data - stimuli data is y-axis. spike data is x-axis
 if(~noPlot)

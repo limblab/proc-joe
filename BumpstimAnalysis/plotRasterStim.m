@@ -29,8 +29,8 @@ timeAfterStimRawArtifact = 10/1000;
 % plot artifact sample
 plotArtifacts = 0;
 maxArtifactsPerPlot = 5;
-rowSubplotArtifact = 4;
-colSubplotArtifact = 5;
+rowSubplotArtifact = 2;
+colSubplotArtifact = 2;
 plotArtifactFiltered = 0;
 plotWaveformFiltered = 0;
 %
@@ -393,7 +393,7 @@ if(~noPlot)
                         plotArtifactsStim(cds,neuronNumber,chan,fig,'plotTitle',plotTitle,'title',titleToPlot,...
                             'maxArtifactsPerPlot',maxArtifactsPerPlot,'timeAfterStim',timeAfterStimRawArtifact,...
                             'rowSubplot',rowSubplotArtifact,'colSubplot',colSubplotArtifact,'plotFiltered',pAF,...
-                            'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix,'templateSubtract',1,...
+                            'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix,'templateSubtract',0,...
                             'randomSample',0);
                     end
                 end

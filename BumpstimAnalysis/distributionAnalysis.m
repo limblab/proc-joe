@@ -16,22 +16,23 @@ opts.SPIKE_DATA = 1;
 %% get probability of response for all units
 
 opts.WINDOW = [1,5]/1000;
-[arrayData.prob] = getProbabilityOfResponse(arrayData,opts);
+opts.AUTOMATIC_WINDOW = 0; % not implemented currently
+opts.SUBTRACT_BASELINE = 0;
+
+[arrayData] = getProbabilityOfResponse(arrayData,opts);
 
 
+%% all of this needs to be rewritten with what changed above
+
+%% look at the distributions (poisson, normal, etc) of the stim response
+
+opts.WINDOW = [1.2,5;41.2,45];
+opts.BASELINE_WINDOW_IDX = 2;
+opts.PROJECT_TO_SLOPE_1 = 1;
+opts.COLOR_MARKERS_RESPONSE = 1;
+arrayDataFits = getDistributionsOfStimResponse(arrayData,opts);
 
 
-%% all of this needs to be rewritten with what is above
-% idx = 1 for stim, idx = 2 for baseline
-idx = 1;
-windowStart = 1.2;
-dWindow = 3;
-arrayData{idx}.window = [windowStart,windowStart+dWindow];
-% find bin indexes (these are in ms)
-binIdx = [find(abs(arrayData.bE(1,1,1,:)-arrayData.window{idx}(1))<1E-4), find(abs(arrayData.bE(1,1,1,:)-arrayData.window{idx}(2))<1E-4)];
-% take means
-arrayData.means{idx} = mean(arrayData.bC(:,:,:,binIdx(1):binIdx(2)),4);
-arrayData.vars{idx} = var(arrayData.bC(:,:,:,binIdx(1):binIdx(2)),0,4);
 %% plot data with best fit line going through (0,0)
 idx = 1;
 figure
