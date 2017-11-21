@@ -1,6 +1,6 @@
 %% process stimulation artifacts:
 pwd = cd;
-folderpath='C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Mihili_20170413_highHeadRoom\';
+folderpath='C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_20170712\Han_20170712_multiElec_CObump_4chanStim-18_29_54_82\';
 % folderpath='D:\Lab\Data\StimArtifact\Chips_one\';
 functionName='processStimArtifact';
 
@@ -9,8 +9,10 @@ inputData.task='taskRW';
 inputData.ranBy='ranByTucker'; 
 inputData.array1='arrayPMD'; 
 inputData.monkey='monkeyMihili';
-inputData.mapFile = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Mihili 12A3\Mihili Left PMd SN 6251-001460.cmp';
-% inputData.mapFile = 'mapFileD:\Lab\Data\MapFiles\Chips_Left_S1\SN 6251-001455.cmp';
+% inputData.mapFile = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Mihili 12A3\Mihili Left PMd SN 6251-001460.cmp';
+% inputData.mapFile = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
+inputData.mapFile = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+
 inputData.badChList=0;
 inputData.interpulse=.000053;%in s
 inputData.pWidth1=.0002;
@@ -29,20 +31,14 @@ cd(pwd);
 %% run all for different positions of the waveform
 % indexesToPlaceNeurons = [125:5:250];
 
-indexesToPlaceNeurons = [120:10:160];
+indexesToPlaceNeurons = [185];
 % indexesToPlaceNeurons = [10];
-ampWave = 100;
+ampWave = 150;
 tolerance = 5;
 thresholdMult = -2;
 percentChannels = 1.0;
-jitter = 20;
-removalSteps = {'','','','';...
-    '2','','','1';...
-    '2','','','2';...
-    '2','','','3';...
-    '2','','','4';...
-    '2','','','5';...
-    '2','','','6'};
+jitter = 1;
+removalSteps = { '10','High500_Order6','',''};
 % removalSteps = {'','','','';...
 %     '0','High750_Order6','','';...
 %     '0','High750_Order4','','';...

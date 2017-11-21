@@ -13,7 +13,7 @@ for a = 1:numel(outputData.artifactData)
             if(rand() < percentChannels)
                 for k = 1:numWaves % for each wave to add
                     wave = meanWave/max(abs(meanWave))*ampWave;
-                    waveIdxJitter = waveIdx(k) + floor(rand()*jitter-jitter/2);
+                    waveIdxJitter = waveIdx(k) + floor(randn()*jitter);
                     outputData.artifactData(a).artifact(i,j,waveIdxJitter:waveIdxJitter+length(wave)-1) = squeeze(outputData.artifactData(a).artifact(i,j,waveIdx(k):waveIdx(k)+length(wave)-1))'+wave;
                     outputData.artifactData(a).fakeWaveTimes(i,j,1:numel(waveIdx)) = waveIdxJitter + minIdx;
                 end

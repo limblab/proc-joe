@@ -3,8 +3,8 @@ makeFigure = 1;
 plotTitle = 1;
 titleToPlot = '';
 maxArtifactsPerPlot = 20;
-rowSubplot = 4; % must be an even integer
-colSubplot = 5;
+rowSubplot = 2; % must be an even integer
+colSubplot = 1;
 waveformsSentExist = any(isfield(cds,'waveforms'));
 plotFiltered = 0;
 [bFilter,aFilter] = butter(6,[500]/(30000/2),'high');
@@ -13,6 +13,7 @@ plotArtifactsSeparated = 1;
 randomSample = 1;
 stimElectrode = -1;
 templateSubtract = 0;
+divisor = 1;
 
 % save stuff
 saveFigures = 0;
@@ -20,7 +21,9 @@ figDir = '';
 figPrefix = '';
 
 rangeProvided = 0;
-plotXRange = [];
+plotXRange = [0,10];
+plotYRange = [-400,400];
+
 for i = 1:2:size(varargin,2)
     switch varargin{i}
         case 'plotFiltered'
@@ -34,12 +37,12 @@ for i = 1:2:size(varargin,2)
         case 'maxArtifactsPerPlot'
             maxArtifactsPerPlot = varargin{i+1};
         case 'rowSubplot'
-            rowSubplotTemp = varargin{i+1};
-            if(mod(rowSubplotTemp,2)==0)
-                rowSubplot = rowSubplotTemp;
-            else
-                rowSubplot = max(2,rowSubplotTemp-1);
-            end
+            rowSubplot = varargin{i+1};
+%             if(mod(rowSubplotTemp,2)==0)
+%                 rowSubplot = rowSubplotTemp;
+%             else
+%                 rowSubplot = max(2,rowSubplotTemp-1);
+%             end
         case 'colSubplot'
             colSubplot = varargin{i+1};
         case 'timeAfterStim'
@@ -57,13 +60,13 @@ for i = 1:2:size(varargin,2)
         case 'figPrefix'
             figPrefix = varargin{i+1};
         case 'plotXRange'
-            rangeProvided = 1;
             plotXRange = varargin{i+1};
-            if(plotXRange(2) < 21)
-                plotXRange(2) = 21;
-            end
+        case 'plotYRange'
+            plotYRange = varargin{i+1};
         case 'templateSubtract'
             templateSubtract = varargin{i+1};
+        case 'divisor'
+            divisor = varargin{i+1};
     end
 end
 
@@ -82,6 +85,8 @@ end
 neuronChan = cds.units(neuronNumber).chan;
 spikes = cds.units(neuronNumber).spikes.ts;
 numArtifacts = size(cds.artifactData.artifact,1);
+artMult = numel(cds.stimOn)/size(cds.artifactData.artifact,1); % I no longer keep all artifacts, this moves the counter forwards
+% artMult = 10;
 xData = ((0:1:size(cds.artifactData.artifact,3)-1)-30)/30000*1000;
 
 if(plotArtifactsSeparated)
@@ -106,8 +111,9 @@ for artCond = 1:maxArtCond
     if(plotArtifactsSeparated)
         if(artCond == 1) % plot sample of artifacts with spike afterwards
             for art = 1:numArtifacts
+                
                 artifactsMask = spikes >= cds.artifactData.t(art) & spikes <= cds.artifactData.t(art) + timeAfterStim;
-                if(sum(artifactsMask)>0 && ((waveformsSentExist && cds.waveforms.waveSent(art) == figNum) || ~waveformsSentExist) && (~any(isfield(cds.waveforms,'chanSent')) || cds.waveforms.chanSent(art)==chanList(chanNum)))
+                 if(sum(artifactsMask)>0 && ((waveformsSentExist && cds.waveforms.waveSent(1+(art-1)*artMult) == figNum) || ~waveformsSentExist) && (~any(isfield(cds.waveforms,'chanSent')) || cds.waveforms.chanSent(1+(art-1)*artMult)==chanList(chanNum)))
                     artifactsPlot(end+1,1) = art;
                 end
             end
@@ -115,14 +121,14 @@ for artCond = 1:maxArtCond
             for art = 1:numArtifacts
                 artifactsMask = spikes >= cds.artifactData.t(art) & spikes <= cds.artifactData.t(art) + timeAfterStim;
 
-                if(sum(artifactsMask)==0 && cds.artifactData.t(art) ~= 0 && ((waveformsSentExist && cds.waveforms.waveSent(art) == figNum) || ~waveformsSentExist) && (~any(isfield(cds.waveforms,'chanSent')) || cds.waveforms.chanSent(art)==chanList(chanNum)))
+                if(sum(artifactsMask)==0 && cds.artifactData.t(art) ~= 0 && ((waveformsSentExist && cds.waveforms.waveSent(1+(art-1)*artMult) == figNum) || ~waveformsSentExist) && (~any(isfield(cds.waveforms,'chanSent')) || cds.waveforms.chanSent(1+(art-1)*artMult)==chanList(chanNum)))
                     artifactsPlot(end+1,1) = art;
                 end
             end
         end
     else
         for art = 1:numArtifacts
-            if(((waveformsSentExist && cds.waveforms.waveSent(art) == figNum) || ~waveformsSentExist) && (~any(isfield(cds.waveforms,'chanSent')) || cds.waveforms.chanSent(art)==chanList(chanNum)))
+            if(((waveformsSentExist && cds.waveforms.waveSent(1+(art-1)*artMult) == figNum) || ~waveformsSentExist) && (~any(isfield(cds.waveforms,'chanSent')) || cds.waveforms.chanSent(1+(art-1)*artMult)==chanList(chanNum)))
                 artifactsPlot(end+1,1) = art;
             end
         end
@@ -145,13 +151,14 @@ for artCond = 1:maxArtCond
             for p = 1:maxArtifactsPerPlot
                 if(artCount <= numel(artifactsPlot))
                     plotStimDataArtifactStim(cds,artifactsPlot,artCount,neuronChan,rangeProvided,plotXRange,plotFiltered,...
-                        bFilter,aFilter,templateSubtract,waveformsSentExist,figNum,chanList,chanNum)
+                        bFilter,aFilter,templateSubtract,waveformsSentExist,figNum,chanList,chanNum,divisor)
 
                 end
                 hold on
                 artCount = artCount+1;
             end
-%             ylim([-400 400])
+            ylim([plotYRange(1) plotYRange(2)])
+            xlim([plotXRange(1) plotXRange(2)])
 %             xlabel('Time after stimulation onset (ms)')
 %             ylabel('Voltage (\muV)')
             formatForLee(gcf)
@@ -162,15 +169,17 @@ for artCond = 1:maxArtCond
             for p = 1:maxArtifactsPerPlot
                 if(artCount <= numel(artifactsPlot))
                     plotStimDataArtifactStim(cds,artifactsPlot,artCount,neuronChan,rangeProvided,plotXRange,plotFiltered,...
-                        bFilter,aFilter,templateSubtract,waveformsSentExist,figNum,chanList,chanNum)
+                        bFilter,aFilter,templateSubtract,waveformsSentExist,figNum,chanList,chanNum,divisor)
                 end
                 hold on
                 artCount = artCount+1;
-%                 ylim([-400,400])
+                ylim([plotYRange(1) plotYRange(2)])
+                xlim([plotXRange(1) plotXRange(2)])
             end
 %             plot((stimDataPlot(1:end-200,:) - mean(stimDataPlot(1:end-200,:),2)))
 
-%             ylim([-400 400])
+            ylim([plotYRange(1) plotYRange(2)])
+            xlim([plotXRange(1) plotXRange(2)])
 %             xlabel('Time after stimulation onset (ms)')
 %             ylabel('Voltage (\muV)')
             formatForLee(gcf)
@@ -203,14 +212,11 @@ end
 
 end
 
-function [] = plotStimDataArtifactStim(cds,artifactsPlot,artCount,neuronChan,rangeProvided,plotXRange,plotFiltered,bFilter,aFilter,templateSubtract,waveformsSentExist,figNum,chanList,chanNum)
+function [] = plotStimDataArtifactStim(cds,artifactsPlot,artCount,neuronChan,rangeProvided,plotXRange,plotFiltered,bFilter,aFilter,templateSubtract,waveformsSentExist,figNum,chanList,chanNum,divisor)
 
 if(plotFiltered && ~any(isfield(cds.artifactData,'artifactProcessed')))
-    if(rangeProvided)
-        stimData = squeeze(cds.artifactData.artifact(artifactsPlot(artCount),neuronChan,plotXRange(1):plotXRange(2)));
-    else
-        stimData = squeeze(cds.artifactData.artifact(artifactsPlot(artCount),neuronChan,:));
-    end
+
+    stimData = squeeze(cds.artifactData.artifact(artifactsPlot(artCount),neuronChan,:));
     stimData = [stimData;mean(stimData(end-20:end))*ones(200,1)];
     stimData = fliplr(filter(bFilter,aFilter,fliplr(stimData')))';
 %     if(templateSubtract)
@@ -226,7 +232,7 @@ if(plotFiltered && ~any(isfield(cds.artifactData,'artifactProcessed')))
 %         template = mean(templateData);
 %         stimData(1:numel(template),1) = stimData(1:numel(template),1) - template';
 %     end
-    plot((0:1:(numel(stimData)-201))/30,stimData(1:end-200)/0.254)
+    plot((0:1:(numel(stimData)-201))/30,stimData(1:end-200)/divisor)
 %     [coeff,score] = pca(squeeze(cds.artifactData.artifact(artifactsPlot(artCount),:,:))');
 %     coeff(:,1:4) = 0;
 %     artifact=coeff*score';
@@ -240,21 +246,25 @@ if(plotFiltered && ~any(isfield(cds.artifactData,'artifactProcessed')))
 elseif(plotFiltered && any(isfield(cds.artifactData,'artifactProcessed')))
     if(rangeProvided)
         plot((0:1:(numel(squeeze(cds.artifactData.artifactProcessed(artifactsPlot(artCount),neuronChan,plotXRange(1):plotXRange(2))))-1))/30,...
-            squeeze(cds.artifactData.artifactProcessed(artifactsPlot(artCount),neuronChan,plotXRange(1):plotXRange(2)))/0.254)
+            squeeze(cds.artifactData.artifactProcessed(artifactsPlot(artCount),neuronChan,plotXRange(1):plotXRange(2)))/divisor)
     else
         plot((0:1:(numel(squeeze(cds.artifactData.artifactProcessed(artifactsPlot(artCount),neuronChan,:)))-1))/30,...
-            squeeze(cds.artifactData.artifactProcessed(artifactsPlot(artCount),neuronChan,:))/0.254)
+            squeeze(cds.artifactData.artifactProcessed(artifactsPlot(artCount),neuronChan,:))/divisor)
     end
 else    
     if(rangeProvided)
         plot((0:1:(numel(squeeze(cds.artifactData.artifact(artifactsPlot(artCount),neuronChan,plotXRange(1):plotXRange(2))))-1))/30,...
-            squeeze(cds.artifactData.artifact(artifactsPlot(artCount),neuronChan,plotXRange(1):plotXRange(2)))/0.254)
+            squeeze(cds.artifactData.artifact(artifactsPlot(artCount),neuronChan,plotXRange(1):plotXRange(2)))/divisor)
     else
         plot((0:1:(numel(squeeze(cds.artifactData.artifact(artifactsPlot(artCount),neuronChan,:)))-1))/30,...
-            squeeze(cds.artifactData.artifact(artifactsPlot(artCount),neuronChan,:))/0.254)
+            squeeze(cds.artifactData.artifact(artifactsPlot(artCount),neuronChan,:))/divisor)
     end
 end
 
+xlabel('Time after stimulation onset (ms)')
+ylabel('Voltage (\muV)')
+set(gca,'fontsize',16)
+formatForLee(gcf)
 
 
 end

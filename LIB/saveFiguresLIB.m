@@ -24,10 +24,16 @@ end
 
 % print all file types
 filename(filename==' ')='_';%replace spaces in name for saving
-print('-dpdf',figHandle,strcat(targetDirectory,['Raw_Figures' filesep 'PDF' filesep],filename,'.pdf'))
 print('-deps',figHandle,strcat(targetDirectory,['Raw_Figures' filesep 'EPS' filesep],filename,'.eps'))
 print('-dpng',figHandle,strcat(targetDirectory,['Raw_Figures' filesep 'PNG' filesep],filename,'.png'))
+
 saveas(figHandle,strcat(targetDirectory,['Raw_Figures' filesep 'FIG' filesep],filename,'.fig'),'fig')
+
+set(figHandle,'Units','Inches');
+pos = get(figHandle,'Position');
+set(figHandle,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
+print('-dpdf',figHandle,strcat(targetDirectory,['Raw_Figures' filesep 'PDF' filesep],filename,'.pdf'),'-r0')
+
 
 end
 

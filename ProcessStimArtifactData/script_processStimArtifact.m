@@ -1,6 +1,6 @@
 clear%% process stimulation artifacts:
 pwd = cd;
-folderpath= 'R:\data\Chips_12H1\RAW\Chips_20171024_dukeBoard_stimRecord\';
+folderpath= 'R:\data\Chips_12H1\RAW\Chips_20171026_stimRecord\';
 % inputData.mapFile='mapFileR:\limblab\lab_folder\Animal-Miscellany\Mihili 12A3\Mihili Left PMd SN 6251-001460.cmp'; % chips mapfile location
 % inputData.mapFile='mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 inputData.mapFile = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
@@ -206,7 +206,7 @@ end
 
 disp('done with this step')
 
-% if need to merge cds's now, do so here
+%% if need to merge cds's now, do so here
 % folderpath = 'R:\data\Mihili_12A3\stimRecord\Mihili_20170717_stimRecord\';
 pwd = cd;
 cd(folderpath)
@@ -324,7 +324,7 @@ save(strcat(fileListProcessed(1).name(1:26),'_all_processed'),'cds','-v7.3');
 
 cd(pwd)
 disp('done merging')
-%% if an interleaved set of trials, merge waveform sent information into cds
+% if an interleaved set of trials, merge waveform sent information into cds
 cd(folderpath);
 fileListCDS = dirSorted('*all_processed.mat*');
 load(fileListCDS(1).name);
