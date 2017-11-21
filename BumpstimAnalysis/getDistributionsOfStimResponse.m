@@ -32,8 +32,12 @@ function [arrayDataFits] = getDistributionsOfStimResponse( arrayData,opts )
         
         % plot variance vs mean
         
-        [F{windowIdx},gof{windowIdx}] = fit(meanWindow,varWindow,'a*x');
+        [F{windowIdx},gof{windowIdx}] = fit(meanWindow(meanWindow < 0.75*max(meanWindow)),varWindow(meanWindow < 0.75*max(meanWindow)),'a*x');
         xFit = [0,max(meanWindow)];
+        if(opts.PLOT_LOG)
+            xFit(1) = eps(1);
+        end
+        
         if(isempty(opts.BASELINE_WINDOW_IDX))
             yFit = F{windowIdx}.a*xFit;
         else
@@ -45,27 +49,108 @@ function [arrayDataFits] = getDistributionsOfStimResponse( arrayData,opts )
             meanWindow = meanWindow*F{opts.BASELINE_WINDOW_IDX}.a;
         end
         figure();
-        if(opts.COLOR_MARKERS_RESPONSE && opts.BASELINE_WINDOW_IDX)
+        if(opts.COLOR_MARKERS_RESPONSE && ~isempty(opts.BASELINE_WINDOW_IDX) && windowIdx ~= opts.BASELINE_WINDOW_IDX)
             meanBaseline = reshape(means(opts.BASELINE_WINDOW_IDX,:,:,:),numel(means(opts.BASELINE_WINDOW_IDX,:,:,:)),1);
             if(opts.PROJECT_TO_SLOPE_1)
                 meanBaseline = meanBaseline*F{opts.BASELINE_WINDOW_IDX}.a;
             end
             ratios = meanWindow./meanBaseline;
+            ratios(ratios > opts.MAX_RATIO) = opts.MAX_RATIO;
+            ratios(ratios < opts.MIN_RATIO) = opts.MIN_RATIO;
             
             for r = 1:numel(ratios)
-                plot(meanWindow(r),varWindow(r),'.','markersize',opts.MARKER_SIZE,'color',opts.COLORS(floor(size(opts.COLORS,1)*ratios(r)/max(ratios)),:));
+                colorIdx = min(size(opts.COLORS,1),max(1,ceil(size(opts.COLORS,1)*(ratios(r)-opts.MIN_RATIO)/(opts.MAX_RATIO - opts.MIN_RATIO))));
+                
+                if(opts.PLOT_LOG)
+                    plot(log(meanWindow(r)),log(varWindow(r)),'.','markersize',opts.MARKER_SIZE,'color',opts.COLORS(colorIdx,:));
+                else
+                    plot(meanWindow(r),varWindow(r),'.','markersize',opts.MARKER_SIZE,'color',opts.COLORS(colorIdx,:));
+                end
                 hold on
             end
         else
-            plot(meanWindow,varWindow,'.','markersize',opts.MARKER_SIZE);
+            if(opts.PLOT_LOG)
+                plot(log(meanWindow),log(varWindow),'.','markersize',opts.MARKER_SIZE);
+            else
+                plot(meanWindow,varWindow,'.','markersize',opts.MARKER_SIZE);
+            end
         end
         hold on
-        plot(xFit,yFit,'k')
+        if(opts.PLOT_FIT_LINE)
+            ax = gca;
+            X_LIMITS = ax.XLim;
+            if(opts.PLOT_LOG)
+                plot(log(xFit),log(yFit),'--k','linewidth',2)
+            else
+                plot(xFit,yFit,'--k','linewidth',2)
+            end
+            ax.XLim = X_LIMITS;
+        end
+        if(opts.PLOT_LOG)
+            xlabel('log(Mean)')
+            ylabel('log(Variance)')
+        else
+            xlabel('Mean')
+            ylabel('Variance') 
+        end
+
+        set(gca,'fontsize',16)
+        formatForLee(gcf)
+        
+        %% deal with saving plot
+        if(opts.FIGURE_SAVE && strcmpi(opts.FIGURE_NAME,'')~=1 && strcmpi(opts.FIGURE_DIR,'')~=1)
+            strAdd = strcat('_WINDOW_',num2str(opts.WINDOW(windowIdx,1)),'-',num2str(opts.WINDOW(windowIdx,2)));
+            if(opts.PROJECT_TO_SLOPE_1)
+                strAdd = strcat(strAdd,'_projectedToSlope1');
+            end
+            if(opts.PLOT_FIT_LINE)
+                strAdd = strcat(strAdd,'_fitLine');
+            end
+            if(opts.PLOT_LOG)
+                strAdd = strcat(strAdd,'_logLog');
+            end
+            saveFiguresLIB(gcf,opts.FIGURE_DIR,strcat(opts.FIGURE_NAME,strAdd));
+        end
         
     end
     
     arrayDataFits.F = F;
     arrayDataFits.gof = gof;
+    
+    %% make colorbar
+    figure
+    b=colorbar;
+    colormap jet;
+    set(gca,'Visible','off');
+    b.FontSize = 14;
+    b.Ticks = [0,0.25,0.5,0.75,1.0];
+    maxDataRound = round(opts.MAX_RATIO,1);
+    minDataRound = round(opts.MIN_RATIO,1);
+    b.TickLabels = {};
+    for i = b.Ticks
+        if(i==b.Ticks(end))
+            b.TickLabels{end+1,1} = strcat('>',num2str(i*(maxDataRound-minDataRound) + minDataRound));
+        elseif(i==b.Ticks(1) && i*(maxDataRound-minDataRound) + minDataRound ~= 0)
+            b.TickLabels{end+1,1} = strcat('<',num2str(i*(maxDataRound-minDataRound) + minDataRound));
+        else
+            b.TickLabels{end+1,1} = num2str(i*(maxDataRound-minDataRound) + minDataRound);
+        end
+    end
+    %% deal with saving plot
+    if(opts.FIGURE_SAVE && strcmpi(opts.FIGURE_NAME,'')~=1 && strcmpi(opts.FIGURE_DIR,'')~=1)
+        strAdd = strcat('_WINDOW_',num2str(opts.WINDOW(windowIdx,1)),'-',num2str(opts.WINDOW(windowIdx,2)));
+        if(opts.PROJECT_TO_SLOPE_1)
+            strAdd = strcat(strAdd,'_projectedToSlope1');
+        end
+        if(opts.PLOT_FIT_LINE)
+            strAdd = strcat(strAdd,'_fitLine');
+        end
+        if(opts.PLOT_LOG)
+            strAdd = strcat(strAdd,'_logLog');
+        end
+        strAdd = strcat(strAdd,'_HEATBAR');
+        saveFiguresLIB(gcf,opts.FIGURE_DIR,strcat(opts.FIGURE_NAME,strAdd));
+    end
 end
 
 function [opts] = configureOpts(optsInput)
@@ -73,10 +158,19 @@ function [opts] = configureOpts(optsInput)
     opts.WINDOW = [];
     opts.MARKER_SIZE = 12;
     opts.BASELINE_WINDOW_IDX = [];
+    opts.PLOT_FIT_LINE = 1;
     opts.PROJECT_TO_SLOPE_1 = 0;
     opts.COLOR_MARKERS_RESPONSE = 0;
     opts.COLORS = colormap(jet);
-
+    opts.MAX_RATIO = 2;
+    opts.MIN_RATIO = 0;
+    
+    opts.PLOT_LOG = 0;
+    
+    opts.FIGURE_SAVE = 0;
+    opts.FIGURE_DIR = '';
+    opts.FIGURE_NAME = '';
+    
     %% check if in opts and optsInput, overwrite if so
     try
         inputFieldnames = fieldnames(optsInput);
@@ -89,4 +183,7 @@ function [opts] = configureOpts(optsInput)
         % do nothing, [] was inputted which means use default setting
     end
     
+    if(size(opts.WINDOW,1) == 1)
+        opts.BASELINE_WINDOW_IDX = 1;
+    end
 end

@@ -26,10 +26,19 @@ opts.SUBTRACT_BASELINE = 0;
 
 %% look at the distributions (poisson, normal, etc) of the stim response
 
-opts.WINDOW = [1.2,5;41.2,45];
-opts.BASELINE_WINDOW_IDX = 2;
-opts.PROJECT_TO_SLOPE_1 = 1;
+opts.WINDOW = [60,64];
+opts.BASELINE_WINDOW_IDX = [];
+opts.PROJECT_TO_SLOPE_1 = 0;
 opts.COLOR_MARKERS_RESPONSE = 1;
+opts.PLOT_FIT_LINE = 1;
+opts.PLOT_LOG = 0;
+opts.MIN_RATIO = 1;
+opts.MAX_RATIO = 4;
+
+opts.FIGURE_SAVE = 1;
+opts.FIGURE_DIR = folderpath;
+opts.FIGURE_NAME = 'Chips_20171026_distributionAnalysis';
+
 arrayDataFits = getDistributionsOfStimResponse(arrayData,opts);
 
 
