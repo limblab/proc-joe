@@ -33,6 +33,7 @@ function [ figureHandle ] = plotRasterBumpstim( cds,neuronNumber,optsTaskInput,o
     
     stimIdxStart = 1;
     stimIdxEnd = 100;
+    stimDataAll = [];
     for trialNum = 1:size(cds.trials,1)
         if(cds.trials.result(trialNum) == 'R' && ~isnan(cds.trials.tgtOnTime(trialNum)) && ~isnan(cds.trials.movePeriod(trialNum))) % if a reward trial and not a corrupted trial
             taskString = '';
@@ -78,6 +79,7 @@ function [ figureHandle ] = plotRasterBumpstim( cds,neuronNumber,optsTaskInput,o
                         if(cds.stimOn(stimIdx) > cds.trials.startTime(trialNum) && cds.stimOn(stimIdx) < cds.trials.endTime(trialNum))
                             stimData{cellIdx(1),cellIdx(2),cellIdx(3),cellIdx(4)}(end+1,1) = cds.stimOn(stimIdx) - cds.trials.(optsTask.ZERO_MARKER)(trialNum);
                             stimData{cellIdx(1),cellIdx(2),cellIdx(3),cellIdx(4)}(end,2) = trialCounter(cellIdx(1),cellIdx(2),cellIdx(3),cellIdx(4));
+                            stimDataAll(end+1,1) = cds.stimOn(stimIdx);
                             stimIdxStart = stimIdx;
                             stimIdxEnd = stimIdxStart + 100;
                         end

@@ -86,7 +86,8 @@ neuronChan = cds.units(neuronNumber).chan;
 spikes = cds.units(neuronNumber).spikes.ts;
 numArtifacts = size(cds.artifactData.artifact,1);
 artMult = numel(cds.stimOn)/size(cds.artifactData.artifact,1); % I no longer keep all artifacts, this moves the counter forwards
-% artMult = 10;
+% artMult = 1;
+
 xData = ((0:1:size(cds.artifactData.artifact,3)-1)-30)/30000*1000;
 
 if(plotArtifactsSeparated)
@@ -202,9 +203,19 @@ end
    
 if(saveFigures)
     if(plotFiltered)
-        fname = strcat(figPrefix,'nn',num2str(neuronNumber),'_chan',num2str(cds.units(neuronNumber).chan),'_stimChan',num2str(chanList(chanNum)),'_waveNum',num2str(figNum),'_artifactDataFiltered');
+%         fname = strcat(figPrefix,'nn',num2str(neuronNumber),'_chan',num2str(cds.units(neuronNumber).chan),'_stimChan',num2str(chanList(chanNum)),'_waveNum',num2str(figNum),'_artifactDataFiltered');
+        if(figNum == 1)
+            fname = strcat(figPrefix,'_cathodal_filtered');
+        else
+            fname = strcat(figPrefix,'_anodal_filtered');
+        end
     else
-        fname = strcat(figPrefix,'nn',num2str(neuronNumber),'_chan',num2str(cds.units(neuronNumber).chan),'_stimChan',num2str(chanList(chanNum)),'_waveNum',num2str(figNum),'_artifactDataRaw');
+%         fname = strcat(figPrefix,'nn',num2str(neuronNumber),'_chan',num2str(cds.units(neuronNumber).chan),'_stimChan',num2str(chanList(chanNum)),'_waveNum',num2str(figNum),'_artifactDataRaw');
+        if(figNum == 1)
+            fname = strcat(figPrefix,'_cathodal_raw');
+        else
+            fname = strcat(figPrefix,'_anodal_raw');
+        end
     end
     saveFiguresLIB(gcf,figDir,fname);
 end

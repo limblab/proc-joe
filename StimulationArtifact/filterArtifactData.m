@@ -32,7 +32,7 @@ outputDataFiltered = outputData;
 
 for art = 1:numel(artifactData)
     tic;
-    for i = 1:numel(artifactData(art).electrodeNames)
+    for i = 1:size(artifactData(art).artifact,1)
         % reverse the signals
 %         tic;
         artifactFlipped = fliplr(squeeze(artifactData(art).artifact(i,:,:)));

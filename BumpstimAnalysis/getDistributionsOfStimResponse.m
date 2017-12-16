@@ -2,7 +2,9 @@ function [arrayDataFits] = getDistributionsOfStimResponse( arrayData,opts )
 % 
 
     opts = configureOpts(opts);
-
+    globalXLimits = [intmax,intmin];
+    globalYLimits = globalXLimits;
+    
     %% get data for each window
     means = zeros(size(opts.WINDOW,1),size(arrayData,2),size(arrayData{1}.bC,1),size(arrayData{1}.bC,2));
     vars = zeros(size(opts.WINDOW,1),size(arrayData,2),size(arrayData{1}.bC,1),size(arrayData{1}.bC,2));
@@ -17,75 +19,68 @@ function [arrayDataFits] = getDistributionsOfStimResponse( arrayData,opts )
                 end % end for wave
             end % end for chan
         end % end for unit
+        % reorganize data to compress across all units, channels, and
+        % waveforms sent
+        meanWindow{windowIdx} = reshape(means(windowIdx,:,:,:),numel(means(windowIdx,:,:,:)),1);
+        varWindow{windowIdx} = reshape(vars(windowIdx,:,:,:),numel(vars(windowIdx,:,:,:)),1);
+        
     end % end for window
     
-    %% plot data for each window with a best fit line going through (0,0)
-    windowIdxs = 1:1:size(opts.WINDOW,1);
-    if(~isempty(opts.BASELINE_WINDOW_IDX))
-        windowIdxs(opts.BASELINE_WINDOW_IDX) = 1;
-        windowIdxs(1) = opts.BASELINE_WINDOW_IDX;
-    end
-    for windowIdx = windowIdxs
-        % get data and compress across all units, channels, waveforms sent
-        meanWindow = reshape(means(windowIdx,:,:,:),numel(means(windowIdx,:,:,:)),1);
-        varWindow = reshape(vars(windowIdx,:,:,:),numel(vars(windowIdx,:,:,:)),1);
-        
-        % plot variance vs mean
-        
-        [F{windowIdx},gof{windowIdx}] = fit(meanWindow(meanWindow < 0.75*max(meanWindow)),varWindow(meanWindow < 0.75*max(meanWindow)),'a*x');
-        xFit = [0,max(meanWindow)];
+    for windowIdx = 1:numel(meanWindow)
+
+        %% fit data with line going through (0,0)
+        [F{windowIdx},gof{windowIdx}] = fit(meanWindow{windowIdx},varWindow{windowIdx},'a*x');
+        xFit{windowIdx} = [0,max(meanWindow{windowIdx})*100000];
         if(opts.PLOT_LOG)
-            xFit(1) = eps(1);
+            xFit{windowIdx}(1) = eps(1);
         end
+        yFit{windowIdx} = F{windowIdx}.a*xFit{windowIdx};
         
-        if(isempty(opts.BASELINE_WINDOW_IDX))
-            yFit = F{windowIdx}.a*xFit;
-        else
-            yFit = F{opts.BASELINE_WINDOW_IDX}.a*xFit;
-        end
-        
-        if(~isempty(opts.BASELINE_WINDOW_IDX) && opts.PROJECT_TO_SLOPE_1)
-            xFit = xFit*F{opts.BASELINE_WINDOW_IDX}.a;
-            meanWindow = meanWindow*F{opts.BASELINE_WINDOW_IDX}.a;
-        end
-        figure();
+        %% get colors if requested
         if(opts.COLOR_MARKERS_RESPONSE && ~isempty(opts.BASELINE_WINDOW_IDX) && windowIdx ~= opts.BASELINE_WINDOW_IDX)
-            meanBaseline = reshape(means(opts.BASELINE_WINDOW_IDX,:,:,:),numel(means(opts.BASELINE_WINDOW_IDX,:,:,:)),1);
-            if(opts.PROJECT_TO_SLOPE_1)
+            meanBaseline = meanWindow{opts.BASELINE_WINDOW_IDX};
+            if(opts.PROJECT_TO_SLOPE_1) % project data to have a slope of 1 so that mean = variance
                 meanBaseline = meanBaseline*F{opts.BASELINE_WINDOW_IDX}.a;
             end
-            ratios = meanWindow./meanBaseline;
+            ratios = meanWindow{windowIdx}./meanBaseline;
             ratios(ratios > opts.MAX_RATIO) = opts.MAX_RATIO;
             ratios(ratios < opts.MIN_RATIO) = opts.MIN_RATIO;
+            colorIdx = min(size(opts.COLORS,1),max(1,ceil(size(opts.COLORS,1).*(ratios-opts.MIN_RATIO)./(opts.MAX_RATIO - opts.MIN_RATIO))));
+        end
+    end
             
-            for r = 1:numel(ratios)
-                colorIdx = min(size(opts.COLORS,1),max(1,ceil(size(opts.COLORS,1)*(ratios(r)-opts.MIN_RATIO)/(opts.MAX_RATIO - opts.MIN_RATIO))));
-                
-                if(opts.PLOT_LOG)
-                    plot(log(meanWindow(r)),log(varWindow(r)),'.','markersize',opts.MARKER_SIZE,'color',opts.COLORS(colorIdx,:));
-                else
-                    plot(meanWindow(r),varWindow(r),'.','markersize',opts.MARKER_SIZE,'color',opts.COLORS(colorIdx,:));
-                end
-                hold on
-            end
+    %% plot data for each window
+    for windowIdx = 1:numel(meanWindow)
+        figHandles{windowIdx} = figure();            
+        if(opts.PLOT_LOG && opts.COLOR_MARKERS_RESPONSE && ~isempty(opts.BASELINE_WINDOW_IDX))
+            scatter(log10(meanWindow{windowIdx}),log10(varWindow{windowIdx}),opts.MARKER_SIZE,opts.COLORS(colorIdx,:),'filled')
+        elseif(opts.PLOT_LOG)
+            scatter(log10(meanWindow{windowIdx}),log10(varWindow{windowIdx}),opts.MARKER_SIZE,'b','filled')
+        elseif(opts.COLOR_MARKERS_RESPONSE && ~isempty(opts.BASELINE_WINDOW_IDX))
+            scatter(meanWindow{windowIdx},varWindow{windowIdx},opts.MARKER_SIZE,opts.COLORS(colorIdx,:),'filled')
         else
-            if(opts.PLOT_LOG)
-                plot(log(meanWindow),log(varWindow),'.','markersize',opts.MARKER_SIZE);
-            else
-                plot(meanWindow,varWindow,'.','markersize',opts.MARKER_SIZE);
-            end
+            scatter(meanWindow{windowIdx},varWindow{windowIdx},opts.MARKER_SIZE,'b','filled')
         end
         hold on
+        
         if(opts.PLOT_FIT_LINE)
+            idxUse = windowIdx;
+            if(~isempty(opts.BASELINE_WINDOW_IDX))
+                idxUse = opts.BASELINE_WINDOW_IDX;
+            end
             ax = gca;
             X_LIMITS = ax.XLim;
             if(opts.PLOT_LOG)
-                plot(log(xFit),log(yFit),'--k','linewidth',2)
+                plot(log10(xFit{idxUse}),log10(yFit{idxUse}),'--k','linewidth',2)
             else
-                plot(xFit,yFit,'--k','linewidth',2)
+                plot(xFit{idxUse},yFit{idxUse},'--k','linewidth',2)
             end
             ax.XLim = X_LIMITS;
         end
+        
+        globalXLimits = [min(globalXLimits(1),ax.XLim(1)),max(globalXLimits(2),ax.XLim(2))];
+        globalYLimits = [min(globalYLimits(1),ax.YLim(1)),max(globalYLimits(2),ax.YLim(2))];
+        
         if(opts.PLOT_LOG)
             xlabel('log(Mean)')
             ylabel('log(Variance)')
@@ -96,8 +91,21 @@ function [arrayDataFits] = getDistributionsOfStimResponse( arrayData,opts )
 
         set(gca,'fontsize',16)
         formatForLee(gcf)
-        
-        %% deal with saving plot
+    end
+    
+    
+    %% set limits as the same
+    if(opts.SAME_LIMITS)
+        for windowIdx = 1:numel(meanWindow)
+            figure(figHandles{windowIdx});
+            ax = gca;
+            ax.XLim = globalXLimits;
+            ax.YLim = globalYLimits;
+        end
+    end
+    
+    %% deal with saving plots
+    for windowIdx = 1:numel(meanWindow)
         if(opts.FIGURE_SAVE && strcmpi(opts.FIGURE_NAME,'')~=1 && strcmpi(opts.FIGURE_DIR,'')~=1)
             strAdd = strcat('_WINDOW_',num2str(opts.WINDOW(windowIdx,1)),'-',num2str(opts.WINDOW(windowIdx,2)));
             if(opts.PROJECT_TO_SLOPE_1)
@@ -109,11 +117,11 @@ function [arrayDataFits] = getDistributionsOfStimResponse( arrayData,opts )
             if(opts.PLOT_LOG)
                 strAdd = strcat(strAdd,'_logLog');
             end
-            saveFiguresLIB(gcf,opts.FIGURE_DIR,strcat(opts.FIGURE_NAME,strAdd));
+            saveFiguresLIB(figHandles{windowIdx},opts.FIGURE_DIR,strcat(opts.FIGURE_NAME,strAdd));
         end
-        
     end
     
+    % store the fits
     arrayDataFits.F = F;
     arrayDataFits.gof = gof;
     
@@ -136,7 +144,7 @@ function [arrayDataFits] = getDistributionsOfStimResponse( arrayData,opts )
             b.TickLabels{end+1,1} = num2str(i*(maxDataRound-minDataRound) + minDataRound);
         end
     end
-    %% deal with saving plot
+    %% deal with saving colorbar plot
     if(opts.FIGURE_SAVE && strcmpi(opts.FIGURE_NAME,'')~=1 && strcmpi(opts.FIGURE_DIR,'')~=1)
         strAdd = strcat('_WINDOW_',num2str(opts.WINDOW(windowIdx,1)),'-',num2str(opts.WINDOW(windowIdx,2)));
         if(opts.PROJECT_TO_SLOPE_1)
@@ -166,6 +174,7 @@ function [opts] = configureOpts(optsInput)
     opts.MIN_RATIO = 0;
     
     opts.PLOT_LOG = 0;
+    opts.SAME_LIMITS = 0;
     
     opts.FIGURE_SAVE = 0;
     opts.FIGURE_DIR = '';

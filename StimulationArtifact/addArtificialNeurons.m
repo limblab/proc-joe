@@ -8,7 +8,7 @@ for a = 1:numel(outputData.artifactData)
     % set up times for fake waves. This is redundant honestly but might be
     % used later if the wave timing is not always the same
     outputData.artifactData(a).fakeWaveTimes = zeros(numel(outputData.eList),size(outputData.artifactData(a).artifact,numWaves))-1;
-    for i = 1:numel(outputData.eList) % for each electrode  
+    for i = 1:size(outputData.artifactData(a).artifact,1) % for each electrode  
         for j = 1:size(outputData.artifactData(a).artifact,2) % for each stimulation
             if(rand() < percentChannels)
                 for k = 1:numWaves % for each wave to add

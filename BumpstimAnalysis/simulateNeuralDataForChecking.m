@@ -1,4 +1,4 @@
-fr = 20; % Hz
+fr = 10; % Hz
 dt = 1/10000; % s
 nBins = 1000; % 100 ms spike train
 numTrials = 2300;

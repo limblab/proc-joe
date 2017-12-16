@@ -15,7 +15,7 @@ opts.SPIKE_DATA = 1;
 
 %% get probability of response for all units
 
-opts.WINDOW = [1,5]/1000;
+opts.WINDOW = [1.2,5]/1000;
 opts.AUTOMATIC_WINDOW = 0; % not implemented currently
 opts.SUBTRACT_BASELINE = 0;
 
@@ -26,18 +26,20 @@ opts.SUBTRACT_BASELINE = 0;
 
 %% look at the distributions (poisson, normal, etc) of the stim response
 
-opts.WINDOW = [60,64];
-opts.BASELINE_WINDOW_IDX = [];
+opts.WINDOW = [60,64;1.2,5.2];
+opts.BASELINE_WINDOW_IDX = 1;
 opts.PROJECT_TO_SLOPE_1 = 0;
 opts.COLOR_MARKERS_RESPONSE = 1;
 opts.PLOT_FIT_LINE = 1;
-opts.PLOT_LOG = 0;
+opts.PLOT_LOG = 1;
 opts.MIN_RATIO = 1;
 opts.MAX_RATIO = 4;
 
+opts.SAME_LIMITS = 1;
+
 opts.FIGURE_SAVE = 1;
 opts.FIGURE_DIR = folderpath;
-opts.FIGURE_NAME = 'Chips_20171026_distributionAnalysis';
+opts.FIGURE_NAME = 'Mihili_20170720_distributionAnalysis';
 
 arrayDataFits = getDistributionsOfStimResponse(arrayData,opts);
 

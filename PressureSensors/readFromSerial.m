@@ -1,7 +1,7 @@
 %% reads data from serial port and plots in pseudo realtime
 
 windowLength = 100;
-dataFilename = 'C:\Users\Joseph\Desktop\Lab\Data\PressureSensors\20171102_monkeyArm\test.txt';
+dataFilename = 'C:\Users\Joseph\Desktop\Lab\Data\PressureSensors\2071207_mineraloiltests\LPS33HW_1.5cmTube_33percentMineralOil_incrementalForce.txt';
 
 yData = zeros(windowLength,1);
 s = serial('COM5');

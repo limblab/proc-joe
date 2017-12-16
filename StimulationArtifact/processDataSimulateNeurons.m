@@ -1,6 +1,6 @@
 %% process stimulation artifacts:
 pwd = cd;
-folderpath='C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_20170712\Han_20170712_multiElec_CObump_4chanStim-18_29_54_82\';
+folderpath='C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20170124\';
 % folderpath='D:\Lab\Data\StimArtifact\Chips_one\';
 functionName='processStimArtifact';
 
@@ -10,10 +10,10 @@ inputData.ranBy='ranByTucker';
 inputData.array1='arrayPMD'; 
 inputData.monkey='monkeyMihili';
 % inputData.mapFile = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Mihili 12A3\Mihili Left PMd SN 6251-001460.cmp';
-% inputData.mapFile = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
-inputData.mapFile = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+inputData.mapFile = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
+% inputData.mapFile = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 
-inputData.badChList=0;
+inputData.badChList=[1:17,19:96];
 inputData.interpulse=.000053;%in s
 inputData.pWidth1=.0002;
 inputData.pWidth2=.0002;
@@ -31,14 +31,14 @@ cd(pwd);
 %% run all for different positions of the waveform
 % indexesToPlaceNeurons = [125:5:250];
 
-indexesToPlaceNeurons = [185];
-% indexesToPlaceNeurons = [10];
-ampWave = 150;
+indexesToPlaceNeurons = [20:5:150];
+% indexesToPlaceNeurons = [10];close al
+ampWave = 125;
 tolerance = 5;
 thresholdMult = -2;
 percentChannels = 1.0;
-jitter = 1;
-removalSteps = { '10','High500_Order6','',''};
+jitter = 0;
+removalSteps = {'0','High500_Order6','',''};
 % removalSteps = {'','','','';...
 %     '0','High750_Order6','','';...
 %     '0','High750_Order4','','';...
@@ -56,12 +56,12 @@ for waveNum = 1:numel(indexesToPlaceNeurons)
     waveIdx = indexesToPlaceNeurons(waveNum);
     % load in artifact data generated above for filtering.
     load(strcat(folderpath,'Input_Data\','Input_structure.mat'));
-    load(strcat(folderpath,'Output_Data\','artifactData.mat'));
+%     load(strcat(folderpath,'Output_Data\','artifactData.mat'));
     load(strcat(folderpath,'Output_Data\','chList.mat'));
     load(strcat(folderpath,'Output_Data\','eList.mat'));
     load(strcat(folderpath,'Output_Data\','posList.mat'));
-    load('Neuron_data_canonical.mat');
-    outputData.artifactData = artifactData; clear artifactData;
+%     load('Neuron_data_canonical.mat');
+%     outputData.artifactData = artifactData; clear artifactData;
     outputData.chList = chList; clear chList;
     outputData.eList = eList; clear eList;
     outputData.posList = posList; clear posList;
@@ -71,17 +71,17 @@ for waveNum = 1:numel(indexesToPlaceNeurons)
     % add waves after the artifact -- data point inputData.presample and beyond
     numWaves = 1;
 
-    outputData.artifactData.artifact = outputData.artifactData.artifact(:,:,:);
+%     outputData.artifactData.artifact = outputData.artifactData.artifact(chansUse,:,:);
     outputData = addArtificialNeurons(outputData, neuronMeanWave, ampWave, waveIdx, numWaves, percentChannels, jitter);
     % perform artifact removal step
     outputDataFilteredTemp = removeArtifacts(outputData,inputData,removalSteps,folderpath);
-
-    % try to recover waves and store data
-    for tempIdx = 1:numel(outputDataFilteredTemp)
-        outputDataFiltered{tempIdx,waveNum} = ... 
-            recoverWaveformsPostFiltering(outputDataFilteredTemp{1,tempIdx}, inputData, ...
-            thresholdMult, tolerance, removalSteps{tempIdx,2},neuronMeanWave);
-    end
+    outputDataFiltered{waveNum} = outputDataFilteredTemp;
+%     % try to recover waves and store data
+%     for tempIdx = 1:numel(outputDataFilteredTemp)
+%         outputDataFiltered{tempIdx,waveNum} = ... 
+%             recoverWaveformsPostFiltering(outputDataFilteredTemp{1,tempIdx}, inputData, ...
+%             thresholdMult, tolerance, removalSteps{tempIdx,2},neuronMeanWave);
+%     end
     clear outputDataFilteredTemp;
 end
        
