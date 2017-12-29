@@ -95,14 +95,14 @@ end
 %     'plotFiltered',[1],'randomSample',0,'templateSubtract',0,'plotXRange',[1,300])
 
 %% plot PSTH
-% nn=100;
+nn=12;
 saveFigures = 0;
 groups = {'all','responsive','nonResponsive'};
 plotPSTHStim(cds,nn,'binSize',0.2/1000,'makeFigure',1,'makeSubplots',0,'plotTitle',1,'stimsPerTrain',1,'stimCenter',1,...
     'waveformTypes',[1:1:numel(unique(cds.waveforms.waveSent))],'chans',[1:1:numel(unique(cds.waveforms.chanSent))],...
     'preTime',10/1000,'postTime',30/1000,'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix,...
     'plotLine',1,'plotAllOnOneFigure',1,'lineColor',{'k','r','b',[0 0.5 0],'m',[0.5,0.5,0.5],[1,0.6,0]},...
-    'plotStimuliGroup','all');
+    'plotStimuliGroup','nonresponsive');
 
 %% whole array plot
 

@@ -10,10 +10,10 @@ stimsPerBump = -1;
 bumpTask = 0;
 makeFigure = 1;
 numWaveformTypes = 1;
-waveformsSentExist = any(isfield(cds,'waveforms'));
+
 waveformsMakeSubplots = 0;
 waveformTypesPlot = 1;
-if(waveformsSentExist)
+if(any(isfield(cds,'waveforms')))
     waveformTypesPlot = 1:1:numel(unique(cds.waveforms.waveSent));
 end
 plotLine = 0;
@@ -52,6 +52,10 @@ plotAllStimuli = 1;
 plotOnlyStimuliWithoutResponse = 0;
 
 barColor = 'k';
+
+initialArraySize = 3000;
+additionalArraySize = 1000;
+
 %% deal with varagin
 for i = 1:2:size(varargin,2)
     switch varargin{i}
@@ -139,7 +143,7 @@ for i = 1:2:size(varargin,2)
 end
 
 %% extract number of waveform types if applicable
-if(waveformsSentExist)
+if(any(isfield(cds,'waveforms')))
     numWaveformTypes = numel(unique(cds.waveforms.waveSent));
 end
 
@@ -152,32 +156,31 @@ else
 end
 
 %% extract data
+
 for c = 1:numChans
     for i = 1:numWaveformTypes
-        spikeTrialTimes{c,i} = [];
-        spikeTrueTimes{c,i} = [];
-        stimuliData{c,i} = [];
+        spikeTrialTimes{c,i} = zeros(1,initialArraySize);
+        spikeTrueTimes{c,i} = zeros(1,initialArraySize);
+        stimuliData{c,i} = zeros(1,initialArraySize);
     end
 end
+arraySize = zeros(numChans,numWaveformTypes);
 stimNum = zeros(numChans,numWaveformTypes);
+flagResponse = 1;
 
 if(bumpTask) % plot things aligned to bump times and whatnot
-    % write this later :D
+    % write this later :D -- in a different function now
 else % get data after stimulations
     for st = 1:stimsPerTrain:numel(cds.stimOn)
         spikeMask = cds.units(neuronNumber).spikes.ts > cds.stimOn(st)-preTime & cds.units(neuronNumber).spikes.ts < cds.stimOn(st)+postTime;
         spikesPlot = (cds.units(neuronNumber).spikes.ts(spikeMask) - cds.stimOn(st));
-        if(plotOnlyStimuliWithResponse) % check if spikesPlot has a spike within a specified amount of time -- if not, remove
-            mask = spikesPlot > 0 & spikesPlot < min(15/1000,timeAfterStimRawArtifact);
-            if(sum(mask) == 0)
-                spikesPlot = [];
-            end
-        elseif(plotOnlyStimuliWithoutResponse)
-            mask = spikesPlot > 0 & spikesPlot < min(15/1000,timeAfterStimRawArtifact);
-            if(sum(mask) ~= 0)
-                spikesPlot = [];
-            end
+        mask = spikesPlot > 0 & spikesPlot < min(15/1000,timeAfterStimRawArtifact);
+        if(sum(mask) == 0) % no spikes in the range, no response
+            flagResponse = 0;
+        else
+            flagResponse = 1; % spikes in range, response
         end
+
         numWaves = sum(spikeMask==1);
         
         if(alignWaves) % align on positive deflection of filtered waveform, then add 4/30 ms to get to negative deflection of spike
@@ -192,64 +195,51 @@ else % get data after stimulations
             spikesPlot = spikesPlot + 4/30000;
         end
         
-        if(waveformsSentExist)
-            if(any(isfield(cds.waveforms,'chanSent')))
-                chanNumber = find(unique(cds.waveforms.chanSent)==cds.waveforms.chanSent(st));
-                stimNum(chanNumber,cds.waveforms.waveSent(st)) = stimNum(chanNumber,cds.waveforms.waveSent(st))+1;
-            else
-                stimNum(1,cds.waveforms.waveSent(st)) = stimNum(1,cds.waveforms.waveSent(st)) + 1;
-            end
-            if(~isempty(spikesPlot))
-                if(any(isfield(cds.waveforms,'chanSent')))
-                    chanNumber = find(unique(cds.waveforms.chanSent)==cds.waveforms.chanSent(st));
-                    spikeTrialTimes{chanNumber,cds.waveforms.waveSent(st)}(end+1:end+numWaves) = spikesPlot';
-                    spikeTrueTimes{chanNumber,cds.waveforms.waveSent(st)}(end+1:end+numWaves) = spikesPlot' + cds.stimOn(st);
-                    stimuliData{chanNumber,cds.waveforms.waveSent(st)}(end+1:end+numWaves) = stimNum(chanNumber,cds.waveforms.waveSent(st));
-                else
-                    spikeTrialTimes{1,cds.waveforms.waveSent(st)}(end+1:end+numWaves) = spikesPlot';
-                    spikeTrueTimes{1,cds.waveforms.waveSent(st)}(end+1:end+numWaves) = spikesPlot' + cds.stimOn(st);
-                    stimuliData{1,cds.waveforms.waveSent(st)}(end+1:end+numWaves) = stimNum(1,cds.waveforms.waveSent(st));
-                end
-            elseif(isempty(spikesPlot) && (plotOnlyStimuliWithResponse || plotOnlyStimuliWithoutResponse)) % decrement stimNum
-                if(any(isfield(cds.waveforms,'chanSent')))
-                    chanNumber = find(unique(cds.waveforms.chanSent)==cds.waveforms.chanSent(st));
-                    stimNum(chanNumber,cds.waveforms.waveSent(st)) = stimNum(chanNumber,cds.waveforms.waveSent(st))-1;
-                else
-                    stimNum(1,cds.waveforms.waveSent(st)) = stimNum(1,cds.waveforms.waveSent(st))-1;
-                end
-            end
-        else
-            if(any(isfield(cds.waveforms,'chanSent')))
-                chanNumber = find(unique(cds.waveforms.chanSent)==cds.waveforms.chanSent(st));
-                stimNum(chanNumber,1) = stimNum(chanNumber,1)+1;
-            else
-                stimNum(1,1) = stimNum(1,1) + 1;
-            end
-            
-            if(~isempty(spikesPlot))
-                if(any(isfield(cds.waveforms,'chanSent')))
-                    chanNumber = find(unique(cds.waveforms.chanSent)==cds.waveforms.chanSent(st));
-                    spikeTrialTimes{chanNumber,1}(end+1:end+numWaves) = spikesPlot';
-                    spikeTrueTimes{chanNumber,1}(end+1:end+numWaves) = spikesPlot' + cds.stimOn(st);
-                    stimuliData{chanNumber,1}(end+1:end+numWaves) = stimNum(chanNumber,1);
-                else
-                    spikeTrialTimes{1}(end+1:end+numWaves) = spikesPlot';
-                    spikeTrueTimes{1}(end+1:end+numWaves) = spikesPlot' + cds.stimOn(st);
-                    stimuliData{1}(end+1:end+numWaves) = stimNum(1,1);
-                end
-            elseif(isempty(spikesPlot) && (plotOnlyStimuliWithResponse || plotOnlyStimuliWithoutResponse)) % decrement stimNum
-                if(any(isfield(cds.waveforms,'chanSent')))
-                    chanNumber = find(unique(cds.waveforms.chanSent)==cds.waveforms.chanSent(st));
-                    stimNum(chanNumber,cds.waveforms.waveSent(st)) = stimNum(chanNumber,cds.waveforms.waveSent(st))-1;
-                else
-                    stimNum(1,cds.waveforms.waveSent(st)) = stimNum(1,cds.waveforms.waveSent(st))-1;
-                end
-            end
-            
+        % find chan and wave number if they exist (they should)
+        chanNumber = 1;
+        waveNumber = 1;
+        if(any(isfield(cds.waveforms,'chanSent'))) % should always be true, older files might not have this though
+            chanNumber = find(unique(cds.waveforms.chanSent)==cds.waveforms.chanSent(st));
         end
+        if(any(isfield(cds,'waveforms')))
+            waveNumber = cds.waveforms.waveSent(st);
+        end
+        
+        % update stimNum if plotting all stimuli, if there is a response
+        % and we are plotting only those with response, or if there is not
+        % a response and that is what we are plotting
+        if((plotAllStimuli) || (plotOnlyStimuliWithResponse && flagResponse) || (plotOnlyStimuliWithoutResponse && ~flagResponse))
+            stimNum(chanNumber,waveNumber) = stimNum(chanNumber,waveNumber) + 1;
+
+            % update spike times 
+            if(~isempty(spikesPlot))
+                spikeTrialTimes{chanNumber,waveNumber}(arraySize(chanNumber,waveNumber)+1:arraySize(chanNumber,waveNumber)+numWaves) = spikesPlot';
+                spikeTrueTimes{chanNumber,waveNumber}(arraySize(chanNumber,waveNumber)+1:arraySize(chanNumber,waveNumber)+numWaves) = spikesPlot' + cds.stimOn(st);
+                stimuliData{chanNumber,waveNumber}(arraySize(chanNumber,waveNumber)+1:arraySize(chanNumber,waveNumber)+numWaves) = stimNum(chanNumber,waveNumber);
+                arraySize(chanNumber,waveNumber) = arraySize(chanNumber,waveNumber) + numWaves;
+                
+                % check if array size is too large, if yes expand arrays
+                if(arraySize(chanNumber,waveNumber) > 2/3*size(spikeTrialTimes{chanNumber,waveNumber},2))
+                    tempArray = zeros(1,size(spikeTrialTimes{chanNumber,waveNumber},2) + additionalArraySize);
+                    tempArray(1:arraySize(chanNumber,waveNumber)) = spikeTrialTimes{chanNumber,waveNumber}(1:arraySize(chanNumber,waveNumber));
+                    spikeTrialTimes{chanNumber,waveNumber} = tempArray;
+                end
+            end
+        end
+                
     end
 end
 
+% prune arrays
+for c = 1:numChans
+    for i = 1:numWaveformTypes
+        spikeTrialTimes{c,i} = spikeTrialTimes{c,i}(1:arraySize(c,i));
+        spikeTrueTimes{c,i} = spikeTrueTimes{c,i}(1:arraySize(c,i));
+        stimuliData{c,i} = stimuliData{c,i}(1:arraySize(c,i));
+    end
+end
+
+% store data
 outputData.spikeTrialTimes = spikeTrialTimes;
 outputData.spikeTrueTimes = spikeTrueTimes;
 outputData.stimData = stimuliData;
@@ -282,6 +272,7 @@ outputData.bC = bC;
 outputData.bE = bE;
 outputData.bCVar = bCVar;
 
+
 %% plot data - stimuli data is y-axis. spike data is x-axis
 if(~noPlot)
     chansPlotTemp = chansPlot;
@@ -300,12 +291,12 @@ if(~noPlot)
                     figure();
                 elseif(plotAllOnOneFigure && ~((numel(waveformTypesPlot)>1 && fig == 1) || (numel(waveformTypesPlot) == 1 && chan == 1)))
                     % do not make figure
-                elseif(waveformsSentExist && waveformsMakeSubplots && fig == 1)
+                elseif(any(isfield(cds,'waveforms')) && waveformsMakeSubplots && fig == 1)
                     figure(); % make figure for the subplots
                     subplot(numWaveformTypes,1,fig);
-                elseif(waveformsSentExist && waveformsMakeSubplots)
+                elseif(any(isfield(cds,'waveforms')) && waveformsMakeSubplots)
                     subplot(numWaveformTypes,1,fig); % subplots
-                elseif(waveformsSentExist && ~waveformsMakeSubplots)
+                elseif(any(isfield(cds,'waveforms')) && ~waveformsMakeSubplots)
                     figure(); % figure for each waveform type
                 elseif(fig==1)
                     figure(); % figure for a single waveform type
@@ -352,7 +343,7 @@ if(~noPlot)
             optsPlot.Y_LIMITS = [0,maxYLim];
             optsPlot.X_LIMITS = [-preTime*1000,postTime*1000];
             optsPlot.Y_LABEL = 'Average number of spikes';
-            if(~waveformsSentExist || ~waveformsMakeSubplots || fig == numWaveformTypes)
+            if(~any(isfield(cds,'waveforms')) || ~waveformsMakeSubplots || fig == numWaveformTypes)
                 optsPlot.X_LABEL = 'Time after stimulation onset (ms)';
             end
             if(plotTitle)
@@ -360,9 +351,9 @@ if(~noPlot)
                     optsPlot.TITLE = titleToPlot;
                 elseif(plotAllOnOneFigure)
                     % no title
-                elseif(numChans > 1 && waveformsSentExist)
+                elseif(numChans > 1 && any(isfield(cds,'waveforms')))
                     optsPlot.TITLE = strcat('Stim Chan: ',num2str(chanList(chan)),' Wave: ',num2str(fig));
-                elseif(numChans == 1 && waveformsSentExist)
+                elseif(numChans == 1 && any(isfield(cds,'waveforms')))
                     optsPlot.TITLE = strcat('Stim Chan: ',num2str(stimElectrode),' Wave: ',num2str(fig));
                 else
 
