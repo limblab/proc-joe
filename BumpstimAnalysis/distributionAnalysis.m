@@ -2,17 +2,16 @@
 
 %% get bin counts and bin edges across array
 % make opts struct for future use
+tic
 opts.MAP_FILENAME = mapFileName;
 opts.PRE_TIME = 10/1000;
 opts.POST_TIME = 90/1000;
 opts.BIN_SIZE = 0.0002;
 opts.WAVEFORM_IDX = [1:numel(unique(cds.waveforms.waveSent))];
 opts.CHANNEL_IDX = [1:numel(unique(cds.waveforms.chanSent))];
-opts.BIN_DATA = 1;
-opts.SPIKE_DATA = 1;
 
 [arrayData] = getCountsAcrossArray(cds,opts);
-
+toc
 %% get probability of response for all units
 
 opts.WINDOW = [1.2,5]/1000;

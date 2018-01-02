@@ -41,7 +41,7 @@ function [ outputData ] = extractDataAroundStimulations( cds,opts )
     stimNum = zeros(NUM_CHANS,NUM_WAVEFORM_TYPES);
         
     %% extract raster data by looking at each stimulation
-
+    spikeData = cds.units(opts.NEURON_NUMBER).spikes.ts;
     for st = 1:opts.STIMULATIONS_PER_TRAIN:numel(cds.stimOn)
         spikeMask = cds.units(opts.NEURON_NUMBER).spikes.ts > cds.stimOn(st)-opts.PRE_TIME & cds.units(opts.NEURON_NUMBER).spikes.ts < cds.stimOn(st)+opts.POST_TIME;
         spikesPlot = (cds.units(opts.NEURON_NUMBER).spikes.ts(spikeMask) - cds.stimOn(st));

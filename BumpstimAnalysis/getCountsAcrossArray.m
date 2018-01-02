@@ -32,33 +32,22 @@ function [outputData] = getCountsAcrossArray(cds,opts)
             outputData{outputDataIdx}.row = eRow;
             outputData{outputDataIdx}.col = eCol;
             
-            if(opts.BIN_DATA == 1) % will get both spike and bin data, may not store spike data though
-                % get bin counts and edges using plotPSTHStim
-                [data] = plotPSTHStim(cds,nn,'binSize',opts.BIN_SIZE,'waveformTypes',opts.WAVEFORM_IDX,...
-                    'chans',opts.CHANNEL_IDX,'preTime',opts.PRE_TIME,'postTime',opts.POST_TIME,'noPlot',1);
+            opts.NEURON_NUMBER = nn;
 
-                % put counts and row/col info into outputData
-                outputData{outputDataIdx}.parameters = cds.waveforms.parameters;
-                outputData{outputDataIdx}.chanSent = unique(cds.waveforms.chanSent);
-                
-                outputData{outputDataIdx}.bC = data.bC;
-                outputData{outputDataIdx}.bE = data.bE;
-                if(opts.SPIKE_DATA)
-                    outputData{outputDataIdx}.spikeTrialTimes = data.spikeTrialTimes;
-                    outputData{outputDataIdx}.spikeTrueTimes = data.spikeTrueTimes;
-                    outputData{outputDataIdx}.stimData = data.stimData;
-                    outputData{outputDataIdx}.numStims = data.numStims;
-                end
+            data = extractDataAroundStimulations(cds,opts);
+            
+            % put counts and row/col info into outputData
+            outputData{outputDataIdx}.parameters = cds.waveforms.parameters;
+            outputData{outputDataIdx}.chanSent = unique(cds.waveforms.chanSent);
 
-            elseif(opts.SPIKE_DATA == 1)
-                % get bin counts and edges using plotPSTHStim
-                [data] = plotRasterStim(cds,nn,'binSize',opts.BIN_SIZE,'waveformTypes',opts.WAVEFORM_IDX,...
-                    'chans',opts.CHANNEL_IDX,'preTime',opts.PRE_TIME,'postTime',opts.POST_TIME,'noPlot',1);
+            outputData{outputDataIdx}.bC = data.bC;
+            outputData{outputDataIdx}.bE = data.bE;
+            outputData{outputDataIdx}.spikeTrialTimes = data.spikeTrialTimes;
+            outputData{outputDataIdx}.spikeTrueTimes = data.spikeTrueTimes;
+            outputData{outputDataIdx}.stimData = data.stimData;
+            outputData{outputDataIdx}.numStims = data.numStims;
 
-                outputData.spikeTimes{outputDataIdx} = data.spikeTimes;
-                outputData.stimData{outputDataIdx} = data.stimData;
- 
-            end
+            
             outputDataIdx = outputDataIdx + 1;
         end
     end
@@ -69,12 +58,16 @@ function [opts] = configureOpts(optsInput)
 
     opts.MAP_FILENAME = '';
     opts.PRE_TIME = 10/1000;
-    opts.POST_TIME = 30/1000;
-    opts.BIN_SIZE = 0.0002;
+    opts.POST_TIME = 90/1000;
+    opts.TIME_AFTER_STIMULATION_WAVEFORMS = 10/1000;
+
+    opts.BIN_SIZE = 0.2/1000;
     opts.WAVEFORM_IDX = 1;
     opts.CHANNEL_IDX = 1;
-    opts.BIN_DATA = 1;
-    opts.SPIKE_DATA = 0;
+    
+    opts.STIMULI_RESPONSE = 'all';
+    opts.STIM_ELECTRODE = 50;
+    opts.STIMULATIONS_PER_TRAIN = 1;
     
     %% check if in opts and optsInput, overwrite if so
     try

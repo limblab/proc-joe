@@ -27,8 +27,7 @@ figPrefix = '';
 saveFigures = 0;
 
 %% extract relevant data for a given unit
-tic
-optsExtract.NEURON_NUMBER = 4;
+optsExtract.NEURON_NUMBER = 15;
 
 optsExtract.STIMULI_RESPONSE = 'all';
 optsExtract.STIM_ELECTRODE = 50;
@@ -40,20 +39,18 @@ optsExtract.BIN_SIZE = 0.2/1000;
 optsExtract.TIME_AFTER_STIMULATION_WAVEFORMS = 10/1000;
 
 unitData = extractDataAroundStimulations(cds,optsExtract);
-toc
+
 %% plot raster, and PSTH for the given unit above
-optsPlotFunc.BIN_SIZE = optsExtract.BIN_SIZE;
+optsPlotFunc = [];
 
 optsPlotFunc.PRE_TIME = 5/1000;
 optsPlotFunc.POST_TIME = 30/1000;
 
 rasterPlots = plotRasterStim(unitData,optsExtract.NEURON_NUMBER,optsPlotFunc);
 
-optsPlotFunc.PLOT_ALL_ONE_FIGURE = 0;
+optsPlotFunc.PLOT_ALL_ONE_FIGURE = 1;
 optsPlotFunc.PLOT_LINE = 1;
-
-optsPlotFunc.SMOOTH = 0;
-optsPlotFunc.SMOOTH_STD_DEV = 0.35;
+optsPlotFunc.SMO
 
 PSTHPlots = plotPSTHStim(unitData,optsExtract.NEURON_NUMBER,optsPlotFunc);
 

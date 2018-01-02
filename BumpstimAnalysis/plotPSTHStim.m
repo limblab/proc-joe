@@ -1,319 +1,40 @@
-function [outputData] = plotPSTHStim(cds,neuronNumber,varargin)
-preTime = 10/1000; % in seconds
-postTime = 20/1000; % in seconds
-plotAllArtifacts = 0;
-spikesArtifact = [];
-plotTitle = 1;
-noPlot = 0;
-titleToPlot = '';
-stimsPerBump = -1;
-bumpTask = 0;
-makeFigure = 1;
-numWaveformTypes = 1;
+function [figureHandle] = plotPSTHStim(unitData,NEURON_NUMBER,optsPlot)
 
-waveformsMakeSubplots = 0;
-waveformTypesPlot = 1;
-if(any(isfield(cds,'waveforms')))
-    waveformTypesPlot = 1:1:numel(unique(cds.waveforms.waveSent));
-end
-plotLine = 0;
-lineColor = 'k';
-lineWidth = 2;
-binSize = 0.0002;
-stimsPerTrain = 1;
-stimCenter = 1;
-% plot waves near artifact stuff
-plotSpikeWaveforms = 0;
-timeAfterStimRawNoStim = 20/1000;
-timeAfterStimRawArtifact = 5/1000;
 
-% plot artifact sample
-plotArtifacts = 0;
-maxArtifactsPerPlot = 5;
-rowSubplotArtifact = 4;
-colSubplotArtifact = 5;
 
-stimElectrode = -1;
-chansPlot = 1;
-alignWaves = 1;
+    %% configure opts and set default values
+    opts = configureOpts(optsPlot);
+    
+    NUM_WAVEFORM_TYPES = size(unitData.spikeTrialTimes,2);
+    NUM_CHANS = size(unitData.spikeTrialTimes,1);
+    CHAN_LIST = unitData.CHAN_LIST;
+    
+    %% format data and call general plot function
+    
+    %% plot data - stimuli data is y-axis. spike data is x-axis
 
-% save stuff
-saveFigures = 0;
-figDir = '';
-figPrefix = '';
-
-plotAllOnOneFigure = 0;
-makeLegend = 0;
-legStr = '';
-plotStimOn = 0;
-
-plotOnlyStimuliWithResponse = 0;
-plotAllStimuli = 1;
-plotOnlyStimuliWithoutResponse = 0;
-
-barColor = 'k';
-
-initialArraySize = 3000;
-additionalArraySize = 1000;
-
-%% deal with varagin
-for i = 1:2:size(varargin,2)
-    switch varargin{i}
-        case 'bumpTask'
-            bumpTask = varargin{i+1};
-        case 'stimsPerBump'
-            stimsPerBump = varargin{i+1};
-        case 'preTime'
-            preTime = varargin{i+1};
-        case 'postTime'
-            postTime = varargin{i+1};
-        case 'plotSpikeWaveforms'
-            plotSpikeWaveforms = varargin{i+1};
-        case 'timeAfterStimRawNoStim'
-            timeAfterStimRawNoStim = varargin{i+1};
-        case 'timeAfterStimRawArtifact'
-            timeAfterStimRawArtifact = varargin{i+1};
-        case 'plotTitle'
-            plotTitle = varargin{i+1};
-        case 'title'
-            titleToPlot = varargin{i+1};
-        case 'noPlot'
-            noPlot = varargin{i+1};
-        case 'plotArtifacts'
-            plotArtifacts = varargin{i+1};
-        case 'makeFigure'
-            makeFigure = varargin{i+1};
-        case 'makeSubplots'
-            waveformsMakeSubplots = varargin{i+1};
-        case 'waveformTypes'
-            waveformTypesPlot = varargin{i+1};
-        case 'maxArtifactsPerPlot'
-            maxArtifactsPerPlot = varargin{i+1};
-        case 'colSubplotArtifact'
-            colSubplotArtifact = varargin{i+1};
-        case 'rowSubplotArtifact'
-            rowSubplotArtifact = varargin{i+1};
-        case 'binSize'
-            binSize = varargin{i+1};
-        case 'chans'
-            chansPlot = varargin{i+1};
-        case 'stimElectrode'
-            stimElectrode = varargin{i+1};
-        case 'saveFigures'
-            saveFigures = varargin{i+1};
-        case 'figDir'
-            figDir = varargin{i+1};
-        case 'figPrefix'
-            figPrefix = varargin{i+1};
-        case 'plotLine'
-            plotLine = varargin{i+1};
-        case 'lineColor'
-            lineColor = varargin{i+1};
-        case 'lineWidth'
-            lineWidth = varargin{i+1};
-        case 'plotAllOnOneFigure'
-            plotAllOnOneFigure = varargin{i+1};
-        case 'makeLegend'
-            makeLegend = varargin{i+1};
-        case 'legendString'
-            legStr = varargin{i+1};
-        case 'plotStimOn'
-            plotStimOn = varargin{i+1};
-        case 'plotStimuliGroup'
-            if(strcmpi(varargin{i+1},'responsive'))
-                plotOnlyStimuliWithResponse = 1;
-                plotAllStimuli = 0;
-                plotOnlyStimuliWithoutResponse = 0;
-            elseif(strcmpi(varargin{i+1},'nonResponsive'))
-                plotOnlyStimuliWithResponse = 0;
-                plotAllStimuli = 0;
-                plotOnlyStimuliWithoutResponse = 1;
-            else % default case
-                plotOnlyStimuliWithResponse = 0;
-                plotAllStimuli = 1;
-                plotOnlyStimuliWithoutResponse = 0;
-            end
-        case 'stimsPerTrain'
-            stimsPerTrain = varargin{i+1};
-        case 'stimCenter'
-            stimCenter = varargin{i+1};
-        case 'barColor'
-            barColor = varargin{i+1};
+    if(opts.PLOT_ALL_ONE_FIGURE)
+        NUM_CHANS_PLOT = 1;
+        NUM_WAVEFORM_TYPES_PLOT = 1;
+    else
+        NUM_CHANS_PLOT = NUM_CHANS;
+        NUM_WAVEFORM_TYPES_PLOT = NUM_WAVEFORM_TYPES;
     end
-end
-
-%% extract number of waveform types if applicable
-if(any(isfield(cds,'waveforms')))
-    numWaveformTypes = numel(unique(cds.waveforms.waveSent));
-end
-
-if(any(isfield(cds.waveforms,'chanSent')))
-    numChans = numel(unique(cds.waveforms.chanSent));
-    chanList = unique(cds.waveforms.chanSent);
-else
-    chanList = stimElectrode;
-    numChans = 1;
-end
-
-%% extract data
-
-for c = 1:numChans
-    for i = 1:numWaveformTypes
-        spikeTrialTimes{c,i} = zeros(1,initialArraySize);
-        spikeTrueTimes{c,i} = zeros(1,initialArraySize);
-        stimuliData{c,i} = zeros(1,initialArraySize);
-    end
-end
-arraySize = zeros(numChans,numWaveformTypes);
-stimNum = zeros(numChans,numWaveformTypes);
-flagResponse = 1;
-
-if(bumpTask) % plot things aligned to bump times and whatnot
-    % write this later :D -- in a different function now
-else % get data after stimulations
-    for st = 1:stimsPerTrain:numel(cds.stimOn)
-        spikeMask = cds.units(neuronNumber).spikes.ts > cds.stimOn(st)-preTime & cds.units(neuronNumber).spikes.ts < cds.stimOn(st)+postTime;
-        spikesPlot = (cds.units(neuronNumber).spikes.ts(spikeMask) - cds.stimOn(st));
-        mask = spikesPlot > 0 & spikesPlot < min(15/1000,timeAfterStimRawArtifact);
-        if(sum(mask) == 0) % no spikes in the range, no response
-            flagResponse = 0;
-        else
-            flagResponse = 1; % spikes in range, response
-        end
-
-        numWaves = sum(spikeMask==1);
-        
-        if(alignWaves) % align on positive deflection of filtered waveform, then add 4/30 ms to get to negative deflection of spike
-%             spikeMaskIdx = find(spikeMask==1);
-%             for spikeIdx = 1:numel(spikesPlot)
-%                 [~,maxIdx] = max(cds.units(neuronNumber).spikes{spikeMaskIdx(spikeIdx),2:end});
-%                 if(maxIdx > 10)
-%                     offset = (28 - maxIdx)/30000;
-%                     spikesPlot(spikeIdx) = spikesPlot(spikeIdx) - offset;
-%                 end
-%             end
-            spikesPlot = spikesPlot + 4/30000;
-        end
-        
-        % find chan and wave number if they exist (they should)
-        chanNumber = 1;
-        waveNumber = 1;
-        if(any(isfield(cds.waveforms,'chanSent'))) % should always be true, older files might not have this though
-            chanNumber = find(unique(cds.waveforms.chanSent)==cds.waveforms.chanSent(st));
-        end
-        if(any(isfield(cds,'waveforms')))
-            waveNumber = cds.waveforms.waveSent(st);
-        end
-        
-        % update stimNum if plotting all stimuli, if there is a response
-        % and we are plotting only those with response, or if there is not
-        % a response and that is what we are plotting
-        if((plotAllStimuli) || (plotOnlyStimuliWithResponse && flagResponse) || (plotOnlyStimuliWithoutResponse && ~flagResponse))
-            stimNum(chanNumber,waveNumber) = stimNum(chanNumber,waveNumber) + 1;
-
-            % update spike times 
-            if(~isempty(spikesPlot))
-                spikeTrialTimes{chanNumber,waveNumber}(arraySize(chanNumber,waveNumber)+1:arraySize(chanNumber,waveNumber)+numWaves) = spikesPlot';
-                spikeTrueTimes{chanNumber,waveNumber}(arraySize(chanNumber,waveNumber)+1:arraySize(chanNumber,waveNumber)+numWaves) = spikesPlot' + cds.stimOn(st);
-                stimuliData{chanNumber,waveNumber}(arraySize(chanNumber,waveNumber)+1:arraySize(chanNumber,waveNumber)+numWaves) = stimNum(chanNumber,waveNumber);
-                arraySize(chanNumber,waveNumber) = arraySize(chanNumber,waveNumber) + numWaves;
-                
-                % check if array size is too large, if yes expand arrays
-                if(arraySize(chanNumber,waveNumber) > 2/3*size(spikeTrialTimes{chanNumber,waveNumber},2))
-                    tempArray = zeros(1,size(spikeTrialTimes{chanNumber,waveNumber},2) + additionalArraySize);
-                    tempArray(1:arraySize(chanNumber,waveNumber)) = spikeTrialTimes{chanNumber,waveNumber}(1:arraySize(chanNumber,waveNumber));
-                    spikeTrialTimes{chanNumber,waveNumber} = tempArray;
-                end
-            end
-        end
-                
-    end
-end
-
-% prune arrays
-for c = 1:numChans
-    for i = 1:numWaveformTypes
-        spikeTrialTimes{c,i} = spikeTrialTimes{c,i}(1:arraySize(c,i));
-        spikeTrueTimes{c,i} = spikeTrueTimes{c,i}(1:arraySize(c,i));
-        stimuliData{c,i} = stimuliData{c,i}(1:arraySize(c,i));
-    end
-end
-
-% store data
-outputData.spikeTrialTimes = spikeTrialTimes;
-outputData.spikeTrueTimes = spikeTrueTimes;
-outputData.stimData = stimuliData;
-outputData.numStims = stimNum;
-
-%% bin data and find max y lim
-maxYLim = 0;
-for chan = chansPlot
-    for fig = waveformTypesPlot
-        % bin data
-        bE{chan,fig} = -preTime:binSize:postTime;
-        [bC{chan,fig},bE{chan,fig}] = histcounts(spikeTrialTimes{chan,fig},bE{chan,fig});
-        bE{chan,fig} = bE{chan,fig}*1000;
-        bC{chan,fig} = bC{chan,fig}/stimNum(chan,fig);
-        maxYLim = max(max(bC{chan,fig})*1.1,maxYLim);
-        % compute a variance for the data from preTime to -2/1000 and for
-        % the data from 1.5/1000 to 5/1000
-        firingRateStimuli = zeros(sum(cds.waveforms.waveSent == fig & cds.waveforms.chanSent == chanList(chan)),2);
-        for i = 1:sum(cds.waveforms.waveSent == fig & cds.waveforms.chanSent == chanList(chan))
-            firingRateStimuli(i,1) = numel(find(stimuliData{chan,fig} == i & spikeTrialTimes{chan,fig} > -preTime & spikeTrialTimes{chan,fig} < 0))/(preTime);
-            firingRateStimuli(i,2) = numel(find(stimuliData{chan,fig} == i & spikeTrialTimes{chan,fig} < 5/1000 & spikeTrialTimes{chan,fig} > 0.5/1000))/(4.5/1000);
-        end
-        
-        bCVar{chan,fig} = [mean(firingRateStimuli(:,1)),mean(firingRateStimuli(:,2));...
-            var(firingRateStimuli(:,1)),var(firingRateStimuli(:,2))];
-    end
-end
-
-outputData.bC = bC;
-outputData.bE = bE;
-outputData.bCVar = bCVar;
-
-
-%% plot data - stimuli data is y-axis. spike data is x-axis
-if(~noPlot)
-    chansPlotTemp = chansPlot;
-    waveformTypesPlotTemp = waveformTypesPlot;
-
-    if(plotAllOnOneFigure)
-        chansPlotTemp = 1;
-        waveformTypesPlotTemp = 1;    
-    end
-
-    for chan = chansPlotTemp
-        for fig = waveformTypesPlot
-            % deals with making figure
-            if(makeFigure)
-                if(plotAllOnOneFigure && ((numel(waveformTypesPlot)>1 && fig == 1) || (numel(waveformTypesPlot) == 1 && chan == 1)))
-                    figure();
-                elseif(plotAllOnOneFigure && ~((numel(waveformTypesPlot)>1 && fig == 1) || (numel(waveformTypesPlot) == 1 && chan == 1)))
-                    % do not make figure
-                elseif(any(isfield(cds,'waveforms')) && waveformsMakeSubplots && fig == 1)
-                    figure(); % make figure for the subplots
-                    subplot(numWaveformTypes,1,fig);
-                elseif(any(isfield(cds,'waveforms')) && waveformsMakeSubplots)
-                    subplot(numWaveformTypes,1,fig); % subplots
-                elseif(any(isfield(cds,'waveforms')) && ~waveformsMakeSubplots)
-                    figure(); % figure for each waveform type
-                elseif(fig==1)
-                    figure(); % figure for a single waveform type
-                end
-            end
+    
+    for chan = 1:NUM_CHANS_PLOT
+        for wave = 1:NUM_WAVEFORM_TYPES_PLOT
 
             % get data
             xData = [];
             yData = [];
-            if(plotAllOnOneFigure)
-                optsPlot.NUM_PLOTS = numel(chansPlot)*numel(waveformTypesPlot);
-                for chanTemp = chansPlot
-                    for waveTemp = waveformTypesPlot
-                        bEtemp = bE{chanTemp,waveTemp};
+            if(opts.PLOT_ALL_ONE_FIGURE)
+                optsPlot.NUM_PLOTS = NUM_CHANS*NUM_WAVEFORM_TYPES;
+                for chanTemp = 1:NUM_CHANS
+                    for waveTemp = 1:NUM_WAVEFORM_TYPES
+                        bEtemp = unitData.bE{chanTemp,waveTemp};
                         xDataTemp = bEtemp(1:end-1)+(bEtemp(2)-bEtemp(1))/2;
                         xDataTemp = xDataTemp';
-                        yDataTemp = bC{chanTemp,waveTemp};
+                        yDataTemp = unitData.bC{chanTemp,waveTemp};
                         yDataTemp = yDataTemp';
                         xData(:,end+1) = xDataTemp;
                         yData(:,end+1) = yDataTemp;
@@ -322,200 +43,113 @@ if(~noPlot)
             else
                 optsPlot.NUM_PLOTS = 1;
 
-                bEtemp = bE{chan,fig};
+                bEtemp = unitData.bE{chan,wave};
                 xData = bEtemp(1:end-1)+(bEtemp(2)-bEtemp(1))/2;
                 xData = xData';
-                yData = bC{chan,fig};
+                yData = unitData.bC{chan,wave};
                 yData = yData';
             end
-            optsPlot.FACE_COLOR = lineColor;
-            optsPlot.EDGE_COLOR = lineColor;
+            
+            optsPlot.SMOOTH = opts.SMOOTH;
+            optsPlot.SMOOTH_STD_DEV = opts.SMOOTH_STD_DEV;
+            optsPlot.BIN_SIZE = opts.BIN_SIZE*1000;
+            
+            optsPlot.FACE_COLOR = opts.LINE_COLOR;
+            optsPlot.EDGE_COLOR = opts.LINE_COLOR;
+            
             % format for plotting, then plot
-            if(plotLine)
+            if(opts.PLOT_LINE)
                 optsPlot.BAR_STYLE = 'line';
             else
                 optsPlot.BAR_STYLE = 'bar';
             end
-            if(makeLegend && ~isempty(legStr))
+            if(opts.MAKE_LEGEND && ~isempty(opts.LEGEND_STR))
                 optsPlot.LEGEND_STRING = legStr;
                 optsPlot.LEGEND_BOX = 'off';
             end      
-            optsPlot.Y_LIMITS = [0,maxYLim];
-            optsPlot.X_LIMITS = [-preTime*1000,postTime*1000];
-            optsPlot.Y_LABEL = 'Average number of spikes';
-            if(~any(isfield(cds,'waveforms')) || ~waveformsMakeSubplots || fig == numWaveformTypes)
+            optsPlot.Y_LIMITS = [0,unitData.binMaxYLim];
+            optsPlot.X_LIMITS = [-opts.PRE_TIME*1000,opts.POST_TIME*1000];
+            optsPlot.Y_LABEL = 'Number of spikes per stimulation';
+            if(~opts.MAKE_SUBPLOTS || wave == NUM_WAVEFORM_TYPES)
                 optsPlot.X_LABEL = 'Time after stimulation onset (ms)';
             end
-            if(plotTitle)
-                if(strcmp(titleToPlot,'') == 0)
+            if(opts.PLOT_TITLE)
+                if(strcmp(opts.TITLE_TO_PLOT,'') == 0)
                     optsPlot.TITLE = titleToPlot;
-                elseif(plotAllOnOneFigure)
+                elseif(opts.PLOT_ALL_ONE_FIGURE)
                     % no title
-                elseif(numChans > 1 && any(isfield(cds,'waveforms')))
-                    optsPlot.TITLE = strcat('Stim Chan: ',num2str(chanList(chan)),' Wave: ',num2str(fig));
-                elseif(numChans == 1 && any(isfield(cds,'waveforms')))
-                    optsPlot.TITLE = strcat('Stim Chan: ',num2str(stimElectrode),' Wave: ',num2str(fig));
                 else
-
+                    optsPlot.TITLE = strcat('Stim Chan: ',num2str(CHAN_LIST(chan)),' Wave: ',num2str(wave));
                 end
             end
 
-            optsPlot.MAKE_FIGURE = 0;
+            optsPlot.MAKE_FIGURE = opts.MAKE_FIGURE;
 
-            optsSave.FIGURE_SAVE = saveFigures;
-            optsSave.FIGURE_DIR = figDir;
-            if(~waveformsMakeSubplots && saveFigures && plotAllOnOneFigure)
-                optsSave.FIGURE_NAME = strcat(figPrefix,'nn',num2str(neuronNumber),'_chan',num2str(cds.units(neuronNumber).chan),'_ALL_PSTH');
-            elseif(~waveformsMakeSubplots && saveFigures)
-                optsSave.FIGURE_NAME = strcat(figPrefix,'nn',num2str(neuronNumber),'_chan',num2str(cds.units(neuronNumber).chan),'_stimChan',num2str(chanList(chan)),'_waveNum',num2str(fig),'_PSTH');
+            optsSave.FIGURE_SAVE = opts.FIGURE_SAVE;
+            optsSave.FIGURE_DIR = opts.FIGURE_DIR;
+            
+            if(~opts.MAKE_SUBPLOTS && opts.FIGURE_SAVE && opts.PLOT_ALL_ONE_FIGURE)
+                optsSave.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'nn',num2str(neuronNumber),'_chan',num2str(cds.units(neuronNumber).chan),'_ALL_PSTH');
+            elseif(~opts.MAKE_SUBPLOTS && opts.FIGURE_SAVE)
+                optsSave.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'nn',num2str(neuronNumber),'_chan',num2str(cds.units(neuronNumber).chan),'_stimChan',num2str(chanList(chan)),'_waveNum',num2str(wave),'_PSTH');
             end
-    %         optsPlot.EDGE_COLOR = barColor;
-    %         optsPlot.FACE_COLOR = barColor;
-            plotPSTHLIB(xData,yData,optsPlot,optsSave);
-    %         if(plotLine)
-    %             if(iscell(lineColor))
-    %                 lc = lineColor{chan*fig};
-    %             else
-    %                 lc = lineColor;
-    %             end
-    %             plot(bE(1:end-1)+(bE(2)-bE(1))/2,bC,'color',lc,'linewidth',lineWidth);
-    %         else
-    %             bar(bE(1:end-1)+(bE(2)-bE(1))/2,bC)
-    %         end
-    %         if(plotAllOnOneFigure)
-    %             hold on
-    %         end
+            
+            optsPlot.PLOT_NO_RECORDING_BOX = opts.PLOT_NO_RECORDING_BOX;
+            optsPlot.NO_RECORDING_WINDOW = opts.NO_RECORDING_WINDOW;
+            optsPlot.NO_RECORDING_BOX_COLOR = opts.NO_RECORDING_BOX_COLOR;
+            
+            figureHandle{chan,wave} = plotPSTHLIB(xData,yData,optsPlot,optsSave);
 
-    %         if(makeLegend && ~isempty(legStr))
-    %             l=legend(legStr);
-    %             set(l,'box','off');
-    %         end
-            if(plotStimOn)
-                hold on
-                plot([0,0],[-1000,maxYLim*10],'r','linewidth',1.5)
-            end
-    %         % clean up graph
-    %         ylim([0,maxYLim])
-    %         xlim([-preTime*1000,postTime*1000])
-    %         ylabel('Average Firing Rate (spikes/s)')
-    %         if(~waveformsSentExist || ~waveformsMakeSubplots || fig == numWaveformTypes)
-    %             xlabel('Time after stimulation onset (ms)')  
-    %         end
-            % deals with title requests
-    %         if(plotTitle)
-    %             if(strcmp(titleToPlot,'') == 0)
-    %                 title(titleToPlot);
-    %             elseif(plotAllOnOneFigure)
-    %                 % no title
-    %             elseif(numChans > 1 && waveformsSentExist)
-    %                 title(strcat('Stim Chan: ',num2str(chanList(chan)),' Wave: ',num2str(fig)));
-    %             elseif(numChans == 1 && waveformsSentExist)
-    %                 title(strcat('Stim Chan: ',num2str(stimElectrode),' Wave: ',num2str(fig)));
-    %             else
-    %                 
-    %             end
-    %         end
-
-    %         formatForLee(gcf);
-
-    %         if(~waveformsMakeSubplots && saveFigures && ~plotAllOnOneFigure)
-    %             fname = strcat(figPrefix,'nn',num2str(neuronNumber),'_chan',num2str(cds.units(neuronNumber).chan),'_stimChan',num2str(chanList(chan)),'_waveNum',num2str(fig),'_PSTH');
-    %             saveFiguresLab(gcf,figDir,fname);
-    %         end
         end
 
-    %     if(waveformsMakeSubplots && saveFigures && ~plotAllOnOneFigure)
-    %         fname = strcat(figPrefix,'nn',num2str(neuronNumber),'_chan',num2str(cds.units(neuronNumber).chan),'_stimChan',num2str(chanList(chan)),'_waveNum',num2str(fig),'_PSTH');
-    %         saveFiguresLab(gcf,figDir,fname);
-    %     end
+    end
+    
+
+
+
+
+end
+
+
+function [opts] = configureOpts(optsInput)
+
+    opts.PLOT_ALL_ONE_FIGURE = 0;
+    
+    opts.PLOT_TITLE = 1;
+    opts.TITLE_TO_PLOT = '';
+    
+    opts.SMOOTH = 1;
+    opts.SMOOTH_STD_DEV = 1;
+    
+    opts.PLOT_LINE = 0;
+    opts.LINE_COLOR = {'k','r',[0,0.5,0],'b','m','o'};
+    opts.PLOT_NO_RECORDING_BOX = 0;
+    opts.NO_RECORDING_WINDOW = [0,1.0/1000];
+    opts.NO_RECORDING_BOX_COLOR = [1.0,0.6,0.6];
+    
+    opts.MAKE_LEGEND = 0;
+    opts.LEGEND_STR = '';
+    
+    opts.MAKE_FIGURE = 1;
+    opts.MAKE_SUBPLOTS = 0;
+    
+    opts.FIGURE_SAVE = 0;
+    opts.FIGURE_DIR = '';
+    opts.FIGURE_PREFIX = '';
+    
+    opts.PRE_TIME = 5/1000;
+    opts.POST_TIME = 30/1000;
+    opts.BIN_SIZE = 0.2/1000;
+    
+    %% check if in optsSave and optsSaveInput, overwrite if so
+    try
+        inputFieldnames = fieldnames(optsInput);
+        for fn = 1:numel(inputFieldnames)
+           if(isfield(opts,inputFieldnames{fn}))
+               opts.(inputFieldnames{fn}) = optsInput.(inputFieldnames{fn});
+           end
+        end
+    catch
+        % do nothing, [] was inputted which means use default setting
     end
 end
-% if(saveFigures && plotAllOnOneFigure)
-%     fname = strcat(figPrefix,'nn',num2str(neuronNumber),'_chan',num2str(cds.units(neuronNumber).chan),'_PSTHall');
-%     saveFiguresLab(gcf,figDir,fname);
-% end
-
-
-
-end
-
-%% old code below
-% % plot a set of zoomed in rasters
-% for cond = 1:2 % 1 = no stim, bump, 2 = stim bump
-%     subplot(2,1,cond)
-%     hold on
-% 
-%     if(cond==1)
-%         trialTable = cds.trials(ctrHoldBumpNoStimMask,:);
-%         yLblStr = 'Bump, No Stim Trials';
-%     else
-%         trialTable = cds.trials(ctrHoldBumpStimMask,:);
-%         yLblStr = 'Bump, Stim Trials';
-%         xLblStr = 'Time after bump start (ms)';
-%     end
-% 
-%     trialOffset = 0;
-%     bumpDirections = unique(trialTable(:,:).bumpDir);
-%     for bd = 1:numel(bumpDirections)
-%         bumpDir = bumpDirections(bd);
-%         trialTableBumpDirMask = trialTable(:,:).bumpDir == bumpDir;
-%         trialTableBumpDir = trialTable(trialTableBumpDirMask,:);
-%         for trial = 1:size(trialTableBumpDir,1) % for each trial
-%             % plot trial related data
-%             if(cond == 1)
-%                 trialStart = trialTableBumpDir(trial,:).bumpTime;
-%             elseif(cond == 2) % stim data
-%                 % find set of 10 times in cds.stimOn
-%                 stimStart = cds.stimOn(1:stimsPerBump:end);
-%                 stimOffset = stimStart - trialTableBumpDir(trial,:).startTime;
-%                 stimOffset(stimOffset < 0) = 10000;
-%                 [~,stimStartIdx] = min(stimOffset);
-%                 stimOnIdx = (stimStartIdx-1)*stimsPerBump + 1;
-%                 stimOnTimes = cds.stimOn(stimOnIdx:stimOnIdx+stimsPerBump-1) - cds.stimOn(stimOnIdx);
-%                 trialStart = cds.stimOn(stimOnIdx);
-%                 stimOffTimes = stimOnTimes + 1/1000; % blank for 1ms
-%                 for st = 1:numel(stimOnTimes)
-%                     dtStim = stimOffTimes(st) - stimOnTimes(st);
-%                     hold on
-%                     pRect = [stimOnTimes(st)*1000, trial+trialOffset-0.5, dtStim, 1]; % [x y dx dy]
-%                     r=rectangle('Position',pRect,'FaceColor',colorRect,'EdgeColor',colorRect); 
-%                 end
-%             end
-% 
-%             % get spike data
-%             spikeMask = cds.units(neuronNumber).spikes.ts  > trialStart - preTime & ...
-%                     cds.units(neuronNumber).spikes.ts < trialStart + postTime;
-%             spikesPlot = cds.units(neuronNumber).spikes.ts(spikeMask) - trialStart;
-%             
-%             if(cond == 2 && plotSpikesNearArtifacts == 1) % save spike data for plotting
-%                 spikesArtifact = [spikesArtifact;spikesPlot+trialStart];
-%             end
-%             % plot spike data
-%             if(verticalLine)
-%                 plot([spikesPlot*1000,spikesPlot*1000]', ...
-%                     [(trial+trialOffset)*ones(length(spikesPlot),1)-rpLineLength/2,...
-%                     (trial+trialOffset)*ones(length(spikesPlot),1)+rpLineLength/2]','k','linewidth',1.5)      
-%             else
-%                 plot(spikesPlot*1000,(trial+trialOffset)*ones(length(spikesPlot),1),'k.','markerSize',markerSize)
-%             end            
-%         end
-%         % plot horizontal line to denote bump directions
-%         trialOffset = trialOffset + size(trialTableBumpDir,1) + 1;
-%         if(bd ~= numel(bumpDirections))
-%             plot([-preTime*1500,postTime*1500],[trialOffset, trialOffset],'b','linewidth',1.5)
-%             trialOffset = trialOffset + 1;
-%         end
-%     end
-%     
-%     ylim([-3,trialOffset]+rpLineLength/2)
-%     xlim([-preTime*1000,postTime*1000])
-%     ylabel(yLblStr)
-%     if(cond == 2)
-%         xlabel(xLblStr);
-%     end
-%     formatForLee(gcf);
-%     ax=gca;
-%     ax.YTick = [0;trialOffset];
-%     ax.YMinorTick = 'off';
-%     ax.YTickLabel = {num2str(0),num2str(size(trialTable,1))};
-% end

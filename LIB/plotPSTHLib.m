@@ -26,6 +26,27 @@ function [ figHandle ] = plotPSTHLIB(xData,yData,optsPlotInput,optsSaveInput)
         figHandle = gcf;
     end
     
+    % smooth data if requested
+    if(optsPlot.SMOOTH)
+        [numSamples,numPlots] = size(yData);
+        yDataSmoothed = zeros(numSamples,numPlots);
+        
+        kernelHalfLength = ceil(3*optsPlot.SMOOTH_STD_DEV/(optsPlot.BIN_SIZE));
+        kernel = normpdf( -kernelHalfLength*(optsPlot.BIN_SIZE) : ...
+                        optsPlot.BIN_SIZE : kernelHalfLength*(optsPlot.BIN_SIZE), ...
+                        0, optsPlot.SMOOTH_STD_DEV )';
+        normFactor = conv(kernel,ones(numSamples,1));
+        
+        % do the smoothing
+        for idx = 1:numPlots
+            auxSmoothed = conv(kernel,yData(:,idx))./normFactor;
+            yDataSmoothed(:,idx) = auxSmoothed(kernelHalfLength+1:end-kernelHalfLength);
+        end
+        
+        yData = yDataSmoothed;
+    end
+    
+    
     % plot data
     for p = 1:optsPlot.NUM_PLOTS
         if(strcmpi(optsPlot.BAR_STYLE,'line')==1) % plot as line
@@ -34,6 +55,12 @@ function [ figHandle ] = plotPSTHLIB(xData,yData,optsPlotInput,optsSaveInput)
             bar(xData(:,p),yData(:,p),optsPlot.WIDTH,'EdgeColor',optsPlot.EDGE_COLOR{p},'FaceColor',optsPlot.FACE_COLOR{p},'linewidth',optsPlot.LINE_WIDTH);
         end
         hold on
+    end
+    
+    % no recording box
+    if(optsPlot.PLOT_NO_RECORDING_BOX)
+        rectPos = [optsPlot.NO_RECORDING_WINDOW(1)*1000,0,diff(optsPlot.NO_RECORDING_WINDOW)*1000,optsPlot.Y_LIMITS(2)*10];
+        rectangle('Position',rectPos,'FaceColor',optsPlot.NO_RECORDING_BOX_COLOR,'EdgeColor',optsPlot.NO_RECORDING_BOX_COLOR);
     end
     % deal with plot things
     if(strcmpi(optsPlot.TITLE,'')~=1)
@@ -119,6 +146,15 @@ function [optsPlot] = configureOptionsPlot(optsPlotInput,xData,yData)
     optsPlot.NUM_PLOTS = 1;
     optsPlot.WIDTH = 0.9;
     optsPlot.BAR_COLOR = 'k';
+    
+    optsPlot.PLOT_NO_RECORDING_BOX = 0;
+    optsPlot.NO_RECORDING_WINDOW = [0,10];
+    optsPlot.NO_RECORDING_BOX_COLOR = [0,0,0];
+    
+    optsPlot.SMOOTH = 0;
+    optsPlot.SMOOTH_STD_DEV = 1;
+    
+    optsPlot.BIN_SIZE = 0.2;
     %% check if in optsPlot and optsPlotInput, overwrite if so
     try
         inputFieldnames = fieldnames(optsPlotInput);
