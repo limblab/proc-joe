@@ -1,5 +1,5 @@
 %% set file names 
-folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20171026\';
+folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20171025\';
 % folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20171024\';
 % mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 % mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Mihili 12A3\Mihili Left PMd SN 6251-001460.cmp';
@@ -28,7 +28,7 @@ saveFigures = 0;
 
 %% extract relevant data for a given unit
 tic
-optsExtract.NEURON_NUMBER = 15;
+optsExtract.NEURON_NUMBER = 3;
 
 optsExtract.STIMULI_RESPONSE = 'all';
 optsExtract.STIM_ELECTRODE = 50;
@@ -58,6 +58,11 @@ optsPlotFunc.SMOOTH_STD_DEV = 0.35;
 
 PSTHPlots = plotPSTHStim(unitData,optsExtract.NEURON_NUMBER,optsPlotFunc);
 
+%% plot waveforms (raw and filtered)
+
+optsWaveforms = [];
+
+WaveformPlots = plotWaveformsStim(cds,optsExtract.NEURON_NUMBER,optsWaveforms);
 
 %% plot raster, waves, and PSTH for a give neuron number
 figDir = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20171025\';

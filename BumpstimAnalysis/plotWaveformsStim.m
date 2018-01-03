@@ -1,238 +1,123 @@
-function [  ] = plotWaveformsStim( cds, neuronNumber,chanNum,figNum,varargin )
-maxWavesPlot = 100;
+function [ figureHandles ] = plotWaveformsStim( cds, NEURON_NUMBER, opts)
+%%% need to do save figures, titles, and other plot format stuff
+%%% also align waves?
 
-timeAfterStimRawNoStim = 20/1000;
-timeAfterStimRawArtifact = 5/1000;
-timeBeforeStimRawArtifact = 0/1000;
-makeFigure = 1;
-plotTitle = 0;
-alignWaves = 1;
-titleToPlot = num2str(neuronNumber);
-waveformsSentExist = any(isfield(cds,'waveforms'));
-stimElectrode = -1;
-numChans = 1;
-adjustForResolution = 1;
 
-% save stuff
-saveFigures = 0;
-figDir = '';
-figPrefix = '';
-plotFiltered = 0;
+    %% configure opts and set default values
+    opts = configureOpts(opts);
 
-for i = 1:2:size(varargin,2)
-    switch varargin{i}
-        case 'timeAfterStimRawNoStim'
-            timeAfterStimRawNoStim = varargin{i+1};
-        case 'timeAfterStimRawArtifact'
-            timeAfterStimRawArtifact = varargin{i+1};
-        case 'timeBeforeStimRawArtifact'
-            timeBeforeStimRawArtifact = varargin{i+1};
-        case 'makeFigure'
-            makeFigure = varargin{i+1};
-        case 'plotTitle'
-            plotTitle = varargin{i+1};
-        case 'title'
-            titleToPlot = varargin{i+1};
-        case 'alignWaves'
-            alignWaves = varargin{i+1};
-        case 'stimElectrode'
-            stimElectrode = varargin{i+1};
-        case 'adjustForResolution'
-            adjustForResolution = varargin{i+1};
-         case 'saveFigures'
-            saveFigures = varargin{i+1};
-        case 'figDir'
-            figDir = varargin{i+1};
-        case 'figPrefix'
-            figPrefix = varargin{i+1};
-        case 'plotFiltered'
-            plotFiltered = varargin{i+1};
-        case 'maxWaveformsPlot'
-            maxWavesPlot = varargin{i+1};
-    end
-end
-
-if(saveFigures && strcmp(figDir,''))
-    saveFigures = 0;
-end
-
-% deals with making figure -- no fancy subplot stuff here
-if(makeFigure)
-    for i = 1:numel(plotFiltered)
-        fig(i) = figure();
-    end
-end
-
-% chan list if necessary
-if(any(isfield(cds.waveforms,'chanSent')))
-    chanList = unique(cds.waveforms.chanSent);
-    numChans = numel(chanList);
-else
-    chanList = stimElectrode;
-    numChans = 1;
-end
-
-% get and plot actual data now
-for i = 1:numel(fig)
-    figure(fig(i));
-    subplot(2,1,1) % raw waves not near artifact
-end
-wavesPlot = [];
-wavesPlotFiltered = [];
-spikeMask = zeros(numel(cds.units(neuronNumber).spikes.ts,1));
-for st = 1:numel(cds.stimOn)
-    if((~waveformsSentExist || cds.waveforms.waveSent(st)==figNum) && (~any(isfield(cds.waveforms,'chanSent')) || cds.waveforms.chanSent(st)==chanList(chanNum)))
-        if(st==numel(cds.stimOn))
-            spikeMask = spikeMask | (cds.units(neuronNumber).spikes.ts > cds.stimOn(st) + timeAfterStimRawNoStim);
-        else
-            spikeMask = spikeMask | (cds.units(neuronNumber).spikes.ts > cds.stimOn(st) + timeAfterStimRawNoStim & cds.units(neuronNumber).spikes.ts < cds.stimOn(st+1));
-        end
-    end
-end
-
-waveIdx = find(spikeMask);
-% waveIdx = datasample(waveIdx,min(maxWavesPlot,numel(waveIdx)),'Replace',false);
-waveIdx = waveIdx(1:min(maxWavesPlot,numel(waveIdx)));
-if(numel(waveIdx) > 0)
-    for wave = 1:numel(waveIdx)
-        if(numel(plotFiltered) > 1)
-            wavesPlotFiltered = [wavesPlotFiltered;cds.units(neuronNumber).spikes{waveIdx(wave),2:end}];
-            rawIdx = getRawDataIdx(cds.units(neuronNumber).spikes.ts(waveIdx(wave)),cds.units(neuronNumber).chan,cds.rawData.ts,cds.rawData.elec);
-            if(rawIdx ~= -1)
-                wavesPlot = [wavesPlot;cds.rawData.waveforms(rawIdx,:)];
-            end
-            xDataWavesFiltered = ((1:size(wavesPlotFiltered,2))-1)/30; % in ms
-            xDataWaves = ((1:size(wavesPlot,2))-1)/30; % in ms
-        elseif(plotFiltered==1)
-            wavesPlotFiltered = [wavesPlotFiltered;cds.units(neuronNumber).spikes{waveIdx(wave),2:end}];
-            xDataWavesFiltered = ((1:size(wavesPlotFiltered,2))-1)/30; % in ms
-        else
-            rawIdx = getRawDataIdx(cds.units(neuronNumber).spikes.ts(waveIdx(wave)),cds.units(neuronNumber).chan,cds.rawData.ts,cds.rawData.elec);
-            if(rawIdx ~= -1)
-                wavesPlot = [wavesPlot;cds.rawData.waveforms(rawIdx,:)];
-            end
-            xDataWaves = ((1:size(wavesPlot,2))-1)/30; % in ms
-        end
-    end
-    if(adjustForResolution)
-        wavesPlot = wavesPlot/0.254;
-    end
-    if(numel(plotFiltered) > 1)
-        figure(fig(2))
-        plot(xDataWavesFiltered,(wavesPlotFiltered-mean(wavesPlotFiltered(:,40:end),2)))
-        figure(fig(1))
-        plot(xDataWaves,(wavesPlot-mean(wavesPlot(:,40:end),2)))
-    elseif(plotFiltered)
-        plot(xDataWavesFiltered,(wavesPlotFiltered-mean(wavesPlotFiltered(:,40:end),2)))
+    %% get number of chans, chan list, and waveform list
+    if(any(isfield(cds,'waveforms')))
+        NUM_WAVEFORM_TYPES = numel(unique(cds.waveforms.waveSent));
     else
-        plot(xDataWaves,(wavesPlot-mean(wavesPlot(:,40:end),2)))
-    end
-end
-
-
-% deals with title requests
-for i = 1:numel(fig)
-    if(plotTitle)
-        if(strcmp(titleToPlot,'') == 0)
-            title(titleToPlot);
-        elseif(numChans > 1 && waveformsSentExist)
-            title(strcat('Stim Chan: ',num2str(chanList(chanNum)),' Wave: ',num2str(figNum)));
-        elseif(numChans == 1 && waveformsSentExist)
-            title(strcat('Stim Chan: ',num2str(stimElectrode),' Wave: ',num2str(figNum)));
-        else
-
-        end
+        NUM_WAVEFORM_TYPES = 1;
     end
 
-    figure(fig(i))
-    ylabel('Voltage (\muV)')
-    ylim([-600 600])
-    formatForLee(gcf);
-end
-
-
-% waveforms near stimulation artifact
-
-for i = 1:numel(fig)
-    figure(fig(i));
-    subplot(2,1,2) % raw waves not near artifact
-end
-
-wavesPlot = [];
-wavesPlotFiltered = [];
-spikeMask = zeros(numel(cds.units(neuronNumber).spikes.ts,1));
-for st = 1:numel(cds.stimOn)
-    if((~waveformsSentExist || cds.waveforms.waveSent(st)==figNum) && (~any(isfield(cds.waveforms,'chanSent')) || cds.waveforms.chanSent(st)==chanList(chanNum)))
-        spikeMask = spikeMask | (cds.units(neuronNumber).spikes.ts < cds.stimOn(st) + timeAfterStimRawArtifact & cds.units(neuronNumber).spikes.ts > cds.stimOn(st) + timeBeforeStimRawArtifact);
-    end
-end
-
-waveIdx = find(spikeMask);
-waveIdx = datasample(waveIdx,min(maxWavesPlot,numel(waveIdx)),'Replace',false);
-if(numel(waveIdx) > 0)
-    for wave = 1:numel(waveIdx)
-        if(numel(plotFiltered) > 1)
-            wavesPlotFiltered = [wavesPlotFiltered;cds.units(neuronNumber).spikes{waveIdx(wave),2:end}];
-            rawIdx = getRawDataIdx(cds.units(neuronNumber).spikes.ts(waveIdx(wave)),cds.units(neuronNumber).chan,cds.rawData.ts,cds.rawData.elec);
-            if(rawIdx ~= -1)
-                wavesPlot = [wavesPlot;cds.rawData.waveforms(rawIdx,:)];
-            end
-            xDataWavesFiltered = ((1:size(wavesPlotFiltered,2))-1)/30; % in ms
-            xDataWaves = ((1:size(wavesPlot,2))-1)/30; % in ms
-        elseif(plotFiltered==1)
-            wavesPlotFiltered = [wavesPlotFiltered;cds.units(neuronNumber).spikes{waveIdx(wave),2:end}];
-            xDataWavesFiltered = ((1:size(wavesPlotFiltered,2))-1)/30; % in ms
-        else
-            rawIdx = getRawDataIdx(cds.units(neuronNumber).spikes.ts(waveIdx(wave)),cds.units(neuronNumber).chan,cds.rawData.ts,cds.rawData.elec);
-            if(rawIdx ~= -1)
-                wavesPlot = [wavesPlot;cds.rawData.waveforms(rawIdx,:)];
-            end
-            xDataWaves = ((1:size(wavesPlot,2))-1)/30; % in ms
-        end
-    end
-    if(adjustForResolution)
-        wavesPlot = wavesPlot/0.254;
-    end
-    if(numel(plotFiltered) > 1)
-        figure(fig(2))
-        plot(xDataWavesFiltered,(wavesPlotFiltered-mean(wavesPlotFiltered(:,40:end),2)))
-        figure(fig(1))
-        plot(xDataWaves,(wavesPlot-mean(wavesPlot(:,40:end),2)))
-    elseif(plotFiltered)
-        plot(xDataWavesFiltered,(wavesPlotFiltered-mean(wavesPlotFiltered(:,40:end),2)))
+    if(any(isfield(cds.waveforms,'chanSent')))
+        NUM_CHANS = numel(unique(cds.waveforms.chanSent));
+        CHAN_LIST = unique(cds.waveforms.chanSent);
     else
-        plot(xDataWaves,(wavesPlot-mean(wavesPlot(:,40:end),2)))
+        CHAN_LIST = opts.STIM_ELECTRODE;
+        NUM_CHANS = 1;
     end
-end
+    figureHandles = {};
+    
+    %% loop over conditions and plot waveforms
+    for chan = 1:NUM_CHANS
+        for wave = 1:NUM_WAVEFORM_TYPES
+            % get waveform indexes for plotting
+            spikeMask.nearArtifact = zeros(numel(cds.units(NEURON_NUMBER).spikes.ts,1));
+            spikeMask.awayArtifact = zeros(numel(cds.units(NEURON_NUMBER).spikes.ts,1));
+            
+            for st = 1:numel(cds.stimOn)-1 % not important to do all of them
+                if(cds.waveforms.chanSent(st) == CHAN_LIST(chan) && cds.waveforms.waveSent(st) == wave)
+                    spikeMask.nearArtifact = spikeMask.nearArtifact | (cds.units(NEURON_NUMBER).spikes.ts > cds.stimOn(st) & ...
+                        cds.units(NEURON_NUMBER).spikes.ts < cds.stimOn(st) + opts.TIME_AFTER_STIMULATION_ARTIFACT);
 
-
-for i = 1:numel(fig)
-    figure(fig(i))
-    ylim([-600 600])
-    ylabel('Voltage (\muV)')
-    xlabel('Time (ms)')
-    formatForLee(gcf);
-end
-
-if(saveFigures)
-    if(numel(plotFiltered) > 1)
-        for i = 1:numel(fig)
-            if(i==1) % non-filtered
-                fname = strcat(figPrefix,'nn',num2str(neuronNumber),'_chan',num2str(cds.units(neuronNumber).chan),'_stimChan',num2str(chanList(chanNum)),'_waveNum',num2str(figNum),'_rawWaveformsFiltered');
-            elseif(i==2) % filtered
-                fname = strcat(figPrefix,'nn',num2str(neuronNumber),'_chan',num2str(cds.units(neuronNumber).chan),'_stimChan',num2str(chanList(chanNum)),'_waveNum',num2str(figNum),'_rawWaveforms');
+                    spikeMask.awayArtifact = spikeMask.awayArtifact | (cds.units(NEURON_NUMBER).spikes.ts > cds.stimOn(st) + opts.TIME_AFTER_STIMULATION_NO_ARTIFACT & ...
+                        cds.units(NEURON_NUMBER).spikes.ts < cds.stimOn(st+1));
+                end
             end
-            saveFiguresLIB(fig(i),figDir,fname);
+            
+            waveIdx.nearArtifact = find(spikeMask.nearArtifact);
+            waveIdx.awayArtifact = find(spikeMask.awayArtifact);
+            
+            if(opts.RANDOM_SAMPLE) % rabdomly sample
+                waveIdx.nearArtifact = datasample(waveIdx.nearArtifact,min(opts.MAX_WAVES_PLOT,numel(waveIdx.nearArtifact)),'replace',false);
+                waveIdx.awayArtifact = datasample(waveIdx.awayArtifact,min(opts.MAX_WAVES_PLOT,numel(waveIdx.awayArtifact)),'replace',false);
+            else % grab first set
+                waveIdx.nearArtifact = waveIdx.nearArtifact(1:min(opts.MAX_WAVES_PLOT,numel(waveIdx.nearArtifact)));
+                waveIdx.awayArtifact = waveIdx.awayArtifact(1:min(opts.MAX_WAVES_PLOT,numel(waveIdx.awayArtifact)));
+            end
+            
+            % get rawIdxs
+            rawIdx.nearArtifact = getRawDataIdx(cds.units(NEURON_NUMBER).spikes.ts(waveIdx.nearArtifact),zeros(size(waveIdx.nearArtifact)) + double(cds.units(NEURON_NUMBER).chan),cds.rawData.ts,cds.rawData.elec);
+            rawIdx.awayArtifact = getRawDataIdx(cds.units(NEURON_NUMBER).spikes.ts(waveIdx.awayArtifact),zeros(size(waveIdx.awayArtifact)) + double(cds.units(NEURON_NUMBER).chan),cds.rawData.ts,cds.rawData.elec);
+            
+            rawIdx.nearArtifact(rawIdx.nearArtifact == -1) = [];
+            rawIdx.awayArtifact(rawIdx.awayArtifact == -1) = [];
+            
+            % we have all the indexes we need, now plot the waveforms
+            if(sum(opts.PLOT_FILTERED == 1) > 0) % plot filtered waveforms (cds.units...spikes)
+                figureHandles{end+1} = figure(); % filtered near artifact
+                xDataFiltered = ((1:size(cds.units(NEURON_NUMBER).spikes{:,2:end},2))-1)/30;
+                
+                plot(xDataFiltered,cds.units(NEURON_NUMBER).spikes.wave(waveIdx.nearArtifact,:)-mean(cds.units(NEURON_NUMBER).spikes.wave(waveIdx.nearArtifact,end-10:end),2))
+                ylim([opts.YLIM_FILTERED])
+                
+                figureHandles{end+1} = figure(); % filtered away from artifact
+                plot(xDataFiltered,cds.units(NEURON_NUMBER).spikes.wave(waveIdx.awayArtifact,:)-mean(cds.units(NEURON_NUMBER).spikes.wave(waveIdx.awayArtifact,end-10:end),2))
+                ylim([opts.YLIM_FILTERED])
+            end
+            if(sum(opts.PLOT_FILTERED == 0) > 0) % plot raw waveforms (cds.rawData)
+                figureHandles{end+1} = figure(); % raw near artifact
+                xDataRaw = ((1:size(cds.rawData.waveforms,2))-1)/30;
+                plot(xDataRaw,cds.rawData.waveforms(rawIdx.nearArtifact,:) - mean(cds.rawData.waveforms(rawIdx.nearArtifact,end-10:end),2))
+                
+                figureHandles{end+1} = figure(); % filtered away from artifact
+                plot(xDataRaw,cds.rawData.waveforms(rawIdx.awayArtifact,:) - mean(cds.rawData.waveforms(rawIdx.awayArtifact,end-10:end),2))
+            end
+            
+            
+            
         end
-    else
-        if(plotFiltered)
-            fname = strcat(figPrefix,'nn',num2str(neuronNumber),'_chan',num2str(cds.units(neuronNumber).chan),'_stimChan',num2str(chanList(chanNum)),'_waveNum',num2str(figNum),'_rawWaveformsFiltered');
-        else
-            fname = strcat(figPrefix,'nn',num2str(neuronNumber),'_chan',num2str(cds.units(neuronNumber).chan),'_stimChan',num2str(chanList(chanNum)),'_waveNum',num2str(figNum),'_rawWaveforms');
-        end
-        saveFiguresLIB(gcf,figDir,fname);
     end
-end
+    
+    
+end % end function
 
-end
 
+function [opts] = configureOpts(optsInput)
+
+    opts.MAX_WAVES_PLOT = 100;
+    opts.RANDOM_SAMPLE = 1;
+    
+    opts.TIME_AFTER_STIMULATION_ARTIFACT = 5/1000;
+    opts.TIME_AFTER_STIMULATION_NO_ARTIFACT = 20/1000;
+    
+    opts.PLOT_FILTERED = [0,1];
+    
+    opts.PLOT_TITLE = 1;
+    opts.TITLE_TO_PLOT = '';
+    
+    opts.ALIGN_WAVES = 1;
+    opts.ADJUST_AMPLITUDE = 1;
+    
+    opts.NEURON_NUMBER = 1;
+    
+    opts.FIGURE_SAVE = 0;
+    opts.FIGURE_DIR = '';
+    opts.FIGURE_PREFIX = '';
+    
+    %% check if in optsSave and optsSaveInput, overwrite if so
+    try
+        inputFieldnames = fieldnames(optsInput);
+        for fn = 1:numel(inputFieldnames)
+           if(isfield(opts,inputFieldnames{fn}))
+               opts.(inputFieldnames{fn}) = optsInput.(inputFieldnames{fn});
+           end
+        end
+    catch
+        % do nothing, [] was inputted which means use default setting
+    end
+end % end function
