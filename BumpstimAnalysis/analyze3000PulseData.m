@@ -28,11 +28,12 @@ saveFigures = 0;
 
 %% extract relevant data for a given unit
 tic
-optsExtract.NEURON_NUMBER = 4;
+optsExtract.NEURON_NUMBER = 15;
 
 optsExtract.STIMULI_RESPONSE = 'all';
 optsExtract.STIM_ELECTRODE = 50;
 optsExtract.STIMULATIONS_PER_TRAIN = 1;
+optsExtract.STIMULATION_BATCH_SIZE = 4000;
 
 optsExtract.PRE_TIME = 10/1000; % made negative in the function
 optsExtract.POST_TIME = 90/1000;
