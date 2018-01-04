@@ -42,7 +42,7 @@ function [ figureHandles ] = plotWaveformsStim( cds, NEURON_NUMBER, opts)
             waveIdx.nearArtifact = find(spikeMask.nearArtifact);
             waveIdx.awayArtifact = find(spikeMask.awayArtifact);
             
-            if(opts.RANDOM_SAMPLE) % rabdomly sample
+            if(opts.RANDOM_SAMPLE) % randomly sample
                 waveIdx.nearArtifact = datasample(waveIdx.nearArtifact,min(opts.MAX_WAVES_PLOT,numel(waveIdx.nearArtifact)),'replace',false);
                 waveIdx.awayArtifact = datasample(waveIdx.awayArtifact,min(opts.MAX_WAVES_PLOT,numel(waveIdx.awayArtifact)),'replace',false);
             else % grab first set
@@ -59,23 +59,39 @@ function [ figureHandles ] = plotWaveformsStim( cds, NEURON_NUMBER, opts)
             
             % we have all the indexes we need, now plot the waveforms
             if(sum(opts.PLOT_FILTERED == 1) > 0) % plot filtered waveforms (cds.units...spikes)
-                figureHandles{end+1} = figure(); % filtered near artifact
-                xDataFiltered = ((1:size(cds.units(NEURON_NUMBER).spikes{:,2:end},2))-1)/30;
                 
-                plot(xDataFiltered,cds.units(NEURON_NUMBER).spikes.wave(waveIdx.nearArtifact,:)-mean(cds.units(NEURON_NUMBER).spikes.wave(waveIdx.nearArtifact,end-10:end),2))
-                ylim([opts.YLIM_FILTERED])
+                waveforms.nearArtifact = cds.units(NEURON_NUMBER).spikes.wave(waveIdx.nearArtifact,:);
+                waveforms.awayArtifact = cds.units(NEURON_NUMBER).spikes.wave(waveIdx.awayArtifact,:);
                 
-                figureHandles{end+1} = figure(); % filtered away from artifact
-                plot(xDataFiltered,cds.units(NEURON_NUMBER).spikes.wave(waveIdx.awayArtifact,:)-mean(cds.units(NEURON_NUMBER).spikes.wave(waveIdx.awayArtifact,end-10:end),2))
-                ylim([opts.YLIM_FILTERED])
+                if(opts.ALIGN_WAVES)
+                    waveforms.nearArtifact = alignWaves(waveforms.nearArtifact,'max','filtered',opts);
+                    waveforms.awayArtifact = alignWaves(waveforms.awayArtifact,'max','filtered',opts);
+                end
+                                
+                opts.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'_nn',num2str(NEURON_NUMBER),'_chan',num2str(cds.units(NEURON_NUMBER).chan),'stimChan',num2str(CHAN_LIST(chan)),'_waveNum',num2str(wave),'wavesFilteredNearArtifact');
+                figureHandles{end+1} = plotWaveforms(waveforms.nearArtifact,opts);
+                
+                opts.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'_nn',num2str(NEURON_NUMBER),'_chan',num2str(cds.units(NEURON_NUMBER).chan),'stimChan',num2str(CHAN_LIST(chan)),'_waveNum',num2str(wave),'wavesFilteredAwayArtifact');
+                figureHandles{end+1} = plotWaveforms(waveforms.awayArtifact,opts);
+                
             end
             if(sum(opts.PLOT_FILTERED == 0) > 0) % plot raw waveforms (cds.rawData)
-                figureHandles{end+1} = figure(); % raw near artifact
-                xDataRaw = ((1:size(cds.rawData.waveforms,2))-1)/30;
-                plot(xDataRaw,cds.rawData.waveforms(rawIdx.nearArtifact,:) - mean(cds.rawData.waveforms(rawIdx.nearArtifact,end-10:end),2))
                 
-                figureHandles{end+1} = figure(); % filtered away from artifact
-                plot(xDataRaw,cds.rawData.waveforms(rawIdx.awayArtifact,:) - mean(cds.rawData.waveforms(rawIdx.awayArtifact,end-10:end),2))
+                
+                waveforms.nearArtifact = cds.rawData.waveforms(rawIdx.nearArtifact,opts.PRE_WAVE_RAW:opts.PRE_WAVE_RAW + opts.WAVE_LENGTH_RAW);
+                waveforms.awayArtifact = cds.rawData.waveforms(rawIdx.awayArtifact,opts.PRE_WAVE_RAW:opts.PRE_WAVE_RAW + opts.WAVE_LENGTH_RAW);
+                
+                if(opts.ALIGN_WAVES)
+                    waveforms.nearArtifact = alignWaves(waveforms.nearArtifact,'min','raw',opts);
+                    waveforms.awayArtifact = alignWaves(waveforms.awayArtifact,'min','raw',opts);
+                end
+                                
+                opts.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'_nn',num2str(NEURON_NUMBER),'_chan',num2str(cds.units(NEURON_NUMBER).chan),'stimChan',num2str(CHAN_LIST(chan)),'_waveNum',num2str(wave),'wavesRawNearArtifact');
+                figureHandles{end+1} = plotWaveforms(waveforms.nearArtifact,opts);
+                
+                opts.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'_nn',num2str(NEURON_NUMBER),'_chan',num2str(cds.units(NEURON_NUMBER).chan),'stimChan',num2str(CHAN_LIST(chan)),'_waveNum',num2str(wave),'wavesRawAwayArtifact');
+                figureHandles{end+1} = plotWaveforms(waveforms.awayArtifact,opts);
+                
             end
             
             
@@ -87,7 +103,83 @@ function [ figureHandles ] = plotWaveformsStim( cds, NEURON_NUMBER, opts)
 end % end function
 
 
+
+
+
+
+function [waveformsAligned] = alignWaves(waveforms,maxOrMin,rawOrFiltered,opts)
+
+    waveformsAligned = waveforms;
+    
+    alignOffset = opts.ALIGN_OFFSET;
+    middleIdx = opts.MIDDLE_IDX;
+    
+    if(strcmpi(rawOrFiltered,'raw') == 1)
+        middleIdx = opts.MIDDLE_IDX_RAW;
+        if(opts.ADJUST_FOR_BIT_ERROR)
+            waveforms = waveforms/0.254;
+        end
+    end
+    
+    % find max or min idx
+    if(strcmpi(maxOrMin,'min') == 1)
+        [~,peakIdx] = min(waveforms(:,alignOffset:end),[],2);
+    elseif(strcmpi(maxOrMin,'max') == 1)
+        [~,peakIdx] = max(waveforms(:,alignOffset:end),[],2);
+    else
+        error('max or min not specified, nothing done')
+    end
+    
+    peakIdx = peakIdx + alignOffset;
+
+    % shift waves accordingly
+    shiftIdx = peakIdx - middleIdx;
+
+    for w = 1:size(waveforms,1)
+        waveformsAligned(w,:) = circshift(waveforms(w,:),-1*shiftIdx(w));
+        waveformsAligned(w,end-shiftIdx(w):end) = 0;
+    end
+                    
+end
+
+function [figureHandle] = plotWaveforms(waveforms,opts)
+    figureHandle = figure();  
+    
+    % deal with colors
+    if(~isempty(opts.COLOR_RANGE))
+        colorOrder = [linspace(opts.COLOR_RANGE(1,1),opts.COLOR_RANGE(2,1),size(waveforms,1))',...
+            linspace(opts.COLOR_RANGE(1,2),opts.COLOR_RANGE(2,2),size(waveforms,1))',...
+            linspace(opts.COLOR_RANGE(1,3),opts.COLOR_RANGE(2,3),size(waveforms,1))'];
+              
+        set(gca,'colorOrder',colorOrder);
+        hold all
+    end
+    
+    % plot
+
+    xData = ((1:size(waveforms,2))-1)/30;
+    plot(xData,waveforms-mean(waveforms(:,end-10:end),2))
+    ylim(opts.YLIM)
+        
+    formatForLee(gcf)
+    
+%     if(opts.PLOT_TITLE)
+%         title(opts.TITLE_TO_PLOT)
+%     end
+    
+    % deal with saving plot
+    if(opts.FIGURE_SAVE && strcmpi(opts.FIGURE_NAME,'')~=1 && strcmpi(opts.FIGURE_DIR,'')~=1)
+        saveFiguresLIB(figHandle,opts.FIGURE_DIR,strcat(opts.FIGURE_NAME));
+    end
+    
+    
+end
+
+
+
 function [opts] = configureOpts(optsInput)
+
+    opts.ADJUST_FOR_BIT_ERROR = 1;
 
     opts.MAX_WAVES_PLOT = 100;
     opts.RANDOM_SAMPLE = 1;
@@ -97,17 +189,23 @@ function [opts] = configureOpts(optsInput)
     
     opts.PLOT_FILTERED = [0,1];
     
-    opts.PLOT_TITLE = 1;
+    opts.PLOT_TITLE = 0; % not implemented
     opts.TITLE_TO_PLOT = '';
     
     opts.ALIGN_WAVES = 1;
-    opts.ADJUST_AMPLITUDE = 1;
+    opts.PRE_WAVE = 22;
+    opts.POST_WAVE = 25;
+    opts.PRE_WAVE_RAW = 28;
+    opts.WAVE_LENGTH_RAW = 48;
     
-    opts.NEURON_NUMBER = 1;
-    
+    opts.ALIGN_OFFSET = 18;
+        
     opts.FIGURE_SAVE = 0;
     opts.FIGURE_DIR = '';
     opts.FIGURE_PREFIX = '';
+    
+    opts.YLIM = [-500,500];
+    opts.COLOR_RANGE = [0.0,0.0,0.0;0.5,0.5,0.5];
     
     %% check if in optsSave and optsSaveInput, overwrite if so
     try
@@ -120,4 +218,9 @@ function [opts] = configureOpts(optsInput)
     catch
         % do nothing, [] was inputted which means use default setting
     end
+    
+    %% constants that depend on variables above
+    opts.MIDDLE_IDX = opts.PRE_WAVE + 1;
+    opts.MIDDLE_IDX_RAW = opts.MIDDLE_IDX + 4;
+    
 end % end function

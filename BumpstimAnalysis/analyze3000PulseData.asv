@@ -69,36 +69,6 @@ WaveformPlots = plotWaveformsStim(cds,optsExtract.NEURON_NUMBER,optsWaveforms);
 optsArtifacts = [];
 ArtifactPlots = plotArtifactsStim(cds,optsExtract.NEURON_NUMBER,optsArtifacts);
 
-%% plot grid
-optsGrid.STIM_ELECTRODE = unique(cds.waveforms.chanSent);
-optsGrid.RECORDING_ELECTRODE = cds.units(optsExtract.NEURON_NUMBER).chan;
-
-optsGrid.STIM_ELECTRODE_COLOR = {'k','r','b',[0,0.5,0],'m'};
-optsGrid.STIM_ELECTRODE_LABEL = 'string';
-
-optsGrid.RECORDING_ELECTRODE_COLOR = 'k';
-optsGrid.RECORDING_ELECTRODE_LABEL = 'string';
-
-ArrayPlots = plotArrayMap(cds,optsExtract.NEURON_NUMBER,mapFileName,optsGrid);
-
-%%  ISI
-optsISI.XLIM = [0,20];
-optsISI.BIN_SIZE = 0.5/1000;
-optsISI.DISPLAY_TEXT = 1;
-
-ISIPlot = plotInterspikeIntervalHistogram(cds,optsExtract.NEURON_NUMBER,optsISI);
-
-
-
-
-
-
-
-
-
-
-
-%% old code below
 %% plot raster, waves, and PSTH for a give neuron number
 figDir = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20171025\';
 % figDir = strcat(cd,'\');
@@ -118,6 +88,12 @@ outputData = plotRasterStim(cds,nn,'plotSpikeWaveforms',plotWaveforms,'plotArtif
     'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix,...
     'maxArtifactsPerPlot',30,'plotArtifactsFiltered',[1],'stimElectrode',stimElectrode, 'plotWaveformsFiltered',[0,1],...
     'maxWaveformsPlot',100,'plotStimuliGroup','all','sortData','no'); % plotStimuliGroup = 'responsive','nonResponsive','all'
+
+%% plot grid
+plotArrayMap(cds,nn,mapFileName,'numRows',10,'numCols',10,...
+    'stimElectrode',[15,23,36,40,45],'stimElectrodeColor',{'k','r','b','g','m'},'stimElectrodeLabel','string',...
+    'recordingElectrode',cds.units(nn).chan,'recordingElectrodeColor','k','recordingElectrodeLabel','string',...
+    'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix)
 
 %% interspike interval histogram
 
