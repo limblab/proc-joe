@@ -42,12 +42,16 @@ function [arrayData] = getProbabilityOfResponse(arrayData,opts)
                         opts.WINDOW = getAutomaticWindow(arryaData,arrayDataIdx,c,w,opts);
                     end
 
-                    [normNumStimsWithBothResponse(c,w),independenceProb(c,w),difference(c,w)] = computePairwiseProbabilityOfResponse(arrayData,arrayDataIdx,comparisonIdx,c,w,opts);
+                    [bothRespond(c,w),thisRespond(c,w),comparisonRespond(c,w), noRespond(c,w), independenceProb(c,w),difference(c,w)] = ...
+                        computePairwiseProbabilityOfResponse(arrayData,arrayDataIdx,comparisonIdx,c,w,opts);
 
                 end
             end
             
-            arrayData{arrayDataIdx}.pairwiseProb.normNumStimsWithBothResponse(comparisonIdx,:,:) = normNumStimsWithBothResponse;
+            arrayData{arrayDataIdx}.pairwiseProb.bothRespond(comparisonIdx,:,:) = bothRespond;
+            arrayData{arrayDataIdx}.pairwiseProb.thisRespond(comparisonIdx,:,:) = thisRespond;
+            arrayData{arrayDataIdx}.pairwiseProb.comparisonRespond(comparisonIdx,:,:) = comparisonRespond;
+            arrayData{arrayDataIdx}.pairwiseProb.noRespond(comparisonIdx,:,:) = noRespond;
             arrayData{arrayDataIdx}.pairwiseProb.independenceProb(comparisonIdx,:,:) = independenceProb;
             arrayData{arrayDataIdx}.pairwiseProb.difference(comparisonIdx,:,:) = difference;
         end
@@ -108,30 +112,58 @@ function [meanSpikesEvoked_all, normNumStimsResponsive, meanSpikesEvoked_respons
 end
 
 %% this function computes pairwise probabilities
-function [normNumStimsWithBothResponse,independenceProb,difference] = computePairwiseProbabilityOfResponse(arrayData,arrayDataIdx,comparisonIdx,c,w,opts)
+function [bothRespond,thisRespond,comparisonRespond,noRespond,independenceProb,difference] = computePairwiseProbabilityOfResponse(arrayData,arrayDataIdx,comparisonIdx,c,w,opts)
+    
     if(arrayDataIdx == comparisonIdx)
         normNumStimsWithBothResponse = -1;
         independenceProb = -1;
         difference = -1;
+        bothRespond = -1;
+        thisRespond = -1;
+        comparisonRespond = -1;
+        noRespond = -1;
     else
         %% compute P1*P2 and store
         independenceProb = arrayData{arrayDataIdx}.singleProb.normNumStimsResponsive(c,w)*arrayData{comparisonIdx}.singleProb.normNumStimsResponsive(c,w);
 
         %% find proportion of stimulations with spikes for both units
-        stimsWithResponse{1} = unique(arrayData{arrayDataIdx}.stimData{c,w}(arrayData{arrayDataIdx}.spikeTrialTimes{c,w} > opts.WINDOW(1) & arrayData{arrayDataIdx}.spikeTrialTimes{c,w} < opts.WINDOW(2)));
-        stimsWithResponse{2} = unique(arrayData{comparisonIdx}.stimData{c,w}(arrayData{comparisonIdx}.spikeTrialTimes{c,w} > opts.WINDOW(1) & arrayData{comparisonIdx}.spikeTrialTimes{c,w} < opts.WINDOW(2)));
-
-        stimsWithBothResponse = intersect(stimsWithResponse{1},stimsWithResponse{2});
-
+        stimsWithResponse{1} = unique(arrayData{arrayDataIdx}.stimData{c,w}(arrayData{arrayDataIdx}.spikeTrialTimes{c,w} > opts.WINDOW(1) & ...
+            arrayData{arrayDataIdx}.spikeTrialTimes{c,w} < opts.WINDOW(2)));
+        stimsWithoutResponse{1} = 1:arrayData{arrayDataIdx}.numStims(c,w);
+        stimsWithoutResponse{1}(stimsWithResponse{1}) = [];
+        
+        stimsWithResponse{2} = unique(arrayData{comparisonIdx}.stimData{c,w}(arrayData{comparisonIdx}.spikeTrialTimes{c,w} > opts.WINDOW(1) & ...
+            arrayData{comparisonIdx}.spikeTrialTimes{c,w} < opts.WINDOW(2)));
+        stimsWithoutResponse{2} = 1:arrayData{arrayDataIdx}.numStims(c,w);
+        stimsWithoutResponse{2}(stimsWithResponse{2}) = [];
+        
         baseline = sum(arrayData{arrayDataIdx}.spikeTrialTimes{c,w} < min(opts.BASELINE_TIME))/(-1*arrayData{arrayDataIdx}.bE{c,w}(1)/1000+opts.BASELINE_TIME);
         baseline = baseline*sum(arrayData{comparisonIdx}.spikeTrialTimes{c,w} < min(opts.BASELINE_TIME))/(-1*arrayData{comparisonIdx}.bE{c,w}(1)/1000+opts.BASELINE_TIME);
 
+        
+        stimsWithBothResponse = intersect(stimsWithResponse{1},stimsWithResponse{2});
+        stimsWithThisResponseOnly = intersect(stimsWithResponse{1},stimsWithoutResponse{2});
+        stimsWithComparisonResponseOnly = intersect(stimsWithoutResponse{1},stimsWithResponse{2});
+        stimsWithNoResponse = intersect(stimsWithoutResponse{1}, stimsWithoutResponse{2});
+        
         if(opts.SUBTRACT_BASELINE)
             normNumStimsWithBothResponse = (numel(stimsWithBothResponse)-baseline*diff(opts.WINDOW))/(arrayData{arrayDataIdx}.numStims(c,w)-baseline*diff(opts.WINDOW));
+            %% what should these lines be?
+                normNumStimsWithThisResponseOnly = (numel(stimsWithThisResponseOnly))/(arrayData{arrayDataIdx}.numStims(c,w));
+                normNumStimsWithComparisonResponseOnly = (numel(stimsWithComparisonResponseOnly))/(arrayData{arrayDataIdx}.numStims(c,w));
+                normNumStimsWithNoResponse = (numel(stimsWithNoResponse))/(arrayData{arrayDataIdx}.numStims(c,w));
         else
             normNumStimsWithBothResponse = (numel(stimsWithBothResponse))/(arrayData{arrayDataIdx}.numStims(c,w));
+            normNumStimsWithThisResponseOnly = (numel(stimsWithThisResponseOnly))/(arrayData{arrayDataIdx}.numStims(c,w));
+            normNumStimsWithComparisonResponseOnly = (numel(stimsWithComparisonResponseOnly))/(arrayData{arrayDataIdx}.numStims(c,w));
+            normNumStimsWithNoResponse = (numel(stimsWithNoResponse))/(arrayData{arrayDataIdx}.numStims(c,w));
         end
         difference = normNumStimsWithBothResponse - independenceProb;
+        
+        bothRespond = normNumStimsWithBothResponse;
+        thisRespond = normNumStimsWithThisResponseOnly;
+        comparisonRespond = normNumStimsWithComparisonResponseOnly;
+        noRespond = normNumStimsWithNoResponse;
     end
 end
 

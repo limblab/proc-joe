@@ -24,65 +24,65 @@ function [figureHandles] = plotArtifactsStim(cds,NEURON_NUMBER,opts)
     %% loop over conditions
     for chan = 1:NUM_CHANS
         for wave = 1:NUM_WAVEFORM_TYPES
-            
-            % get artifact indices
-            artifactIdx.nearArtifact = [];
-            artifactIdx.awayArtifact = [];
-            
-            for st = 1:opts.ARTIFACT_MULTIPLIER:numel(cds.stimOn)
-                if(cds.waveforms.chanSent(st) == CHAN_LIST(chan) && cds.waveforms.waveSent(st) == wave)
-                    artifactMask = cds.units(NEURON_NUMBER).spikes.ts > cds.artifactData.t((st-1)/opts.ARTIFACT_MULTIPLIER + 1) & ...
-                        cds.units(NEURON_NUMBER).spikes.ts < cds.artifactData.t((st-1)/opts.ARTIFACT_MULTIPLIER + 1) + opts.TIME_AFTER_STIMULATION_ARTIFACT;
-                    if(sum(artifactMask)==0) % no spikes present
-                        artifactIdx.awayArtifact(end+1,1) = (st-1)/opts.ARTIFACT_MULTIPLIER + 1;
-                    elseif(sum(artifactMask)>0) % spike present
-                        artifactIdx.nearArtifact(end+1,1) = (st-1)/opts.ARTIFACT_MULTIPLIER + 1;
+            if((isempty(opts.WAVEFORMS_TO_PLOT) || sum(wave==opts.WAVEFORMS_TO_PLOT) > 0) && (isempty(opts.CHANS_TO_PLOT) || sum(chan==opts.CHANS_TO_PLOT) > 0))
+                % get artifact indices
+                artifactIdx.nearArtifact = [];
+                artifactIdx.awayArtifact = [];
+
+                for st = 1:opts.ARTIFACT_MULTIPLIER:numel(cds.stimOn)
+                    if(cds.waveforms.chanSent(st) == CHAN_LIST(chan) && cds.waveforms.waveSent(st) == wave)
+                        artifactMask = cds.units(NEURON_NUMBER).spikes.ts > cds.artifactData.t((st-1)/opts.ARTIFACT_MULTIPLIER + 1) & ...
+                            cds.units(NEURON_NUMBER).spikes.ts < cds.artifactData.t((st-1)/opts.ARTIFACT_MULTIPLIER + 1) + opts.TIME_AFTER_STIMULATION_ARTIFACT;
+                        if(sum(artifactMask)==0) % no spikes present
+                            artifactIdx.awayArtifact(end+1,1) = (st-1)/opts.ARTIFACT_MULTIPLIER + 1;
+                        elseif(sum(artifactMask)>0) % spike present
+                            artifactIdx.nearArtifact(end+1,1) = (st-1)/opts.ARTIFACT_MULTIPLIER + 1;
+                        end
                     end
                 end
-            end
+
+                if(opts.RANDOM_SAMPLE) % randomly sample
+                    artifactIdx.nearArtifact = datasample(artifactIdx.nearArtifact,min(opts.MAX_WAVES_PLOT*opts.ROW_SUBPLOT*opts.COL_SUBPLOT,numel(artifactIdx.nearArtifact)),'replace',false);
+                    artifactIdx.awayArtifact = datasample(artifactIdx.awayArtifact,min(opts.MAX_WAVES_PLOT*opts.ROW_SUBPLOT*opts.COL_SUBPLOT,numel(artifactIdx.awayArtifact)),'replace',false);
+                else % grab first set
+                    artifactIdx.nearArtifact = artifactIdx.nearArtifact(1:min(opts.MAX_WAVES_PLOT*opts.ROW_SUBPLOT*opts.COL_SUBPLOT,numel(artifactIdx.nearArtifact)));
+                    artifactIdx.awayArtifact = artifactIdx.awayArtifact(1:min(opts.MAX_WAVES_PLOT*opts.ROW_SUBPLOT*opts.COL_SUBPLOT,numel(artifactIdx.awayArtifact)));
+                end
+
+                % we have all the indexes we need, now plot the waveforms
+                if(sum(opts.PLOT_FILTERED == 1) > 0) % plot filtered waveforms (cds.units...spikes)
+
+                    waveforms.nearArtifact = squeeze(cds.artifactData.artifact(artifactIdx.nearArtifact,cds.units(NEURON_NUMBER).chan,:));
+                    waveforms.awayArtifact = squeeze(cds.artifactData.artifact(artifactIdx.awayArtifact,cds.units(NEURON_NUMBER).chan,:));
+
+                    waveforms.nearArtifact = filterArtifactData(waveforms.nearArtifact,opts);
+                    waveforms.awayArtifact = filterArtifactData(waveforms.awayArtifact,opts);
+
+                    opts.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'_nn',num2str(NEURON_NUMBER),'_chan',num2str(cds.units(NEURON_NUMBER).chan),'stimChan',num2str(CHAN_LIST(chan)),'_waveNum',num2str(wave),'artifactsFilteredNear');
+                    opts.TITLE_TO_PLOT = strcat('Filtered-Near, stimChan ',num2str(CHAN_LIST(chan)),', wave ', num2str(wave));
+                    figureHandles{end+1} = plotArtifacts(waveforms.nearArtifact,opts);
+
+                    opts.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'_nn',num2str(NEURON_NUMBER),'_chan',num2str(cds.units(NEURON_NUMBER).chan),'stimChan',num2str(CHAN_LIST(chan)),'_waveNum',num2str(wave),'artifactsFilteredAway');
+                    opts.TITLE_TO_PLOT = strcat('Filtered-Away, stimChan ',num2str(CHAN_LIST(chan)),', wave ', num2str(wave));
+                    figureHandles{end+1} = plotArtifacts(waveforms.awayArtifact,opts);
+
+                end
+                if(sum(opts.PLOT_FILTERED == 0) > 0) % plot raw waveforms (cds.rawData)
+
+                    waveforms.nearArtifact = squeeze(cds.artifactData.artifact(artifactIdx.nearArtifact,cds.units(NEURON_NUMBER).chan,:));
+                    waveforms.awayArtifact = squeeze(cds.artifactData.artifact(artifactIdx.awayArtifact,cds.units(NEURON_NUMBER).chan,:));
+
+                    opts.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'_nn',num2str(NEURON_NUMBER),'_chan',num2str(cds.units(NEURON_NUMBER).chan),'stimChan',num2str(CHAN_LIST(chan)),'_waveNum',num2str(wave),'artifactsRawNear');
+                    opts.TITLE_TO_PLOT = strcat('Raw-Near, stimChan ',num2str(CHAN_LIST(chan)),', wave ', num2str(wave));
+                    figureHandles{end+1} = plotArtifacts(waveforms.nearArtifact,opts);
+
+                    opts.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'_nn',num2str(NEURON_NUMBER),'_chan',num2str(cds.units(NEURON_NUMBER).chan),'stimChan',num2str(CHAN_LIST(chan)),'_waveNum',num2str(wave),'artifactsRawAway');
+                    opts.TITLE_TO_PLOT = strcat('Raw-Away, stimChan ',num2str(CHAN_LIST(chan)),', wave ', num2str(wave));
+                    figureHandles{end+1} = plotArtifacts(waveforms.awayArtifact,opts);
+
+                end
             
-            if(opts.RANDOM_SAMPLE) % randomly sample
-                artifactIdx.nearArtifact = datasample(artifactIdx.nearArtifact,min(opts.MAX_WAVES_PLOT*opts.ROW_SUBPLOT*opts.COL_SUBPLOT,numel(artifactIdx.nearArtifact)),'replace',false);
-                artifactIdx.awayArtifact = datasample(artifactIdx.awayArtifact,min(opts.MAX_WAVES_PLOT*opts.ROW_SUBPLOT*opts.COL_SUBPLOT,numel(artifactIdx.awayArtifact)),'replace',false);
-            else % grab first set
-                artifactIdx.nearArtifact = artifactIdx.nearArtifact(1:min(opts.MAX_WAVES_PLOT*opts.ROW_SUBPLOT*opts.COL_SUBPLOT,numel(artifactIdx.nearArtifact)));
-                artifactIdx.awayArtifact = artifactIdx.awayArtifact(1:min(opts.MAX_WAVES_PLOT*opts.ROW_SUBPLOT*opts.COL_SUBPLOT,numel(artifactIdx.awayArtifact)));
             end
-            
-            % we have all the indexes we need, now plot the waveforms
-            if(sum(opts.PLOT_FILTERED == 1) > 0) % plot filtered waveforms (cds.units...spikes)
-                
-                waveforms.nearArtifact = squeeze(cds.artifactData.artifact(artifactIdx.nearArtifact,cds.units(NEURON_NUMBER).chan,:));
-                waveforms.awayArtifact = squeeze(cds.artifactData.artifact(artifactIdx.awayArtifact,cds.units(NEURON_NUMBER).chan,:));
-                
-                waveforms.nearArtifact = filterArtifactData(waveforms.nearArtifact,opts);
-                waveforms.awayArtifact = filterArtifactData(waveforms.awayArtifact,opts);
- 
-                opts.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'_nn',num2str(NEURON_NUMBER),'_chan',num2str(cds.units(NEURON_NUMBER).chan),'stimChan',num2str(CHAN_LIST(chan)),'_waveNum',num2str(wave),'artifactsFilteredNear');
-                opts.TITLE_TO_PLOT = strcat('Filtered-Near, stimChan ',num2str(CHAN_LIST(chan)),', wave ', num2str(wave));
-                figureHandles{end+1} = plotArtifacts(waveforms.nearArtifact,opts);
-                
-                opts.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'_nn',num2str(NEURON_NUMBER),'_chan',num2str(cds.units(NEURON_NUMBER).chan),'stimChan',num2str(CHAN_LIST(chan)),'_waveNum',num2str(wave),'artifactsFilteredAway');
-                opts.TITLE_TO_PLOT = strcat('Filtered-Away, stimChan ',num2str(CHAN_LIST(chan)),', wave ', num2str(wave));
-                figureHandles{end+1} = plotArtifacts(waveforms.awayArtifact,opts);
-                
-            end
-            if(sum(opts.PLOT_FILTERED == 0) > 0) % plot raw waveforms (cds.rawData)
-                
-                waveforms.nearArtifact = squeeze(cds.artifactData.artifact(artifactIdx.nearArtifact,cds.units(NEURON_NUMBER).chan,:));
-                waveforms.awayArtifact = squeeze(cds.artifactData.artifact(artifactIdx.awayArtifact,cds.units(NEURON_NUMBER).chan,:));
-                                
-                opts.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'_nn',num2str(NEURON_NUMBER),'_chan',num2str(cds.units(NEURON_NUMBER).chan),'stimChan',num2str(CHAN_LIST(chan)),'_waveNum',num2str(wave),'artifactsRawNear');
-                opts.TITLE_TO_PLOT = strcat('Raw-Near, stimChan ',num2str(CHAN_LIST(chan)),', wave ', num2str(wave));
-                figureHandles{end+1} = plotArtifacts(waveforms.nearArtifact,opts);
-                
-                opts.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'_nn',num2str(NEURON_NUMBER),'_chan',num2str(cds.units(NEURON_NUMBER).chan),'stimChan',num2str(CHAN_LIST(chan)),'_waveNum',num2str(wave),'artifactsRawAway');
-                opts.TITLE_TO_PLOT = strcat('Raw-Away, stimChan ',num2str(CHAN_LIST(chan)),', wave ', num2str(wave));
-                figureHandles{end+1} = plotArtifacts(waveforms.awayArtifact,opts);
-                
-            end
-            
-            
         end
     end
 
@@ -179,6 +179,10 @@ function [opts] = configureOpts(optsInput)
     [opts.B,opts.A] = butter(6,500/(30000/2),'high');
     opts.NUM_PAD = 200;
     opts.PAD_MEAN_LENGTH = 20;
+    
+    opts.WAVEFORMS_TO_PLOT = [];
+    opts.CHANS_TO_PLOT = [];
+    
     %% check if in optsSave and optsSaveInput, overwrite if so
     try
         inputFieldnames = fieldnames(optsInput);

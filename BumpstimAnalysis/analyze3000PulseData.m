@@ -1,5 +1,5 @@
 %% set file names 
-folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20171025\';
+folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20171117_dukeBoardV2_variedPulseWidths\';
 % folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20171024\';
 % mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 % mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Mihili 12A3\Mihili Left PMd SN 6251-001460.cmp';
@@ -28,12 +28,12 @@ saveFigures = 0;
 
 %% extract relevant data for a given unit
 tic
-optsExtract.NEURON_NUMBER = 3;
+optsExtract.NEURON_NUMBER = 39;
 
 optsExtract.STIMULI_RESPONSE = 'all';
-optsExtract.STIM_ELECTRODE = 50;
+optsExtract.STIM_ELECTRODE = unique(cds.waveforms.chanSent);
 optsExtract.STIMULATIONS_PER_TRAIN = 1;
-optsExtract.STIMULATION_BATCH_SIZE = 4000;
+optsExtract.STIMULATION_BATCH_SIZE = 1000;
 
 optsExtract.PRE_TIME = 10/1000; % made negative in the function
 optsExtract.POST_TIME = 90/1000;
@@ -45,12 +45,13 @@ toc
 %% plot raster, and PSTH for the given unit above
 optsPlotFunc.BIN_SIZE = optsExtract.BIN_SIZE;
 
-optsPlotFunc.PRE_TIME = 5/1000;
-optsPlotFunc.POST_TIME = 30/1000;
+optsPlotFunc.PRE_TIME = 3/1000;
+optsPlotFunc.POST_TIME = 10/1000;
+optsPlotFunc.SORT_DATA = 'no';
 
 rasterPlots = plotRasterStim(unitData,optsExtract.NEURON_NUMBER,optsPlotFunc);
 
-optsPlotFunc.PLOT_ALL_ONE_FIGURE = 0;
+optsPlotFunc.PLOT_ALL_ONE_FIGURE = 1;
 optsPlotFunc.PLOT_LINE = 1;
 
 optsPlotFunc.SMOOTH = 0;
@@ -67,6 +68,8 @@ WaveformPlots = plotWaveformsStim(cds,optsExtract.NEURON_NUMBER,optsWaveforms);
 %% plot artifacts (raw and filtered)
 
 optsArtifacts = [];
+optsArtifacts.WAVEFORMS_TO_PLOT = [];
+optsArtifacts.CHANS_TO_PLOT = [1];
 ArtifactPlots = plotArtifactsStim(cds,optsExtract.NEURON_NUMBER,optsArtifacts);
 
 %% plot grid
@@ -87,6 +90,48 @@ optsISI.BIN_SIZE = 0.5/1000;
 optsISI.DISPLAY_TEXT = 1;
 
 ISIPlot = plotInterspikeIntervalHistogram(cds,optsExtract.NEURON_NUMBER,optsISI);
+
+
+
+
+
+%% whole array analysis
+% extract data across whole array
+tic
+
+optsExtract.STIMULI_RESPONSE = 'all';
+optsExtract.STIM_ELECTRODE = unique(cds.waveforms.chanSent);
+optsExtract.STIMULATIONS_PER_TRAIN = 1;
+optsExtract.STIMULATION_BATCH_SIZE = 1000;
+
+optsExtract.PRE_TIME = 10/1000; % made negative in the function
+optsExtract.POST_TIME = 90/1000;
+optsExtract.BIN_SIZE = 0.2/1000;
+optsExtract.TIME_AFTER_STIMULATION_WAVEFORMS = 10/1000;
+
+arrayData = extractDataAroundStimulationsWholeArray(cds,mapFileName,optsExtract);
+toc
+
+
+%% heatmap across whole array
+
+% opts.STIM_ELECTRODE_PLOT = [1:numel(unique(cds.waveforms.chanSent))];
+opts.STIM_ELECTRODE_PLOT = 1;
+opts.WAVEFORM_TYPES_PLOT = 1;%unique(cds.waveforms.waveSent);
+
+opts.BASELINE_PRE_TIME = -10/1000;
+opts.BASELINE_POST_TIME = -3/1000;
+opts.STIM_PRE_TIME = 1.5/1000;
+opts.STIM_POST_TIME = 5/1000;
+
+opts.MAX_RATIO = 8;
+opts.MIN_RATIO = 1;
+opts.LOG_SCALE = 1;
+
+plotHeatmaps(arrayData,mapFileName,opts);
+
+
+%% PSTH across whole array
 
 
 
