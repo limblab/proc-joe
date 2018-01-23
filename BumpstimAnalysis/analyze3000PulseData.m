@@ -1,5 +1,5 @@
 %% set file names 
-folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20171117_dukeBoardV2_variedPulseWidths\';
+folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20171026\';
 % folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20171024\';
 % mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 % mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Mihili 12A3\Mihili Left PMd SN 6251-001460.cmp';
@@ -27,71 +27,72 @@ figPrefix = '';
 saveFigures = 0;
 
 %% extract relevant data for a given unit
-tic
-optsExtract.NEURON_NUMBER = 39;
+for nn = 1:2%size(cds.units,2)
+    if(cds.units(nn).ID ~= 0 && cds.units(nn).ID ~= 255)
+        optsExtract.NEURON_NUMBER = nn;
 
-optsExtract.STIMULI_RESPONSE = 'all';
-optsExtract.STIM_ELECTRODE = unique(cds.waveforms.chanSent);
-optsExtract.STIMULATIONS_PER_TRAIN = 1;
-optsExtract.STIMULATION_BATCH_SIZE = 1000;
+        optsExtract.STIMULI_RESPONSE = 'all';
+        optsExtract.STIM_ELECTRODE = unique(cds.waveforms.chanSent);
+        optsExtract.STIMULATIONS_PER_TRAIN = 1;
+        optsExtract.STIMULATION_BATCH_SIZE = 1000;
 
-optsExtract.PRE_TIME = 10/1000; % made negative in the function
-optsExtract.POST_TIME = 90/1000;
-optsExtract.BIN_SIZE = 0.2/1000;
-optsExtract.TIME_AFTER_STIMULATION_WAVEFORMS = 10/1000;
+        optsExtract.PRE_TIME = 10/1000; % made negative in the function
+        optsExtract.POST_TIME = 90/1000;
+        optsExtract.BIN_SIZE = 0.2/1000;
+        optsExtract.TIME_AFTER_STIMULATION_WAVEFORMS = 10/1000;
 
-unitData = extractDataAroundStimulations(cds,optsExtract);
-toc
-%% plot raster, and PSTH for the given unit above
-optsPlotFunc.BIN_SIZE = optsExtract.BIN_SIZE;
+        unitData = extractDataAroundStimulations(cds,optsExtract);
+        
+        % plot raster, and PSTH for the given unit above
+        optsPlotFunc.BIN_SIZE = optsExtract.BIN_SIZE;
 
-optsPlotFunc.PRE_TIME = 3/1000;
-optsPlotFunc.POST_TIME = 10/1000;
-optsPlotFunc.SORT_DATA = 'no';
+        optsPlotFunc.PRE_TIME = 3/1000;
+        optsPlotFunc.POST_TIME = 30/1000;
+        optsPlotFunc.SORT_DATA = 'no';
 
-rasterPlots = plotRasterStim(unitData,optsExtract.NEURON_NUMBER,optsPlotFunc);
+        rasterPlots = plotRasterStim(unitData,optsExtract.NEURON_NUMBER,optsPlotFunc);
 
-optsPlotFunc.PLOT_ALL_ONE_FIGURE = 1;
-optsPlotFunc.PLOT_LINE = 1;
+        optsPlotFunc.PLOT_ALL_ONE_FIGURE = 1;
+        optsPlotFunc.PLOT_LINE = 1;
 
-optsPlotFunc.SMOOTH = 0;
-optsPlotFunc.SMOOTH_STD_DEV = 0.35;
+        optsPlotFunc.SMOOTH = 0;
+        optsPlotFunc.SMOOTH_STD_DEV = 0.35;
 
-PSTHPlots = plotPSTHStim(unitData,optsExtract.NEURON_NUMBER,optsPlotFunc);
+        PSTHPlots = plotPSTHStim(unitData,optsExtract.NEURON_NUMBER,optsPlotFunc);
 
-%% plot waveforms (raw and filtered)
+        % plot waveforms (raw and filtered)
 
-optsWaveforms = [];
+        optsWaveforms = [];
 
-WaveformPlots = plotWaveformsStim(cds,optsExtract.NEURON_NUMBER,optsWaveforms);
+        WaveformPlots = plotWaveformsStim(cds,optsExtract.NEURON_NUMBER,optsWaveforms);
 
-%% plot artifacts (raw and filtered)
+        % plot artifacts (raw and filtered)
 
-optsArtifacts = [];
-optsArtifacts.WAVEFORMS_TO_PLOT = [];
-optsArtifacts.CHANS_TO_PLOT = [1];
-ArtifactPlots = plotArtifactsStim(cds,optsExtract.NEURON_NUMBER,optsArtifacts);
+        optsArtifacts = [];
+        optsArtifacts.WAVEFORMS_TO_PLOT = [];
+        optsArtifacts.CHANS_TO_PLOT = [1];
+        ArtifactPlots = plotArtifactsStim(cds,optsExtract.NEURON_NUMBER,optsArtifacts);
 
-%% plot grid
-optsGrid.STIM_ELECTRODE = unique(cds.waveforms.chanSent);
-optsGrid.RECORDING_ELECTRODE = cds.units(optsExtract.NEURON_NUMBER).chan;
+        % plot grid
+        optsGrid.STIM_ELECTRODE = unique(cds.waveforms.chanSent);
+        optsGrid.RECORDING_ELECTRODE = cds.units(optsExtract.NEURON_NUMBER).chan;
 
-optsGrid.STIM_ELECTRODE_COLOR = {'k','r','b',[0,0.5,0],'m'};
-optsGrid.STIM_ELECTRODE_LABEL = 'string';
+        optsGrid.STIM_ELECTRODE_COLOR = {'k','r','b',[0,0.5,0],'m'};
+        optsGrid.STIM_ELECTRODE_LABEL = 'string';
 
-optsGrid.RECORDING_ELECTRODE_COLOR = 'k';
-optsGrid.RECORDING_ELECTRODE_LABEL = 'string';
+        optsGrid.RECORDING_ELECTRODE_COLOR = 'k';
+        optsGrid.RECORDING_ELECTRODE_LABEL = 'string';
 
-ArrayPlots = plotArrayMap(cds,optsExtract.NEURON_NUMBER,mapFileName,optsGrid);
+        ArrayPlots = plotArrayMap(cds,optsExtract.NEURON_NUMBER,mapFileName,optsGrid);
 
-%%  ISI
-optsISI.XLIM = [0,20];
-optsISI.BIN_SIZE = 0.5/1000;
-optsISI.DISPLAY_TEXT = 1;
+        %  ISI
+        optsISI.XLIM = [0,20];
+        optsISI.BIN_SIZE = 0.5/1000;
+        optsISI.DISPLAY_TEXT = 1;
 
-ISIPlot = plotInterspikeIntervalHistogram(cds,optsExtract.NEURON_NUMBER,optsISI);
-
-
+        ISIPlot = plotInterspikeIntervalHistogram(cds,optsExtract.NEURON_NUMBER,optsISI);
+    end
+end
 
 
 

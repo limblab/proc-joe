@@ -95,10 +95,10 @@ function [figureHandle] = plotReaches(cds,timeCues,timeOffsets,tgtAngleWindow,ro
     
     for tr = 1:numel(cds.trials.number)
         if((cds.trials.result(tr) == 'R' || cds.trials.result(tr) == 'F') && cds.trials.tgtDir(tr) > tgtAngleWindow(1) && cds.trials.tgtDir(tr) <= tgtAngleWindow(2) && numTrialsPlotted < opts.MAX_TRIALS_PLOT && ...
-                ~isnan(cds.trials.(timeCues{1})(tr)) && ~isnan(cds.trials.(timeCues{2})(tr)))
+                ~isnan(cds.trials.(timeCues{1})(tr)) && ~isnan(cds.trials.(timeCues{2})(tr)) && cds.trials.showRing(tr) && ~cds.trials.showOuterTarget(tr))
             kinIdx = [find(cds.trials.(timeCues{1})(tr)+timeOffsets(tr,1) <= cds.kin.t,1,'first'),find(cds.trials.(timeCues{2})(tr)+timeOffsets(tr,2) <= cds.kin.t,1,'first')];
-            xData = kinX(kinIdx(1):kinIdx(2));
-            yData = kinY(kinIdx(1):kinIdx(2));
+            xData = kinX(kinIdx(1):kinIdx(2)) - kinX(kinIdx(1));
+            yData = kinY(kinIdx(1):kinIdx(2)) - kinY(kinIdx(1));
 
             if(rotateReaches)
                 xDataRot = xData*cos(cds.trials.tgtDir(tr)*pi/180) + yData*sin(cds.trials.tgtDir(tr)*pi/180);
@@ -117,10 +117,18 @@ function [figureHandle] = plotReaches(cds,timeCues,timeOffsets,tgtAngleWindow,ro
     end
      
     if(opts.DRAW_CIRCLE)
+        
         t = linspace(0,2*pi,10000);
         x = (opts.CIRCLE_RADIUS-0.5*opts.CIRCLE_DEPTH)*cos(t);
         y = (opts.CIRCLE_RADIUS-0.5*opts.CIRCLE_DEPTH)*sin(t);
-        plot(x,y,'k','linewidth',2)
+        plot(x,y,'k','linewidth',opts.CIRCLE_LINE_WIDTH)
+        hold on
+        if(rotateReaches)
+            t = linspace(-cds.trials.tgtWidth(1)/2,cds.trials.tgtWidth(1)/2,10000)*pi/180;
+            x = (opts.CIRCLE_RADIUS-0.5*opts.CIRCLE_DEPTH)*cos(t);
+            y = (opts.CIRCLE_RADIUS-0.5*opts.CIRCLE_DEPTH)*sin(t);
+            plot(x,y,'r','linewidth',opts.CIRCLE_LINE_WIDTH)
+        end
     end
     
     xlim(opts.XLIM)
@@ -147,12 +155,15 @@ function [figureHandle] = plotReachDistribution(cds,tgtAngleWindow,opts)
     angleOffsets = [-360,0,360];
     for tr = 1:numel(cds.trials.number)
         if((cds.trials.result(tr) == 'R' || cds.trials.result(tr) == 'F') && cds.trials.tgtDir(tr) > tgtAngleWindow(1) && cds.trials.tgtDir(tr) <= tgtAngleWindow(2) && ...
-                ~isnan(cds.trials.goCueTime(tr)) && ~isnan(cds.trials.endTime(tr)))
+                ~isnan(cds.trials.goCueTime(tr)) && ~isnan(cds.trials.endTime(tr)) && cds.trials.showRing(tr) && ~cds.trials.showOuterTarget(tr))
             kinIdx = [find(cds.trials.goCueTime(tr) <= cds.kin.t,1,'first'),find(cds.trials.endTime(tr) <= cds.kin.t,1,'first')];
-            xData = kinX(kinIdx(1):kinIdx(2));
-            yData = kinY(kinIdx(1):kinIdx(2));
+            xData = kinX(kinIdx(1):kinIdx(2)) - kinX(kinIdx(1));
+            yData = kinY(kinIdx(1):kinIdx(2)) - kinY(kinIdx(1));
             
             outerCircleIdx = find(sqrt((xData.^2 + yData.^2)) > opts.CIRCLE_RADIUS - 0.5*opts.CIRCLE_DEPTH - 0.5,1,'first');
+            if(isempty(outerCircleIdx)) 
+                outerCircleIdx = numel(xData);
+            end
             reachAngle = 180/pi*atan2(yData(outerCircleIdx-1),xData(outerCircleIdx-1));
             [~,offsetIdx] = min(abs(cds.trials.tgtDir(tr) - (reachAngle+angleOffsets)));
             reachAngles(sizeReachAngle+1,1) = cds.trials.tgtDir(tr) - (reachAngle+angleOffsets(offsetIdx));
@@ -189,6 +200,7 @@ function [opts] = configureOpts(optsInput)
     opts.CIRCLE_RADIUS = 7;
     opts.CIRCLE_DEPTH = 2;
     opts.PLOT_UNTIL_CIRCLE = 1;
+    opts.CIRCLE_LINE_WIDTH = 3;
     
     opts.XLIM = [-opts.CIRCLE_RADIUS, opts.CIRCLE_RADIUS];
     opts.YLIM = [-opts.CIRCLE_RADIUS, opts.CIRCLE_RADIUS];

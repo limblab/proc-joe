@@ -1,6 +1,6 @@
 %% set file name and load file into cds
 
-folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\RingReporting\Chips_20180118\';
+folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\RingReporting\Chips_20180119\';
 mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
 
 inputData.array = 'arrayLeftS1';
