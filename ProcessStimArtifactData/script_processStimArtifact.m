@@ -1,17 +1,18 @@
 clear%% process stimulation artifacts:
 pwd = cd;
-folderpath= 'R:\data\Chips_12H1\RAW\Chips_20171024_dukeBoard_stimRecord\';
+folderpath= 'R:\data\Chips_12H1\RAW\Chips_20171117_dukeBoardV2_stimRecord\';
 % inputData.mapFile='mapFileR:\limblab\lab_folder\Animal-Miscellany\Mihili 12A3\Mihili Left PMd SN 6251-001460.cmp'; % chips mapfile location
 % inputData.mapFile='mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 inputData.mapFile = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
-inputData.task='taskCObump';
+inputData.task='taskCO';
 inputData.ranBy='ranByJoseph'; 
 inputData.array1='arrayLeftS1'; 
 inputData.monkey='monkeyChips';
 
-inputData.dukeBoardChannel = -1;
+inputData.dukeBoardChannel = 67;
 inputData.dukeBoardLabel = 'ainp15';
 
+inputData.issueExists = 0;
 
 inputData.badChList=0;
 inputData.interpulse=.000053;%in s
@@ -24,7 +25,7 @@ inputData.templateSubtract = 0;
 inputData.templateSize = 99/1000;
 
 inputData.blankPeriod = floor(0.0*30);
-inputData.artifactDataTime = 10; % in ms
+inputData.artifactDataTime = 25; % in ms
 
 inputData.preOffset = 22;
 inputData.postOffset = 25;
@@ -33,9 +34,10 @@ inputData.moreThanOnePulsePerWave = 0;
 inputData.numPulses = 10;
 inputData.pulseFrequency = 100;
 
-inputData.thresholdMult = 3.5;
-inputData.artifactSkip = 5;
+inputData.thresholdMult = 4.5;
+inputData.artifactSkip = 1;
 
+inputData.maxChunkLength = 5000*30; % 5 second chunk maximum
 %% generates _cds and _nevData files, also writes nev file
 cd(folderpath)
 fileList = dirSorted('*.nev');
@@ -70,47 +72,47 @@ for f = 1:endIndex
 end
 
 % save('','artifactData')
-
-% write nev file
-disp('writing nev file')
-if(~MERGE_FILES) %write nev file
-    nevDataAll = [];
-    totalDuration = 0;
-    cd(folderpath);
-    fileListNEV=dirSorted('*_nevData*');
-    fileListCDS=dirSorted('*_cds.mat*');
-    for i = 1:numel(fileListNEV)
-        load(fileListNEV(i).name);
-        load(fileListCDS(i).name);
-        if(i==1)
-            nevDataAll.ts = nevData.ts;
-            nevDataAll.waveforms = nevData.waveforms(:,:);
-            nevDataAll.elec = nevData.elec(:,:);
-        else
-            nevDataAll.ts(end+1:end+numel(nevData.ts),:) = nevData.ts + totalDuration;
-            nevDataAll.waveforms(end+1:end+numel(nevData.ts),:) = nevData.waveforms(:,:);
-            nevDataAll.elec(end+1:end+numel(nevData.ts),:) = nevData.elec(:,:);
-        end
-        disp(num2str(cds.meta.duration - max(nevData.ts)))
-        
-        totalDuration = totalDuration + cds.meta.duration;
-    end
-    packetWidth = 104;
-    filename = strcat(fileListNEV(1).name(1:12),'_merged');
-    mapFilename = inputData.mapFile(8:end);
-    comments = '';
-    writeNEV(nevDataAll, packetWidth, filename, mapFilename, comments )
-    cd(pwd);
-else
-    fileListNEV=dirSorted('*_nevData*');
-    load(fileListNEV(1).name);
-    packetWidth = 104;
-    filename = strcat(fileListNEV(1).name(1:12),'_merged');
-    mapFilename = inputData.mapFile(8:end);
-    comments = '';
-    writeNEV(nevData, packetWidth, filename, mapFilename, comments )
-    cd(pwd);
-end
+% 
+% %write nev file
+% disp('writing nev file')
+% if(~MERGE_FILES) %write nev file
+%     nevDataAll = [];
+%     totalDuration = 0;
+%     cd(folderpath);
+%     fileListNEV=dirSorted('*_nevData*');
+%     fileListCDS=dirSorted('*_cds.mat*');
+%     for i = 1:numel(fileListNEV)
+%         load(fileListNEV(i).name);
+%         load(fileListCDS(i).name);
+%         if(i==1)
+%             nevDataAll.ts = nevData.ts;
+%             nevDataAll.waveforms = nevData.waveforms(:,:);
+%             nevDataAll.elec = nevData.elec(:,:);
+%         else
+%             nevDataAll.ts(end+1:end+numel(nevData.ts),:) = nevData.ts + totalDuration;
+%             nevDataAll.waveforms(end+1:end+numel(nevData.ts),:) = nevData.waveforms(:,:);
+%             nevDataAll.elec(end+1:end+numel(nevData.ts),:) = nevData.elec(:,:);
+%         end
+%         disp(num2str(cds.meta.duration - max(nevData.ts)))
+%         
+%         totalDuration = totalDuration + cds.meta.duration;
+%     end
+%     packetWidth = 104;
+%     filename = strcat(fileListNEV(1).name(1:12),'_merged');
+%     mapFilename = inputData.mapFile(8:end);
+%     comments = '';
+%     writeNEV(nevDataAll, packetWidth, filename, mapFilename, comments )
+%     cd(pwd);
+% else
+%     fileListNEV=dirSorted('*_nevData*');
+%     load(fileListNEV(1).name);
+%     packetWidth = 104;
+%     filename = strcat(fileListNEV(1).name(1:12),'_merged');
+%     mapFilename = inputData.mapFile(8:end);
+%     comments = '';
+%     writeNEV(nevData, packetWidth, filename, mapFilename, comments )
+%     cd(pwd);
+% end
 
 
 cd(pwd);
@@ -324,7 +326,7 @@ save(strcat(fileListProcessed(1).name(1:26),'_all_processed'),'cds','-v7.3');
 
 cd(pwd)
 disp('done merging')
-%% if an interleaved set of trials, merge waveform sent information into cds
+% if an interleaved set of trials, merge waveform sent information into cds
 cd(folderpath);
 fileListCDS = dirSorted('*all_processed.mat*');
 load(fileListCDS(1).name);
@@ -334,7 +336,7 @@ fileListWaves = dirSorted('*_waveformsSent_*');
 for f = 1:numel(fileListWaves)
     load(fileListWaves(f).name);
     disp(num2str(f))
-    d=find(diff(cds.stimOn)>1);
+    d=find(diff(cds.stimOn)>10);
     if(~isempty(d))
         if(f==1)
             cds.waveforms.waveSent(1:d(1),1) = waveforms.waveSent(1:d(1));
