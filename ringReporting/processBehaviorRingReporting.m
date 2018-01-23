@@ -6,40 +6,49 @@ function [behaviorData,figureHandles] = processBehaviorRingReporting(cds,opts)
     figureHandles = {};
     
     %% store % correct vs % fail
-    behaviorData.percentCorrect = sum(cds.trials.result == 'R')/sum(cds.trials.result == 'R' | cds.trials.result == 'F');
+    if(isempty(opts.BUMP_MAGS))
+        opts.BUMP_MAGS = unique(cds.trials.bumpMagnitude);
+        opts.BUMP_MAGS = opts.BUMP_MAGS(~isnan(opts.BUMP_MAGS));
+    end
     
-    %% look at % correct as a function of tgtDir (make plot)
+    for bm = 1:numel(opts.BUMP_MAGS)
+        behaviorData.percentCorrect(bm) = sum(cds.trials.result == 'R' & cds.trials.showOuterTarget == 0 & cds.trials.bumpMagnitude == opts.BUMP_MAGS(bm))/...
+            sum((cds.trials.result == 'R' | cds.trials.result == 'F') & cds.trials.showOuterTarget == 0 & cds.trials.bumpMagnitude == opts.BUMP_MAGS(bm));
+    end
+    %% look at % correct as a function of tgtDir (make plot) and bump mag
     % opts.NUM_BINS_DIR is the number of bins to divide the circle into
-    
-    behaviorData.bin_edges = (0:360/opts.NUM_BINS_DIR:360-360/opts.NUM_BINS_DIR) - (360/opts.NUM_BINS_DIR)/2 - 180;
-    behaviorData.bin_edges(end+1) = behaviorData.bin_edges(1) + 360;
-    
-    
+     
+    behaviorData.bin_edges = (0:360/opts.NUM_BINS_DIR:360) - 180;
     
     behaviorData.bin_percentCorrect = zeros(1,opts.NUM_BINS_DIR);
-    for b = 1:opts.NUM_BINS_DIR
-        behaviorData.bin_percentCorrect(b) = sum(cds.trials.result == 'R' & ...
-            cds.trials.tgtDir >= behaviorData.bin_edges(b) & cds.trials.tgtDir < behaviorData.bin_edges(b+1))/...
-            sum((cds.trials.result == 'R' | cds.trials.result == 'F') & cds.trials.tgtDir >= behaviorData.bin_edges(b) & cds.trials.tgtDir < behaviorData.bin_edges(b+1));
+    for bm = 1:numel(opts.BUMP_MAGS)
+        for b = 1:opts.NUM_BINS_DIR
+            behaviorData.bin_percentCorrect(bm,b) = sum(cds.trials.result == 'R' & cds.trials.showOuterTarget == 0 & cds.trials.bumpMagnitude == opts.BUMP_MAGS(bm) &...
+                cds.trials.tgtDir >= behaviorData.bin_edges(b) & cds.trials.tgtDir < behaviorData.bin_edges(b+1))/...
+                sum((cds.trials.result == 'R' | cds.trials.result == 'F') & cds.trials.showOuterTarget == 0 & cds.trials.bumpMagnitude == opts.BUMP_MAGS(bm) &...
+                cds.trials.tgtDir >= behaviorData.bin_edges(b) & cds.trials.tgtDir < behaviorData.bin_edges(b+1));
+        end
     end
     
     % make figure if requested -- this shows errors as a function of target
     % angle
     if(opts.MAKE_FIGURES && opts.NUM_BINS_DIR > 1)
         figureHandles{end+1} = figure;
-        if(opts.PLOT_POLAR)
-            theta = deg2rad([behaviorData.bin_edges(1:end-1),behaviorData.bin_edges(1)] + (behaviorData.bin_edges(2)-behaviorData.bin_edges(1))/2);
-            rho = [behaviorData.bin_percentCorrect,behaviorData.bin_percentCorrect(1)]; % closing the cirlce by including the first value twice
-            polarplot(theta,rho,'-k.','markersize',opts.MARKER_SIZE);
-            figureHandles{end}.Children(1).RLim = [0,1]; % radius limits from 0 to 1
-        else % line plot
-            plot(behaviorData.bin_edges(1:end-1) + (behaviorData.bin_edges(2)-behaviorData.bin_edges(1))/2,behaviorData.bin_percentCorrect,'-k.','markerSize',opts.MARKER_SIZE);
-            ylim([0,1]);
-            xlim([-180,180]);
-            set(gca,'fontsize',opts.FONT_SIZE)
-            formatForLee(gcf)
+        for bm = 1:numel(opts.BUMP_MAGS)
+            if(opts.PLOT_POLAR)
+                theta = deg2rad([behaviorData.bin_edges(1:end-1),behaviorData.bin_edges(1)] + (behaviorData.bin_edges(2)-behaviorData.bin_edges(1))/2);
+                rho = [behaviorData.bin_percentCorrect(bm,:),behaviorData.bin_percentCorrect(bm,1)]; % closing the cirlce by including the first value twice
+                polarplot(theta,rho,'-.','markersize',opts.MARKER_SIZE,'linewidth',opts.LINE_WIDTH);
+                figureHandles{end}.Children(1).RLim = [0,1]; % radius limits from 0 to 1
+            else % line plot
+                plot(behaviorData.bin_edges(1:end-1) + (behaviorData.bin_edges(2)-behaviorData.bin_edges(1))/2,behaviorData.bin_percentCorrect(bm,:),'-.','markerSize',opts.MARKER_SIZE,'linewidth',opts.LINE_WIDTH);
+                ylim([0,1]);
+                xlim([-180,180]);
+                set(gca,'fontsize',opts.FONT_SIZE)
+                formatForLee(gcf)
+            end
+            hold on
         end
-        
     end
     
     
@@ -68,6 +77,14 @@ function [behaviorData,figureHandles] = processBehaviorRingReporting(cds,opts)
         plotReachDistribution(cds,angleWindow,opts);
         
     end
+    
+    %% plot polar plot showing distribution of target centers to check for randomness
+    [tgtDistribution] = histcounts(cds.trials.tgtDir(cds.trials.result == 'R' | cds.trials.result == 'F'),behaviorData.bin_edges);
+    figureHandles{end+1} = figure;
+    theta = deg2rad([behaviorData.bin_edges(1:end-1),behaviorData.bin_edges(1)] + (behaviorData.bin_edges(2)-behaviorData.bin_edges(1))/2);
+    rho = [tgtDistribution,tgtDistribution(1)]/sum(cds.trials.result == 'R' | cds.trials.result == 'F'); % closing the cirlce by including the first value twice
+    polarplot(theta,rho,'-.','markersize',opts.MARKER_SIZE,'linewidth',opts.LINE_WIDTH);
+    figureHandles{end}.Children(1).RLim = [0,1/opts.NUM_BINS_DIR + 0.1]; % radius limits from 0 to 1
     
     
    
@@ -190,8 +207,8 @@ function [opts] = configureOpts(optsInput)
     opts.MARKER_SIZE = 12;
     opts.PLOT_POLAR = 0;
     opts.PLOT_CHANCE = 1;
-    opts.FONT_SIZE = 16;
-    
+    opts.FONT_SIZE = 14;
+    opts.LINE_WIDTH = 2;
     opts.CENTER_X = 3;
     opts.CENTER_Y = -33;
     
@@ -206,8 +223,11 @@ function [opts] = configureOpts(optsInput)
     opts.YLIM = [-opts.CIRCLE_RADIUS, opts.CIRCLE_RADIUS];
     
     opts.REMOVE_AXIS = 1;
+    opts.BUMP_MAGS = [];
     
     opts.DISTRIBUTION_BIN_SIZE = 5;
+    
+    
     %% check if in opts and optsInput, overwrite if so
     try
         inputFieldnames = fieldnames(optsInput);
