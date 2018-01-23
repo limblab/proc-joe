@@ -1,128 +1,191 @@
-function [probOut] = getProbabilityOfResponse(cds,neuronNumber,varargin)
+function [arrayData] = getProbabilityOfResponse(arrayData,opts)
 
-lowTime = 0/1000;
-highTime = 5/1000;
-preTime = 20/1000;
-postTime = 60/1000;
-
-waveformsSentExist = any(isfield(cds,'waveforms'));
-waveformTypes = 1;
-if(waveformsSentExist)
-    waveformTypes = 1:1:numel(unique(cds.waveforms.waveSent));
-end
-chans = 1;
-stimElectrode = -1;
-bumpTask = 0;
-alignWaves = 1;
-autoPeakPeriod = 0;
-for i = 1:2:numel(varargin)
-    switch varargin{i}
-        case 'peakPeriod'
-            if(~strcmp('automatic',varargin{i+1}))
-                temp = varargin{i+1};
-                lowTime = temp(1);
-                highTime = temp(2);
-            else
-                autoPeakPeriod = 1;
+    opts = configureOpts(opts);
+    binSize = mean(diff(arrayData{1}.bE{1,1})); % in ms
+    %% calculate probability of detection for each channel
+    for arrayDataIdx = 1:numel(arrayData)
+        meanSpikesEvoked_all = zeros(size(arrayData{arrayDataIdx}.bC));
+        normNumStimsResponsive = zeros(size(arrayData{arrayDataIdx}.bC));
+        meanSpikesEvoked_responsive = zeros(size(arrayData{arrayDataIdx}.bC));
+        
+        
+        for c = 1:size(arrayData{arrayDataIdx}.bE,1)
+            for w = 1:1:size(arrayData{arrayDataIdx}.bE,2)
+                % determine window if automatic windowing
+                if(opts.AUTOMATIC_WINDOW) % get high time and low time automatically
+                    opts.WINDOW = getAutomaticWindow(arryaData,arrayDataIdx,c,w,opts);
+                end
+                
+                [meanSpikesEvoked_all(c,w), normNumStimsResponsive(c,w), meanSpikesEvoked_responsive(c,w)] = computeProbabilityOfResponse(arrayData,arrayDataIdx,c,w,opts);
+                
             end
-        case 'waveformTypes'
-            waveformTypes = varargin{i+1};
-        case 'chans'
-            chans = varargin{i+1};
-        case 'stimElectrode'
-            stimElectrode = varargin{i+1};
-        case 'preTime'
-            preTime = varargin{i+1};
-        case 'postTime'
-            postTime = varargin{i+1};
-    end
-end
-
-%% extract number of waveform types if applicable
-if(waveformsSentExist)
-    numWaveformTypes = numel(unique(cds.waveforms.waveSent));
-end
-
-if(any(isfield(cds.waveforms,'chanSent')))
-    numChans = numel(unique(cds.waveforms.chanSent));
-    chanList = unique(cds.waveforms.chanSent);
-else
-    chanList = stimElectrode;
-    numChans = 1;
-end
-
-%% extract data
-for c = 1:numChans
-    for i = 1:numWaveformTypes
-        spikeTimeData{c,i} = [];
-    end
-end
-stimNum = zeros(numChans,numWaveformTypes);
-if(bumpTask) % plot things aligned to bump times and whatnot
-    % write this later :D
-else % get data after stimulations
-    for st = 1:numel(cds.stimOn)
-        spikeMask = cds.units(neuronNumber).spikes.ts > cds.stimOn(st)-preTime & cds.units(neuronNumber).spikes.ts < cds.stimOn(st)+postTime;
-        spikesPlot = (cds.units(neuronNumber).spikes.ts(spikeMask) - cds.stimOn(st));
-        if(alignWaves)
-            spikesPlot = spikesPlot + 4/30000;
         end
-        numWaves = sum(spikeMask==1);
-        if(waveformsSentExist)
-            if(any(isfield(cds.waveforms,'chanSent')))
-                chanNumber = find(unique(cds.waveforms.chanSent)==cds.waveforms.chanSent(st));
-                stimNum(chanNumber,cds.waveforms.waveSent(st)) = stimNum(chanNumber,cds.waveforms.waveSent(st)) + 1;
-                if(~isempty(spikesPlot))
-                    spikeTimeData{chanNumber,cds.waveforms.waveSent(st)}(end+1:end+numWaves) = spikesPlot';
-                end
-            else
-                stimNum(1,cds.waveforms.waveSent(st)) = stimNum(1,cds.waveforms.waveSent(st)) + 1;
-                if(~isempty(spikesPlot))
-                    spikeTimeData{1,cds.waveforms.waveSent(st)}(end+1:end+numWaves) = spikesPlot';
+        
+        arrayData{arrayDataIdx}.singleProb.meanSpikesEvoked_all = meanSpikesEvoked_all;
+        arrayData{arrayDataIdx}.singleProb.normNumStimsResponsive = normNumStimsResponsive;
+        arrayData{arrayDataIdx}.singleProb.meanSpikesEvoked_responsive = meanSpikesEvoked_responsive;
+
+    end
+    
+    %% compute pairwise probabilities
+    
+    for arrayDataIdx = 1:numel(arrayData)
+        arrayData{arrayDataIdx}.pairwiseProb.normNumStimsWithBothResponse = zeros(numel(arrayData),size(arrayData{arrayDataIdx}.bC,1),size(arrayData{arrayDataIdx}.bC,2));
+        arrayData{arrayDataIdx}.pairwiseProb.independenceProb = zeros(numel(arrayData),size(arrayData{arrayDataIdx}.bC,1),size(arrayData{arrayDataIdx}.bC,2));
+        for comparisonIdx = 1:numel(arrayData)
+            normNumStimsWithBothResponse = zeros(size(arrayData{arrayDataIdx}.bC));
+            independenceProb = zeros(size(arrayData{arrayDataIdx}.bC));
+            for c = 1:size(arrayData{arrayDataIdx}.bE,1)
+                for w = 1:1:size(arrayData{arrayDataIdx}.bE,2)
+                    % determine window if automatic windowing
+                    if(opts.AUTOMATIC_WINDOW) % get high time and low time automatically
+                        opts.WINDOW = getAutomaticWindow(arryaData,arrayDataIdx,c,w,opts);
+                    end
+
+                    [bothRespond(c,w),thisRespond(c,w),comparisonRespond(c,w), noRespond(c,w), independenceProb(c,w),difference(c,w)] = ...
+                        computePairwiseProbabilityOfResponse(arrayData,arrayDataIdx,comparisonIdx,c,w,opts);
+
                 end
             end
+            
+            arrayData{arrayDataIdx}.pairwiseProb.bothRespond(comparisonIdx,:,:) = bothRespond;
+            arrayData{arrayDataIdx}.pairwiseProb.thisRespond(comparisonIdx,:,:) = thisRespond;
+            arrayData{arrayDataIdx}.pairwiseProb.comparisonRespond(comparisonIdx,:,:) = comparisonRespond;
+            arrayData{arrayDataIdx}.pairwiseProb.noRespond(comparisonIdx,:,:) = noRespond;
+            arrayData{arrayDataIdx}.pairwiseProb.independenceProb(comparisonIdx,:,:) = independenceProb;
+            arrayData{arrayDataIdx}.pairwiseProb.difference(comparisonIdx,:,:) = difference;
+        end
+    end
+    
+end
+
+
+function [opts] = configureOpts(optsInput)
+
+    opts.WINDOW = [1,5]/1000;
+    opts.AUTOMATIC_WINDOW = 0;
+    opts.BASELINE_TIME = 3/1000;
+    opts.SUBTRACT_BASELINE = 1;
+    opts.COMPUTE_PAIRWISE = 0;
+    
+    %% check if in opts and optsInput, overwrite if so
+    try
+        inputFieldnames = fieldnames(optsInput);
+        for fn = 1:numel(inputFieldnames)
+           if(isfield(opts,inputFieldnames{fn}))
+               opts.(inputFieldnames{fn}) = optsInput.(inputFieldnames{fn});
+           end
+        end
+    catch
+        % do nothing, [] was inputted which means use default setting
+    end
+end
+
+%% this function computes the probability of response for a single unit
+function [meanSpikesEvoked_all, normNumStimsResponsive, meanSpikesEvoked_responsive] = computeProbabilityOfResponse(arrayData,arrayDataIdx,c,w,opts)
+
+    % get numSpikesEvoked/numStims for all stimulations
+    baseline = sum(arrayData{arrayDataIdx}.spikeTrialTimes{c,w} < min(opts.BASELINE_TIME))/(-1*arrayData{arrayDataIdx}.bE{c,w}(1)/1000+opts.BASELINE_TIME); % mean spikes/ms
+    ROI = sum(arrayData{arrayDataIdx}.spikeTrialTimes{c,w} > opts.WINDOW(1) & arrayData{arrayDataIdx}.spikeTrialTimes{c,w} < opts.WINDOW(2))/(opts.WINDOW(2)-opts.WINDOW(1)); % mean spikes/ms
+    if(opts.SUBTRACT_BASELINE)
+        meanSpikesEvoked_all = (ROI - baseline)*(opts.WINDOW(2)-opts.WINDOW(1))/(arrayData{arrayDataIdx}.numStims(c,w)-baseline*diff(opts.WINDOW));
+    else
+        meanSpikesEvoked_all = (ROI)*(opts.WINDOW(2)-opts.WINDOW(1))/(arrayData{arrayDataIdx}.numStims(c,w));
+    end
+    % get numSpikesEvoked/numStims for only those with a
+    % response
+    % get num stimulations with response / num stimulations
+    stimsWithResponse = unique(arrayData{arrayDataIdx}.stimData{c,w}(arrayData{arrayDataIdx}.spikeTrialTimes{c,w} > opts.WINDOW(1) & arrayData{arrayDataIdx}.spikeTrialTimes{c,w} < opts.WINDOW(2)));
+
+    if(opts.SUBTRACT_BASELINE)
+        normNumStimsResponsive = (numel(stimsWithResponse)-baseline*diff(opts.WINDOW))/(arrayData{arrayDataIdx}.numStims(c,w)-baseline*diff(opts.WINDOW));
+    else
+        normNumStimsResponsive = (numel(stimsWithResponse))/(arrayData{arrayDataIdx}.numStims(c,w));
+    end
+
+    if(opts.SUBTRACT_BASELINE)
+        meanSpikesEvoked_responsive = meanSpikesEvoked_all*(arrayData{arrayDataIdx}.numStims(c,w)-baseline*diff(opts.WINDOW))/(numel(stimsWithResponse)-baseline*diff(opts.WINDOW));
+    else
+        meanSpikesEvoked_responsive = meanSpikesEvoked_all*arrayData{arrayDataIdx}.numStims(c,w)/(numel(stimsWithResponse));
+    end
+
+end
+
+%% this function computes pairwise probabilities
+function [bothRespond,thisRespond,comparisonRespond,noRespond,independenceProb,difference] = computePairwiseProbabilityOfResponse(arrayData,arrayDataIdx,comparisonIdx,c,w,opts)
+    
+    if(arrayDataIdx == comparisonIdx)
+        normNumStimsWithBothResponse = -1;
+        independenceProb = -1;
+        difference = -1;
+        bothRespond = -1;
+        thisRespond = -1;
+        comparisonRespond = -1;
+        noRespond = -1;
+    else
+        %% compute P1*P2 and store
+        independenceProb = arrayData{arrayDataIdx}.singleProb.normNumStimsResponsive(c,w)*arrayData{comparisonIdx}.singleProb.normNumStimsResponsive(c,w);
+
+        %% find proportion of stimulations with spikes for both units
+        stimsWithResponse{1} = unique(arrayData{arrayDataIdx}.stimData{c,w}(arrayData{arrayDataIdx}.spikeTrialTimes{c,w} > opts.WINDOW(1) & ...
+            arrayData{arrayDataIdx}.spikeTrialTimes{c,w} < opts.WINDOW(2)));
+        stimsWithoutResponse{1} = 1:arrayData{arrayDataIdx}.numStims(c,w);
+        stimsWithoutResponse{1}(stimsWithResponse{1}) = [];
+        
+        stimsWithResponse{2} = unique(arrayData{comparisonIdx}.stimData{c,w}(arrayData{comparisonIdx}.spikeTrialTimes{c,w} > opts.WINDOW(1) & ...
+            arrayData{comparisonIdx}.spikeTrialTimes{c,w} < opts.WINDOW(2)));
+        stimsWithoutResponse{2} = 1:arrayData{arrayDataIdx}.numStims(c,w);
+        stimsWithoutResponse{2}(stimsWithResponse{2}) = [];
+        
+        baseline = sum(arrayData{arrayDataIdx}.spikeTrialTimes{c,w} < min(opts.BASELINE_TIME))/(-1*arrayData{arrayDataIdx}.bE{c,w}(1)/1000+opts.BASELINE_TIME);
+        baseline = baseline*sum(arrayData{comparisonIdx}.spikeTrialTimes{c,w} < min(opts.BASELINE_TIME))/(-1*arrayData{comparisonIdx}.bE{c,w}(1)/1000+opts.BASELINE_TIME);
+
+        
+        stimsWithBothResponse = intersect(stimsWithResponse{1},stimsWithResponse{2});
+        stimsWithThisResponseOnly = intersect(stimsWithResponse{1},stimsWithoutResponse{2});
+        stimsWithComparisonResponseOnly = intersect(stimsWithoutResponse{1},stimsWithResponse{2});
+        stimsWithNoResponse = intersect(stimsWithoutResponse{1}, stimsWithoutResponse{2});
+        
+        if(opts.SUBTRACT_BASELINE)
+            normNumStimsWithBothResponse = (numel(stimsWithBothResponse)-baseline*diff(opts.WINDOW))/(arrayData{arrayDataIdx}.numStims(c,w)-baseline*diff(opts.WINDOW));
+            %% what should these lines be?
+                normNumStimsWithThisResponseOnly = (numel(stimsWithThisResponseOnly))/(arrayData{arrayDataIdx}.numStims(c,w));
+                normNumStimsWithComparisonResponseOnly = (numel(stimsWithComparisonResponseOnly))/(arrayData{arrayDataIdx}.numStims(c,w));
+                normNumStimsWithNoResponse = (numel(stimsWithNoResponse))/(arrayData{arrayDataIdx}.numStims(c,w));
         else
-            if(any(isfield(cds.waveforms,'chanSent')))
-                chanNumber = find(unique(cds.waveforms.chanSent)==cds.waveforms.chanSent(st));
-                stimNum(chanNumber,1) = stimNum(chanNumber,1) + 1;
-                spikeTimeData{chanNumber,1}(end+1:end+numWaves) = spikesPlot';
-            else
-                stimNum(1,1) = stimNum(1,1) + 1;
-                spikeTimeData{1,1}(end+1:end+numWaves) = spikesPlot';
-            end
+            normNumStimsWithBothResponse = (numel(stimsWithBothResponse))/(arrayData{arrayDataIdx}.numStims(c,w));
+            normNumStimsWithThisResponseOnly = (numel(stimsWithThisResponseOnly))/(arrayData{arrayDataIdx}.numStims(c,w));
+            normNumStimsWithComparisonResponseOnly = (numel(stimsWithComparisonResponseOnly))/(arrayData{arrayDataIdx}.numStims(c,w));
+            normNumStimsWithNoResponse = (numel(stimsWithNoResponse))/(arrayData{arrayDataIdx}.numStims(c,w));
         end
+        difference = normNumStimsWithBothResponse - independenceProb;
+        
+        bothRespond = normNumStimsWithBothResponse;
+        thisRespond = normNumStimsWithThisResponseOnly;
+        comparisonRespond = normNumStimsWithComparisonResponseOnly;
+        noRespond = normNumStimsWithNoResponse;
     end
 end
 
-%% calculate probability of detection
-prob = zeros(numChans,numWaveformTypes);
-for c = 1:numChans
-    for w = 1:numWaveformTypes
-        if(autoPeakPeriod) % get high time and low time automatically
-            % bin data
-            binSize = 0.0002;
-            bE = -preTime:binSize:postTime;
-            [bC,~] = histcounts(spikeTimeData{c,w},bE);
-            % find peak in PSTH between 0 and 5ms
-            zeroBin = floor(preTime/binSize);
-            [~,peakIdx] = max(bC(zeroBin:zeroBin+ceil(0.005/binSize)));
-            peakIdx = peakIdx + zeroBin - 1;
-            % get baseline rate
-            baselineRate = bC(1:zeroBin-floor(0.003/binSize)); % preTime to -3ms
-            % set high and low time based on baseline firing rate
-            lowTemp = find(bC(1:peakIdx) < baselineRate);
-            lowTime = bE(lowTemp(end));
-            highTemp = find(bC(peakIdx:end) < baselineRate);
-            highTime = highTemp(1);
-%             lowTime = bE(peakIdx)-0.001;
-%             highTime = bE(peakIdx)+0.001;
-        end
-        baseline = sum(spikeTimeData{c,w} < min(0,lowTime))/(min(0,lowTime)+preTime); % spikes/ms
-        ROI = sum(spikeTimeData{c,w} > lowTime & spikeTimeData{c,w} < highTime)/(highTime-lowTime); % spikes/ms
-        prob(c,w) = ((ROI - baseline)*(highTime-lowTime))/sum(cds.waveforms.waveSent == w & cds.waveforms.chanSent == chanList(c));
-    end
-end
+%% automatic window finder
+function [window] = getAutomaticWindow(arrayData,arrayDataIdx,c,w,opts)
 
-probOut = prob(chans,waveformTypes);
+    % find bin with edge at zero 
+    zeroBin = find(arrayData{arrayDataIdx}.bE{c,w} == 0);
 
+    % find peak in PSTH between 0 and 5ms
+    [~,peakIdx] = max(arrayData{arrayDataIdx}.bC{c,w}(zeroBin+floor(opts.WINDOW(1)/binSize):zeroBin+floor(opts.WINDOW(2)/binSize)));
+    peakIdx = peakIdx + zeroBin - 1; % shift over so it corresponds with normal indexing
+
+    % get baseline rate
+    baselineRate = mean(arrayData{arrayDataIdx}.bC{c,w}(1:zeroBin-floor(opts.BASELINE_TIME/binSize))); % preTime to -3ms
+
+    % set high and low time based on baseline firing rate
+    lowTemp = find(arrayData{arrayDataIdx}.bC{c,w}(1:peakIdx) < baselineRate);
+    window(1) = arrayData{arrayDataIdx}.bE{c,w}(lowTemp(end));
+    highTemp = find(arrayData{arrayDataIdx}.bC{c,w}(peakIdx:end) < baselineRate);
+    window(2) = highTemp(1);
+    %             lowTime = bE(peakIdx)-0.001;
+    %             highTime = bE(peakIdx)+0.001;
+    
 end

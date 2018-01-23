@@ -34,7 +34,8 @@ inputData.moreThanOnePulsePerWave = 0;
 inputData.numPulses = 10;
 inputData.pulseFrequency = 100;
 
-inputData.thresholdMult = 4.5;
+
+inputData.thresholdMult = 3.5;
 inputData.artifactSkip = 1;
 
 inputData.maxChunkLength = 5000*30; % 5 second chunk maximum
@@ -53,7 +54,7 @@ save(strcat(fileList(1).name(1:end-4),'_inputData.mat'),'inputData');
 
 artifactData = cell(endIndex,1);
 % process data
-for f = 1:endIndex
+for f = 2:endIndex
     warning('off')
     inputData.stimsPerBump = 1;
     if(~MERGE_FILES)
@@ -72,8 +73,8 @@ for f = 1:endIndex
 end
 
 % save('','artifactData')
-% 
-% %write nev file
+
+% write nev file
 % disp('writing nev file')
 % if(~MERGE_FILES) %write nev file
 %     nevDataAll = [];
@@ -113,7 +114,6 @@ end
 %     writeNEV(nevData, packetWidth, filename, mapFilename, comments )
 %     cd(pwd);
 % end
-
 
 cd(pwd);
 disp('DONE -- CAN CONTINUE')
@@ -208,7 +208,7 @@ end
 
 disp('done with this step')
 
-% if need to merge cds's now, do so here
+%% if need to merge cds's now, do so here
 % folderpath = 'R:\data\Mihili_12A3\stimRecord\Mihili_20170717_stimRecord\';
 pwd = cd;
 cd(folderpath)

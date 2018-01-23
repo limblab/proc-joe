@@ -33,6 +33,7 @@ function [ figureHandle ] = plotRasterBumpstim( cds,neuronNumber,optsTaskInput,o
     
     stimIdxStart = 1;
     stimIdxEnd = 100;
+    stimDataAll = [];
     for trialNum = 1:size(cds.trials,1)
         if(cds.trials.result(trialNum) == 'R' && ~isnan(cds.trials.tgtOnTime(trialNum)) && ~isnan(cds.trials.movePeriod(trialNum))) % if a reward trial and not a corrupted trial
             taskString = '';
@@ -40,7 +41,7 @@ function [ figureHandle ] = plotRasterBumpstim( cds,neuronNumber,optsTaskInput,o
             if(cds.trials.ctrHoldBump(trialNum) && cds.trials.stimCode(trialNum)==-1 && sum(strcmpi(optsTask.TRIAL_LIST,'ctrHoldBump')) > 0)
                 taskString = 'ctrHoldBump';
             elseif(cds.trials.ctrHoldBump(trialNum) && cds.trials.stimCode(trialNum)~=-1 && sum(strcmpi(optsTask.TRIAL_LIST,'ctrHoldBumpStim')) > 0)
-                taskString = 'ctrHoldBump';
+                taskString = 'ctrHoldBumpStim';
             elseif(cds.trials.delayBump(trialNum) && cds.trials.stimCode(trialNum)==-1 && sum(strcmpi(optsTask.TRIAL_LIST,'delayBump')) > 0)
                 taskString = 'delayBump';
             elseif(cds.trials.delayBump(trialNum) && cds.trials.stimCode(trialNum)~=-1 && sum(strcmpi(optsTask.TRIAL_LIST,'delayBumpStim')) > 0)
@@ -78,6 +79,7 @@ function [ figureHandle ] = plotRasterBumpstim( cds,neuronNumber,optsTaskInput,o
                         if(cds.stimOn(stimIdx) > cds.trials.startTime(trialNum) && cds.stimOn(stimIdx) < cds.trials.endTime(trialNum))
                             stimData{cellIdx(1),cellIdx(2),cellIdx(3),cellIdx(4)}(end+1,1) = cds.stimOn(stimIdx) - cds.trials.(optsTask.ZERO_MARKER)(trialNum);
                             stimData{cellIdx(1),cellIdx(2),cellIdx(3),cellIdx(4)}(end,2) = trialCounter(cellIdx(1),cellIdx(2),cellIdx(3),cellIdx(4));
+                            stimDataAll(end+1,1) = cds.stimOn(stimIdx);
                             stimIdxStart = stimIdx;
                             stimIdxEnd = stimIdxStart + 100;
                         end
@@ -317,7 +319,7 @@ function [ figureHandle ] = plotRasterBumpstim( cds,neuronNumber,optsTaskInput,o
                             optsPlot.Y_LIMITS = yLimits;
                         end
                         
-                        if(~isempty(combineData{trial,tgtDir,bumpDir,stimCode}))
+                        if(~isempty(optsTask.COMBINE) && ~isempty(combineData{trial,tgtDir,bumpDir,stimCode}))
                             optsPlot.Y_TICK = [1,combineData{trial,tgtDir,bumpDir,stimCode}',max(yData)];
                         else
                             optsPlot.Y_TICK = [1,max(yData)];

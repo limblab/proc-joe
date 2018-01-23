@@ -70,6 +70,7 @@ IO_LPS22HB::IO_LPS22HB() // constructor
 void IO_LPS22HB::begin(uint8_t address) {
   _address = address;
   Wire.begin();
+  Wire.setClock(100000);
   write(LPS22HB_RES_CONF, 0x0); // resolution: temp=32, pressure=128
   write(LPS22HB_CTRL_REG1, 0b01010000); // 75Hz continuous streaming
 }

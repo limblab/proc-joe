@@ -27,9 +27,9 @@ function [ figHandle ] = plotRasterLIB(xData,yData,optsPlotInput,optsSaveInput)
         switch optsPlot.SORT_DATA
             case 'postStimuliTime'
                 xDataShort = xData;
-                xDataShort(xData <= 0) = 100000;
+                xDataShort(xData <= 0) = 100000; % need to make those times below 0 a big number to sort post stimuli time
                 yDataShort = yData;
-                [xDataShort,sortIdx] = sort(xDataShort);
+                [~,sortIdx] = sort(xDataShort);
                 yDataShort = yDataShort(sortIdx);
                 sortIdx = unique(yDataShort,'stable');
                 yDataSorted = yData;

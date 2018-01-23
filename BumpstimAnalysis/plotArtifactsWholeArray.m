@@ -1,44 +1,53 @@
-% plot artifacts on a subset of the array
+function [figHandles] = plotArtifactsWholeArray(cds,mapFilename, opts)
+% plot artifacts across the array (or a subset)
 
-figure('Position',[357.8000 56.2000 838.4000 726.4000]);
-mapData=loadMapFile(mapFileName);
-%establish trackers for information that is common to all files:
-posList=[];
-posList = [mapData.row,mapData.col];
-plottedHere = zeros(10,10);% plot neurons
-stimChan = 73;
+    opts = configureOptions(opts);
 
-for chan = 1:96
-    posIdx=find(mapData.chan==chan);
-    eRow=posList(posIdx,1);
-    eRow = 11 - eRow;
-    eCol=posList(posIdx,2);
-%     h=subplot(10,10,10*(eRow-1)+eCol);
-%     plottedHere(eRow,eCol) = 1;
-
-    if(eRow >= 4 && eRow <= 8 && eCol <= 3) 
-        h=subplot(5,3,3*(eRow-4)+eCol);
-        plottedHere(eRow,eCol) = 1;
-        %% PLOT ARTIFACTS CODE
-        xData = ((0:1:size(dataStruct2.artifactData(1).artifact,3)-1)-inputData.presample)/30;
-        plot(xData,squeeze(dataStruct2.artifactData(1).artifact(chan,1:10:end,:))','r','linewidth',1.5)
-        hold on
-        plot(xData,squeeze(dataStruct2.artifactData(1).artifact(chan,2:10:end,:))','b','linewidth',1.5)
-
-        % remove axes
-        % plot one set of axes
-        xlim([-0.3,5])
-        ylim([-1000,1000])
-        if(eRow == 8 && eCol == 1)
-            set(gca,'visible','on')
-            set(gca,'fontsize',16)
-            formatForLee(gcf)
-            set(gca,'YTick',[-1000,1000])
-            set(gca,'YMinorTick','off')
-            set(gca,'YTickLabel',[])
-            xlabel('Time after stimulation onset (ms)')
-            ylabel('Voltage (\muV)')
-        else
+    % make figure
+    figure('Position',[357.8000 56.2000 838.4000 726.4000]);
+    mapData=loadMapFile(mapFilename);
+    %establish trackers for information that is common to all files:
+    posList = [mapData.row,mapData.col];
+    plottedHere = zeros(10,10);% plotted neurons here
+    
+    numRows = max(opts.ROWS_PLOT) - min(opts.ROWS_PLOT) + 1;
+    numCols = max(opts.COLS_PLOT) - min(opts.COLS_PLOT) + 1;
+    
+    % get artifact indexes corresponding to waveform to plot
+    artifactMult = numel(cds.stimOn)/size(cds.artifactData.artifact,1);
+    channelList = unique(cds.waveforms.chanSent);
+    artifactIdx = find(cds.waveforms.waveSent(1:artifactMult:end) == opts.WAVEFORM_PLOT & ...
+        cds.waveforms.chanSent(1:artifactMult:end) == channelList(opts.CHANNEL_PLOT));
+    
+    for chan = 1:96
+        posIdx=find(mapData.chan==chan);
+        eRow=posList(posIdx,1);
+        eRow = 11 - eRow;
+        eCol=posList(posIdx,2);
+        if(~isempty(find(opts.ROWS_PLOT,eRow)) && ~isempty(find(opts.COLS_PLOT,eCol)))
+            h=subplot(numRows,numCols,numCols*(eRow-min(opts.ROWS_PLOT))+eCol);
+            plottedHere(eRow,eCol) = 1;
+            
+            xData = ((0:1:size(cds.artifactData.artifact,3)-1))/30;
+            
+            if(opts.MARK_BANK)
+                switch mapData.bank{posIdx}
+                    case 'A'
+                        colorPlot = 'r';
+                    case 'B' 
+                        colorPlot = [0, 0.5, 0];
+                    case 'C'
+                        colorPlot = 'b';
+                end
+            else
+                colorPlot = 'r';
+            end
+            plot(xData,squeeze(cds.artifactData.artifact(artifactIdx(1:min(opts.ARTIFACTS_PLOT,numel(artifactIdx))),chan,:))','color',colorPlot,'linewidth',1.5)
+        
+            % remove axes
+            xlim(opts.XLIM)
+            ylim(opts.YLIM)
+            
             set(gca,'XTickLabel',[])
             set(gca,'YTickLabel',[])
             set(gca,'XLabel',[]);
@@ -49,37 +58,65 @@ for chan = 1:96
             set(gca,'YMinorTick','off')
             set(gca,'Visible','off')
         end
-        
-        
-        
+
     end
+
+    % mark stim chan (if requested)
+    if(opts.MARK_STIM_CHAN)
+        posIdx=find(mapData.chan==channelList(opts.CHANNEL_PLOT));
+        eRow=posList(posIdx,1);
+        eRow = 11 - eRow;
+        eCol=posList(posIdx,2);
+        h=subplot(10,10,10*(eRow-1)+eCol);
+        % h=subplot(5,3,3*(eRow-4)+eCol);
+        hold on
+        ax = h;
+        XLIM = ax.XLim;
+        YLIM = ax.YLim;
+        if(plottedHere(eRow,eCol)==1)
+            stimBoxX=[XLIM(1),XLIM(2),XLIM(2),XLIM(1),XLIM(1)];
+            stimBoxY=[YLIM(1),YLIM(1),YLIM(2),YLIM(2),YLIM(1)];
+            plot(ax,stimBoxX,stimBoxY,'m-','linewidth',2)
+        else
+        %                 stimCrossX1 = [XLIM(1),XLIM(2)];
+        %                 stimCrossY1 = [YLIM(1),YLIM(2)];
+        %                 stimCrossX2 = [XLIM(1),XLIM(2)];
+        %                 stimCrossY2 = [YLIM(2),YLIM(1)];
+            stimDotX = (XLIM(2) + XLIM(1))/2;
+            stimDotY = (YLIM(2) + YLIM(1))/2;
+            plot(ax,stimDotX,stimDotY,'m','markersize',75)
+            xlim(XLIM)
+            ylim(YLIM)
+            set(ax,'visible','off')
+            set(ax,'color','none')
+        end
+    end
+
 end
 
-% mark stim chan
-posIdx=find(mapData.chan==stimChan);
-eRow=posList(posIdx,1);
-eRow = 11 - eRow;
-eCol=posList(posIdx,2);
-% h=subplot(10,10,10*(eRow-1)+eCol);
-h=subplot(5,3,3*(eRow-4)+eCol);
-hold on
-ax = gca;
-XLIM = ax.XLim;
-YLIM = ax.YLim;
-if(plottedHere(eRow,eCol)==1)
-    stimBoxX=[XLIM(1),XLIM(2),XLIM(2),XLIM(1),XLIM(1)];
-    stimBoxY=[YLIM(1),YLIM(1),YLIM(2),YLIM(2),YLIM(1)];
-    plot(stimBoxX,stimBoxY,'m-','linewidth',3)
-else
-%                 stimCrossX1 = [XLIM(1),XLIM(2)];
-%                 stimCrossY1 = [YLIM(1),YLIM(2)];
-%                 stimCrossX2 = [XLIM(1),XLIM(2)];
-%                 stimCrossY2 = [YLIM(2),YLIM(1)];
-    stimDotX = (XLIM(2) + XLIM(1))/2;
-    stimDotY = (YLIM(2) + YLIM(1))/2;
-    plot(stimDotX,stimDotY,'m','markersize',75)
-    xlim(XLIM)
-    ylim(YLIM)
-    set(ax,'visible','off')
-    set(ax,'color','none')
+function [opts] = configureOptions(optsInput)
+    opts.ROWS_PLOT = 1:10;
+    opts.COLS_PLOT = 1:10;
+    opts.CHANNEL_PLOT = 1;
+    opts.WAVEFORM_PLOT = 1;
+    opts.ARTIFACTS_PLOT = 10;
+    
+    opts.XLIM = [-0.3,5];
+    opts.YLIM = [-9000, 9000];
+    opts.MARK_STIM_CHAN = 1;
+    opts.MARK_BANK = 1;
+    %% check if in opts and optsInput, overwrite if so
+    try
+        inputFieldnames = fieldnames(optsInput);
+        for fn = 1:numel(inputFieldnames)
+           if(isfield(opts,inputFieldnames{fn}))
+               opts.(inputFieldnames{fn}) = optsInput.(inputFieldnames{fn});
+           end
+        end
+    catch
+        % do nothing, [] was inputted which means use default setting
+    end
+    
 end
+
+
