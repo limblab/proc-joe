@@ -1,17 +1,18 @@
 clear%% process stimulation artifacts:
 pwd = cd;
-folderpath= 'R:\data\Test data\joe\artificialMonkey_20171130_dukeBoardV2MOD\';
+folderpath= 'R:\data\Chips_12H1\RAW\Chips_20171117_dukeBoardV2_stimRecord\';
 % inputData.mapFile='mapFileR:\limblab\lab_folder\Animal-Miscellany\Mihili 12A3\Mihili Left PMd SN 6251-001460.cmp'; % chips mapfile location
 % inputData.mapFile='mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 inputData.mapFile = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
-inputData.task='taskWF';
+inputData.task='taskCO';
 inputData.ranBy='ranByJoseph'; 
 inputData.array1='arrayLeftS1'; 
 inputData.monkey='monkeyChips';
 
-inputData.dukeBoardChannel = 27;
+inputData.dukeBoardChannel = 67;
 inputData.dukeBoardLabel = 'ainp15';
 
+inputData.issueExists = 0;
 
 inputData.badChList=0;
 inputData.interpulse=.000053;%in s
@@ -24,7 +25,7 @@ inputData.templateSubtract = 0;
 inputData.templateSize = 99/1000;
 
 inputData.blankPeriod = floor(0.0*30);
-inputData.artifactDataTime = 10; % in ms
+inputData.artifactDataTime = 25; % in ms
 
 inputData.preOffset = 22;
 inputData.postOffset = 25;
@@ -33,9 +34,11 @@ inputData.moreThanOnePulsePerWave = 0;
 inputData.numPulses = 10;
 inputData.pulseFrequency = 100;
 
+
 inputData.thresholdMult = 3.5;
 inputData.artifactSkip = 1;
 
+inputData.maxChunkLength = 5000*30; % 5 second chunk maximum
 %% generates _cds and _nevData files, also writes nev file
 cd(folderpath)
 fileList = dirSorted('*.nev');
@@ -111,7 +114,6 @@ end
 %     writeNEV(nevData, packetWidth, filename, mapFilename, comments )
 %     cd(pwd);
 % end
-% 
 
 cd(pwd);
 disp('DONE -- CAN CONTINUE')
@@ -334,7 +336,7 @@ fileListWaves = dirSorted('*_waveformsSent_*');
 for f = 1:numel(fileListWaves)
     load(fileListWaves(f).name);
     disp(num2str(f))
-    d=find(diff(cds.stimOn)>1);
+    d=find(diff(cds.stimOn)>10);
     if(~isempty(d))
         if(f==1)
             cds.waveforms.waveSent(1:d(1),1) = waveforms.waveSent(1:d(1));

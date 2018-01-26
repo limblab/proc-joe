@@ -46,8 +46,7 @@ function [outputFigures, outputData ] = processStimArtifactData(folderpath, inpu
     nevData = [];
     rawData = [];
     artifactDataTime = inputData.artifactDataTime; % in ms
-    artifactData.artifact = zeros(3000,96,artifactDataTime*30000/1000);
-    artifactData.t = zeros(3000,1);
+    artifactData.t = zeros(1000,1);
     artifactDataIndex = 1;
      
     for i=1:numel(fileList)
@@ -59,6 +58,10 @@ function [outputFigures, outputData ] = processStimArtifactData(folderpath, inpu
 
         cdsTemp.file2cds([folderpath,fileList(i).name],inputData.ranBy,inputData.array1,inputData.monkey,inputData.lab,inputData.task,inputData.mapFile);
         
+        % set artifactData.artifact size based on num channels, subtract 1
+        % for the time column
+        artifactData.artifact = zeros(1000,size(cdsTemp.lfp,2)-1,artifactDataTime*2*30000/1000);
+
         %% load waveformsSent file if it exists or make one if it does not exist
         underscoreIdx = find(fileList(i).name=='_');
         [~,fname,~] = fileparts(fileList(i).name);
@@ -185,6 +188,8 @@ function [outputFigures, outputData ] = processStimArtifactData(folderpath, inpu
                 end
             end
         end
+        
+        
         %% fix stim times if more than one pulse sent per wave
         if(inputData.moreThanOnePulsePerWave)
             stimOnTemp = [];
@@ -206,7 +211,7 @@ function [outputFigures, outputData ] = processStimArtifactData(folderpath, inpu
         
         %% extract data from cdsTemp so that the rest of the code moves quicker - table operations are slow af
         cdsTempLFP = cdsTemp.lfp{:,:};
-        % if the duke board is connected, then get the data from thecorrect analog pin
+        % if the duke board is connected, then get the data from the correct analog pin
         if(inputData.dukeBoardChannel > 0)
             cdsTempLFP(:,inputData.dukeBoardChannel+1) = -1*cdsTemp.analog{1,1}.(inputData.dukeBoardLabel)*1000/100;
         end
@@ -227,8 +232,29 @@ function [outputFigures, outputData ] = processStimArtifactData(folderpath, inpu
             end
         end
         artifactDataPre.stimOn = artifactDataPre.stimOn(logical(maskKeep));
-  
-        % merge cdsTemp with cds <- this one is everything but lfp + analog
+        
+        %% fix stim times if joe sees an issue with the data file
+        if(inputData.issueExists)
+            % cable falling out, remove stim times that this corresponds
+            % too
+            maskArtifactKeep = ones(numel(artifactDataPre.stimOn),1);
+            for artIdx = 1:numel(artifactDataPre.stimOn)
+                artData = cdsTempLFP(artifactDataPre.stimOn(artIdx):artifactDataPre.stimOn(artIdx)+90,inputData.dukeBoardChannel+1);
+                if(mean(artData) < -8000 || max(artData-mean(artData)) < 500)
+                    maskArtifactKeep(artIdx) = 0;
+                end
+            end
+            artifactDataPre.stimOn = artifactDataPre.stimOn(maskArtifactKeep==1);
+            % fix waveforms sent file
+            waveformFilename = strcat(fileList(i).name(1:underscoreIdx(end)),'waveformsSent',fname(underscoreIdx(end):end),'.mat');
+            load(waveformFilename)
+             
+            waveforms.chanSent = waveforms.chanSent(maskArtifactKeep == 1);
+            waveforms.waveSent = waveforms.waveSent(maskArtifactKeep == 1);
+            save(waveformFilename,'waveforms','-v7.3');
+        end
+        
+        %% merge cdsTemp with cds <- this one is everything but lfp + analog
         if(strcmp(inputData.task,'taskCObump'))
             if(i==1)
                 % rewrite everything into cds -- which is really not a
@@ -246,6 +272,7 @@ function [outputFigures, outputData ] = processStimArtifactData(folderpath, inpu
                 cds.emg = cdsTemp.emg;
                 cds.analog = {};
                 cds.stimOn = cdsTempLFP(artifactDataPre.stimOn,1); % use the lfp times because artifact data might start at non-zero value
+                cds.timeOffset = cdsTempLFP(1,1);
                 cds.stimOff = cdsTempLFP(artifactDataPre.stimOff,1);
 %                 cds.stimOn = artifactDataPre.stimOn/30000;
 %                 cds.stimOff = artifactDataPre.stimOff/30000;
@@ -306,6 +333,7 @@ function [outputFigures, outputData ] = processStimArtifactData(folderpath, inpu
                 cds.analog = {};
                 if(~noSync)
                     cds.stimOn = cdsTempLFP(artifactDataPre.stimOn,1);
+                    cds.timeOffset = cdsTempLFP(1,1);
                     cds.stimOff = cdsTempLFP(artifactDataPre.stimOff,1);
                 end
                 cds.triggers = cdsTemp.triggers;
@@ -373,7 +401,23 @@ function [outputFigures, outputData ] = processStimArtifactData(folderpath, inpu
             end
             
         end
-        % get thresholds for each channel based on non stim data
+        
+        %% add fake stim times so that the data processed is not too large and does not slow things down
+        artifactDataPreMask = ones(numel(artifactDataPre.stimOn),1);
+        artifactDataPreStimOnTemp = artifactDataPre.stimOn;
+        tempIdx = 2;
+        while tempIdx < numel(artifactDataPreStimOnTemp)
+            if(artifactDataPreStimOnTemp(tempIdx) - artifactDataPreStimOnTemp(tempIdx-1) > inputData.maxChunkLength)
+                artifactDataPreStimOnTemp = [artifactDataPreStimOnTemp(1:tempIdx-1,1);artifactDataPreStimOnTemp(tempIdx-1)+inputData.maxChunkLength;...
+                    artifactDataPreStimOnTemp(tempIdx:end,1)];
+                artifactDataPreMask = [artifactDataPreMask(1:tempIdx-1,1); 0; artifactDataPreMask(tempIdx:end,1)];
+            end
+            tempIdx = tempIdx + 1;
+        end
+        artifactDataPre.stimOn = artifactDataPreStimOnTemp;
+        
+        
+        %% get thresholds for each channel based on non stim data
         thresholdAll = zeros(size(cdsTempLFP,2)-1,1);
         flagStop = 0;
         for ch = 2:size(cdsTempLFP,2)
@@ -458,6 +502,11 @@ function [outputFigures, outputData ] = processStimArtifactData(folderpath, inpu
 %                 threshold = abs(rms(stimData(max(1,numel(stimData(:,ch))-10):end,ch))*thresholdMult);
                 thresholdCrossings = find(stimData(:,ch)>abs(threshold));
                 
+                %% append data before and after stimData to get spikes near the edges
+                numAppend = 100;
+                stimData = [zeros(numAppend,size(stimData,2));stimData(:,:);zeros(numAppend,size(stimData,2))];
+                thresholdCrossings = thresholdCrossings + numAppend;
+                
                 % remove potential artifacts and too close to beginning/end
                 % of stim data
                 crossingsMask = ones(numel(thresholdCrossings),1);
@@ -509,11 +558,10 @@ function [outputFigures, outputData ] = processStimArtifactData(folderpath, inpu
                 % store thresholdCrossing data
                 for cross = 1:numel(thresholdCrossings)
                     if(stimIdx == 1)
-                        spikeTimes(spikeNum) = cdsTempLFP(thresholdCrossings(cross)-1,1); % this is in seconds
+                        spikeTimes(spikeNum) = cdsTempLFP(thresholdCrossings(cross)-numAppend,1); % this is in seconds
                         
                     else
-                        spikeTimes(spikeNum) = cdsTempLFP(artifactDataPre.stimOn(stimIdx-1)+thresholdCrossings(cross)-1,1); % this is in secondss
-                        
+                        spikeTimes(spikeNum) = cdsTempLFP(artifactDataPre.stimOn(stimIdx-1)+thresholdCrossings(cross)-1-numAppend,1); % this is in secondss
                     end
                     spikeChan(spikeNum) = ch;
                     % check if too close to beginning or end
@@ -602,9 +650,10 @@ function [outputFigures, outputData ] = processStimArtifactData(folderpath, inpu
         clear spikeWaves
         
         % store artifact data
-        for art = 1:inputData.artifactSkip:numel(artifactDataPre.stimOn)
+        artifactDataPre.stimOn = artifactDataPre.stimOn(artifactDataPreMask==1,1);
+        for art = 1:inputData.artifactSkip:numel(artifactDataPre.stimOn)           
             if(artifactDataPre.stimOn(art) + artifactDataTime*30000/1000 <= size(cdsTempLFP,1))
-                artifactData.artifact(artifactDataIndex,:,:) = cdsTempLFP(artifactDataPre.stimOn(art):artifactDataPre.stimOn(art)+floor(artifactDataTime*30000/1000)-1,2:end)';
+                artifactData.artifact(artifactDataIndex,:,:) = cdsTempLFP(artifactDataPre.stimOn(art)-floor(artifactDataTime*30000/1000):artifactDataPre.stimOn(art)+floor(artifactDataTime*30000/1000)-1,2:end)';
                 if(i==1)
                     artifactData.t(artifactDataIndex,1) = cdsTempLFP(artifactDataPre.stimOn(art),1);
                 else
