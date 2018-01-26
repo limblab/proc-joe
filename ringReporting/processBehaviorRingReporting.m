@@ -12,9 +12,12 @@ function [behaviorData,figureHandles] = processBehaviorRingReporting(cds,opts)
     end
     
     for bm = 1:numel(opts.BUMP_MAGS)
-        behaviorData.percentCorrect(bm) = sum(cds.trials.result == 'R' & cds.trials.showOuterTarget == 0 & cds.trials.bumpMagnitude == opts.BUMP_MAGS(bm))/...
-            sum((cds.trials.result == 'R' | cds.trials.result == 'F') & cds.trials.showOuterTarget == 0 & cds.trials.bumpMagnitude == opts.BUMP_MAGS(bm));
+        behaviorData.percentCorrect(bm) = sum(cds.trials.result == 'R' & cds.trials.showOuterTarget == 0 & ~isnan(cds.trials.bumpMagnitude) & cds.trials.bumpMagnitude == opts.BUMP_MAGS(bm))/...
+            sum((cds.trials.result == 'R' | cds.trials.result == 'F') & cds.trials.showOuterTarget == 0 & ~isnan(cds.trials.bumpMagnitude) & cds.trials.bumpMagnitude == opts.BUMP_MAGS(bm));
     end
+    
+    behaviorData.percentCorrect_all = sum(cds.trials.result == 'R' & cds.trials.showOuterTarget == 0 & ~isnan(cds.trials.bumpMagnitude))/...
+            sum((cds.trials.result == 'R' | cds.trials.result == 'F') & cds.trials.showOuterTarget == 0 & ~isnan(cds.trials.bumpMagnitude));
     %% look at % correct as a function of tgtDir (make plot) and bump mag
     % opts.NUM_BINS_DIR is the number of bins to divide the circle into
      
@@ -74,18 +77,23 @@ function [behaviorData,figureHandles] = processBehaviorRingReporting(cds,opts)
         
         % plot distribution of target errors
         angleWindow = [-1000,1000];
+        opts.PLOT_ALL_BUMP_MAGS = 0;
         plotReachDistribution(cds,angleWindow,opts);
         
+        angleWindow = [90,180];
+        opts.PLOT_ALL_BUMP_MAGS = 0;
+        plotReachDistribution(cds,angleWindow,opts);
     end
     
     %% plot polar plot showing distribution of target centers to check for randomness
-    [tgtDistribution] = histcounts(cds.trials.tgtDir(cds.trials.result == 'R' | cds.trials.result == 'F'),behaviorData.bin_edges);
-    figureHandles{end+1} = figure;
-    theta = deg2rad([behaviorData.bin_edges(1:end-1),behaviorData.bin_edges(1)] + (behaviorData.bin_edges(2)-behaviorData.bin_edges(1))/2);
-    rho = [tgtDistribution,tgtDistribution(1)]/sum(cds.trials.result == 'R' | cds.trials.result == 'F'); % closing the cirlce by including the first value twice
-    polarplot(theta,rho,'-.','markersize',opts.MARKER_SIZE,'linewidth',opts.LINE_WIDTH);
-    figureHandles{end}.Children(1).RLim = [0,1/opts.NUM_BINS_DIR + 0.1]; % radius limits from 0 to 1
-    
+%     [tgtDistribution] = histcounts(cds.trials.tgtDir((cds.trials.result == 'R' | cds.trials.result == 'F') & ~isnan(cds.trials.tgtDir)),behaviorData.bin_edges);
+%     figureHandles{end+1} = figure;
+%     theta = deg2rad([behaviorData.bin_edges(1:end-1),behaviorData.bin_edges(1)] + (behaviorData.bin_edges(2)-behaviorData.bin_edges(1))/2);
+%     rho = [tgtDistribution,tgtDistribution(1)]/sum((cds.trials.result == 'R' | cds.trials.result == 'F') & ~isnan(cds.trials.tgtDir)); % closing the cirlce by including the first value twice
+%     polarplot(theta,rho,'-.','markersize',opts.MARKER_SIZE,'linewidth',opts.LINE_WIDTH);
+%     title('target distribution for completed reaches')
+%     figureHandles{end}.Children(1).RLim = [0,1/opts.NUM_BINS_DIR + 0.1]; % radius limits from 0 to 1
+%     
     
    
     
@@ -168,6 +176,7 @@ function [figureHandle] = plotReachDistribution(cds,tgtAngleWindow,opts)
     kinY = cds.kin.y - opts.CENTER_Y;
     
     reachAngles = zeros(numel(cds.trials.number),1);
+    bumpMag = zeros(numel(cds.trials.number),1);
     sizeReachAngle = 0;
     angleOffsets = [-360,0,360];
     for tr = 1:numel(cds.trials.number)
@@ -184,16 +193,28 @@ function [figureHandle] = plotReachDistribution(cds,tgtAngleWindow,opts)
             reachAngle = 180/pi*atan2(yData(outerCircleIdx-1),xData(outerCircleIdx-1));
             [~,offsetIdx] = min(abs(cds.trials.tgtDir(tr) - (reachAngle+angleOffsets)));
             reachAngles(sizeReachAngle+1,1) = cds.trials.tgtDir(tr) - (reachAngle+angleOffsets(offsetIdx));
+            bumpMag(sizeReachAngle+1,1) = cds.trials.bumpMagnitude(tr);
             sizeReachAngle = sizeReachAngle + 1;
         end
     end
 
     reachAngles = reachAngles(1:sizeReachAngle);
-    % bin and plot reach angle
+    bumpMag = bumpMag(1:sizeReachAngle);
     
-    [bC,bE] = histcounts(reachAngles,'BinWidth',opts.DISTRIBUTION_BIN_SIZE);
-    bC = bC/numel(reachAngles);
-    bar(bE(1:end-1) + (bE(2)-bE(1))/2,bC);
+    if(opts.PLOT_ALL_BUMP_MAGS)
+        for bm = 1:numel(opts.BUMP_MAGS)
+            [bC,bE] = histcounts(reachAngles(bumpMag == opts.BUMP_MAGS(bm)),'BinWidth',opts.DISTRIBUTION_BIN_SIZE);
+            bC = bC/sum(bumpMag == opts.BUMP_MAGS(bm));
+            plot(bE(1:end-1) + (bE(2)-bE(1))/2,bC,'linewidth',opts.LINE_WIDTH);
+            hold on
+        end
+    else
+        % bin and plot reach angle
+        [bC,bE] = histcounts(reachAngles,'BinWidth',opts.DISTRIBUTION_BIN_SIZE);
+        bC = bC/numel(reachAngles);
+        bar(bE(1:end-1) + (bE(2)-bE(1))/2,bC);
+    end
+    
     
     formatForLee(gcf)
 end

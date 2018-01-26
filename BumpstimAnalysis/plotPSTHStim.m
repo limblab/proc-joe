@@ -122,7 +122,7 @@ function [opts] = configureOpts(optsInput)
     opts.SMOOTH_STD_DEV = 1;
     
     opts.PLOT_LINE = 0;
-    opts.LINE_COLOR = {'k','r',[0,0.5,0],'b','m','o'};
+    opts.LINE_COLOR = {'k','r',[0,0.5,0],'b','m',[0.5 0.5 0.5]};
     opts.PLOT_NO_RECORDING_BOX = 0;
     opts.NO_RECORDING_WINDOW = [0,1.0/1000];
     opts.NO_RECORDING_BOX_COLOR = [1.0,0.6,0.6];

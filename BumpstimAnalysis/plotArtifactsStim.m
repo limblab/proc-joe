@@ -91,7 +91,7 @@ end
 function [waveformsFiltered] = filterArtifactData(waveforms,opts)
     
     % pad
-    waveformsFiltered = [waveforms,mean(waveforms(:,end-opts.PAD_MEAN_LENGTH:end),2)*ones(1,opts.NUM_PAD)];
+    waveformsFiltered = [waveforms,mean(waveforms(:,end-opts.PAD_MEAN_LENGTH:end),2)*ones(1,opts.NUM_PAD)]; %+ 1/2*randn(size(waveforms,1),opts.NUM_PAD).*sqrt(var(waveforms(:,end-opts.PAD_VAR_LENGTH:end),0,2))];
     % flip, filter and flip
     waveformsFiltered = fliplr(filter(opts.B,opts.A,fliplr(waveformsFiltered)')');
     % unpad
@@ -178,10 +178,11 @@ function [opts] = configureOpts(optsInput)
     
     [opts.B,opts.A] = butter(6,500/(30000/2),'high');
     opts.NUM_PAD = 200;
-    opts.PAD_MEAN_LENGTH = 20;
-    
+    opts.PAD_MEAN_LENGTH = 0;
+    opts.PAD_VAR_LENGTH = 20;
     opts.WAVEFORMS_TO_PLOT = [];
     opts.CHANS_TO_PLOT = [];
+    
     
     %% check if in optsSave and optsSaveInput, overwrite if so
     try

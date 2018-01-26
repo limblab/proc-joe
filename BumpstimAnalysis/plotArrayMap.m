@@ -21,12 +21,15 @@ function [ figureHandle ] = plotArrayMap( cds,NEURON_NUMBER,MAP_FILE_NAME, opts 
     %% make square
     figureHandle.Position(4) = figureHandle.Position(3);
     figureHandle.Position(2) = figureHandle.Position(2) - 200; % move down to not be annoyingly off my screen
+    
+    ax = gca;
+    ax.Children(1).LineWidth = 1.5; % thicker box boundaries
     %% label stim electrode -- currently using an 'S' though this can be changed maybe later
     if(~isempty(opts.STIM_ELECTRODE))
         for stElec = 1:numel(opts.STIM_ELECTRODE)
             arrayMapIdx = find(arrayMap.chan == opts.STIM_ELECTRODE(stElec));
             if(~isempty(arrayMapIdx))
-                rowElec = arrayMap.row(arrayMapIdx);
+                rowElec = 11 - arrayMap.row(arrayMapIdx);
                 colElec = arrayMap.col(arrayMapIdx);
                 if(strcmpi(opts.STIM_ELECTRODE_LABEL,'string'))
                     if(numel(opts.STIM_ELECTRODE_COLOR) > 1)
@@ -51,7 +54,7 @@ function [ figureHandle ] = plotArrayMap( cds,NEURON_NUMBER,MAP_FILE_NAME, opts 
         for recElec = 1:numel(opts.RECORDING_ELECTRODE)
             arrayMapIdx = find(arrayMap.chan == opts.RECORDING_ELECTRODE(recElec));
             if(~isempty(arrayMapIdx))
-                rowElec = arrayMap.row(arrayMapIdx);
+                rowElec = 11 - arrayMap.row(arrayMapIdx);
                 colElec = arrayMap.col(arrayMapIdx);
                 if(strcmpi(opts.RECORDING_ELECTRODE_LABEL,'string'))
                     if(numel(opts.RECORDING_ELECTRODE_COLOR)>1)

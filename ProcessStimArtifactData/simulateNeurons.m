@@ -11,7 +11,7 @@ opts.MAP_FILE_NAME = 'R:\limblab\lab_folder\Animal-Miscellany\Chips_12H1\map_fil
 %% settings and run all code to generate a NEV file
 opts.CHANS_USE = [];
 opts.PACKET_WIDTH = 104;
-opts.WAVE_AMPLITUDE = 150;
+opts.WAVE_AMPLITUDE = 100;
 opts.MAX_CHANS_USE = 10;
 opts.THRESHOLD_MULT = -4;
 opts.IDX_ADD_NEURONS = [25:60];
@@ -34,16 +34,16 @@ if(isempty(opts.CHANS_USE)) % find channels based on unit data
 end
 
 % add artificial neurons to artifact data on specified channels
-artifact = cds.artifactData.artifact(:,opts.CHANS_USE,:);
+artifact = cds.artifactData.artifact(cds.waveforms.waveSent((0:size(cds.artifactData.artifact,1)-1)*5 + 1)==5,opts.CHANS_USE,:);
 artifactData_neurons = addArtificialNeurons(artifact, neuronData, opts);
 
 % get threshold data
-neuralData = thresholdData(artifactData_neurons.artifact,opts);
+% neuralData = thresholdData(artifactData_neurons.artifact,opts);
 
-% write nev file
-filename = 'Chips_20171026_neuronSimulation';
-writeNEV(neuralData, opts.PACKET_WIDTH, filename, opts.MAP_FILE_NAME, '')
-save(strcat(filename,'_inputData'),'opts');
+% % write nev file
+% filename = 'Chips_20171026_neuronSimulation';
+% writeNEV(neuralData, opts.PACKET_WIDTH, filename, opts.MAP_FILE_NAME, '')
+% save(strcat(filename,'_inputData'),'opts');
 
 %% generate get spike times form nev file
 NEV = openNEV(strcat(filename,'-s.nev'),'nosave');
@@ -60,25 +60,25 @@ saveFigures = 0;
 folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20171026\SimulationStudy\';
 
 plotFiltered = 0;
-idxsPlot = 30:5:opts.IDX_ADD_NEURONS(end);
-chan = 9;
+idxsPlot = 30:3:opts.IDX_ADD_NEURONS(end);
+chan = 50;
 figure();
 % artifactIdxAll = [];
 for idx = idxsPlot
-    artifactIdx = find(artifactData_neurons.neuronIdx == idx);
-    artifactIdx = datasample(artifactIdx,10,'replace',false);
+%     artifactIdx = find(artifactData_neurons.neuronIdx == idx);
+%     artifactIdx = datasample(artifactIdx,1,'replace',false);
 %     artifactIdxAll = [artifactIdxAll;artifactIdx];
     xData = ((1:1:size(artifactData_neurons.artifact,3))-1)/30;
     if(plotFiltered)
         plot(xData,fliplr(filter(opts.B,opts.A,fliplr(squeeze(artifactData_neurons.artifact(artifactIdx,chan,:))')))','linewidth',1.5)
     else
-        plot(xData,squeeze(artifactData_neurons.artifact(artifactIdx,chan,:))','linewidth',1.5)
+        plot(xData,squeeze(artifactData_neurons.artifact(artifactIdx,chan,:))','linewidth',2)
     end
     
     hold on
 end
 
-ylim([-1000,1000])
+ylim([-10000,10000])
 xlim([0,3])
 xlabel('Time after stimulation onset (ms)')
 ylabel('Voltage (\muV)')
@@ -86,7 +86,7 @@ set(gca,'fontsize',16)
 formatForLee(gcf)
 if(saveFigures)
     if(~plotFiltered)
-        saveFiguresLIB(gcf,folderpath,'Chips_20171026_exampleArtifactsWithSimulatedSpikes_unfiltered');
+        saveFiguresLIB(gcf,folderpath,'Chips_20171026_exampleArtifactsWithSimulatedSpikes_chan50_stimChan50_unfiltered');
     else
         saveFiguresLIB(gcf,folderpath,'Chips_20171026_exampleArtifactsWithSimulatedSpikes_filtered');
     end
