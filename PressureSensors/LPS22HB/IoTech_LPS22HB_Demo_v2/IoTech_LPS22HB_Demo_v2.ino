@@ -1,14 +1,11 @@
 /***************************************************************************
   This is a library for the LPS22HB Absolute Digital Barometer
-
   Designed to work with all kinds of LPS22HB Breakout Boards
-
   These sensors use I2C, 2 pins are required to interface, as this :
-	VDD to 3.3V DC
-	SCL to A5
-	SDA to A4
-	GND to common groud 
-
+  VDD to 3.3V DC
+  SCL to A5
+  SDA to A4
+  GND to common groud 
   Written by Adrien Chapelet for Iotech
  ***************************************************************************/
 
@@ -17,7 +14,7 @@
 
 /* 
  *  
- *  DEFINE SENSOR CLASS
+ *  DEFINE SENSOR CLASS 
  *  
  */
  
@@ -34,6 +31,21 @@
 #define LPS22HB_PRES_OUT_H  0X2A //MSB
 #define LPS22HB_TEMP_OUT_L  0X2B //LSB
 #define LPS22HB_TEMP_OUT_H  0X2C //MSB
+float pressure_in;
+float newPressure;
+float minPressure = 1650.0;
+float maxPressure = 990.0;
+int PWMpin = 9;
+int SYNCpin = 1;
+bool SYNCsig = 1;
+bool output_pressure_state = 0;
+float DEBOUNCE_TIME = 50;
+float last_debounce_time=0;
+bool button_state = 0;
+bool last_button_state = 0;
+int BUTTONpin = 10;
+bool button_was_pressed = 0;
+int FORCEpin = 0;
 
 
 
@@ -49,6 +61,7 @@ class IO_LPS22HB {
     float readPressure();
     uint32_t readPressureUI();
     uint32_t readPressureRAW();
+    
   
   private:
     uint8_t _address;
@@ -178,11 +191,7 @@ void IO_LPS22HB::write(uint8_t reg, uint8_t data) {
 
 
 /* 
-
-
 SETUP AND LOOP CODE BELOW 
-
-
 */
 
 
@@ -194,15 +203,59 @@ void setup()
   
   pinMode(A4,INPUT);
   pinMode(A5,INPUT);
+  pinMode(PWMpin, OUTPUT);
+  pinMode(SYNCpin, INPUT);
+  pinMode(BUTTONpin,INPUT);
+  pinMode(FORCEpin,INPUT);
+  Serial.begin(9600);
   
-	Serial.begin(9600);
-	
-	lps22hb.begin(0x5C);
+  lps22hb.begin(0x5C);
 
 }
 
 void loop()
 {
-	Serial.println(lps22hb.readPressure());
-}
+  button_state = digitalRead(BUTTONpin);
 
+  if(button_state != last_button_state) {
+    last_debounce_time = millis();
+  }
+  
+  if(button_state == 0 && millis() - last_debounce_time > DEBOUNCE_TIME) {
+    button_was_pressed = 1;
+  }
+  else if(button_state == 1 && button_was_pressed == 1 && millis() - last_debounce_time > DEBOUNCE_TIME) {
+    output_pressure_state = !output_pressure_state;
+    button_was_pressed = 0;
+    if(output_pressure_state == 0) {
+      SYNCsig = 0;
+      digitalWrite(SYNCpin, SYNCsig);
+    }
+  }
+  
+  last_button_state = button_state;
+
+
+  /* write sync output and to serial if button was pressed*/
+  //if(output_pressure_state == 1)
+  //{
+    /* get pressure reading and output pwm */
+    
+    pressure_in = lps22hb.readPressure();
+   // if(pressure_in < minPressure) pressure_in = minPressure;
+   // if(pressure_in > maxPressure) pressure_in = maxPressure;
+  
+  newPressure = ((pressure_in - minPressure)/(maxPressure-minPressure))*255.0;
+  
+  analogWrite(PWMpin, newPressure); 
+    
+  //Serial.print(analogRead(SYNCpin));
+  //Serial.print(",");
+  Serial.print(analogRead(FORCEpin));
+  Serial.print(",");
+  Serial.println(pressure_in);
+  
+  //}
+  //delay(10);
+
+}
