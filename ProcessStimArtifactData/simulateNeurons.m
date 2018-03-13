@@ -16,7 +16,7 @@ opts.MAX_CHANS_USE = 10;
 opts.THRESHOLD_MULT = -4;
 opts.IDX_ADD_NEURONS = [25:60];
 opts.NEURONS_PER_IDX = 300;
-[opts.B, opts.A] =butter(6,500/(30000/2),'high');
+[opts.B, opts.A] =butter(2,250/(30000/2),'high');
 
 % get a random set of channels to use
 
@@ -59,14 +59,14 @@ foundStruct = getPercentFound(spikeData,artifactData_neurons,opts);
 saveFigures = 0;
 folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20171026\SimulationStudy\';
 
-plotFiltered = 0;
+plotFiltered = 1;
 idxsPlot = 30:3:opts.IDX_ADD_NEURONS(end);
-chan = 50;
+chan = 5;
 figure();
 % artifactIdxAll = [];
 for idx = idxsPlot
-%     artifactIdx = find(artifactData_neurons.neuronIdx == idx);
-%     artifactIdx = datasample(artifactIdx,1,'replace',false);
+    artifactIdx = find(artifactData_neurons.neuronIdx == idx);
+    artifactIdx = datasample(artifactIdx,1,'replace',false);
 %     artifactIdxAll = [artifactIdxAll;artifactIdx];
     xData = ((1:1:size(artifactData_neurons.artifact,3))-1)/30;
     if(plotFiltered)
@@ -78,7 +78,7 @@ for idx = idxsPlot
     hold on
 end
 
-ylim([-10000,10000])
+ylim([-1000,1000])
 xlim([0,3])
 xlabel('Time after stimulation onset (ms)')
 ylabel('Voltage (\muV)')

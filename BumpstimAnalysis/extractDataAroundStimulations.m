@@ -29,6 +29,7 @@ function [ outputData ] = extractDataAroundStimulations( cds,opts )
     binEdges = cell(NUM_CHANS,NUM_WAVEFORM_TYPES);
     binCounts = cell(NUM_CHANS,NUM_WAVEFORM_TYPES);
     binCountsVar = cell(NUM_CHANS,NUM_WAVEFORM_TYPES);
+    kinData = cell(NUM_CHANS,NUM_WAVEFORM_TYPES);
     
     for c = 1:NUM_CHANS
         for i = 1:NUM_WAVEFORM_TYPES
@@ -52,11 +53,12 @@ function [ outputData ] = extractDataAroundStimulations( cds,opts )
                 
                 spikeDataTemp = repmat(cds.units(opts.NEURON_NUMBER).spikes.ts,1,min(numel(stimIdx)-st+1,opts.STIMULATION_BATCH_SIZE)) - ...
                     cds.stimOn(stimIdx(st:min(numel(stimIdx),st+opts.STIMULATION_BATCH_SIZE-1)))';
-                
+                spikeDataTrueTemp = repmat(cds.units(opts.NEURON_NUMBER).spikes.ts,1,min(numel(stimIdx)-st+1,opts.STIMULATION_BATCH_SIZE));
                 
                 spikeMask = spikeDataTemp > -opts.PRE_TIME & spikeDataTemp < opts.POST_TIME;
                 
                 spikeTimes = spikeDataTemp(spikeMask);% spike times
+                spikeDataTrue = spikeDataTrueTemp(spikeMask); % true spike times
                 [~,stimNums] = find(spikeMask); % stim num (column data)
                                 
                 if(opts.ALIGN_WAVES) % add 4/30 ms to get to negative deflection of spike since positive deflection is what we are aligned on
@@ -64,11 +66,10 @@ function [ outputData ] = extractDataAroundStimulations( cds,opts )
                 end
                 
                 
-                
                 numWaves = numel(spikeTimes);
                 if(numWaves > 0)
                     spikeTrialTimes{chan,wave}(arraySize(chan,wave)+1:arraySize(chan,wave)+numWaves) = spikeTimes';
-                    spikeTrueTimes{chan,wave}(arraySize(chan,wave)+1:arraySize(chan,wave)+numWaves) = spikeTimes'; % not correct, fix later
+                    spikeTrueTimes{chan,wave}(arraySize(chan,wave)+1:arraySize(chan,wave)+numWaves) = spikeDataTrue'; % not correct, fix later
                     stimuliData{chan,wave}(arraySize(chan,wave)+1:arraySize(chan,wave)+numWaves) = (stimNums+st-1)';
                     arraySize(chan,wave) = arraySize(chan,wave) + numWaves;
                 end
@@ -115,6 +116,32 @@ function [ outputData ] = extractDataAroundStimulations( cds,opts )
         end
     end
     
+    %% grab kin data for each stimulation
+    kin_dt = mode(diff(cds.kin.t));
+    for chan = 1:NUM_CHANS
+        for wave = 1:NUM_WAVEFORM_TYPES
+            stimIdx = find(cds.waveforms.waveSent(1:opts.STIMULATIONS_PER_TRAIN:end) == wave & cds.waveforms.chanSent(1:opts.STIMULATIONS_PER_TRAIN:end) == CHAN_LIST(chan));
+            kinData{chan,wave}.x = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
+            kinData{chan,wave}.y = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
+            kinData{chan,wave}.vx = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
+            kinData{chan,wave}.vy = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
+            kinData{chan,wave}.ax = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
+            kinData{chan,wave}.ay = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
+            
+            for st = 1:numel(stimIdx)
+                kinIdx = find(cds.stimOn(stimIdx(st)) <= cds.kin.t,1,'first');
+                if(~isempty(kinIdx))
+                    kinData{chan,wave}.x(st,:) = cds.kin.x(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
+                    kinData{chan,wave}.y(st,:) = cds.kin.y(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
+                    kinData{chan,wave}.vx(st,:) = cds.kin.vx(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
+                    kinData{chan,wave}.vy(st,:) = cds.kin.vy(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
+                    kinData{chan,wave}.ax(st,:) = cds.kin.ax(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
+                    kinData{chan,wave}.ay(st,:) = cds.kin.ay(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
+                end
+            end
+        end
+    end
+    
     %% store output data
     outputData.spikeTrialTimes = spikeTrialTimes;
     outputData.spikeTrueTimes = spikeTrueTimes;
@@ -124,13 +151,14 @@ function [ outputData ] = extractDataAroundStimulations( cds,opts )
     outputData.bE = binEdges;
     outputData.bCVar = binCountsVar;
     outputData.binMaxYLim = maxYLim;
+    outputData.kin = kinData;
     
     %% save useful stimulation related information
     outputData.CHAN_LIST = CHAN_LIST;
     outputData.STIM_PARAMETERS = cds.waveforms.parameters;
     outputData.WAVEFORM_SENT = cds.waveforms.waveSent;
     outputData.CHAN_SENT = cds.waveforms.chanSent;
-    
+    outputData.CHAN_REC = cds.units(opts.NEURON_NUMBER).chan;
 end
 
 function [opts] = configureOpts(optsInput)

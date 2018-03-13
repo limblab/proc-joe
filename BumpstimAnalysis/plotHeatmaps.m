@@ -10,11 +10,7 @@ function [figureHandles] = plotHeatmaps(arrayData,mapFileName,opts)
     if(size(opts.WAVEFORM_TYPES_PLOT,1) > size(opts.WAVEFORM_TYPES_PLOT,2))
         opts.WAVEFORM_TYPES_PLOT = opts.WAVEFORM_TYPES_PLOT';
     end
-    
-    if(opts.LOG_SCALE)
-        opts.MAX_RATIO = log10(opts.MAX_RATIO);
-        opts.MIN_RATIO = log10(opts.MIN_RATIO);
-    end
+
     
     %% useful constants
     figureHandles = {};
@@ -23,12 +19,16 @@ function [figureHandles] = plotHeatmaps(arrayData,mapFileName,opts)
     NUM_WAVEFORMS = size(arrayData{1,1}.spikeTrialTimes,2);
     
     MAP_DATA = loadMapFile(mapFileName);
+    
+    colorsBelowOne = [0*(0:63)' 0*(0:63)' 0+(0:63)'/(63)];
+    colorsAboveOne = [0+(0:63)'/(63) 0*(0:63)' 0*(0:63)'];
     %% plot a heatmap for each waveform type and stimulation channel
     for chan = opts.STIM_ELECTRODE_PLOT
         for wave = opts.WAVEFORM_TYPES_PLOT
             %% get data in the correct ranges from arrayData
             postStim_binEdgePre = max(find(arrayData{1,1}.bE{chan,wave} <= opts.STIM_PRE_TIME*1000));
             postStim_binEdgePost = max(find(arrayData{1,1}.bE{chan,wave} <= opts.STIM_POST_TIME*1000)); - 1;
+            numPostStimBins = postStim_binEdgePost - postStim_binEdgePre;
             
             baseline_binEdgePre = max(find(arrayData{1,1}.bE{chan,wave} <= opts.BASELINE_PRE_TIME*1000));
             baseline_binEdgePost = max(find(arrayData{1,1}.bE{chan,wave} <= opts.BASELINE_POST_TIME*1000)) - 1; % one more bin edge than bin count
@@ -37,15 +37,17 @@ function [figureHandles] = plotHeatmaps(arrayData,mapFileName,opts)
             dataPost = zeros(size(arrayData,1),1);
             
             for unit = 1:size(arrayData,1)
-                dataPost(unit) = mean(arrayData{unit,1}.bC{chan,wave}(postStim_binEdgePre:postStim_binEdgePost));
-                dataPre(unit) = mean(arrayData{unit,1}.bC{chan,wave}(baseline_binEdgePre:baseline_binEdgePost));
+                dataPost(unit) = sum(arrayData{unit,1}.bC{chan,wave}(postStim_binEdgePre:postStim_binEdgePost));
+                dataPre(unit) = numPostStimBins*mean(arrayData{unit,1}.bC{chan,wave}(baseline_binEdgePre:baseline_binEdgePost));
             end
             
-            dataRatio = dataPost./dataPre;
+            dataRatio = dataPost-dataPre;
         
             if(opts.LOG_SCALE)
-                dataRatio(dataRatio == 0) = 0+eps;
-                dataRatio = log10(dataRatio);
+                dataRatio = dataRatio+eps;
+                if(opts.MAX_RATIO == 0)
+                    opts.MAX_RATIO = eps;
+                end
             end
             
             dataRatio(dataRatio > opts.MAX_RATIO) = opts.MAX_RATIO;
@@ -56,7 +58,7 @@ function [figureHandles] = plotHeatmaps(arrayData,mapFileName,opts)
             figureHandles{end+1} = figure();
             figureHandles{end}.Position(4) = figureHandles{end}.Position(3);
             figureHandles{end}.Position(2) = figureHandles{end}.Position(2) - 200; % move down to not be annoyingly off my screen
-            colors = colormap(jet);
+
             plottedHere = zeros(10,10);
             
             surface(zeros(opts.NUM_ROWS+1,opts.NUM_COLS+1));
@@ -72,10 +74,28 @@ function [figureHandles] = plotHeatmaps(arrayData,mapFileName,opts)
             hold on
             % plot each unit
             for unit = 1:size(arrayData,1)
-                colorIdx = min(size(colors,1),max(1,floor(size(colors,1)*(dataRatio(unit)-opts.MIN_RATIO)/(opts.MAX_RATIO-opts.MIN_RATIO))));
+                if(dataRatio(unit) < 0)
+                    if(~opts.LOG_SCALE)
+                        mapping = floor(size(colorsBelowOne,1)*(-dataRatio(unit))/(-opts.MIN_RATIO));
+                    else
+                        mapping = floor(size(colorsBelowOne,1)*(log10(1+-(opts.LOG_PARAM-1)*dataRatio(unit)/-opts.MIN_RATIO)/log10(opts.LOG_PARAM)));
+%                         mapping = floor(size(colorsBelowOne,1)*(1-(log10(-dataRatio(unit)/-opts.MIN_RATIO))/(log10(eps))));
+                    end
+                    colorIdx = min(size(colorsBelowOne,1),max(1,mapping));
+                    colorToPlot = colorsBelowOne(colorIdx,:);
+                elseif(dataRatio(unit) >= 0)
+                    if(~opts.LOG_SCALE)
+                        mapping = floor(size(colorsAboveOne,1)*(dataRatio(unit))/(opts.MAX_RATIO));
+                    else
+                        mapping = floor(size(colorsAboveOne,1)*(log10(1 + opts.LOG_PARAM*dataRatio(unit)/opts.MAX_RATIO)/log10(1+opts.LOG_PARAM)));
+%                         mapping = floor(size(colorsBelowOne,1)*(1-(log10(dataRatio(unit)/opts.MAX_RATIO))/(log10(eps))));
+                    end
+                    colorIdx = min(size(colorsAboveOne,1),max(1,mapping));
+                    colorToPlot = colorsAboveOne(colorIdx,:);
+                end
                 
                 rectangle('Position',[arrayData{unit}.COL,arrayData{unit}.ROW,1,1],'EdgeColor','k',...
-                            'FaceColor',colors(colorIdx,:),'linewidth',0.1);
+                            'FaceColor',colorToPlot,'linewidth',0.1);
                 plottedHere(arrayData{unit}.COL,arrayData{unit}.ROW) = 1;
             end
             
@@ -106,30 +126,55 @@ function [figureHandles] = plotHeatmaps(arrayData,mapFileName,opts)
         end
     end
     
-    %% make bar plot
+    %% make bar plots
     if(opts.MAKE_BAR_PLOT)
-        figureHandles{end+1} = figure();
-        b = colorbar;
-        colormap jet;
-        set(gca,'Visible','off');
-        b.FontSize = 14;
-        b.Ticks = [0,0.25,0.5,0.75,1.0];
-        
-        maxDataRound = round(opts.MAX_RATIO,1);
-        minDataRound = round(opts.MIN_RATIO,1);
-        
-        b.TickLabels = {};
-        for i = b.Ticks
-            if(i==b.Ticks(end))
-                b.TickLabels{end+1,1} = strcat('>',num2str(i*(maxDataRound-minDataRound) + minDataRound));
+        for barMake = 1:2
+            figureHandles{end+1} = figure();
+            b = colorbar;
+            if(barMake == 1)
+                colormap(colorsAboveOne);
             else
-                b.TickLabels{end+1,1} = num2str(i*(maxDataRound-minDataRound) + minDataRound);
+                colormap(flip(colorsBelowOne,1));
             end
-        end
-        
-        if(opts.FIGURE_SAVE && strcmpi(FIGURE_DIR,'')~=1)
-            FIGURE_NAME = strcat(FIGURE_PREFIX,'_stimChan',num2str(arrayData{1,1}.CHAN_LIST(chan)),'_wave',num2str(wave),'_heatmapBarPlot');
-            saveFiguresLIB(figHandle,optsSave.FIGURE_DIR,FIGURE_NAME);
+            set(gca,'Visible','off');
+            b.FontSize = 14;
+            b.Ticks = [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0]; 
+            b.TickDirection = 'out';
+            
+            if(opts.LOG_SCALE)
+                b.Ticks = log10(1+(opts.LOG_PARAM-1)*b.Ticks)/log10(opts.LOG_PARAM);
+%                 if(barMake == 1)
+%                     b.Ticks = 1-(log10((b.Ticks+eps)*opts.MAX_RATIO))/(log10(eps));  
+%                 else
+%                     b.Ticks = 1-(log10((b.Ticks+eps)*opts.MIN_RATIO))/(log10(eps));
+%                 end
+            end
+            
+            if(barMake == 1)
+                maxDataRound = round(opts.MAX_RATIO,1);
+                minDataRound = 0;
+            else
+                maxDataRound = 0;
+                minDataRound = round(opts.MIN_RATIO,1);
+            end
+            
+            b.TickLabels = cell(1,numel(b.Ticks));
+
+            for i = 1:2:numel(b.Ticks)
+                if(i==numel(b.Ticks))
+                    b.TickLabels{i,1} = strcat('>',num2str((i-1)*(maxDataRound-minDataRound)/(numel(b.Ticks)-1) + minDataRound));
+                elseif(i==1)
+                    b.TickLabels{i,1} = strcat('<',num2str((i-1)*(maxDataRound-minDataRound)/(numel(b.Ticks)-1) + minDataRound));
+                else
+                    b.TickLabels{i,1} = num2str((i-1)*(maxDataRound-minDataRound)/(numel(b.Ticks)-1) + minDataRound);
+                end
+
+            end
+
+            if(opts.FIGURE_SAVE && strcmpi(FIGURE_DIR,'')~=1)
+                FIGURE_NAME = strcat(FIGURE_PREFIX,'_stimChan',num2str(arrayData{1,1}.CHAN_LIST(chan)),'_wave',num2str(wave),'_heatmapBarPlot');
+                saveFiguresLIB(figHandle,optsSave.FIGURE_DIR,FIGURE_NAME);
+            end
         end
     end
     
@@ -152,6 +197,7 @@ function [opts] = configureOpts(optsInput)
     opts.MAX_RATIO = 8;
     opts.MIN_RATIO = 1;
     opts.LOG_SCALE = 0;
+    opts.LOG_PARAM = 9;
     
     opts.FIGURE_SAVE = 0;
     opts.FIGURE_DIR = '';

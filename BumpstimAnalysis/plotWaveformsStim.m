@@ -156,12 +156,13 @@ function [figureHandle] = plotWaveforms(waveforms,opts)
     end
     
     % plot
+    if(~isempty(waveforms))
+        xData = ((1:size(waveforms,2))-1)/30;
+        plot(xData,waveforms-mean(waveforms(:,end-10:end),2))
+        ylim(opts.YLIM)
 
-    xData = ((1:size(waveforms,2))-1)/30;
-    plot(xData,waveforms-mean(waveforms(:,end-10:end),2))
-    ylim(opts.YLIM)
-        
-    formatForLee(gcf)
+        formatForLee(gcf)
+    end
     
 %     if(opts.PLOT_TITLE)
 %         title(opts.TITLE_TO_PLOT)
@@ -169,7 +170,7 @@ function [figureHandle] = plotWaveforms(waveforms,opts)
     
     % deal with saving plot
     if(opts.FIGURE_SAVE && strcmpi(opts.FIGURE_NAME,'')~=1 && strcmpi(opts.FIGURE_DIR,'')~=1)
-        saveFiguresLIB(figHandle,opts.FIGURE_DIR,strcat(opts.FIGURE_NAME));
+        saveFiguresLIB(gcf,opts.FIGURE_DIR,strcat(opts.FIGURE_NAME));
     end
     
     

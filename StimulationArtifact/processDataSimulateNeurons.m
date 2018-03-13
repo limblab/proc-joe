@@ -1,19 +1,19 @@
 %% process stimulation artifacts:
 pwd = cd;
-folderpath='C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20170124\';
+folderpath='C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\artificialMonkey_20180128_modifiedFastSettle_tucker\';
 % folderpath='D:\Lab\Data\StimArtifact\Chips_one\';
 functionName='processStimArtifact';
 
 %%
-inputData.task='taskRW';
+inputData.task='taskCObump';
 inputData.ranBy='ranByTucker'; 
-inputData.array1='arrayPMD'; 
-inputData.monkey='monkeyMihili';
+inputData.array1='arrayLeftS1'; 
+inputData.monkey='monkeyChips';
 % inputData.mapFile = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Mihili 12A3\Mihili Left PMd SN 6251-001460.cmp';
 inputData.mapFile = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
 % inputData.mapFile = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 
-inputData.badChList=[1:17,19:96];
+inputData.badChList=[];
 inputData.interpulse=.000053;%in s
 inputData.pWidth1=.0002;
 inputData.pWidth2=.0002;

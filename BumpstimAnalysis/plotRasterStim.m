@@ -16,7 +16,21 @@ function [figureHandle] = plotRasterStim(unitData,NEURON_NUMBER,optsPlot)
             xData = unitData.spikeTrialTimes{chan,wave}*1000;
             yData = unitData.stimData{chan,wave};
 
-            optsPlot.SORT_DATA = opts.SORT_DATA;
+            if(strcmpi(opts.SORT_DATA,'velocity')) % handle the sort
+                vx = unitData.kin{chan,wave}.vx;
+                vy = unitData.kin{chan,wave}.vy;
+                vel = mean(vx.^2 + vy.^2,2);
+                [~,sortIdx] = sort(vel);
+                [xData,yData] = sortRasterData(xData,yData,sortIdx);
+            elseif(strcmpi(opts.SORT_DATA,'acceleration'))
+                ax = unitData.kin{chan,wave}.ax;
+                ay = unitData.kin{chan,wave}.ay;
+                accel = mean(ax.^2 + ay.^2,2);
+                [~,sortIdx] = sort(accel);
+                [xData,yData] = sortRasterData(xData,yData,sortIdx);
+            else % plotRasterLIB handles the sort otherwise
+                optsPlot.SORT_DATA = opts.SORT_DATA;
+            end
             % plot related information
             optsPlot.MAKE_FIGURE = opts.MAKE_FIGURE;
             optsPlot.X_LIMITS = [-opts.PRE_TIME*1000,opts.POST_TIME*1000];
@@ -42,7 +56,7 @@ function [figureHandle] = plotRasterStim(unitData,NEURON_NUMBER,optsPlot)
             optsSave.FIGURE_SAVE = opts.FIGURE_SAVE;
             optsSave.FIGURE_DIR = opts.FIGURE_DIR;
             if(opts.FIGURE_SAVE)
-                optsSave.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'nn',num2str(NEURON_NUMBER),'_chan',num2str(cds.units(NEURON_NUMBER).chan),'_stimChan',num2str(CHAN_LIST(chan)),'_waveNum',num2str(wave),'_raster');
+                optsSave.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'nn',num2str(NEURON_NUMBER),'_chan',num2str(unitData.CHAN_REC),'_stimChan',num2str(CHAN_LIST(chan)),'_waveNum',num2str(wave),'_raster');
             else
                 optsSave.FIGURE_NAME = '';
             end
@@ -59,6 +73,19 @@ function [figureHandle] = plotRasterStim(unitData,NEURON_NUMBER,optsPlot)
 
 
 
+end
+
+function [xDataSorted,yDataSorted] = sortRasterData(xData,yData,sortIdx)
+
+    yDataSorted = yData;
+    xDataSorted = xData;
+    counter = 1;
+    for sIdx = 1:numel(sortIdx)
+        yDataSorted(counter:counter+sum(yData==sortIdx(sIdx))-1) = sIdx;
+        xDataSorted(counter:counter+sum(yData==sortIdx(sIdx))-1) = xData(yData==sortIdx(sIdx));
+        counter = counter+sum(yData==sortIdx(sIdx));
+    end
+    
 end
 
 

@@ -64,7 +64,7 @@ function [figureHandle] = plotPSTHStim(unitData,NEURON_NUMBER,optsPlot)
                 optsPlot.BAR_STYLE = 'bar';
             end
             if(opts.MAKE_LEGEND && ~isempty(opts.LEGEND_STR))
-                optsPlot.LEGEND_STRING = legStr;
+                optsPlot.LEGEND_STRING = opts.LEGEND_STR;
                 optsPlot.LEGEND_BOX = 'off';
             end      
             optsPlot.Y_LIMITS = [0,unitData.binMaxYLim];
@@ -89,9 +89,9 @@ function [figureHandle] = plotPSTHStim(unitData,NEURON_NUMBER,optsPlot)
             optsSave.FIGURE_DIR = opts.FIGURE_DIR;
             
             if(~opts.MAKE_SUBPLOTS && opts.FIGURE_SAVE && opts.PLOT_ALL_ONE_FIGURE)
-                optsSave.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'nn',num2str(neuronNumber),'_chan',num2str(cds.units(neuronNumber).chan),'_ALL_PSTH');
+                optsSave.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'nn',num2str(NEURON_NUMBER),'_chan',num2str(unitData.CHAN_REC),'_ALL_PSTH');
             elseif(~opts.MAKE_SUBPLOTS && opts.FIGURE_SAVE)
-                optsSave.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'nn',num2str(neuronNumber),'_chan',num2str(cds.units(neuronNumber).chan),'_stimChan',num2str(chanList(chan)),'_waveNum',num2str(wave),'_PSTH');
+                optsSave.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'nn',num2str(NEURON_NUMBER),'_chan',num2str(unitData.CHAN_REC),'_stimChan',num2str(chanList(chan)),'_waveNum',num2str(wave),'_PSTH');
             end
             
             optsPlot.PLOT_NO_RECORDING_BOX = opts.PLOT_NO_RECORDING_BOX;

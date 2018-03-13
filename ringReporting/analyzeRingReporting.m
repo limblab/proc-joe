@@ -1,6 +1,6 @@
 %% set file name and load file into cds
 
-folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\RingReporting\Chips_20180124\';
+folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\RingReporting\Chips_20180221\';
 mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
 
 inputData.array = 'arrayLeftS1';
@@ -15,10 +15,14 @@ cd(folderpath)
 fileList = dir('*nev*');
 cds = commonDataStructure();
 cds.file2cds(strcat(folderpath,fileList(1).name),inputData.array,inputData.monkey,inputData.ranBy,...
-    inputData.lab,inputData.mapFile,inputData.task,'recoverPreSync');
+    inputData.lab,inputData.mapFile,inputData.task,'recoverPreSync','ignoreJumps','ignoreFilecat');
 cd(pwd);
 
 %%
+opts.FIGURE_SAVE = 0;
+opts.FIGURE_PREFIX = 'Chips_20180226_RR';
+opts.FIGURE_DIR = folderpath;
+
 opts.NUM_BINS_DIR = 8;
 opts.MAKE_FIGURES = 1;
 opts.PLOT_POLAR = 1;
@@ -27,7 +31,10 @@ opts.CIRCLE_RADIUS = 7;
 opts.CIRCLE_DEPTH = 2;
 
 opts.DISTRIBUTION_BIN_SIZE = 5;
-opts.BUMP_MAGS = [];
+opts.BUMP_MAGS = [1.25];
 
 behaviorData = processBehaviorRingReporting(cds,opts);
 
+%% get reaction times for trials
+opts = [];
+rt = processReactionTime(cds,opts);

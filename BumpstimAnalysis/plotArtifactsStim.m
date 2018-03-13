@@ -94,6 +94,9 @@ function [waveformsFiltered] = filterArtifactData(waveforms,opts)
     waveformsFiltered = [waveforms,mean(waveforms(:,end-opts.PAD_MEAN_LENGTH:end),2)*ones(1,opts.NUM_PAD)]; %+ 1/2*randn(size(waveforms,1),opts.NUM_PAD).*sqrt(var(waveforms(:,end-opts.PAD_VAR_LENGTH:end),0,2))];
     % flip, filter and flip
     waveformsFiltered = fliplr(filter(opts.B,opts.A,fliplr(waveformsFiltered)')');
+    
+%     [b,a] = butter(2,7500/(30000/2),'low');
+%     waveformsFiltered = fliplr(filter(b,a,fliplr(waveformsFiltered)')');
     % unpad
     waveformsFiltered = waveformsFiltered(:,1:end-opts.NUM_PAD);
 
@@ -114,8 +117,9 @@ function [figureHandle] = plotArtifacts(waveforms,opts)
 
     % make figure
     figureHandle = figure();
-    xData  = ((1:size(waveforms,2))-1)/30;
-    
+    xData  = ((1:size(waveforms,2))-1 - size(waveforms,2)/2)/30;
+%     xData  = ((1:size(waveforms,2))-1)/30;
+
     % enumerate over subplots
     for row = 1:opts.ROW_SUBPLOT
         for col = 1:opts.COL_SUBPLOT
@@ -128,7 +132,7 @@ function [figureHandle] = plotArtifacts(waveforms,opts)
             % plot
             plotIdx = ((row-1)*opts.COL_SUBPLOT + col-1)*opts.MAX_WAVES_PLOT + 1;
             if(plotIdx < size(waveforms,1))
-                plot(xData,waveforms(plotIdx:min(size(waveforms,1),plotIdx+opts.MAX_WAVES_PLOT-1),:));
+                plot(xData,waveforms(plotIdx:min(size(waveforms,1),plotIdx+opts.MAX_WAVES_PLOT-1),:),'linewidth',1.5);
             end
             xlim(opts.XLIM)
             ylim(opts.YLIM)
@@ -151,20 +155,20 @@ end
 
 function [opts] = configureOpts(optsInput)
     
-    opts.ARTIFACT_MULTIPLIER = -1;
+    opts.ARTIFACT_MULTIPLIER = 1;
     opts.ADJUST_FOR_BIT_ERROR = 1;
 
-    opts.MAX_WAVES_PLOT = 10;
+    opts.MAX_WAVES_PLOT = 4;
     opts.ROW_SUBPLOT = 2;
     opts.COL_SUBPLOT = 2;
     
     opts.RANDOM_SAMPLE = 1;
     
-    opts.TIME_AFTER_STIMULATION_ARTIFACT = 5/1000;
+    opts.TIME_AFTER_STIMULATION_ARTIFACT = 10/1000;
     
     opts.PLOT_FILTERED = [0,1];
     
-    opts.PLOT_TITLE = 1; % not implemented
+    opts.PLOT_TITLE = 0; % not implemented
     opts.TITLE_TO_PLOT = '';
     
     opts.FIGURE_SAVE = 0;

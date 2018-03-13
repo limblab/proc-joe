@@ -99,6 +99,7 @@ function [ figHandle ] = plotPSTHLIB(xData,yData,optsPlotInput,optsSaveInput)
     if(strcmpi(optsPlot.LEGEND_STRING,'')~=1)
         l=legend(optsPlot.LEGEND_STRING);
         set(l,'box',optsPlot.LEGEND_BOX);
+        set(l,'fontsize',16);
     end
     
     % do x and y limits last

@@ -103,7 +103,7 @@ function [ outputFigures,outputData ] = processStimArtifact(folderpath, inputDat
                 artifactData(i).stimOff(j)=offIdx;
             end
         end
-
+    
         stimWindows=[artifactData(i).stimOn,artifactData(i).stimOn+inputData.windowSize-1];    
         %% find monitor data for cerestim monitoring ports:
         
@@ -144,9 +144,9 @@ function [ outputFigures,outputData ] = processStimArtifact(folderpath, inputDat
         artifactData(i).stimChannel=str2num(fileList(i).name(idxStart:idxEnd));
 
         if isempty(cds.lfp)
-            numChans=size(cds.analog{1,1},2);
+            numChans=size(cds.analog{1,1},2)-1;
         else
-            numChans=size(cds.lfp,2);
+            numChans=size(cds.lfp,2)-1;
         end
         
         

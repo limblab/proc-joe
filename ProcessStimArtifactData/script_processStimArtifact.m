@@ -1,15 +1,15 @@
 clear%% process stimulation artifacts:
 pwd = cd;
-folderpath= 'R:\data\Chips_12H1\RAW\Chips_20171117_dukeBoardV2_stimRecord\';
+folderpath= 'R:\data\Han_13B1\Raw\Han_20180304_chic201802\normalSetup\';
 % inputData.mapFile='mapFileR:\limblab\lab_folder\Animal-Miscellany\Mihili 12A3\Mihili Left PMd SN 6251-001460.cmp'; % chips mapfile location
-% inputData.mapFile='mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
-inputData.mapFile = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
+inputData.mapFile='mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+% inputData.mapFile = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
 inputData.task='taskCO';
 inputData.ranBy='ranByJoseph'; 
 inputData.array1='arrayLeftS1'; 
 inputData.monkey='monkeyChips';
 
-inputData.dukeBoardChannel = 67;
+inputData.dukeBoardChannel = -1;
 inputData.dukeBoardLabel = 'ainp15';
 
 inputData.issueExists = 0;
@@ -25,7 +25,7 @@ inputData.templateSubtract = 0;
 inputData.templateSize = 99/1000;
 
 inputData.blankPeriod = floor(0.0*30);
-inputData.artifactDataTime = 25; % in ms
+inputData.artifactDataTime = 10; % in ms
 
 inputData.preOffset = 22;
 inputData.postOffset = 25;
@@ -54,7 +54,7 @@ save(strcat(fileList(1).name(1:end-4),'_inputData.mat'),'inputData');
 
 artifactData = cell(endIndex,1);
 % process data
-for f = 2:endIndex
+for f = 3:endIndex
     warning('off')
     inputData.stimsPerBump = 1;
     if(~MERGE_FILES)
@@ -326,15 +326,16 @@ save(strcat(fileListProcessed(1).name(1:26),'_all_processed'),'cds','-v7.3');
 
 cd(pwd)
 disp('done merging')
-% if an interleaved set of trials, merge waveform sent information into cds
+%% if an interleaved set of trials, merge waveform sent information into cds
 cd(folderpath);
-fileListCDS = dirSorted('*all_processed.mat*');
-load(fileListCDS(1).name);
+fileListCDS = dirSorted('*_processed.mat*');
+% load(fileListCDS(1).name);
 cds.waveforms.waveSent = [];
 
 fileListWaves = dirSorted('*_waveformsSent_*');
 for f = 1:numel(fileListWaves)
     load(fileListWaves(f).name);
+    load(fileListCDS(f).name)
     disp(num2str(f))
     d=find(diff(cds.stimOn)>10);
     if(~isempty(d))
@@ -354,9 +355,9 @@ for f = 1:numel(fileListWaves)
         cds.waveforms.waveSent = waveforms.waveSent;
     end
     cds.waveforms.parameters = waveforms.parameters;
-
+    save(fileListCDS(f).name,'cds','-v7.3');
 end
 
-save(fileListCDS(1).name,'cds','-v7.3');
+% save(fileListCDS(1).name,'cds','-v7.3');
 
 disp('done interleaving')

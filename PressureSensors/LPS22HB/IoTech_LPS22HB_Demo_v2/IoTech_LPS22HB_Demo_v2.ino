@@ -241,7 +241,11 @@ void loop()
   //{
     /* get pressure reading and output pwm */
     
+    Serial.print(millis());
+    Serial.print(",");
     pressure_in = lps22hb.readPressure();
+    Serial.print(millis());
+    Serial.print(",");
    // if(pressure_in < minPressure) pressure_in = minPressure;
    // if(pressure_in > maxPressure) pressure_in = maxPressure;
   

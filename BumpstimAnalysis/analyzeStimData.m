@@ -1,14 +1,13 @@
 %% set file names 
-folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20171101_dukeBoard\';
-% folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20171024\';
+% folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20171025\';
+folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20171025\lowPass\';
 % mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 % mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Mihili 12A3\Mihili Left PMd SN 6251-001460.cmp';
 mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
-% mapFileName = 'C:\Users\Joseph\Desktop\Mihili Left PMd SN 6251-001460.cmp';
 
 pwd=cd;
 cd(folderpath)
-fileList = dir('*all_processed*');
+fileList = dir('*proc*');
 
 %% load file and parse for stim electrode number
 fileNumber = 1;
@@ -28,15 +27,15 @@ saveFigures = 0;
 
 %% extract relevant data for a given unit
 
-optsExtract.NEURON_NUMBER = 28;
+optsExtract.NEURON_NUMBER = 124;
 
 optsExtract.STIMULI_RESPONSE = 'all';
 optsExtract.STIM_ELECTRODE = unique(cds.waveforms.chanSent);
 optsExtract.STIMULATIONS_PER_TRAIN = 1;
 optsExtract.STIMULATION_BATCH_SIZE = 1000;
 
-optsExtract.PRE_TIME = 10/1000; % made negative in the function
-optsExtract.POST_TIME = 90/1000;
+optsExtract.PRE_TIME = 20/1000; % made negative in the function
+optsExtract.POST_TIME = 80/1000;
 optsExtract.BIN_SIZE = 0.2/1000;
 optsExtract.TIME_AFTER_STIMULATION_WAVEFORMS = 10/1000;
 
@@ -44,39 +43,51 @@ unitData = extractDataAroundStimulations(cds,optsExtract);
 
 %% plot raster, and PSTH for the given unit above
 optsPlotFunc.BIN_SIZE = optsExtract.BIN_SIZE;
+optsPlotFunc.FIGURE_SAVE =0;
+optsPlotFunc.FIGURE_DIR = folderpath;
+optsPlotFunc.FIGURE_PREFIX = 'Chips_20171024_dukeBoardV1_short';
 
 optsPlotFunc.PRE_TIME = 3/1000;
-optsPlotFunc.POST_TIME = 90/1000;
-optsPlotFunc.SORT_DATA = 'postStimuliTime';
+optsPlotFunc.POST_TIME = 30/1000;
+optsPlotFunc.SORT_DATA = '';
 
 rasterPlots = plotRasterStim(unitData,optsExtract.NEURON_NUMBER,optsPlotFunc);
 
 optsPlotFunc.PLOT_ALL_ONE_FIGURE = 1;
 optsPlotFunc.PLOT_LINE = 1;
+optsPlotFunc.PLOT_TITLE = 0;
 
 optsPlotFunc.SMOOTH = 0;
 optsPlotFunc.SMOOTH_STD_DEV = 0.35;
-
+optsPlotFunc.MAKE_LEGEND = 0;
+optsPlotFunc.LEGEND_STR = {'20\muA','40\muA'};
 PSTHPlots = plotPSTHStim(unitData,optsExtract.NEURON_NUMBER,optsPlotFunc);
 
 %% plot waveforms (raw and filtered)
-
 optsWaveforms = [];
-optsWaveforms.YLIM = [-800,600];
-opts.TIME_AFTER_STIMULATION_ARTIFACT = 12/1000;
+
+optsWaveforms.FIGURE_SAVE = 0;
+optsWaveforms.FIGURE_DIR = folderpath;
+optsWaveforms.FIGURE_PREFIX = 'Chips_20171024_dukeBoardV1_';
+
+optsWaveforms.YLIM = [-800,800];
+optsWaveforms.TIME_AFTER_STIMULATION_ARTIFACT = 4/1000;
 WaveformPlots = plotWaveformsStim(cds,optsExtract.NEURON_NUMBER,optsWaveforms);
 
 %% plot artifacts (raw and filtered)
 
 optsArtifacts = [];
-optsArtifacts.WAVEFORMS_TO_PLOT = [5];
-optsArtifacts.CHANS_TO_PLOT = [];
-optsArtifacts.YLIM = [-500,500];
+optsArtifacts.WAVEFORMS_TO_PLOT = [4];
+optsArtifacts.CHANS_TO_PLOT = [1];
+optsArtifacts.MAX_WAVES_PLOT = 25;
+optsArtifacts.YLIM = [-600,600];
+optsArtifacts.XLIM = [0,10];
 optsArtifacts.ADJUST_FOR_BIT_ERROR = 0;
 optsArtifacts.ROW_SUBPLOT = 1;
 optsArtifacts.COL_SUBPLOT = 1;
 optsArtifacts.NUM_PAD = 200;
-optsArtifacts.RANDOM_SAMPLE = 0;
+optsArtifacts.RANDOM_SAMPLE = 1;
+optsArtifacts.ARTIFACT_MULTIPLIER = 5;
 
 ArtifactPlots = plotArtifactsStim(cds,optsExtract.NEURON_NUMBER,optsArtifacts);
 
@@ -111,10 +122,10 @@ optsExtract.STIM_ELECTRODE = unique(cds.waveforms.chanSent);
 optsExtract.STIMULATIONS_PER_TRAIN = 1;
 optsExtract.STIMULATION_BATCH_SIZE = 1000;
 
-optsExtract.PRE_TIME = 10/1000; % made negative in the function
-optsExtract.POST_TIME = 90/1000;
+optsExtract.PRE_TIME = 20/1000; % made negative in the function
+optsExtract.POST_TIME = 80/1000;
 optsExtract.BIN_SIZE = 0.2/1000;
-optsExtract.TIME_AFTER_STIMULATION_WAVEFORMS = 10/10300;
+optsExtract.TIME_AFTER_STIMULATION_WAVEFORMS = 10/1000;
 
 arrayData = extractDataAroundStimulationsWholeArray(cds,mapFileName,optsExtract);
 toc
@@ -122,21 +133,51 @@ toc
 
 %% heatmap across whole array
 
+% opts.STIM_ELECTRODE_PLOT = [1:numel(unique(cds.waveforms.chanSent))];
+opts.STIM_ELECTRODE_PLOT = 1;
+opts.WAVEFORM_TYPES_PLOT = unique(cds.waveforms.waveSent);
+
+opts.BASELINE_PRE_TIME = -20/1000;
+opts.BASELINE_POST_TIME = -3/1000;
+opts.STIM_PRE_TIME = 1.2/1000;
+opts.STIM_POST_TIME = 5/1000;
+plotHeatmaps(arrayData,mapFileName,opts);
+
+opts.MAX_RATIO = 1.0;
+opts.MIN_RATIO = -0.05;
+opts.LOG_SCALE = 1;
+opts.LOG_PARAM = 4;
+
+%% make gif
+t = 1:0.1:2.1;
+for i = t
+    opts.STIM_PRE_TIME = i/1000;
+    opts.STIM_POST_TIME = (i+1)/1000;
+    opts.MAKE_BAR_PLOT = 0;
+    fig = plotHeatmaps(arrayData,mapFileName,opts);
+    frame = getframe(fig{1});
+    im = frame2im(frame);
+    [imind(:,:,1,counter),cm] = rgb2ind(im,256);
+    
+    
+    counter = counter+1;
+
+end
+
+imwrite(imind,cm,'TEST_GIF.gif','gif','loopcount',inf);
+%% amplitude vs. distance curve for each condition
 opts.STIM_ELECTRODE_PLOT = [1:numel(unique(cds.waveforms.chanSent))];
 % opts.STIM_ELECTRODE_PLOT = 1;
 opts.WAVEFORM_TYPES_PLOT = unique(cds.waveforms.waveSent);
 
 opts.BASELINE_PRE_TIME = -10/1000;
 opts.BASELINE_POST_TIME = -3/1000;
-opts.STIM_PRE_TIME = 1.5/1000;
+opts.STIM_PRE_TIME = 1.2/1000;
 opts.STIM_POST_TIME = 5/1000;
 
-opts.MAX_RATIO = 6;
-opts.MIN_RATIO = 1;
 opts.LOG_SCALE = 0;
-
-plotHeatmaps(arrayData,mapFileName,opts);
-
+opts.PLOT_ON_ONE_FIGURE = 0;
+[~,FITS]=plotAmplitudeVsDistance(arrayData,mapFileName,opts);
 
 %% PSTH across whole array
 
@@ -145,145 +186,4 @@ plotHeatmaps(arrayData,mapFileName,opts);
 
 
 
-
-
-
-
-
-%% old code below
-%% plot raster, waves, and PSTH for a give neuron number
-figDir = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20171025\';
-% figDir = strcat(cd,'\');
-figPrefix = 'Chips_20171025_';
-saveFigures = 0;
-
-
-%%
-nn = 81;
-plotWaveforms = 0;
-plotArtifacts = 1;
-outputData = plotRasterStim(cds,nn,'plotSpikeWaveforms',plotWaveforms,'plotArtifacts',plotArtifacts,'stimsPerTrain',1,...
-    'waveformTypes',[1:1:numel(unique(cds.waveforms.waveSent))],'chans',[1:1:numel(unique(cds.waveforms.chanSent))],...
-    'preTime',10/1000,'postTime',110/1000,'timeAfterStimRawNoStim',10/1000,'timeAfterStimRawArtifact',5/1000,...
-    'markerstyle','.','markersize',4,'linelength',1,'linewidth',1.5,...
-    'makeFigure',1,'makeSubplots',0,'plotTitle',0,'plotXRange',[0,5],...        
-    'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix,...
-    'maxArtifactsPerPlot',30,'plotArtifactsFiltered',[1],'stimElectrode',stimElectrode, 'plotWaveformsFiltered',[0,1],...
-    'maxWaveformsPlot',100,'plotStimuliGroup','all','sortData','no'); % plotStimuliGroup = 'responsive','nonResponsive','all'
-
-%% interspike interval histogram
-
-plotInterspikeIntervalHistogram(cds,nn,'xLim',[0,20],'binSize',0.2,'displayText',1,...
-    'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix);
-
-%% probability of eliciting a response
-nn=124;
-probOut = getProbabilityOfResponse(cds,nn,'peakPeriod','automatic','preTime',20/1000,'postTime',60/1000,...
-    'chans',[1:1:numel(unique(cds.waveforms.chanSent))],'waveformTypes',[1:1:numel(cds.waveforms.parameters)])
-
-%% double peak dependence -- if applicable
-% nn=99;
-nn = 80;
-[probActual,probExpected] = getDoublePeakProbability(cds,nn,'peakPeriod1',[3,4]/1000,'peakPeriod2',[4.3,5.5]/1000,'preTime',20/1000,'postTime',60/1000,...
-    'chans',[1:1:numel(unique(cds.waveforms.chanSent))],'waveformTypes',[1:1:numel(cds.waveforms.parameters)])
-
-%% plot artifacts
-% nn = 112;
-nn=67;
-figDir = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20171024_dukeBoardchan65\';
-% figDir = strcat(cd,'\');
-figPrefix = 'Chips_20171024_dukeBoardV1_';
-saveFigures = 0;
-
-for wave = 1:numel(unique(cds.waveforms.waveSent))  
-    plotArtifactsStim(cds,nn,1,wave,'rowSubplot',1,'colSubplot',1,...
-        'maxArtifactsPerPlot',10,'plotArtifactsSeparated',0,'plotTitle',0,...
-        'plotFiltered',[0],'randomSample',1,'templateSubtract',0,'plotYRange',[-9000,9000],'plotXRange',[0,8],...
-        'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix,...
-        'divisor',1)
-    
-%     plotArtifactsStim(cds,nn,1,wave,'rowSubplot',1,'colSubplot',1,...
-%         'maxArtifactsPerPlot',10,'plotArtifactsSeparated',0,'plotTitle',0,...
-%         'plotFiltered',[1],'randomSample',1,'templateSubtract',0,'plotYRange',[-400,400],'plotXRange',[0,8],...
-%         'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix,...
-%         'divisor',1)
-end
-% plotArtifactsStim(cds,nn,find(unique(cds.waveforms.chanSent)==45),1,'rowSubplot',1,'colSubplot',1,...
-%     'maxArtifactsPerPlot',4,'plotArtifactsSeparated',1,'plotTitle',0,...
-%     'chans',[find(unique(cds.waveforms.chanSent)==45)],...
-%     'plotFiltered',[1],'randomSample',0,'templateSubtract',0,'plotXRange',[1,300])
-
-%% plot PSTH
-nn=12;
-saveFigures = 0;
-groups = {'all','responsive','nonResponsive'};
-plotPSTHStim(cds,nn,'binSize',0.2/1000,'makeFigure',1,'makeSubplots',0,'plotTitle',1,'stimsPerTrain',1,'stimCenter',1,...
-    'waveformTypes',[1:1:numel(unique(cds.waveforms.waveSent))],'chans',[1:1:numel(unique(cds.waveforms.chanSent))],...
-    'preTime',10/1000,'postTime',30/1000,'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix,...
-    'plotLine',1,'plotAllOnOneFigure',1,'lineColor',{'k','r','b',[0 0.5 0],'m',[0.5,0.5,0.5],[1,0.6,0]},...
-    'plotStimuliGroup','nonresponsive');
-
-%% whole array plot
-
-plotPSTHStimWholeArray(cds,mapFileName,'preTime',10/1000,'postTime',30/1000,'binSize',0.0002,...
-    'waveformTypes',[1:numel(unique(cds.waveforms.waveSent))],'chans',[1:numel(unique(cds.waveforms.chanSent))],'plotLine',1,'lineWidth',0.5,'plotStimOn',1,'plotStimChan',1,'plotProbabilityText',1);
-
-%% heatmap
-% for i = 0:0.5:5.5
-    plotHeatmap(cds,mapFileName,'baselinePreTime',-10/1000,'baselinePostTime',-2/1000,...
-        'stimPreTime',1.5/1000,'stimPostTime',5/1000,...
-        'binSize',0.0002,'waveformTypes',1:numel(unique(cds.waveforms.waveSent)),'chans',1:numel(unique(cds.waveforms.chanSent)),'plotLine',1,...
-        'lineWidth',0.5,'plotStimOn',1,'plotStimChan',1,...
-        'saveFigures',saveFigures,'figDir',figDir,'figPrefix',strcat(figPrefix));
-    
-%     close all
-% end
-%% make all and save all
-
-figDir = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20171026\';
-figPrefix = 'Chips_20171026_';
-
-saveFigures = 1;
-% stimElectrode = [57];
-stimElectrode = unique(cds.waveforms.chanSent);
-plotWaveforms = 1;
-plotArtifacts = 0;
-
-plotHeatmap(cds,mapFileName,'baselinePreTime',-10/1000,'baselinePostTime',-2/1000,...
-    'stimPreTime',0,'stimPostTime',5/1000,...
-    'binSize',0.0002,'waveformTypes',1:numel(unique(cds.waveforms.waveSent)),'chans',1:numel(unique(cds.waveforms.chanSent)),'plotLine',1,...
-    'lineWidth',0.5,'plotStimOn',1,'plotStimChan',1,'plotProbabilityText',1,...
-    'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix);
-
-% for nn = 1:size(cds.units,2)
-%     if(cds.units(nn).ID ~= 0 && cds.units(nn).ID ~= 255)
-% % 
-%         plotRasterStim(cds,nn,'plotSpikeWaveforms',plotWaveforms,'plotArtifacts',plotArtifacts,'stimsPerTrain',1,...
-%             'waveformTypes',[1:1:numel(unique(cds.waveforms.waveSent))],'chans',[1:1:numel(unique(cds.waveforms.chanSent))],...
-%             'preTime',10/1000,'postTime',30/1000,'timeAfterStimRawNoStim',10/1000,'timeAfterStimRawArtifact',8/1000,...
-%             'markerstyle','.','linelength',1,'linewidth',1.5,...
-%             'makeFigure',1,'makeSubplots',0,'plotTitle',0,...        
-%             'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix,...
-%             'maxArtifactsPerPlot',10,'plotArtifactsFiltered',[0,1],'stimElectrode',stimElectrode, 'plotWaveformsFiltered',[0,1],...
-%             'maxWaveformsPlot',100,'plotStimuliGroup','all','sortData','no'); % plotStimuliGroup = 'responsive','nonResponsive','all'
-% 
-%         plotArrayMap(cds,nn,mapFileName,'numRows',10,'numCols',10,...
-%             'stimElectrode',stimElectrode,'stimElectrodeColor',{[0 0.5 0],'r','b','k','m',[0.5,0.5,0.5],[1,0.6,0]},'stimElectrodeLabel','string',...
-%             'recordingElectrode',cds.units(nn).chan,'recordingElectrodeColor','k','recordingElectrodeLabel','string',...
-%             'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix)
-% 
-%         plotInterspikeIntervalHistogram(cds,nn,'xLim',[0,20],'binSize',0.2,'displayText',1,...
-%             'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix);
-%         
-%         plotPSTHStim(cds,nn,'binSize',0.2/1000,'makeFigure',1,'makeSubplots',0,'plotTitle',0,'waveformTypes',[1:1:numel(cds.waveforms.parameters)],...
-%             'chans',[1:1:numel(unique(cds.waveforms.chanSent))],'preTime',10/1000,'postTime',30/1000,'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix,...
-%             'barColor','k')
-% 
-%         plotPSTHStim(cds,nn,'binSize',0.2/1000,'makeFigure',1,'makeSubplots',0,'plotTitle',0,'waveformTypes',[1:1:numel(cds.waveforms.parameters)],...
-%             'chans',[1:1:numel(unique(cds.waveforms.chanSent))],'preTime',10/1000,'postTime',30/1000,'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix,...
-%             'plotLine',1,'plotAllOnOneFigure',1,'lineColor',{[0 0.5 0],'r','b','k','m',[0.5,0.5,0.5],[1,0.6,0]})
-%         
-%         close all
-%    end
-% end
 
