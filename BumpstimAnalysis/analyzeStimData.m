@@ -1,6 +1,6 @@
 %% set file names 
 % folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20171025\';
-folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20171025\lowPass\';
+folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20171024_dukeBoardchan65\';
 % mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 % mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Mihili 12A3\Mihili Left PMd SN 6251-001460.cmp';
 mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
@@ -27,7 +27,7 @@ saveFigures = 0;
 
 %% extract relevant data for a given unit
 
-optsExtract.NEURON_NUMBER = 124;
+optsExtract.NEURON_NUMBER = 81;
 
 optsExtract.STIMULI_RESPONSE = 'all';
 optsExtract.STIM_ELECTRODE = unique(cds.waveforms.chanSent);
@@ -35,7 +35,7 @@ optsExtract.STIMULATIONS_PER_TRAIN = 1;
 optsExtract.STIMULATION_BATCH_SIZE = 1000;
 
 optsExtract.PRE_TIME = 20/1000; % made negative in the function
-optsExtract.POST_TIME = 80/1000;
+optsExtract.POST_TIME = 180/1000;
 optsExtract.BIN_SIZE = 0.2/1000;
 optsExtract.TIME_AFTER_STIMULATION_WAVEFORMS = 10/1000;
 
@@ -43,25 +43,25 @@ unitData = extractDataAroundStimulations(cds,optsExtract);
 
 %% plot raster, and PSTH for the given unit above
 optsPlotFunc.BIN_SIZE = optsExtract.BIN_SIZE;
-optsPlotFunc.FIGURE_SAVE =0;
+optsPlotFunc.FIGURE_SAVE = 1;
 optsPlotFunc.FIGURE_DIR = folderpath;
-optsPlotFunc.FIGURE_PREFIX = 'Chips_20171024_dukeBoardV1_short';
+optsPlotFunc.FIGURE_PREFIX = 'Chips_20171024_dukeBoardV1_velocityEffect';
 
-optsPlotFunc.PRE_TIME = 3/1000;
-optsPlotFunc.POST_TIME = 30/1000;
-optsPlotFunc.SORT_DATA = '';
+optsPlotFunc.PRE_TIME = 20/1000;
+optsPlotFunc.POST_TIME = 180/1000;
+optsPlotFunc.SORT_DATA = 'velocity';
 
 rasterPlots = plotRasterStim(unitData,optsExtract.NEURON_NUMBER,optsPlotFunc);
 
-optsPlotFunc.PLOT_ALL_ONE_FIGURE = 1;
-optsPlotFunc.PLOT_LINE = 1;
-optsPlotFunc.PLOT_TITLE = 0;
-
-optsPlotFunc.SMOOTH = 0;
-optsPlotFunc.SMOOTH_STD_DEV = 0.35;
-optsPlotFunc.MAKE_LEGEND = 0;
-optsPlotFunc.LEGEND_STR = {'20\muA','40\muA'};
-PSTHPlots = plotPSTHStim(unitData,optsExtract.NEURON_NUMBER,optsPlotFunc);
+% optsPlotFunc.PLOT_ALL_ONE_FIGURE = 1;
+% optsPlotFunc.PLOT_LINE = 1;
+% optsPlotFunc.PLOT_TITLE = 0;
+% 
+% optsPlotFunc.SMOOTH = 0;
+% optsPlotFunc.SMOOTH_STD_DEV = 0.35;
+% optsPlotFunc.MAKE_LEGEND = 0;
+% optsPlotFunc.LEGEND_STR = {'20\muA','40\muA'};
+% PSTHPlots = plotPSTHStim(unitData,optsExtract.NEURON_NUMBER,optsPlotFunc);
 
 %% plot waveforms (raw and filtered)
 optsWaveforms = [];
@@ -79,7 +79,7 @@ WaveformPlots = plotWaveformsStim(cds,optsExtract.NEURON_NUMBER,optsWaveforms);
 optsArtifacts = [];
 optsArtifacts.WAVEFORMS_TO_PLOT = [4];
 optsArtifacts.CHANS_TO_PLOT = [1];
-optsArtifacts.MAX_WAVES_PLOT = 25;
+optsArtifacts.MAX_WAVES_PLOT = 20;
 optsArtifacts.YLIM = [-600,600];
 optsArtifacts.XLIM = [0,10];
 optsArtifacts.ADJUST_FOR_BIT_ERROR = 0;

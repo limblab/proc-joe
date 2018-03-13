@@ -1,13 +1,13 @@
 %% process stimulation artifacts:
 pwd = cd;
-folderpath='C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_20170621_3000stimuli\';
+folderpath='C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_20180311_stimswitch\';
 functionName='processStimArtifact';
 
 %%
-inputData.task='tasknone';
+inputData.task='taskCObump';
 inputData.ranBy='ranByTucker'; 
 inputData.array1='arrayS1'; 
-inputData.monkey='monkeyChips';
+inputData.monkey='monkeyHan';
 inputData.mapFile='mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp'; % chips mapfile location
 
 inputData.badChList=[];

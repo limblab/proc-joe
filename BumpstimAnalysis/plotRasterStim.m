@@ -52,7 +52,10 @@ function [figureHandle] = plotRasterStim(unitData,NEURON_NUMBER,optsPlot)
             optsPlot.Y_TICK = [0;max(unitData.numStims(chan,wave))];
             optsPlot.Y_MINOR_TICK = 'off';
             optsPlot.Y_TICK_LABEL = {num2str(1),num2str(unitData.numStims(chan,wave))};
-
+            if(strcmpi(opts.SORT_DATA,'velocity'))
+                optsPlot.Y_TICK_LABEL = {'Low','High'};
+                optsPlot.Y_LABEL = 'Velocity';
+            end
             optsSave.FIGURE_SAVE = opts.FIGURE_SAVE;
             optsSave.FIGURE_DIR = opts.FIGURE_DIR;
             if(opts.FIGURE_SAVE)
