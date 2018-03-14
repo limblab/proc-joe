@@ -6,8 +6,6 @@ functionName='processStimArtifact_filter'; % includes acausal filtered data
 
 %%
 inputData.saveFigures = 0;
-inputData.dukeBoardChannel = -1;
-inputData.dukeBoardLabel = 'ainp15';
 
 inputData.task='taskCObump';
 inputData.ranBy='ranByTucker'; 
@@ -22,11 +20,13 @@ inputData.pWidth2=.0002;
 
 inputData.windowSize=30*10;%in points
 inputData.presample=100;%in points
-inputData.plotRange=8;%in mV
+inputData.plotRange=10;%in mV
 inputData.plotRangeFiltered=0.5;%in mV
 inputData.lab=6;
 inputData.useSyncLabel=[];
 
+inputData.dukeBoardChannel = 27;
+inputDtaa.
 [output_data] = runDataProcessing(functionName,folderpath,inputData);
 disp('done processing')
 cd(pwd);
