@@ -1,4 +1,4 @@
-function [ outputFigures,outputData ] = processStimArtifact(folderpath, inputData )
+function [ outputFigures,outputData ] = processStimArtifact_filter(folderpath, inputData )
     %script to load stimulation files and generate perievent plots of 30khz
     %data. Formatted to work with runDataProcessing
     
@@ -21,7 +21,7 @@ function [ outputFigures,outputData ] = processStimArtifact(folderpath, inputDat
     chList=[];
     interleavedTrials = 0;
     
-    for i=1:1%numel(fileList)
+    for i=1:numel(fileList)
         %% load file
         disp(['working on:'])
         disp(fileList(i).name)

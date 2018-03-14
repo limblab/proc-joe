@@ -5,7 +5,7 @@ folderpath='C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_20180310_chic20180
 functionName='processStimArtifact_filter'; % includes acausal filtered data
 
 %%
-inputData.saveFigures = 0;
+inputData.saveFigures = 1;
 inputData.dukeBoardChannel = -1;
 inputData.dukeBoardLabel = 'ainp15';
 
