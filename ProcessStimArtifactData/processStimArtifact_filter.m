@@ -170,9 +170,13 @@ function [ outputFigures,outputData ] = processStimArtifact_filter(folderpath, i
                 elseif(j-1 == inputData.dukeBoardChannel)
                     artifactMat(j-1,k,1:inputData.windowSize+inputData.presample)=reshape(cds.analog{1,1}.(inputData.dukeBoardLabel)(stimWindows(k,1)-inputData.presample:stimWindows(k,2)),[1,1,inputData.windowSize+inputData.presample]);
                     electrodeList{j-1}=cds.lfp.Properties.VariableNames{j};
+%                     mapIdx = find(mapData.chan == j-1);
+%                     electrodeList{j-1} = mapData.label(mapIdx);
                 else
                     artifactMat(j-1,k,1:inputData.windowSize+inputData.presample)=reshape(cds.lfp{stimWindows(k,1)-inputData.presample:stimWindows(k,2),j},[1,1,inputData.windowSize+inputData.presample]);
                     electrodeList{j-1}=cds.lfp.Properties.VariableNames{j};
+%                     mapIdx = find(mapData.chan == j-1);
+%                     electrodeList{j-1} = mapData.label(mapIdx);
                 end
                 %if we don't have a position for this electrode, find it:
                 if isempty(find(strcmp(eList,electrodeList{j-1}),1))
