@@ -132,7 +132,7 @@ function [figureHandle] = plotArtifacts(waveforms,opts)
             % plot
             plotIdx = ((row-1)*opts.COL_SUBPLOT + col-1)*opts.MAX_WAVES_PLOT + 1;
             if(plotIdx < size(waveforms,1))
-                plot(xData,waveforms(plotIdx:min(size(waveforms,1),plotIdx+opts.MAX_WAVES_PLOT-1),:),'linewidth',1.5);
+                plot(xData,waveforms(plotIdx:min(size(waveforms,1),plotIdx+opts.MAX_WAVES_PLOT-1),:),'linewidth',1);
             end
             xlim(opts.XLIM)
             ylim(opts.YLIM)

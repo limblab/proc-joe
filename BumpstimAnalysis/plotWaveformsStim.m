@@ -158,7 +158,7 @@ function [figureHandle] = plotWaveforms(waveforms,opts)
     % plot
     if(~isempty(waveforms))
         xData = ((1:size(waveforms,2))-1)/30;
-        plot(xData,waveforms-mean(waveforms(:,end-10:end),2))
+        plot(xData,waveforms-mean(waveforms(:,:),2))
         ylim(opts.YLIM)
 
         formatForLee(gcf)

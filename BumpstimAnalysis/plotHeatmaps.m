@@ -50,6 +50,10 @@ function [figureHandles] = plotHeatmaps(arrayData,mapFileName,opts)
                 end
             end
             
+            if(opts.RELATIVE_INHIBITION)
+                dataRatio(dataRatio < 0) = dataRatio(dataRatio < 0)./dataPre(dataRatio<0);
+            end
+            
             dataRatio(dataRatio > opts.MAX_RATIO) = opts.MAX_RATIO;
             dataRatio(dataRatio < opts.MIN_RATIO) = opts.MIN_RATIO;
             
@@ -117,9 +121,9 @@ function [figureHandles] = plotHeatmaps(arrayData,mapFileName,opts)
             
             
             %% save figures
-            if(opts.FIGURE_SAVE && strcmpi(FIGURE_DIR,'')~=1)
-                FIGURE_NAME = strcat(FIGURE_PREFIX,'_stimChan',num2str(arrayData{1,1}.CHAN_LIST(chan)),'_wave',num2str(wave),'_heatmap');
-                saveFiguresLIB(figHandle,optsSave.FIGURE_DIR,FIGURE_NAME);
+            if(opts.FIGURE_SAVE && strcmpi(opts.FIGURE_DIR,'')~=1)
+                FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'_stimChan',num2str(arrayData{1,1}.CHAN_LIST(chan)),'_wave',num2str(wave),'_heatmap');
+                saveFiguresLIB(figureHandles{end},opts.FIGURE_DIR,FIGURE_NAME);
             end
             
             
@@ -171,9 +175,9 @@ function [figureHandles] = plotHeatmaps(arrayData,mapFileName,opts)
 
             end
 
-            if(opts.FIGURE_SAVE && strcmpi(FIGURE_DIR,'')~=1)
-                FIGURE_NAME = strcat(FIGURE_PREFIX,'_stimChan',num2str(arrayData{1,1}.CHAN_LIST(chan)),'_wave',num2str(wave),'_heatmapBarPlot');
-                saveFiguresLIB(figHandle,optsSave.FIGURE_DIR,FIGURE_NAME);
+            if(opts.FIGURE_SAVE && strcmpi(opts.FIGURE_DIR,'')~=1)
+                FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'_stimChan',num2str(arrayData{1,1}.CHAN_LIST(chan)),'_wave',num2str(wave),'_heatmapBarPlot_',num2str(barMake));
+                saveFiguresLIB(figureHandles{end},opts.FIGURE_DIR,FIGURE_NAME);
             end
         end
     end
@@ -194,8 +198,8 @@ function [opts] = configureOpts(optsInput)
     opts.STIM_ELECTRODE_PLOT = 1;
     opts.WAVEFORM_TYPES_PLOT = 1;
     
-    opts.MAX_RATIO = 8;
-    opts.MIN_RATIO = 1;
+    opts.MAX_RATIO = 1;
+    opts.MIN_RATIO = -0.2;
     opts.LOG_SCALE = 0;
     opts.LOG_PARAM = 9;
     
@@ -205,6 +209,8 @@ function [opts] = configureOpts(optsInput)
     
     opts.NUM_ROWS = 10;
     opts.NUM_COLS = 10;
+    
+    opts.RELATIVE_INHIBITION = 0;
     %% check if in optsSave and optsSaveInput, overwrite if so
     try
         inputFieldnames = fieldnames(optsInput);

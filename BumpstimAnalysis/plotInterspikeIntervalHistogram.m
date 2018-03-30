@@ -5,9 +5,21 @@ function [ figureHandle ] = plotInterspikeIntervalHistogram( cds, NEURON_NUMBER,
     
     figureHandle = figure();
     %% get data
-    interSpikeInterval = diff(cds.units(NEURON_NUMBER).spikes.ts);
-    interSpikeInterval = interSpikeInterval*1000; % seconds to ms
+    spikeTimes = cds.units(NEURON_NUMBER).spikes.ts;
+    
+    % clean out spike times
+    spikeTimesKeep = spikeTimes(spikeTimes<10);
+    
+    for st = 1:numel(cds.stimOn)-1
+        spikeTimesKeep = [spikeTimesKeep; spikeTimes(spikeTimes > cds.stimOn(st) + 0.08 & spikeTimes < cds.stimOn(st+1))];
+%         spikeTimesKeep = [spikeTimesKeep; spikeTimes(cds.waveforms.waveSent(st) == 2 & spikeTimes > cds.stimOn(st) & spikeTimes < cds.stimOn(st)+0.15)];
+    end   
+    spikeTimesKeep = [spikeTimesKeep; spikeTimes(spikeTimes > cds.stimOn(end) + 0.1)];
+    spikeTimes = spikeTimesKeep;
 
+    interSpikeInterval = diff(spikeTimes);
+    interSpikeInterval = interSpikeInterval*1000; % seconds to ms
+%     interSpikeInterval = interSpikeInterval(interSpikeInterval > 1.5);
     %% bin and plot data
     binEdges = 0:opts.BIN_SIZE*1000:max(opts.XLIM);
     [binCounts,~] = histcounts(interSpikeInterval,binEdges);
@@ -17,12 +29,12 @@ function [ figureHandle ] = plotInterspikeIntervalHistogram( cds, NEURON_NUMBER,
     formatForLee(gcf)
     %% display things (namely percentage below 1.7ms)
     if(opts.DISPLAY_TEXT)
-        percentageBelow = sum(interSpikeInterval < 1.7)/numel(interSpikeInterval)*100;
+        percentageBelow = sum(interSpikeInterval < 1.2)/numel(interSpikeInterval)*100;
         disp(percentageBelow)
     end
 
-    if(opts.FIGURE_SAVE && strcmpi(opts.FIGURE_NAME,'')~=1 && strcmpi(opts.FIGURE_DIR,'')~=1)
-        saveFiguresLIB(figHandle,opts.FIGURE_DIR,strcat(opts.FIGURE_PREFIX,'_nn',num2str(NEURON_NUMBER),'_chan',num2str(cds.units(NEURON_NUMBER).chan),'_ISI'));
+    if(opts.FIGURE_SAVE && strcmpi(opts.FIGURE_PREFIX,'')~=1 && strcmpi(opts.FIGURE_DIR,'')~=1)
+        saveFiguresLIB(gcf,opts.FIGURE_DIR,strcat(opts.FIGURE_PREFIX,'_nn',num2str(NEURON_NUMBER),'_chan',num2str(cds.units(NEURON_NUMBER).chan),'_ISI'));
     end
 
 end

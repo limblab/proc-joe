@@ -45,7 +45,9 @@ function [ outputData ] = extractDataAroundStimulations( cds,opts )
     for chan = 1:NUM_CHANS
         for wave = 1:NUM_WAVEFORM_TYPES
             % find artifacts from channel and wave combination
-            stimIdx = find(cds.waveforms.waveSent(1:opts.STIMULATIONS_PER_TRAIN:end) == wave & cds.waveforms.chanSent(1:opts.STIMULATIONS_PER_TRAIN:end) == CHAN_LIST(chan));
+            stimsPerTrainMask = zeros(min(numel(cds.stimOn),numel(cds.waveforms.waveSent)),1);
+            stimsPerTrainMask(1:opts.STIMULATIONS_PER_TRAIN:end) = 1;
+            stimIdx = find(stimsPerTrainMask == 1& cds.waveforms.waveSent(1:numel(stimsPerTrainMask)) == wave & cds.waveforms.chanSent(1:numel(stimsPerTrainMask)) == CHAN_LIST(chan));
             
             numStims(chan,wave) = numel(stimIdx);
             % process stims in batches to improve speed but control memory
@@ -117,26 +119,28 @@ function [ outputData ] = extractDataAroundStimulations( cds,opts )
     end
     
     %% grab kin data for each stimulation
-    kin_dt = mode(diff(cds.kin.t));
-    for chan = 1:NUM_CHANS
-        for wave = 1:NUM_WAVEFORM_TYPES
-            stimIdx = find(cds.waveforms.waveSent(1:opts.STIMULATIONS_PER_TRAIN:end) == wave & cds.waveforms.chanSent(1:opts.STIMULATIONS_PER_TRAIN:end) == CHAN_LIST(chan));
-            kinData{chan,wave}.x = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
-            kinData{chan,wave}.y = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
-            kinData{chan,wave}.vx = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
-            kinData{chan,wave}.vy = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
-            kinData{chan,wave}.ax = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
-            kinData{chan,wave}.ay = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
-            
-            for st = 1:numel(stimIdx)
-                kinIdx = find(cds.stimOn(stimIdx(st)) <= cds.kin.t,1,'first');
-                if(~isempty(kinIdx))
-                    kinData{chan,wave}.x(st,:) = cds.kin.x(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
-                    kinData{chan,wave}.y(st,:) = cds.kin.y(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
-                    kinData{chan,wave}.vx(st,:) = cds.kin.vx(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
-                    kinData{chan,wave}.vy(st,:) = cds.kin.vy(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
-                    kinData{chan,wave}.ax(st,:) = cds.kin.ax(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
-                    kinData{chan,wave}.ay(st,:) = cds.kin.ay(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
+    if(isfield(cds,'kin') && ~isempty(cds.kin))
+        kin_dt = mode(diff(cds.kin.t));
+        for chan = 1:NUM_CHANS
+            for wave = 1:NUM_WAVEFORM_TYPES
+                stimIdx = find(cds.waveforms.waveSent(1:opts.STIMULATIONS_PER_TRAIN:end) == wave & cds.waveforms.chanSent(1:opts.STIMULATIONS_PER_TRAIN:end) == CHAN_LIST(chan));
+                kinData{chan,wave}.x = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
+                kinData{chan,wave}.y = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
+                kinData{chan,wave}.vx = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
+                kinData{chan,wave}.vy = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
+                kinData{chan,wave}.ax = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
+                kinData{chan,wave}.ay = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
+
+                for st = 1:numel(stimIdx)
+                    kinIdx = find(cds.stimOn(stimIdx(st)) <= cds.kin.t,1,'first');
+                    if(~isempty(kinIdx))
+                        kinData{chan,wave}.x(st,:) = cds.kin.x(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
+                        kinData{chan,wave}.y(st,:) = cds.kin.y(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
+                        kinData{chan,wave}.vx(st,:) = cds.kin.vx(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
+                        kinData{chan,wave}.vy(st,:) = cds.kin.vy(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
+                        kinData{chan,wave}.ax(st,:) = cds.kin.ax(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
+                        kinData{chan,wave}.ay(st,:) = cds.kin.ay(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
+                    end
                 end
             end
         end
