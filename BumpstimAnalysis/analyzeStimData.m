@@ -1,15 +1,15 @@
 %% set file names 
-folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_20180324_doublePulse\chan32stim_unresponsive\';
+folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_20180331_doublePulse\chan25\';
 % folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20171024_dukeBoardchan65\';
-% mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 % mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Mihili 12A3\Mihili Left PMd SN 6251-001460.cmp';
-mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
+% mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
 
 pwd=cd;
 cd(folderpath)
 fileList = dir('*proc*');
 
-% load file and parse for stim electrode number
+%% load file and parse for stim electrode number
 fileNumber = 1;
 disp(fileList(fileNumber).name)
 chanIdx = strfind(fileList(fileNumber).name,'chan');
@@ -27,12 +27,15 @@ figPrefix = '';
 saveFigures = 0;
 
 %% extract relevant data for a given unit
+cds.waveforms.waveSent(4:4:end) = 2;
+cds.waveforms.waveSent(3:4:end) = 2;
+% cds.waveforms.waveSent(2:2:end) = 2;
 
-optsExtract.NEURON_NUMBER = 40;
+optsExtract.NEURON_NUMBER = 1;
 
 optsExtract.STIMULI_RESPONSE = 'all';
 optsExtract.STIM_ELECTRODE = unique(cds.waveforms.chanSent);
-optsExtract.STIMULATIONS_PER_TRAIN = 1;
+optsExtract.STIMULATIONS_PER_TRAIN = 2;
 optsExtract.STIMULATION_BATCH_SIZE = 1000;
 
 optsExtract.PRE_TIME = 20/1000; % made negative in the function
@@ -50,7 +53,7 @@ optsPlotFunc.FIGURE_DIR = folderpath;
 optsPlotFunc.FIGURE_PREFIX = strcat('Han_20180324_',prefix,'_excite_');
 close all
 optsPlotFunc.PRE_TIME = 10/1000;
-optsPlotFunc.POST_TIME = 40/1000;
+optsPlotFunc.POST_TIME = 180/1000;
 optsPlotFunc.SORT_DATA = 'postStimuliTime';
 
 rasterPlots = plotRasterStim(unitData,optsExtract.NEURON_NUMBER,optsPlotFunc);
