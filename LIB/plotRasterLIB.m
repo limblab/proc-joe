@@ -114,7 +114,10 @@ function [ figHandle ] = plotRasterLIB(xData,yData,optsPlotInput,optsSaveInput)
         set(gca,'XTick',optsPlot.X_TICK);
     end
     if(strcmpi(optsPlot.Y_TICK,'')~=1)
-        set(gca,'YTick',optsPlot.Y_TICK);
+        try
+            set(gca,'YTick',optsPlot.Y_TICK);
+        catch
+        end
     end
 
     if(strcmpi(optsPlot.X_MINOR_TICK,'')~=1)

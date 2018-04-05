@@ -1,9 +1,9 @@
 %% set file names 
-folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_20180331_doublePulse\chan25\';
+folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20171026\';
 % folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20171024_dukeBoardchan65\';
-mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+% mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 % mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Mihili 12A3\Mihili Left PMd SN 6251-001460.cmp';
-% mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
+mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
 
 pwd=cd;
 cd(folderpath)
@@ -29,9 +29,9 @@ saveFigures = 0;
 %% extract relevant data for a given unit
 cds.waveforms.waveSent(4:4:end) = 2;
 cds.waveforms.waveSent(3:4:end) = 2;
-% cds.waveforms.waveSent(2:2:end) = 2;
+% % % cds.waveforms.waveSent(2:2:end) = 2;
 
-optsExtract.NEURON_NUMBER = 1;
+optsExtract.NEURON_NUMBER = 74;
 
 optsExtract.STIMULI_RESPONSE = 'all';
 optsExtract.STIM_ELECTRODE = unique(cds.waveforms.chanSent);
@@ -45,18 +45,22 @@ optsExtract.TIME_AFTER_STIMULATION_WAVEFORMS = 10/1000;
 
 unitData = extractDataAroundStimulations(cds,optsExtract);
 
-%% plot raster, and PSTH for the given unit above
-prefix = 'chan1stim_single';
+%%
+unitData = arrayData{15};
+optsExtract.NEURON_NUMBER = arrayData{15}.NN;
+% plot raster, and PSTH for the given unit above
+prefix = 'chan6stim_chan11rec_dpl10_';
+
 optsPlotFunc.BIN_SIZE = optsExtract.BIN_SIZE;
 optsPlotFunc.FIGURE_SAVE = 0;
 optsPlotFunc.FIGURE_DIR = folderpath;
 optsPlotFunc.FIGURE_PREFIX = strcat('Han_20180324_',prefix,'_excite_');
 close all
 optsPlotFunc.PRE_TIME = 10/1000;
-optsPlotFunc.POST_TIME = 180/1000;
+optsPlotFunc.POST_TIME = 40/1000;
 optsPlotFunc.SORT_DATA = 'postStimuliTime';
 
-rasterPlots = plotRasterStim(unitData,optsExtract.NEURON_NUMBER,optsPlotFunc);
+% rasterPlots = plotRasterStim(unitData,optsExtract.NEURON_NUMBER,optsPlotFunc);
 
 optsPlotFunc.PLOT_ALL_ONE_FIGURE = 1;
 optsPlotFunc.PLOT_LINE = 1;
@@ -65,10 +69,10 @@ optsPlotFunc.PLOT_TITLE = 0;
 optsPlotFunc.SMOOTH = 0;
 optsPlotFunc.SMOOTH_STD_DEV = 0.35;
 optsPlotFunc.MAKE_LEGEND = 1;
-optsPlotFunc.LEGEND_STR = {'10\muA','20\muA','30\muA','40\muA','50\muA','60\muA'};
-optsPlotFunc.LEGEND_STR = {'cathodal','anodal'};
+% optsPlotFunc.LEGEND_STR = {'10\muA','20\muA','30\muA','40\muA','50\muA','60\muA'};
+% optsPlotFunc.LEGEND_STR = {'cathodal','anodal'};
 PSTHPlots = plotPSTHStim(unitData,optsExtract.NEURON_NUMBER,optsPlotFunc);
-% 
+
 % optsPlotFunc.BIN_SIZE = optsExtract.BIN_SIZE;
 % optsPlotFunc.FIGURE_PREFIX = strcat('Han_20180324_',prefix,'_inhib_');
 % 
@@ -143,13 +147,24 @@ optsExtract.STIM_ELECTRODE = unique(cds.waveforms.chanSent);
 optsExtract.STIMULATIONS_PER_TRAIN = 1;
 optsExtract.STIMULATION_BATCH_SIZE = 1000;
 
-optsExtract.PRE_TIME = 10/1000; % made negative in the function
-optsExtract.POST_TIME = 100/1000;
+optsExtract.PRE_TIME = 20/1000; % made negative in the function
+optsExtract.POST_TIME = 80/1000;
 optsExtract.BIN_SIZE = 0.2/1000;
 optsExtract.TIME_AFTER_STIMULATION_WAVEFORMS = 10/1000;
 
 arrayData = extractDataAroundStimulationsWholeArray(cds,mapFileName,optsExtract);
 toc
+
+%% label as excitatory or inhibitory based on Hao 2016 (which is based on 
+% Kraskov 2011)
+%% this is buggy and not really great.....probably should implement a different
+% method that finds the best period of time
+optsLabel.BRUTE_FORCE_MAX_WINDOW = 0;
+optsLabel.MIN_WINDOW_SIZE = 3;
+optsLabel.BRUTE_FORCE_EXCITE_GAMMA = 2;
+optsLabel.BRUTE_FORCE_INHIB_GAMMA = 0.0001;
+
+[arrayData,report] = labelResponse(arrayData,optsLabel);
 
 
 %% heatmap across whole array
@@ -158,10 +173,12 @@ opts.STIM_ELECTRODE_PLOT = [1:numel(unique(cds.waveforms.chanSent))];
 % opts.STIM_ELECTRODE_PLOT = 1;
 opts.WAVEFORM_TYPES_PLOT = unique(cds.waveforms.waveSent);
 
-opts.BASELINE_PRE_TIME = -10/1000;
-opts.BASELINE_POST_TIME = -3/1000;
+opts.BASELINE_PRE_TIME = -20/1000;
+opts.BASELINE_POST_TIME = -2/1000;
 opts.STIM_PRE_TIME = 1.2/1000;
-opts.STIM_POST_TIME = 5/1000;
+opts.STIM_POST_TIME = 10/1000;
+
+opts.AUTO_WINDOW = 0; % 
 
 opts.MAX_RATIO = 1.0;
 opts.MIN_RATIO = -0.1;
@@ -171,10 +188,37 @@ opts.LOG_PARAM = 9;
 opts.RELATIVE_INHIBITION = 0;
 
 opts.FIGURE_SAVE = 0;
-opts.FIGURE_DIR = folderpath;
-opts.FIGURE_PREFIX = 'Chips_20171025';
+opts.FIGURE_DIR = fpath;
+opts.FIGURE_PREFIX = 'Chips_20171026';
 plotHeatmaps(arrayData,mapFileName,opts);
 
+
+
+
+%% amplitude vs. distance curve for each condition -- excitation
+opts.STIM_ELECTRODE_PLOT = [1:numel(unique(cds.waveforms.chanSent))];
+opts.WAVEFORM_TYPES_PLOT = unique(cds.waveforms.waveSent);
+
+% maybe automatically find these
+opts.BASELINE_PRE_TIME = -20/1000;
+opts.BASELINE_POST_TIME = -3/1000;
+opts.STIM_PRE_TIME = 1.2/1000;
+opts.STIM_POST_TIME = 5/1000;
+
+opts.AUTO_WINDOW = 0;
+
+opts.FIGURE_SAVE = 0;
+opts.PLOT_ON_ONE_FIGURE = 1;
+[~,FITS]=plotAmplitudeVsDistance(arrayData,mapFileName,opts);
+
+%% latency excitation vs distance
+[~,FITS] = plotLatencyExciteVsDistance(arrayData,mapFileName,opts);
+
+%% inhibition duration vs distance
+[~,FITS] = plotInhibitionDurationVsDistance(arrayData,mapFileName,opts);
+
+%% plot amplitude of response vs. inhibition duration
+[~,FITS] = plotAmplitudeVsInhibitionDuration(arrayData,mapFileName,opts);
 
 
 %% make gif
@@ -206,25 +250,3 @@ v.FrameRate = 30;
 open(v)
 writeVideo(v,imind)
 close(v)
-%% amplitude vs. distance curve for each condition
-opts.STIM_ELECTRODE_PLOT = [1:numel(unique(cds.waveforms.chanSent))];
-% opts.STIM_ELECTRODE_PLOT = 1;
-opts.WAVEFORM_TYPES_PLOT = unique(cds.waveforms.waveSent);
-
-opts.BASELINE_PRE_TIME = -10/1000;
-opts.BASELINE_POST_TIME = -3/1000;
-opts.STIM_PRE_TIME = 1.2/1000;
-opts.STIM_POST_TIME = 5/1000;
-
-opts.LOG_SCALE = 0;
-opts.PLOT_ON_ONE_FIGURE = 0;
-[~,FITS]=plotAmplitudeVsDistance(arrayData,mapFileName,opts);
-
-%% PSTH across whole array
-
-
-
-
-
-
-

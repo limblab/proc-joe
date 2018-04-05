@@ -27,18 +27,27 @@ function [figureHandles] = plotHeatmaps(arrayData,mapFileName,opts)
         for wave = opts.WAVEFORM_TYPES_PLOT
             %% get data in the correct ranges from arrayData
             postStim_binEdgePre = max(find(arrayData{1,1}.bE{chan,wave} <= opts.STIM_PRE_TIME*1000));
-            postStim_binEdgePost = max(find(arrayData{1,1}.bE{chan,wave} <= opts.STIM_POST_TIME*1000)); - 1;
-            numPostStimBins = postStim_binEdgePost - postStim_binEdgePre;
+            postStim_binEdgePost = max(find(arrayData{1,1}.bE{chan,wave} <= opts.STIM_POST_TIME*1000));
+            numPostStimBins = ones(size(arrayData,1))*(postStim_binEdgePost - postStim_binEdgePre);
             
             baseline_binEdgePre = max(find(arrayData{1,1}.bE{chan,wave} <= opts.BASELINE_PRE_TIME*1000));
-            baseline_binEdgePost = max(find(arrayData{1,1}.bE{chan,wave} <= opts.BASELINE_POST_TIME*1000)) - 1; % one more bin edge than bin count
+            baseline_binEdgePost = max(find(arrayData{1,1}.bE{chan,wave} <= opts.BASELINE_POST_TIME*1000));
             
             dataPre = zeros(size(arrayData,1),1);
             dataPost = zeros(size(arrayData,1),1);
             
             for unit = 1:size(arrayData,1)
-                dataPost(unit) = sum(arrayData{unit,1}.bC{chan,wave}(postStim_binEdgePre:postStim_binEdgePost));
-                dataPre(unit) = numPostStimBins*mean(arrayData{unit,1}.bC{chan,wave}(baseline_binEdgePre:baseline_binEdgePost));
+                if(opts.AUTO_WINDOW && arrayData{unit}.isExcitatory{chan,wave})
+                    tempPre = max(find(arrayData{1,1}.bE{chan,wave} <= arrayData{unit}.excitatoryLatency{chan,wave}(1)));
+                    tempPost = max(find(arrayData{1,1}.bE{chan,wave} <= arrayData{unit}.excitatoryLatency{chan,wave}(3)));
+                    
+                    dataPost(unit) = sum(arrayData{unit}.bC{chan,wave}(tempPre:tempPost));
+                    numPostStimBins(unit) = tempPost-tempPre;
+                else
+                    dataPost(unit) = sum(arrayData{unit,1}.bC{chan,wave}(postStim_binEdgePre:postStim_binEdgePost));
+                end
+                dataPre(unit) = numPostStimBins(unit)*mean(arrayData{unit,1}.bC{chan,wave}(baseline_binEdgePre:baseline_binEdgePost));
+
             end
             
             dataRatio = dataPost-dataPre;
@@ -122,7 +131,8 @@ function [figureHandles] = plotHeatmaps(arrayData,mapFileName,opts)
             
             %% save figures
             if(opts.FIGURE_SAVE && strcmpi(opts.FIGURE_DIR,'')~=1)
-                FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'_stimChan',num2str(arrayData{1,1}.CHAN_LIST(chan)),'_wave',num2str(wave),'_heatmap');
+                FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'_stimChan',num2str(arrayData{1,1}.CHAN_LIST(chan)),'_wave',num2str(wave),...
+                    '_window',num2str(opts.STIM_PRE_TIME),'-',num2str(opts.STIM_POST_TIME),'_relativeInhib',num2str(opts.RELATIVE_INHIBITION),'_heatmap');
                 saveFiguresLIB(figureHandles{end},opts.FIGURE_DIR,FIGURE_NAME);
             end
             
@@ -176,7 +186,9 @@ function [figureHandles] = plotHeatmaps(arrayData,mapFileName,opts)
             end
 
             if(opts.FIGURE_SAVE && strcmpi(opts.FIGURE_DIR,'')~=1)
-                FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'_stimChan',num2str(arrayData{1,1}.CHAN_LIST(chan)),'_wave',num2str(wave),'_heatmapBarPlot_',num2str(barMake));
+                FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'_stimChan',num2str(arrayData{1,1}.CHAN_LIST(chan)),'_wave',num2str(wave),...
+                    '_window',num2str(opts.STIM_PRE_TIME),'-',num2str(opts.STIM_POST_TIME),'_relativeInhib',num2str(opts.RELATIVE_INHIBITION),...
+                    '_heatmapBarPlot_',num2str(barMake));
                 saveFiguresLIB(figureHandles{end},opts.FIGURE_DIR,FIGURE_NAME);
             end
         end
@@ -211,6 +223,7 @@ function [opts] = configureOpts(optsInput)
     opts.NUM_COLS = 10;
     
     opts.RELATIVE_INHIBITION = 0;
+    opts.AUTO_WINDOW = 0;
     %% check if in optsSave and optsSaveInput, overwrite if so
     try
         inputFieldnames = fieldnames(optsInput);

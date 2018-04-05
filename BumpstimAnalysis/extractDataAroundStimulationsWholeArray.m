@@ -19,6 +19,7 @@ function [outputData] = extractDataAroundStimulationsWholeArray(cds,mapFileName,
             outputData{end+1,1} = unitData;
             outputData{end}.CHAN = cds.units(unit).chan;
             outputData{end}.ID = cds.units(unit).ID;
+            outputData{end}.NN = unit;
             
             posIdx = find(MAP_DATA.chan==cds.units(unit).chan);
             outputData{end}.ROW = 11 - POS_LIST(posIdx,1);
@@ -48,6 +49,7 @@ function [opts] = configureOpts(optsInput)
     opts.TIME_AFTER_STIMULATION_WAVEFORMS = 10/1000;
     
     opts.NEURON_NUMBER = 1;
+    opts.GET_KIN = 0;
     %% check if in optsSave and optsSaveInput, overwrite if so
     try
         inputFieldnames = fieldnames(optsInput);

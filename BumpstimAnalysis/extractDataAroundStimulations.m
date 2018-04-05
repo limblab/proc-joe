@@ -119,7 +119,7 @@ function [ outputData ] = extractDataAroundStimulations( cds,opts )
     end
     
     %% grab kin data for each stimulation
-    if(isfield(cds,'kin') && ~isempty(cds.kin))
+    if(opts.GET_KIN && isfield(cds,'kin') && ~isempty(cds.kin))
         kin_dt = mode(diff(cds.kin.t));
         for chan = 1:NUM_CHANS
             for wave = 1:NUM_WAVEFORM_TYPES
@@ -183,6 +183,8 @@ function [opts] = configureOpts(optsInput)
     opts.TIME_AFTER_STIMULATION_WAVEFORMS = 10/1000;
     
     opts.NEURON_NUMBER = 1;
+    
+    opts.GET_KIN = 0;
     %% check if in optsSave and optsSaveInput, overwrite if so
     try
         inputFieldnames = fieldnames(optsInput);
@@ -195,130 +197,3 @@ function [opts] = configureOpts(optsInput)
         % do nothing, [] was inputted which means use default setting
     end
 end
-
-% for st = 1:opts.STIMULATIONS_PER_TRAIN:numel(cds.stimOn)
-%         spikeMask = cds.units(opts.NEURON_NUMBER).spikes.ts > cds.stimOn(st)-opts.PRE_TIME & cds.units(opts.NEURON_NUMBER).spikes.ts < cds.stimOn(st)+opts.POST_TIME;
-%         spikesPlot = (cds.units(opts.NEURON_NUMBER).spikes.ts(spikeMask) - cds.stimOn(st));
-%         
-%         mask = spikesPlot > 0 & spikesPlot < min(15/1000,opts.TIME_AFTER_STIMULATION_WAVEFORMS);
-%         if(sum(mask) == 0) % no spikes in the range, no response
-%             flagResponse = 0;
-%         else
-%             flagResponse = 1; % spikes in range, response
-%         end
-% 
-%         numWaves = sum(spikeMask==1);
-%         
-%         if(opts.ALIGN_WAVES) % add 4/30 ms to get to negative deflection of spike since positive deflection is what we are aligned on
-%             spikesPlot = spikesPlot + 4/30000;
-%         end
-%         
-%         % find chan and wave number if they exist (they should)
-%         chanNumber = 1;
-%         waveNumber = 1;
-%         if(any(isfield(cds.waveforms,'chanSent'))) % should always be true, older files might not have this though
-%             chanNumber = find(unique(cds.waveforms.chanSent)==cds.waveforms.chanSent(st));
-%         end
-%         if(any(isfield(cds,'waveforms')))
-%             waveNumber = cds.waveforms.waveSent(st);
-%         end
-%         
-%         % update stimNum and arrays if plotting all stimuli, if there is a response
-%         % and we are plotting only those with response, or if there is not
-%         % a response and that is what we are plotting
-%         if(strcmpi(opts.STIMULI_RESPONSE,'all') || (strcmpi(opts.STIMULI_RESPONSE,'responsive') && flagResponse) || (strcmpi(opts.STIMULI_RESPONSE,'nonresponsive') && ~flagResponse))
-%             stimNum(chanNumber,waveNumber) = stimNum(chanNumber,waveNumber) + 1;
-% 
-%             % update spike times 
-%             if(numWaves > 0)
-%                 spikeTrialTimes{chanNumber,waveNumber}(arraySize(chanNumber,waveNumber)+1:arraySize(chanNumber,waveNumber)+numWaves) = spikesPlot';
-%                 spikeTrueTimes{chanNumber,waveNumber}(arraySize(chanNumber,waveNumber)+1:arraySize(chanNumber,waveNumber)+numWaves) = spikesPlot' + cds.stimOn(st);
-%                 stimuliData{chanNumber,waveNumber}(arraySize(chanNumber,waveNumber)+1:arraySize(chanNumber,waveNumber)+numWaves) = stimNum(chanNumber,waveNumber);
-%                 arraySize(chanNumber,waveNumber) = arraySize(chanNumber,waveNumber) + numWaves;
-%                 
-%                 % check if array size is too large, if yes expand arrays
-%                 if(arraySize(chanNumber,waveNumber) > 2/3*size(spikeTrialTimes{chanNumber,waveNumber},2))
-%                     tempArray = zeros(1,size(spikeTrialTimes{chanNumber,waveNumber},2) + opts.ADDITIONAL_ARRAY_SIZE);
-%                     tempArray(1:arraySize(chanNumber,waveNumber)) = spikeTrialTimes{chanNumber,waveNumber}(1:arraySize(chanNumber,waveNumber));
-%                     spikeTrialTimes{chanNumber,waveNumber} = tempArray; 
-%                     % FIX THIS SHIT
-%                     
-%                 end
-%             end
-%         end
-%         
-%     end
-
-
-
-
-
-
-
-
-
-
-% copy spikeData based on the batch size
-%     spikeData = cds.units(opts.NEURON_NUMBER).spikes.ts;
-%     spikeData = repmat(spikeData,1,opts.STIMULATION_BATCH_SIZE);
-%     
-%     for st = 1:opts.STIMULATIONS_PER_TRAIN*opts.STIMULATION_BATCH_SIZE:numel(cds.stimOn)
-% 
-%         stimulationIdx = st:opts.STIMULATIONS_PER_TRAIN:min(st+opts.STIMULATION_BATCH_SIZE*opts.STIMULATIONS_PER_TRAIN-1,numel(cds.stimOn));
-%         spikeDataTemp = spikeData(:,1:numel(stimulationIdx)) - cds.stimOn(stimulationIdx)';
-%         
-%         spikeMask = spikeDataTemp > -opts.PRE_TIME & spikeDataTemp < opts.POST_TIME;
-%         spikesPlot = (spikeDataTemp(spikeMask));
-%         [~,stimulationsPlot] = find(spikeMask);
-%         
-% %         mask = spikesPlot > 0 & spikesPlot < min(15/1000,opts.TIME_AFTER_STIMULATION_WAVEFORMS);
-% %         if(sum(mask) == 0) % no spikes in the range, no response
-% %             flagResponse = 0;
-% %         else
-% %             flagResponse = 1; % spikes in range, response
-% %         end
-%         
-%         if(opts.ALIGN_WAVES) % add 4/30 ms to get to negative deflection of spike since positive deflection is what we are aligned on
-%             spikesPlot = spikesPlot + 4/30000;
-%         end
-%         
-%         % find chan and wave number if they exist (they should)
-%         chanNumber = 1;
-%         waveNumber = 1;
-%         if(any(isfield(cds.waveforms,'chanSent'))) % should always be true, older files might not have this though
-%             [~,chanNumber] = find(unique(cds.waveforms.chanSent)'==cds.waveforms.chanSent(stimulationIdx));
-%         end
-%         if(any(isfield(cds,'waveforms')))
-%             waveNumber = cds.waveforms.waveSent(stimulationIdx);
-%         end
-%         
-%         % update stimNum and arrays if plotting all stimuli, if there is a response
-%         % and we are plotting only those with response, or if there is not
-%         % a response and that is what we are plotting
-%         if(strcmpi(opts.STIMULI_RESPONSE,'all') || (strcmpi(opts.STIMULI_RESPONSE,'responsive') && flagResponse) || (strcmpi(opts.STIMULI_RESPONSE,'nonresponsive') && ~flagResponse))
-%             for chanIdx = 1:numel(unique(chanNumber))
-%                 for waveIdx = 1:numel(unique(waveNumber))
-%                     numWaves = sum(waveNumber(stimulationsPlot)==waveIdx & chanNumber(stimulationsPlot) == chanIdx);
-%                     % update spike times 
-%                     if(numWaves > 0)
-%                         spikeTrialTimes{chanIdx,waveIdx}(arraySize(chanIdx,waveIdx)+1:arraySize(chanIdx,waveIdx)+numWaves) = spikesPlot(waveNumber(stimulationsPlot)==waveIdx & chanNumber(stimulationsPlot) == chanIdx)';
-%                         spikeTrueTimes{chanIdx,waveIdx}(arraySize(chanIdx,waveIdx)+1:arraySize(chanIdx,waveIdx)+numWaves) = spikesPlot(waveNumber(stimulationsPlot)==waveIdx & chanNumber(stimulationsPlot) == chanIdx)' + cds.stimOn(st+stimulationsPlot(waveNumber(stimulationsPlot)==waveIdx & chanNumber(stimulationsPlot) == chanIdx)-1)';
-%                         stimuliData{chanIdx,waveIdx}(arraySize(chanIdx,waveIdx)+1:arraySize(chanIdx,waveIdx)+numWaves) = stimNum(chanIdx,waveIdx) + stimulationsPlot(waveNumber(stimulationsPlot)==waveIdx & chanNumber(stimulationsPlot) == chanIdx);
-%                         arraySize(chanIdx,waveIdx) = arraySize(chanIdx,waveIdx) + numWaves;
-% 
-%                         % check if array size is too large, if yes expand arrays
-%                         if(arraySize(chanIdx,waveIdx) > 2/3*size(spikeTrialTimes{chanIdx,waveIdx},2))
-%                             tempArray = zeros(1,size(spikeTrialTimes{chanIdx,waveIdx},2) + opts.ADDITIONAL_ARRAY_SIZE);
-%                             tempArray(1:arraySize(chanIdx,waveIdx)) = spikeTrialTimes{chanIdx,waveIdx}(1:arraySize(chanIdx,waveIdx));
-%                             spikeTrialTimes{chanIdx,waveIdx} = tempArray;
-%                             % FIX THIS SHIT
-%                         end
-%                         
-%                         stimNum(chanIdx,waveIdx) = stimNum(chanIdx,waveIdx) + sum(waveNumber(stimulationIdx-st+1)==waveIdx & chanNumber(stimulationIdx-st+1) == chanIdx);
-%                     end
-%                 end
-%             end
-% 
-%         end
-%         
-%     end

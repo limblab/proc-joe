@@ -1,4 +1,4 @@
-folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\testingCode\';
+folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_20180403_doublePulse\chan62stim\';
 
 inputData.monkey = 'monkeyHan';
 inputData.array =  'arrayLeftS1';
@@ -9,17 +9,15 @@ inputData.mapFile = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map
 
 cd(folderpath)
 fileList = dir('*spikesExtracted.nev*');
-outputDataFileList = dir('*outputData*');
-
 
 %%
-fileNum = 2;
+fileNum = 4;
 disp(fileList(fileNum).name)
 cds = commonDataStructure();
 cds.file2cds([folderpath fileList(fileNum).name],inputData.monkey,inputData.array,...
     inputData.labnum,inputData.task,inputData.ranBy,inputData.mapFile);
 
-load(outputDataFileList(fileNum).name);
+% load(waveformFileList(fileNum).name);
 
 cdsTemp = [];
 cdsTemp.meta = cds.meta;
@@ -35,8 +33,7 @@ cdsTemp.aliasList = cds.aliasList;
 cdsTemp.operationLog = cds.operationLog;
 stimOnIdx = find(diff(cds.analog{1}.ainp16-mean(cds.analog{1}.ainp16)>3)>.5);
 cdsTemp.stimOn = cds.analog{1}.t(stimOnIdx);
-% cdsTemp.stimOn = (outputData.stimInfo.stimOn/30000)';
-% cdsTemp.stimOff = (outputData.stimInfo.stimOff/30000)';
-cdsTemp.waveforms = outputData.waveforms;
-cdsTemp.artifactData = outputData.artifactData;
+cdsTemp.waveforms.chanSent = -1*ones(numel(stimOnIdx),1);
+cdsTemp.waveforms.waveSent = 1*ones(numel(stimOnIdx),1);
+cdsTemp.waveforms.parameters = [];
 cds = cdsTemp;

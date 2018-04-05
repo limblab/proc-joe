@@ -1,4 +1,4 @@
-function [figureHandles,FITS] = plotAmplitudeVsDistance(arrayData,mapFileName,opts)
+function [figureHandles,FITS] = plotAmplitudeVsInhibitionDuration(arrayData,mapFileName,opts)
     
     %% configure opts and set default values
     opts = configureOpts(opts);
@@ -31,32 +31,25 @@ function [figureHandles,FITS] = plotAmplitudeVsDistance(arrayData,mapFileName,op
             %% get data in the correct ranges from arrayData
             postStim_binEdgePre = max(find(arrayData{1,1}.bE{chan,wave} <= opts.STIM_PRE_TIME*1000));
             postStim_binEdgePost = max(find(arrayData{1,1}.bE{chan,wave} <= opts.STIM_POST_TIME*1000)) - 1;
-            numPostStimBins = ones(size(arrayData,1),1)*(postStim_binEdgePost - postStim_binEdgePre);
+            numPostStimBins = postStim_binEdgePost - postStim_binEdgePre;
             
             baseline_binEdgePre = max(find(arrayData{1,1}.bE{chan,wave} <= opts.BASELINE_PRE_TIME*1000));
             baseline_binEdgePost = max(find(arrayData{1,1}.bE{chan,wave} <= opts.BASELINE_POST_TIME*1000)) - 1; % one more bin edge than bin count
             
             dataPre = zeros(size(arrayData,1),1);
             dataPost = zeros(size(arrayData,1),1);
-            distances = zeros(size(arrayData,1),1);
-            STIMCHAN_POS = [MAP_DATA.row(find(MAP_DATA.chan == arrayData{1,1}.CHAN_LIST(chan))), MAP_DATA.col(find(MAP_DATA.chan == arrayData{1,1}.CHAN_LIST(chan)))];
+            inhibitionDuration = zeros(size(arrayData,1),1);
             
             for unit = 1:size(arrayData,1)
-                if(opts.AUTO_WINDOW && arrayData{unit}.isExcitatory{chan,wave})
-                    tempPre = max(find(arrayData{1,1}.bE{chan,wave} <= arrayData{unit}.excitatoryLatency{chan,wave}(1)));
-                    tempPost = max(find(arrayData{1,1}.bE{chan,wave} <= arrayData{unit}.excitatoryLatency{chan,wave}(3)));
-                    
-                    dataPost(unit) = sum(arrayData{unit}.bC{chan,wave}(tempPre:tempPost));
-                    numPostStimBins(unit) = tempPost-tempPre;
-                else
-                    dataPost(unit) = sum(arrayData{unit,1}.bC{chan,wave}(postStim_binEdgePre:postStim_binEdgePost));
-                end
-                dataPre(unit) = numPostStimBins(unit)*mean(arrayData{unit,1}.bC{chan,wave}(baseline_binEdgePre:baseline_binEdgePost));
-
-                distances(unit) = 400*sqrt((arrayData{unit,1}.ROW-STIMCHAN_POS(1)).^2 + (arrayData{unit,1}.COL-STIMCHAN_POS(2)).^2);
+                dataPost(unit) = sum(arrayData{unit,1}.bC{chan,wave}(postStim_binEdgePre:postStim_binEdgePost));
+                dataPre(unit) = numPostStimBins*mean(arrayData{unit,1}.bC{chan,wave}(baseline_binEdgePre:baseline_binEdgePost));
+                inhibitionDuration(unit) = diff(arrayData{unit}.inhibitoryLatency{chan,wave});
             end
             
             dataRatio = dataPost-dataPre;
+            
+            dataRatio(inhibitionDuration <= 0) = [];
+            inhibitionDuration(inhibitionDuration <= 0) = [];
             
             %% plot distance vs amplitude
             if(~opts.PLOT_ON_ONE_FIGURE)
@@ -65,8 +58,7 @@ function [figureHandles,FITS] = plotAmplitudeVsDistance(arrayData,mapFileName,op
             else
                 c = opts.COLORS{chan*wave};
             end
-            plot(distances,dataRatio,'.','markersize',opts.MARKER_SIZE,'color',c);
-            ylim([0,1])
+            plot(inhibitionDuration,dataRatio,'.','markersize',opts.MARKER_SIZE,'color',c);
 %             hold on
 %             [FITS.f{chan*wave},FITS.stats{chan*wave}] = fit(distances,dataRatio,'exp1');
 %             plot(FITS.f{chan*wave});
@@ -104,7 +96,6 @@ function [opts] = configureOpts(optsInput)
     opts.PLOT_ON_ONE_FIGURE = 1;
     opts.COLORS = {'r','b','g','k','m',[0.5,0.5,0.5],'y'};
 
-    opts.AUTO_WINDOW = 0;
     %% check if in optsSave and optsSaveInput, overwrite if so
     try
         inputFieldnames = fieldnames(optsInput);
