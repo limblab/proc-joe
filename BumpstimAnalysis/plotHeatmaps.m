@@ -37,9 +37,15 @@ function [figureHandles] = plotHeatmaps(arrayData,mapFileName,opts)
             dataPost = zeros(size(arrayData,1),1);
             
             for unit = 1:size(arrayData,1)
-                if(opts.AUTO_WINDOW && arrayData{unit}.isExcitatory{chan,wave})
+                if(opts.AUTO_WINDOW && opts.EXCITATORY && arrayData{unit}.isExcitatory{chan,wave})
                     tempPre = max(find(arrayData{1,1}.bE{chan,wave} <= arrayData{unit}.excitatoryLatency{chan,wave}(1)));
                     tempPost = max(find(arrayData{1,1}.bE{chan,wave} <= arrayData{unit}.excitatoryLatency{chan,wave}(3)));
+                    
+                    dataPost(unit) = sum(arrayData{unit}.bC{chan,wave}(tempPre:tempPost));
+                    numPostStimBins(unit) = tempPost-tempPre;
+                elseif(opts.AUTO_WINDOW && opts.INHIBITORY && arrayData{unit}.isInhibitory{chan,wave})
+                    tempPre = max(find(arrayData{1,1}.bE{chan,wave} <= arrayData{unit}.inhibitoryLatency{chan,wave}(1)));
+                    tempPost = max(find(arrayData{1,1}.bE{chan,wave} <= arrayData{unit}.inhibitoryLatency{chan,wave}(2)));
                     
                     dataPost(unit) = sum(arrayData{unit}.bC{chan,wave}(tempPre:tempPost));
                     numPostStimBins(unit) = tempPost-tempPre;
@@ -74,10 +80,12 @@ function [figureHandles] = plotHeatmaps(arrayData,mapFileName,opts)
 
             plottedHere = zeros(10,10);
             
-            surface(zeros(opts.NUM_ROWS+1,opts.NUM_COLS+1));
+            % no grid lines
+%             surface(zeros(opts.NUM_ROWS+1,opts.NUM_COLS+1));
+            plot([1,opts.NUM_ROWS+1,opts.NUM_ROWS+1,1,1],[1,1,opts.NUM_COLS+1,opts.NUM_COLS+1,1],'-k','linewidth',1.5)
             
             ax = gca;
-            ax.Children(1).LineWidth = 1.5; % thicker box boundaries
+%             ax.Children(1).LineWidth = 1.5; % thicker box boundaries
             
             colormap([1,1,1]);
             
@@ -127,12 +135,17 @@ function [figureHandles] = plotHeatmaps(arrayData,mapFileName,opts)
             end
             
             set(gca,'Visible','off')
-            
-            
+            axis square
+
             %% save figures
             if(opts.FIGURE_SAVE && strcmpi(opts.FIGURE_DIR,'')~=1)
-                FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'_stimChan',num2str(arrayData{1,1}.CHAN_LIST(chan)),'_wave',num2str(wave),...
-                    '_window',num2str(opts.STIM_PRE_TIME),'-',num2str(opts.STIM_POST_TIME),'_relativeInhib',num2str(opts.RELATIVE_INHIBITION),'_heatmap');
+                if(~opts.AUTO_WINDOW)
+                    FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'_stimChan',num2str(arrayData{1,1}.CHAN_LIST(chan)),'_wave',num2str(wave),...
+                        '_window',num2str(opts.STIM_PRE_TIME),'-',num2str(opts.STIM_POST_TIME),'_relativeInhib',num2str(opts.RELATIVE_INHIBITION),'_heatmap');
+                else
+                    FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'_stimChan',num2str(arrayData{1,1}.CHAN_LIST(chan)),'_wave',num2str(wave),...
+                        '_windowAUTO','_relativeInhib',num2str(opts.RELATIVE_INHIBITION),'_heatmap');
+                end
                 saveFiguresLIB(figureHandles{end},opts.FIGURE_DIR,FIGURE_NAME);
             end
             
@@ -224,6 +237,8 @@ function [opts] = configureOpts(optsInput)
     
     opts.RELATIVE_INHIBITION = 0;
     opts.AUTO_WINDOW = 0;
+    opts.INHIBITORY = 0;
+    opts.EXCITATORY = 1;
     %% check if in optsSave and optsSaveInput, overwrite if so
     try
         inputFieldnames = fieldnames(optsInput);
