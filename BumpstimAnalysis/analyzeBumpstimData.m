@@ -1,6 +1,6 @@
 %% set file names 
 
-folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20171116_COstim\';
+folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20171026\';
 % folderpath = 'D:\Lab\Data\StimArtifact\Han\bumpstim\20170614\';
 % mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 % mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Mihili 12A3\Mihili Left PMd SN 6251-001460.cmp';
@@ -11,7 +11,7 @@ cd(folderpath)
 fileList = dir('*_processed.mat');
 
 %% load file and parse for stim electrode number
-fileNumber = 2;
+fileNumber = 1;
 chanIdx = strfind(fileList(fileNumber).name,'chan');
 stimIdx = strfind(fileList(fileNumber).name,'stim');
 if(~isempty(chanIdx) && numel(chanIdx) == 1 && ~isempty(stimIdx) && numel(stimIdx) == 1)

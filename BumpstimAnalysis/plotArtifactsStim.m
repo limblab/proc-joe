@@ -31,8 +31,10 @@ function [figureHandles] = plotArtifactsStim(cds,NEURON_NUMBER,opts)
 
                 for st = 1:opts.ARTIFACT_MULTIPLIER:numel(cds.stimOn)
                     if(cds.waveforms.chanSent(st) == CHAN_LIST(chan) && cds.waveforms.waveSent(st) == wave)
-                        artifactMask = cds.units(NEURON_NUMBER).spikes.ts > cds.artifactData.t((st-1)/opts.ARTIFACT_MULTIPLIER + 1) & ...
-                            cds.units(NEURON_NUMBER).spikes.ts < cds.artifactData.t((st-1)/opts.ARTIFACT_MULTIPLIER + 1) + opts.TIME_AFTER_STIMULATION_ARTIFACT;
+                        artifactMask = cds.units(NEURON_NUMBER).spikes.ts > cds.artifactData.t((st-1)/opts.ARTIFACT_MULTIPLIER + 1) + 4/1000 & ...
+                            cds.units(NEURON_NUMBER).spikes.ts < cds.artifactData.t((st-1)/opts.ARTIFACT_MULTIPLIER + 1) + opts.TIME_AFTER_STIMULATION_ARTIFACT & ...
+                            ~(cds.units(NEURON_NUMBER).spikes.ts > cds.artifactData.t((st-1)/opts.ARTIFACT_MULTIPLIER + 1) & ...
+                            cds.units(NEURON_NUMBER).spikes.ts < cds.artifactData.t((st-1)/opts.ARTIFACT_MULTIPLIER + 1) +4/1000);
                         if(sum(artifactMask)==0) % no spikes present
                             artifactIdx.awayArtifact(end+1,1) = (st-1)/opts.ARTIFACT_MULTIPLIER + 1;
                         elseif(sum(artifactMask)>0) % spike present
@@ -117,8 +119,8 @@ function [figureHandle] = plotArtifacts(waveforms,opts)
 
     % make figure
     figureHandle = figure();
-    xData  = ((1:size(waveforms,2))-1 - size(waveforms,2)/2)/30;
-%     xData  = ((1:size(waveforms,2))-1)/30;
+%     xData  = ((1:size(waveforms,2))-1 - size(waveforms,2)/2)/30;
+    xData  = ((1:size(waveforms,2))-1)/30;
 
     % enumerate over subplots
     for row = 1:opts.ROW_SUBPLOT

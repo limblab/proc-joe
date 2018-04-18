@@ -2,7 +2,9 @@ function [figureHandles,FITS] = plotAmplitudeVsInhibitionDuration(arrayData,mapF
     
     %% configure opts and set default values
     opts = configureOpts(opts);
-    
+    if(isempty(opts.UNITS))
+        opts.UNITS = 1:size(arrayData,1);
+    end
     if(size(opts.STIM_ELECTRODE_PLOT,1) > size(opts.STIM_ELECTRODE_PLOT,2))
         opts.STIM_ELECTRODE_PLOT = opts.STIM_ELECTRODE_PLOT';
     end
@@ -40,7 +42,7 @@ function [figureHandles,FITS] = plotAmplitudeVsInhibitionDuration(arrayData,mapF
             dataPost = zeros(size(arrayData,1),1);
             inhibitionDuration = zeros(size(arrayData,1),1);
             
-            for unit = 1:size(arrayData,1)
+            for unit = opts.UNITS
                 dataPost(unit) = sum(arrayData{unit,1}.bC{chan,wave}(postStim_binEdgePre:postStim_binEdgePost));
                 dataPre(unit) = numPostStimBins*mean(arrayData{unit,1}.bC{chan,wave}(baseline_binEdgePre:baseline_binEdgePost));
                 inhibitionDuration(unit) = diff(arrayData{unit}.inhibitoryLatency{chan,wave});
@@ -48,8 +50,8 @@ function [figureHandles,FITS] = plotAmplitudeVsInhibitionDuration(arrayData,mapF
             
             dataRatio = dataPost-dataPre;
             
-            dataRatio(inhibitionDuration <= 0) = [];
-            inhibitionDuration(inhibitionDuration <= 0) = [];
+%             dataRatio(inhibitionDuration <= 0) = [];
+%             inhibitionDuration(inhibitionDuration <= 0) = [];
             
             %% plot distance vs amplitude
             if(~opts.PLOT_ON_ONE_FIGURE)
@@ -58,10 +60,14 @@ function [figureHandles,FITS] = plotAmplitudeVsInhibitionDuration(arrayData,mapF
             else
                 c = opts.COLORS{chan*wave};
             end
+%             for unit = 1:numel(opts.UNITS)
+%                 plot(inhibitionDuration(opts.UNITS(unit)),dataRatio(opts.UNITS(unit)),'.','markersize',opts.MARKER_SIZE,'color',opts.COLORS{unit});
+%             end
             plot(inhibitionDuration,dataRatio,'.','markersize',opts.MARKER_SIZE,'color',c);
-%             hold on
+            hold on
 %             [FITS.f{chan*wave},FITS.stats{chan*wave}] = fit(distances,dataRatio,'exp1');
 %             plot(FITS.f{chan*wave});
+            
             %% save figures
             if(opts.FIGURE_SAVE && strcmpi(FIGURE_DIR,'')~=1)
                 FIGURE_NAME = strcat(FIGURE_PREFIX,'_stimChan',num2str(arrayData{1,1}.CHAN_LIST(chan)),'_wave',num2str(wave),'_heatmap');
@@ -72,6 +78,9 @@ function [figureHandles,FITS] = plotAmplitudeVsInhibitionDuration(arrayData,mapF
         end
     end
     
+    ax = gca;
+    ax.XLim(1) = 0;
+    ax.YLim(1) = min(ax.YLim(1),0);
     
 end
 
@@ -94,8 +103,8 @@ function [opts] = configureOpts(optsInput)
     opts.FIGURE_PREFIX = '';
     
     opts.PLOT_ON_ONE_FIGURE = 1;
-    opts.COLORS = {'r','b','g','k','m',[0.5,0.5,0.5],'y'};
-
+    opts.COLORS = {'k','r','b',[0,0.5,0],'m',[0.5,0.5,0.5],[0.6,0.6,0],[0.9,0.75,0],[0.5,0.5,1.0],[0.75,0.75,0.75],[1.0,0.5,0.5]};
+    opts.UNITS = [];
     %% check if in optsSave and optsSaveInput, overwrite if so
     try
         inputFieldnames = fieldnames(optsInput);

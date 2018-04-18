@@ -26,12 +26,16 @@ function [ figHandle ] = plotRasterLIB(xData,yData,optsPlotInput,optsSaveInput)
     if(strcmpi(optsPlot.SORT_DATA,'no')~=1)
         switch optsPlot.SORT_DATA
             case 'postStimuliTime'
-                xDataShort = xData;
-                xDataShort(xData <= 0) = 100000; % need to make those times below 0 a big number to sort post stimuli time
-                yDataShort = yData;
+                yDataShort = yData(xData > 0);
+                xDataShort = xData(xData > 0);
+%                 xDataShort(xData <= 0) = 100000; % make the times below 0 a big number to sort post stimuli time
+%                 yDataShort = yData;
                 [~,sortIdx] = sort(xDataShort);
                 yDataShort = yDataShort(sortIdx);
                 sortIdx = unique(yDataShort,'stable');
+                % add trials with no data to end of sortIdx
+                allIdx = 1:max(yData);
+                sortIdx = [sortIdx; allIdx(setdiff(allIdx,sortIdx))'];
                 yDataSorted = yData;
                 xDataSorted = xData;
                 counter = 1;
@@ -40,6 +44,7 @@ function [ figHandle ] = plotRasterLIB(xData,yData,optsPlotInput,optsSaveInput)
                     xDataSorted(counter:counter+sum(yData==sortIdx(sIdx))-1) = xData(yData==sortIdx(sIdx));
                     counter = counter+sum(yData==sortIdx(sIdx));
                 end
+
                 yData = yDataSorted;
                 xData = xDataSorted;
         end
@@ -109,6 +114,7 @@ function [ figHandle ] = plotRasterLIB(xData,yData,optsPlotInput,optsSaveInput)
     % format for lee
     formatForLee(figHandle);
 
+    set(gca,'FontSize',optsPlot.FONT_SIZE);
     
     if(strcmpi(optsPlot.X_TICK,'')~=1)
         set(gca,'XTick',optsPlot.X_TICK);
@@ -167,6 +173,7 @@ function [optsPlot] = configureOptionsPlot(optsPlotInput,xData,yData)
     optsPlot.STIM_DATA_COLOR = 'r';
     optsPlot.STIM_LINE_WIDTH = 1.2;
     optsPlot.SORT_DATA = 'no'; % postStimuliTime
+    optsPlot.FONT_SIZE = 16;
     
     %% check if in optsPlot and optsPlotInput, overwrite if so
     try

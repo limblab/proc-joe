@@ -80,7 +80,7 @@ function [ figureHandle ] = plotArrayMap( cds,NEURON_NUMBER,MAP_FILE_NAME, opts 
     ax = gca;
     set(ax,'Visible','off')
     if(opts.FIGURE_SAVE && strcmpi(opts.FIGURE_PREFIX,'')~=1 && strcmpi(opts.FIGURE_DIR,'')~=1)
-        saveFiguresLIB(figHandle,opts.FIGURE_DIR,strcat(opts.FIGURE_PREFIX,'_nn',num2str(NEURON_NUMBER),'_chan',num2str(cds.units(NEURON_NUMBER).chan),'_arrayMap'));
+        saveFiguresLIB(gcf,opts.FIGURE_DIR,strcat(opts.FIGURE_PREFIX,'_nn',num2str(NEURON_NUMBER),'_chan',num2str(cds.units(NEURON_NUMBER).chan),'_arrayMap'));
     end
 
 end

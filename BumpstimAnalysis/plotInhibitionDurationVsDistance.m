@@ -20,7 +20,7 @@ function [figureHandles,FITS] = plotInhibitionDurationVsDistance(arrayData,mapFi
             %% get data 
             inhibitionDuration = zeros(size(arrayData,1),1);
             distances = zeros(size(arrayData,1),1);
-            STIMCHAN_POS = [MAP_DATA.row(find(MAP_DATA.chan == arrayData{1,1}.CHAN_LIST(chan))), MAP_DATA.col(find(MAP_DATA.chan == arrayData{1,1}.CHAN_LIST(chan)))];
+            STIMCHAN_POS = [11-MAP_DATA.row(find(MAP_DATA.chan == arrayData{1,1}.CHAN_LIST(chan))), MAP_DATA.col(find(MAP_DATA.chan == arrayData{1,1}.CHAN_LIST(chan)))];
             
             for unit = 1:size(arrayData,1)
                 inhibitionDuration(unit) = diff(arrayData{unit}.inhibitoryLatency{chan,wave});
@@ -66,7 +66,7 @@ function [opts] = configureOpts(optsInput)
     opts.FIGURE_PREFIX = '';
     
     opts.PLOT_ON_ONE_FIGURE = 1;
-    opts.COLORS = {'r','b','g','k','m',[0.5,0.5,0.5],'y'};
+    opts.COLORS = {'k','r','b',[0,0.5,0],'m'};
 
     %% check if in optsSave and optsSaveInput, overwrite if so
     try

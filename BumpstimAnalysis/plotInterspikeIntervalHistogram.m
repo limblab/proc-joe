@@ -1,42 +1,48 @@
-function [ figureHandle ] = plotInterspikeIntervalHistogram( cds, NEURON_NUMBER, opts )
+function [ figureHandle, outputData ] = plotInterspikeIntervalHistogram( cds, NEURON_NUMBER, opts )
 
     %% configure opts and set default values
     opts = configureOpts(opts);
     
-    figureHandle = figure();
     %% get data
     spikeTimes = cds.units(NEURON_NUMBER).spikes.ts;
     
     % clean out spike times
-    spikeTimesKeep = spikeTimes(spikeTimes<10);
+    ts_postStim = [];
+    ts_noStim = [];
     
     for st = 1:numel(cds.stimOn)-1
-        spikeTimesKeep = [spikeTimesKeep; spikeTimes(spikeTimes > cds.stimOn(st) + 0.08 & spikeTimes < cds.stimOn(st+1))];
-%         spikeTimesKeep = [spikeTimesKeep; spikeTimes(cds.waveforms.waveSent(st) == 2 & spikeTimes > cds.stimOn(st) & spikeTimes < cds.stimOn(st)+0.15)];
+        ts_noStim = [ts_noStim; spikeTimes(spikeTimes > cds.stimOn(st) + 0.05 & spikeTimes < cds.stimOn(st+1))];
+        ts_postStim = [ts_postStim; spikeTimes(spikeTimes > cds.stimOn(st) & spikeTimes < cds.stimOn(st)+0.02)];
     end   
-    spikeTimesKeep = [spikeTimesKeep; spikeTimes(spikeTimes > cds.stimOn(end) + 0.1)];
-    spikeTimes = spikeTimesKeep;
+    ts_noStim = [spikeTimes(spikeTimes < cds.stimOn(1)); ts_noStim; spikeTimes(spikeTimes > cds.stimOn(end) + 0.1)];
 
-    interSpikeInterval = diff(spikeTimes);
-    interSpikeInterval = interSpikeInterval*1000; % seconds to ms
-%     interSpikeInterval = interSpikeInterval(interSpikeInterval > 1.5);
+    interSpikeInterval{1} = diff(ts_noStim)*1000;
+    interSpikeInterval{2} = diff(ts_postStim)*1000; % seconds to ms
+
     %% bin and plot data
-    binEdges = 0:opts.BIN_SIZE*1000:max(opts.XLIM);
-    [binCounts,~] = histcounts(interSpikeInterval,binEdges);
-    bar(binEdges(1:end-1)+(binEdges(2)-binEdges(1))/2,binCounts)
-    ylabel('Spike count')
-    xlabel('Time (ms)')
-    formatForLee(gcf)
-    %% display things (namely percentage below 1.7ms)
-    if(opts.DISPLAY_TEXT)
-        percentageBelow = sum(interSpikeInterval < 1.2)/numel(interSpikeInterval)*100;
-        disp(percentageBelow)
+    binEdges = 0:opts.BIN_SIZE*1000:max(max(interSpikeInterval{1}),max(interSpikeInterval{2}));
+    for i = 1:numel(interSpikeInterval)
+        figureHandle{i} = figure();
+
+        [binCounts,~] = histcounts(interSpikeInterval{i},binEdges);
+        bar(binEdges(1:end-1)+(binEdges(2)-binEdges(1))/2,binCounts)
+        ylabel('Spike count')
+        xlabel('Time (ms)')
+        xlim([opts.XLIM])
+        formatForLee(gcf)
+        %% display things (namely percentage below 1.7ms)
+        if(opts.DISPLAY_TEXT)
+            percentageBelow = sum(interSpikeInterval{i} < 1.2)/numel(interSpikeInterval{i})*100;
+            disp(percentageBelow)
+        end
+
+        if(opts.FIGURE_SAVE && strcmpi(opts.FIGURE_PREFIX,'')~=1 && strcmpi(opts.FIGURE_DIR,'')~=1)
+            saveFiguresLIB(gcf,opts.FIGURE_DIR,strcat(opts.FIGURE_PREFIX,'_nn',num2str(NEURON_NUMBER),'_chan',num2str(cds.units(NEURON_NUMBER).chan),'_ISI'));
+        end
     end
 
-    if(opts.FIGURE_SAVE && strcmpi(opts.FIGURE_PREFIX,'')~=1 && strcmpi(opts.FIGURE_DIR,'')~=1)
-        saveFiguresLIB(gcf,opts.FIGURE_DIR,strcat(opts.FIGURE_PREFIX,'_nn',num2str(NEURON_NUMBER),'_chan',num2str(cds.units(NEURON_NUMBER).chan),'_ISI'));
-    end
-
+    
+    outputData.interSpikeInterval = interSpikeInterval;
 end
 
 

@@ -39,7 +39,7 @@ function [figureHandles,FITS] = plotAmplitudeVsDistance(arrayData,mapFileName,op
             dataPre = zeros(size(arrayData,1),1);
             dataPost = zeros(size(arrayData,1),1);
             distances = zeros(size(arrayData,1),1);
-            STIMCHAN_POS = [MAP_DATA.row(find(MAP_DATA.chan == arrayData{1,1}.CHAN_LIST(chan))), MAP_DATA.col(find(MAP_DATA.chan == arrayData{1,1}.CHAN_LIST(chan)))];
+            STIMCHAN_POS = [11-MAP_DATA.row(find(MAP_DATA.chan == arrayData{1,1}.CHAN_LIST(chan))), MAP_DATA.col(find(MAP_DATA.chan == arrayData{1,1}.CHAN_LIST(chan)))];
             
             for unit = 1:size(arrayData,1)
                 if(opts.AUTO_WINDOW && arrayData{unit}.isExcitatory{chan,wave})
@@ -102,7 +102,7 @@ function [opts] = configureOpts(optsInput)
     opts.FIGURE_PREFIX = '';
     
     opts.PLOT_ON_ONE_FIGURE = 1;
-    opts.COLORS = {'r','b','g','k','m',[0.5,0.5,0.5],'y'};
+    opts.COLORS = {'k','r','b',[0,0.5,0],'m'};
 
     opts.AUTO_WINDOW = 0;
     %% check if in optsSave and optsSaveInput, overwrite if so

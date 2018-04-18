@@ -21,11 +21,14 @@ function [figureHandles,FITS] = plotLatencyExciteVsDistance(arrayData,mapFileNam
             %% get data 
             latency = zeros(size(arrayData,1),1);
             distances = zeros(size(arrayData,1),1);
-            STIMCHAN_POS = [MAP_DATA.row(find(MAP_DATA.chan == arrayData{1,1}.CHAN_LIST(chan))), MAP_DATA.col(find(MAP_DATA.chan == arrayData{1,1}.CHAN_LIST(chan)))];
+            STIMCHAN_POS = [11-MAP_DATA.row(find(MAP_DATA.chan == arrayData{1,1}.CHAN_LIST(chan))), MAP_DATA.col(find(MAP_DATA.chan == arrayData{1,1}.CHAN_LIST(chan)))];
             
             for unit = 1:size(arrayData,1)
                 if(arrayData{unit}.isExcitatory{chan,wave})
                     latency(unit) = arrayData{unit}.excitatoryLatency{chan,wave}(2); % 2 is the peak
+                    if(latency(unit) > 8)
+                        disp(num2str(unit))
+                    end
                 end
                 distances(unit) = 400*sqrt((arrayData{unit,1}.ROW-STIMCHAN_POS(1)).^2 + (arrayData{unit,1}.COL-STIMCHAN_POS(2)).^2);
             end
@@ -84,7 +87,7 @@ function [opts] = configureOpts(optsInput)
     opts.FIGURE_PREFIX = '';
     
     opts.PLOT_ON_ONE_FIGURE = 1;
-    opts.COLORS = {'r','b','g','k','m',[0.5,0.5,0.5],'y'};
+    opts.COLORS = {'k','r','b',[0,0.5,0],'m'};
 
     %% check if in optsSave and optsSaveInput, overwrite if so
     try

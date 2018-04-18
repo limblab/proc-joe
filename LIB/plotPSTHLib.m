@@ -112,7 +112,7 @@ function [ figHandle ] = plotPSTHLIB(xData,yData,optsPlotInput,optsSaveInput)
     
     % format for lee
     formatForLee(figHandle);
-
+    set(gca,'FontSize',optsPlot.FONT_SIZE);
     %% deal with saving plot
     if(optsSave.FIGURE_SAVE && strcmpi(optsSave.FIGURE_NAME,'')~=1 && strcmpi(optsSave.FIGURE_DIR,'')~=1)
         saveFiguresLIB(figHandle,optsSave.FIGURE_DIR,strcat(optsSave.FIGURE_NAME));
@@ -147,6 +147,7 @@ function [optsPlot] = configureOptionsPlot(optsPlotInput,xData,yData)
     optsPlot.NUM_PLOTS = 1;
     optsPlot.WIDTH = 0.9;
     optsPlot.BAR_COLOR = 'k';
+    optsPlot.FONT_SIZE = 16;
     
     optsPlot.PLOT_NO_RECORDING_BOX = 0;
     optsPlot.NO_RECORDING_WINDOW = [0,10];

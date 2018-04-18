@@ -49,7 +49,7 @@ function [opts] = configureOpts(optsInput)
     opts.TIME_AFTER_STIMULATION_WAVEFORMS = 10/1000;
     
     opts.NEURON_NUMBER = 1;
-    opts.GET_KIN = 0;
+    opts.GET_KIN = 1;
     %% check if in optsSave and optsSaveInput, overwrite if so
     try
         inputFieldnames = fieldnames(optsInput);
