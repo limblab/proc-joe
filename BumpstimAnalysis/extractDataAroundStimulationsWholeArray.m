@@ -1,4 +1,4 @@
-function [outputData] = extractDataAroundStimulationsWholeArray(cds,mapFileName,opts)
+function [outputData] = extractDataAroundStimulationsWholeArray(cds,stimInfo,mapFileName,opts)
 
 
     %% configure opts and set default values
@@ -14,7 +14,7 @@ function [outputData] = extractDataAroundStimulationsWholeArray(cds,mapFileName,
         if(cds.units(unit).ID ~= 0 && cds.units(unit).ID ~= 255)
             % extract and store data
             opts.NEURON_NUMBER = unit;
-            unitData = extractDataAroundStimulations(cds,opts);
+            unitData = extractDataAroundStimulations(cds,stimInfo,opts);
             
             outputData{end+1,1} = unitData;
             outputData{end}.CHAN = cds.units(unit).chan;

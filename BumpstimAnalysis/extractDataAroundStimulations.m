@@ -21,6 +21,8 @@ function [ outputData ] = extractDataAroundStimulations( cds,stimInfo,opts )
     end
     
     flagResponse = 1;
+ 
+    
     
     %% setup arrays
     spikeTrialTimes = cell(NUM_CHANS,NUM_WAVEFORM_TYPES);
