@@ -118,7 +118,7 @@ function [opts] = configureOpts(optsInput)
     opts.PLOT_TITLE = 1;
     opts.TITLE_TO_PLOT = '';
     
-    opts.SMOOTH = 1;
+    opts.SMOOTH = 0;
     opts.SMOOTH_STD_DEV = 1;
     
     opts.PLOT_LINE = 0;

@@ -1,33 +1,55 @@
 %% set file names 
-folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20171026\';
-mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
+inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\testingCode\';
+inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
+folderpath = inputData.folderpath; % rest of code uses folderpath currently
+
+inputData.task='taskCObump';
+inputData.ranBy='ranByJoseph'; 
+inputData.array1='arrayLeftS1'; 
+inputData.monkey='monkeyHan';
+inputData.labnum = 6;
 
 pwd=cd;
-cd(folderpath)
-fileList = dir('*all_merged*');
-
+cd(inputData.folderpath)
+fileList = dir('*spikesExtracted.nev*');
+stimInfoFileList = dir('*outputData*');
 %% load file and parse for stim electrode number
-fileNumber = 1;
+fileNumber = 3;
 disp(fileList(fileNumber).name)
 
-load(fileList(fileNumber).name);
-cd(pwd);
+cds = commonDataStructure();
+cdsPreSync = commonDataStructure();
 
+cds.file2cds([inputData.folderpath fileList(1).name],inputData.task,inputData.ranBy,...
+    inputData.monkey,inputData.labnum,inputData.array1,inputData.mapFileName);
+cd(inputData.folderpath)
+cdsPreSync.file2cds([inputData.folderpath fileList(1).name],inputData.task,inputData.ranBy,...
+    inputData.monkey,inputData.labnum,inputData.array1,inputData.mapFileName,'recoverPreSync');
+
+load(stimInfoFileList(fileNumber).name);
+% cd(pwd);
+
+%% make stimInfo struct
+stimInfo.chanSent = outputData.waveforms.chanSent;
+stimInfo.waveSent = outputData.waveforms.waveSent;
+stimInfo.stimOn = outputData.stimInfo.stimOn'/30000;
+stimInfo.stimOff = outputData.stimInfo.stimOn'/30000;
+stimInfo.parameters = outputData.waveforms.parameters;
 
 %% extract relevant data for a given unit
-optsExtract.NEURON_NUMBER = 118;
+optsExtract.NEURON_NUMBER = 1;
 
 optsExtract.STIMULI_RESPONSE = 'all';
-optsExtract.STIM_ELECTRODE = unique(cds.waveforms.chanSent);
+optsExtract.STIM_ELECTRODE = unique(stimInfo.chanSent);
 optsExtract.STIMULATIONS_PER_TRAIN = 1;
 optsExtract.STIMULATION_BATCH_SIZE = 1000;
 
 optsExtract.PRE_TIME = 20/1000; % made negative in the function
-optsExtract.POST_TIME = 180/1000;
+optsExtract.POST_TIME = 80/1000;
 optsExtract.BIN_SIZE = 0.2/1000;
 optsExtract.TIME_AFTER_STIMULATION_WAVEFORMS = 10/1000;
 
-unitData = extractDataAroundStimulations(cds,optsExtract);
+unitData = extractDataAroundStimulations(cds,stimInfo,optsExtract);
 
 %% plot raster, and PSTH for the given unit above
 
@@ -60,7 +82,7 @@ optsWaveforms.FIGURE_PREFIX = 'Chips_20171024_';
 optsWaveforms.YLIM = [-800,800];
 optsWaveforms.TIME_AFTER_STIMULATION_ARTIFACT = 4/1000;
 %% BROKEN WITH NEW CODE -- ALL BELOW ARE PROBABLY ALSO BROKEN
-WaveformPlots = plotWaveformsStim(cds,optsExtract.NEURON_NUMBER,optsWaveforms);
+WaveformPlots = plotWaveformsStim(cds,stimInfo,rawData,optsExtract.NEURON_NUMBER,optsWaveforms);
 
 %% plot artifacts (raw and filtered)
 
@@ -80,11 +102,11 @@ optsArtifacts.ARTIFACT_MULTIPLIER = 5;
 
 optsArtifacts.PLOT_FILTERED = 1;
 
-ArtifactPlots = plotArtifactsStim(cds,optsExtract.NEURON_NUMBER,optsArtifacts);
+ArtifactPlots = plotArtifactsStim(cds,stimInfo,artifactData,optsExtract.NEURON_NUMBER,optsArtifacts);
 
 %% plot grid
-optsGrid.STIM_ELECTRODE = unique(cds.waveforms.chanSent);
-optsGrid.RECORDING_ELECTRODE = cds.units(optsExtract.NEURON_NUMBER).chan;
+optsGrid.STIM_ELECTRODE = unique(stimInfo.waveforms.chanSent);
+optsGrid.RECORDING_ELECTRODE = stimInfo.units(optsExtract.NEURON_NUMBER).chan;
 
 optsGrid.STIM_ELECTRODE_COLOR = {'k','r','b',[0,0.5,0],'m'};
 optsGrid.STIM_ELECTRODE_LABEL = 'string';
@@ -116,7 +138,7 @@ optsISI.FIGURE_DIR = folderpath;
 tic
 
 optsExtract.STIMULI_RESPONSE = 'all';
-optsExtract.STIM_ELECTRODE = unique(cds.waveforms.chanSent);
+optsExtract.STIM_ELECTRODE = unique(stimInfo.waveforms.chanSent);
 optsExtract.STIMULATIONS_PER_TRAIN = 1;
 optsExtract.STIMULATION_BATCH_SIZE = 1000;
 
@@ -125,7 +147,7 @@ optsExtract.POST_TIME = 80/1000;
 optsExtract.BIN_SIZE = 0.5/1000;
 optsExtract.TIME_AFTER_STIMULATION_WAVEFORMS = 10/1000;
 
-arrayData = extractDataAroundStimulationsWholeArray(cds,mapFileName,optsExtract);
+arrayData = extractDataAroundStimulationsWholeArray(cds,stimInfo,mapFileName,optsExtract);
 toc
 
 %% label as excitatory or inhibitory based on Hao 2016 (which is based on 

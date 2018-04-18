@@ -6,15 +6,15 @@ function [ outputData ] = extractDataAroundStimulations( cds,stimInfo,opts )
     opts = configureOpts(opts);
     
     %% setup useful variables
-    if(any(isfield(stimInfo,'waveforms')))
-        NUM_WAVEFORM_TYPES = numel(unique(stimInfo.waveforms.waveSent));
+    if(any(isfield(stimInfo,'waveSent')))
+        NUM_WAVEFORM_TYPES = numel(unique(stimInfo.waveSent));
     else
         NUM_WAVEFORM_TYPES = 1;
     end
 
-    if(any(isfield(stimInfo.waveforms,'chanSent')))
-        NUM_CHANS = numel(unique(stimInfo.waveforms.chanSent));
-        CHAN_LIST = unique(stimInfo.waveforms.chanSent);
+    if(any(isfield(stimInfo,'chanSent')))
+        NUM_CHANS = numel(unique(stimInfo.chanSent));
+        CHAN_LIST = unique(stimInfo.chanSent);
     else
         CHAN_LIST = opts.STIM_ELECTRODE;
         NUM_CHANS = 1;
@@ -47,9 +47,9 @@ function [ outputData ] = extractDataAroundStimulations( cds,stimInfo,opts )
     for chan = 1:NUM_CHANS
         for wave = 1:NUM_WAVEFORM_TYPES
             % find artifacts from channel and wave combination
-            stimsPerTrainMask = zeros(min(numel(stimInfo.stimOn),numel(stimInfo.waveforms.waveSent)),1);
+            stimsPerTrainMask = zeros(min(numel(stimInfo.stimOn),numel(stimInfo.waveSent)),1);
             stimsPerTrainMask(1:opts.STIMULATIONS_PER_TRAIN:end) = 1;
-            stimIdx = find(stimsPerTrainMask == 1& stimInfo.waveforms.waveSent(1:numel(stimsPerTrainMask)) == wave & stimInfo.waveforms.chanSent(1:numel(stimsPerTrainMask)) == CHAN_LIST(chan));
+            stimIdx = find(stimsPerTrainMask == 1& stimInfo.waveSent(1:numel(stimsPerTrainMask)) == wave & stimInfo.chanSent(1:numel(stimsPerTrainMask)) == CHAN_LIST(chan));
             
             numStims(chan,wave) = numel(stimIdx);
             % process stims in batches to improve speed but control memory
@@ -109,8 +109,8 @@ function [ outputData ] = extractDataAroundStimulations( cds,stimInfo,opts )
             maxYLim = max(max(binCounts{chan,wave})*1.1,maxYLim); 
             % compute a variance for the data from preTime to -2/1000 and for
             % the data from 1.5/1000 to 5/1000
-            firingRateStimuli = zeros(sum(stimInfo.waveforms.waveSent == wave & stimInfo.waveforms.chanSent == CHAN_LIST(chan)),2);
-            for i = 1:sum(stimInfo.waveforms.waveSent == wave & stimInfo.waveforms.chanSent == CHAN_LIST(chan))
+            firingRateStimuli = zeros(sum(stimInfo.waveSent == wave & stimInfo.chanSent == CHAN_LIST(chan)),2);
+            for i = 1:sum(stimInfo.waveSent == wave & stimInfo.chanSent == CHAN_LIST(chan))
                 firingRateStimuli(i,1) = numel(find(stimuliData{chan,wave} == i & spikeTrialTimes{chan,wave} > -opts.PRE_TIME & spikeTrialTimes{chan,wave} < 0))/(opts.PRE_TIME);
                 firingRateStimuli(i,2) = numel(find(stimuliData{chan,wave} == i & spikeTrialTimes{chan,wave} < 5/1000 & spikeTrialTimes{chan,wave} > 0.5/1000))/(4.5/1000);
             end
@@ -125,7 +125,7 @@ function [ outputData ] = extractDataAroundStimulations( cds,stimInfo,opts )
         kin_dt = mode(diff(cds.kin.t));
         for chan = 1:NUM_CHANS
             for wave = 1:NUM_WAVEFORM_TYPES
-                stimIdx = find(stimInfo.waveforms.waveSent(1:opts.STIMULATIONS_PER_TRAIN:end) == wave & stimInfo.waveforms.chanSent(1:opts.STIMULATIONS_PER_TRAIN:end) == CHAN_LIST(chan));
+                stimIdx = find(stimInfo.waveSent(1:opts.STIMULATIONS_PER_TRAIN:end) == wave & stimInfo.chanSent(1:opts.STIMULATIONS_PER_TRAIN:end) == CHAN_LIST(chan));
                 kinData{chan,wave}.x = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
                 kinData{chan,wave}.y = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
                 kinData{chan,wave}.vx = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
@@ -161,9 +161,9 @@ function [ outputData ] = extractDataAroundStimulations( cds,stimInfo,opts )
     
     %% save useful stimulation related information
     outputData.CHAN_LIST = CHAN_LIST;
-    outputData.STIM_PARAMETERS = stimInfo.waveforms.parameters;
-    outputData.WAVEFORM_SENT = stimInfo.waveforms.waveSent;
-    outputData.CHAN_SENT = stimInfo.waveforms.chanSent;
+    outputData.STIM_PARAMETERS = stimInfo.parameters;
+    outputData.WAVEFORM_SENT = stimInfo.waveSent;
+    outputData.CHAN_SENT = stimInfo.chanSent;
     outputData.CHAN_REC = cds.units(opts.NEURON_NUMBER).chan;
 end
 

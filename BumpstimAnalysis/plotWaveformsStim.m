@@ -1,4 +1,4 @@
-function [ figureHandles ] = plotWaveformsStim( cds, NEURON_NUMBER, opts)
+function [ figureHandles ] = plotWaveformsStim( cds, stimInfo, rawData, NEURON_NUMBER, opts)
 %%% need to do save figures, titles, and other plot format stuff
 %%% also align waves?
 
@@ -7,15 +7,15 @@ function [ figureHandles ] = plotWaveformsStim( cds, NEURON_NUMBER, opts)
     opts = configureOpts(opts);
 
     %% get number of chans, chan list, and waveform list
-    if(any(isfield(cds,'waveforms')))
-        NUM_WAVEFORM_TYPES = numel(unique(cds.waveforms.waveSent));
+    if(any(isfield(stimInfo,'waveforms')))
+        NUM_WAVEFORM_TYPES = numel(unique(stimInfo.waveforms.waveSent));
     else
         NUM_WAVEFORM_TYPES = 1;
     end
 
-    if(any(isfield(cds.waveforms,'chanSent')))
-        NUM_CHANS = numel(unique(cds.waveforms.chanSent));
-        CHAN_LIST = unique(cds.waveforms.chanSent);
+    if(any(isfield(stimInfo.waveforms,'chanSent')))
+        NUM_CHANS = numel(unique(stimInfo.waveforms.chanSent));
+        CHAN_LIST = unique(stimInfo.waveforms.chanSent);
     else
         CHAN_LIST = opts.STIM_ELECTRODE;
         NUM_CHANS = 1;
@@ -29,13 +29,13 @@ function [ figureHandles ] = plotWaveformsStim( cds, NEURON_NUMBER, opts)
             spikeMask.nearArtifact = zeros(numel(cds.units(NEURON_NUMBER).spikes.ts,1));
             spikeMask.awayArtifact = zeros(numel(cds.units(NEURON_NUMBER).spikes.ts,1));
             
-            for st = 1:numel(cds.stimOn)-1 % not important to do all of them
-                if(cds.waveforms.chanSent(st) == CHAN_LIST(chan) && cds.waveforms.waveSent(st) == wave)
-                    spikeMask.nearArtifact = spikeMask.nearArtifact | (cds.units(NEURON_NUMBER).spikes.ts > cds.stimOn(st) & ...
-                        cds.units(NEURON_NUMBER).spikes.ts < cds.stimOn(st) + opts.TIME_AFTER_STIMULATION_ARTIFACT);
+            for st = 1:numel(stimInfo.stimOn)-1 % not important to do all of them
+                if(stimInfo.waveforms.chanSent(st) == CHAN_LIST(chan) && stimInfo.waveforms.waveSent(st) == wave)
+                    spikeMask.nearArtifact = spikeMask.nearArtifact | (cds.units(NEURON_NUMBER).spikes.ts > stimInfo.stimOn(st) & ...
+                        cds.units(NEURON_NUMBER).spikes.ts < stimInfo.stimOn(st) + opts.TIME_AFTER_STIMULATION_ARTIFACT);
 
-                    spikeMask.awayArtifact = spikeMask.awayArtifact | (cds.units(NEURON_NUMBER).spikes.ts > cds.stimOn(st) + opts.TIME_AFTER_STIMULATION_NO_ARTIFACT & ...
-                        cds.units(NEURON_NUMBER).spikes.ts < cds.stimOn(st+1));
+                    spikeMask.awayArtifact = spikeMask.awayArtifact | (cds.units(NEURON_NUMBER).spikes.ts > stimInfo.stimOn(st) + opts.TIME_AFTER_STIMULATION_NO_ARTIFACT & ...
+                        cds.units(NEURON_NUMBER).spikes.ts < stimInfo.stimOn(st+1));
                 end
             end
             
@@ -51,8 +51,8 @@ function [ figureHandles ] = plotWaveformsStim( cds, NEURON_NUMBER, opts)
             end
             
             % get rawIdxs
-            rawIdx.nearArtifact = getRawDataIdx(cds.units(NEURON_NUMBER).spikes.ts(waveIdx.nearArtifact),zeros(size(waveIdx.nearArtifact)) + double(cds.units(NEURON_NUMBER).chan),cds.rawData.ts,cds.rawData.elec);
-            rawIdx.awayArtifact = getRawDataIdx(cds.units(NEURON_NUMBER).spikes.ts(waveIdx.awayArtifact),zeros(size(waveIdx.awayArtifact)) + double(cds.units(NEURON_NUMBER).chan),cds.rawData.ts,cds.rawData.elec);
+            rawIdx.nearArtifact = getRawDataIdx(cds.units(NEURON_NUMBER).spikes.ts(waveIdx.nearArtifact),zeros(size(waveIdx.nearArtifact)) + double(cds.units(NEURON_NUMBER).chan),rawData.ts,rawData.elec);
+            rawIdx.awayArtifact = getRawDataIdx(cds.units(NEURON_NUMBER).spikes.ts(waveIdx.awayArtifact),zeros(size(waveIdx.awayArtifact)) + double(cds.units(NEURON_NUMBER).chan),rawData.ts,rawData.elec);
             
             rawIdx.nearArtifact(rawIdx.nearArtifact == -1) = [];
             rawIdx.awayArtifact(rawIdx.awayArtifact == -1) = [];
@@ -78,8 +78,8 @@ function [ figureHandles ] = plotWaveformsStim( cds, NEURON_NUMBER, opts)
             if(sum(opts.PLOT_FILTERED == 0) > 0) % plot raw waveforms (cds.rawData)
                 
                 
-                waveforms.nearArtifact = cds.rawData.waveforms(rawIdx.nearArtifact,opts.PRE_WAVE_RAW:opts.PRE_WAVE_RAW + opts.WAVE_LENGTH_RAW);
-                waveforms.awayArtifact = cds.rawData.waveforms(rawIdx.awayArtifact,opts.PRE_WAVE_RAW:opts.PRE_WAVE_RAW + opts.WAVE_LENGTH_RAW);
+                waveforms.nearArtifact = rawData.waveforms(rawIdx.nearArtifact,opts.PRE_WAVE_RAW:opts.PRE_WAVE_RAW + opts.WAVE_LENGTH_RAW);
+                waveforms.awayArtifact = rawData.waveforms(rawIdx.awayArtifact,opts.PRE_WAVE_RAW:opts.PRE_WAVE_RAW + opts.WAVE_LENGTH_RAW);
                 
                 if(opts.ALIGN_WAVES)
                     waveforms.nearArtifact = alignWaves(waveforms.nearArtifact,'min','raw',opts);

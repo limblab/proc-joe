@@ -1,4 +1,4 @@
-function [ figureHandle, outputData ] = plotInterspikeIntervalHistogram( cds, NEURON_NUMBER, opts )
+function [ figureHandle, outputData ] = plotInterspikeIntervalHistogram( cds,stimInfo NEURON_NUMBER, opts )
 
     %% configure opts and set default values
     opts = configureOpts(opts);
@@ -10,11 +10,11 @@ function [ figureHandle, outputData ] = plotInterspikeIntervalHistogram( cds, NE
     ts_postStim = [];
     ts_noStim = [];
     
-    for st = 1:numel(cds.stimOn)-1
-        ts_noStim = [ts_noStim; spikeTimes(spikeTimes > cds.stimOn(st) + 0.05 & spikeTimes < cds.stimOn(st+1))];
-        ts_postStim = [ts_postStim; spikeTimes(spikeTimes > cds.stimOn(st) & spikeTimes < cds.stimOn(st)+0.02)];
+    for st = 1:numel(stimInfo.stimOn)-1
+        ts_noStim = [ts_noStim; spikeTimes(spikeTimes > stimInfo.stimOn(st) + 0.05 & spikeTimes < stimInfo.stimOn(st+1))];
+        ts_postStim = [ts_postStim; spikeTimes(spikeTimes > stimInfo.stimOn(st) & spikeTimes < stimInfo.stimOn(st)+0.02)];
     end   
-    ts_noStim = [spikeTimes(spikeTimes < cds.stimOn(1)); ts_noStim; spikeTimes(spikeTimes > cds.stimOn(end) + 0.1)];
+    ts_noStim = [spikeTimes(spikeTimes < stimInfo.stimOn(1)); ts_noStim; spikeTimes(spikeTimes > stimInfo.stimOn(end) + 0.1)];
 
     interSpikeInterval{1} = diff(ts_noStim)*1000;
     interSpikeInterval{2} = diff(ts_postStim)*1000; % seconds to ms
