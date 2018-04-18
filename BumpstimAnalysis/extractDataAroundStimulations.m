@@ -1,4 +1,4 @@
-function [ outputData ] = extractDataAroundStimulations( cds,opts )
+function [ outputData ] = extractDataAroundStimulations( cds,stimInfo,opts )
 % this function gets the spike time and bin count information around the
 % stimulations. opts provides inputs
 
@@ -6,15 +6,15 @@ function [ outputData ] = extractDataAroundStimulations( cds,opts )
     opts = configureOpts(opts);
     
     %% setup useful variables
-    if(any(isfield(cds,'waveforms')))
-        NUM_WAVEFORM_TYPES = numel(unique(cds.waveforms.waveSent));
+    if(any(isfield(stimInfo,'waveforms')))
+        NUM_WAVEFORM_TYPES = numel(unique(stimInfo.waveforms.waveSent));
     else
         NUM_WAVEFORM_TYPES = 1;
     end
 
-    if(any(isfield(cds.waveforms,'chanSent')))
-        NUM_CHANS = numel(unique(cds.waveforms.chanSent));
-        CHAN_LIST = unique(cds.waveforms.chanSent);
+    if(any(isfield(stimInfo.waveforms,'chanSent')))
+        NUM_CHANS = numel(unique(stimInfo.waveforms.chanSent));
+        CHAN_LIST = unique(stimInfo.waveforms.chanSent);
     else
         CHAN_LIST = opts.STIM_ELECTRODE;
         NUM_CHANS = 1;
@@ -45,16 +45,16 @@ function [ outputData ] = extractDataAroundStimulations( cds,opts )
     for chan = 1:NUM_CHANS
         for wave = 1:NUM_WAVEFORM_TYPES
             % find artifacts from channel and wave combination
-            stimsPerTrainMask = zeros(min(numel(cds.stimOn),numel(cds.waveforms.waveSent)),1);
+            stimsPerTrainMask = zeros(min(numel(stimInfo.stimOn),numel(stimInfo.waveforms.waveSent)),1);
             stimsPerTrainMask(1:opts.STIMULATIONS_PER_TRAIN:end) = 1;
-            stimIdx = find(stimsPerTrainMask == 1& cds.waveforms.waveSent(1:numel(stimsPerTrainMask)) == wave & cds.waveforms.chanSent(1:numel(stimsPerTrainMask)) == CHAN_LIST(chan));
+            stimIdx = find(stimsPerTrainMask == 1& stimInfo.waveforms.waveSent(1:numel(stimsPerTrainMask)) == wave & stimInfo.waveforms.chanSent(1:numel(stimsPerTrainMask)) == CHAN_LIST(chan));
             
             numStims(chan,wave) = numel(stimIdx);
             % process stims in batches to improve speed but control memory
             for st = 1:opts.STIMULATION_BATCH_SIZE:numel(stimIdx)
                 
                 spikeDataTemp = repmat(cds.units(opts.NEURON_NUMBER).spikes.ts,1,min(numel(stimIdx)-st+1,opts.STIMULATION_BATCH_SIZE)) - ...
-                    cds.stimOn(stimIdx(st:min(numel(stimIdx),st+opts.STIMULATION_BATCH_SIZE-1)))';
+                    stimInfo.stimOn(stimIdx(st:min(numel(stimIdx),st+opts.STIMULATION_BATCH_SIZE-1)))';
                 spikeDataTrueTemp = repmat(cds.units(opts.NEURON_NUMBER).spikes.ts,1,min(numel(stimIdx)-st+1,opts.STIMULATION_BATCH_SIZE));
                 
                 spikeMask = spikeDataTemp > -opts.PRE_TIME & spikeDataTemp < opts.POST_TIME;
@@ -107,8 +107,8 @@ function [ outputData ] = extractDataAroundStimulations( cds,opts )
             maxYLim = max(max(binCounts{chan,wave})*1.1,maxYLim); 
             % compute a variance for the data from preTime to -2/1000 and for
             % the data from 1.5/1000 to 5/1000
-            firingRateStimuli = zeros(sum(cds.waveforms.waveSent == wave & cds.waveforms.chanSent == CHAN_LIST(chan)),2);
-            for i = 1:sum(cds.waveforms.waveSent == wave & cds.waveforms.chanSent == CHAN_LIST(chan))
+            firingRateStimuli = zeros(sum(stimInfo.waveforms.waveSent == wave & stimInfo.waveforms.chanSent == CHAN_LIST(chan)),2);
+            for i = 1:sum(stimInfo.waveforms.waveSent == wave & stimInfo.waveforms.chanSent == CHAN_LIST(chan))
                 firingRateStimuli(i,1) = numel(find(stimuliData{chan,wave} == i & spikeTrialTimes{chan,wave} > -opts.PRE_TIME & spikeTrialTimes{chan,wave} < 0))/(opts.PRE_TIME);
                 firingRateStimuli(i,2) = numel(find(stimuliData{chan,wave} == i & spikeTrialTimes{chan,wave} < 5/1000 & spikeTrialTimes{chan,wave} > 0.5/1000))/(4.5/1000);
             end
@@ -123,7 +123,7 @@ function [ outputData ] = extractDataAroundStimulations( cds,opts )
         kin_dt = mode(diff(cds.kin.t));
         for chan = 1:NUM_CHANS
             for wave = 1:NUM_WAVEFORM_TYPES
-                stimIdx = find(cds.waveforms.waveSent(1:opts.STIMULATIONS_PER_TRAIN:end) == wave & cds.waveforms.chanSent(1:opts.STIMULATIONS_PER_TRAIN:end) == CHAN_LIST(chan));
+                stimIdx = find(stimInfo.waveforms.waveSent(1:opts.STIMULATIONS_PER_TRAIN:end) == wave & stimInfo.waveforms.chanSent(1:opts.STIMULATIONS_PER_TRAIN:end) == CHAN_LIST(chan));
                 kinData{chan,wave}.x = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
                 kinData{chan,wave}.y = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
                 kinData{chan,wave}.vx = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
@@ -132,7 +132,7 @@ function [ outputData ] = extractDataAroundStimulations( cds,opts )
                 kinData{chan,wave}.ay = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
 
                 for st = 1:numel(stimIdx)
-                    kinIdx = find(cds.stimOn(stimIdx(st)) <= cds.kin.t,1,'first');
+                    kinIdx = find(stimInfo.stimOn(stimIdx(st)) <= cds.kin.t,1,'first');
                     if(~isempty(kinIdx))
                         kinData{chan,wave}.x(st,:) = cds.kin.x(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
                         kinData{chan,wave}.y(st,:) = cds.kin.y(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
@@ -159,9 +159,9 @@ function [ outputData ] = extractDataAroundStimulations( cds,opts )
     
     %% save useful stimulation related information
     outputData.CHAN_LIST = CHAN_LIST;
-    outputData.STIM_PARAMETERS = cds.waveforms.parameters;
-    outputData.WAVEFORM_SENT = cds.waveforms.waveSent;
-    outputData.CHAN_SENT = cds.waveforms.chanSent;
+    outputData.STIM_PARAMETERS = stimInfo.waveforms.parameters;
+    outputData.WAVEFORM_SENT = stimInfo.waveforms.waveSent;
+    outputData.CHAN_SENT = stimInfo.waveforms.chanSent;
     outputData.CHAN_REC = cds.units(opts.NEURON_NUMBER).chan;
 end
 

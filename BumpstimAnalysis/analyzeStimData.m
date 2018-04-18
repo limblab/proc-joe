@@ -1,8 +1,5 @@
 %% set file names 
 folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20171026\';
-% folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20171024_dukeBoardchan65\lowThreshold\';
-% mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
-% mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Mihili 12A3\Mihili Left PMd SN 6251-001460.cmp';
 mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
 
 pwd=cd;
@@ -12,25 +9,12 @@ fileList = dir('*all_merged*');
 %% load file and parse for stim electrode number
 fileNumber = 1;
 disp(fileList(fileNumber).name)
-chanIdx = strfind(fileList(fileNumber).name,'chan');
-stimIdx = strfind(fileList(fileNumber).name,'stim');
-if(~isempty(chanIdx) && numel(chanIdx) == 1 && ~isempty(stimIdx) && numel(stimIdx) == 1)
-    stimElectrode = str2num(fileList(fileNumber).name(chanIdx+4:stimIdx-1));
-else % manually input stim electrode
-    stimElectrode = 57;
-end
+
 load(fileList(fileNumber).name);
 cd(pwd);
 
-figDir = '';
-figPrefix = '';
-saveFigures = 0;
 
 %% extract relevant data for a given unit
-% cds.waveforms.waveSent(4:4:end) = 2;
-% cds.waveforms.waveSent(3:4:end) = 2;
-% % % cds.waveforms.waveSent(2:2:end) = 2;
-
 optsExtract.NEURON_NUMBER = 118;
 
 optsExtract.STIMULI_RESPONSE = 'all';
@@ -62,23 +46,8 @@ optsPlotFunc.PLOT_ALL_ONE_FIGURE = 1;
 optsPlotFunc.PLOT_LINE = 1;
 optsPlotFunc.PLOT_TITLE = 0;
 
-optsPlotFunc.SMOOTH = 0;
-optsPlotFunc.SMOOTH_STD_DEV = 0.35;
-optsPlotFunc.MAKE_LEGEND = 1;
-% optsPlotFunc.LEGEND_STR = {'10\muA','20\muA','30\muA','40\muA','50\muA','60\muA'};
-% optsPlotFunc.LEGEND_STR = {'cathodal','anodal'};
 PSTHPlots = plotPSTHStim(unitData,optsExtract.NEURON_NUMBER,optsPlotFunc);
 
-% optsPlotFunc.BIN_SIZE = optsExtract.BIN_SIZE;
-% optsPlotFunc.FIGURE_PREFIX = 'Chips_20171024_long_';
-% 
-% optsPlotFunc.PRE_TIME = 10/1000;
-% optsPlotFunc.POST_TIME = 80/1000;
-% optsPlotFunc.SORT_DATA = 'postStimuliTime';
-% 
-% rasterPlots = plotRasterStim(unitData,optsExtract.NEURON_NUMBER,optsPlotFunc);
-% 
-% PSTHPlots = plotPSTHStim(unitData,optsExtract.NEURON_NUMBER,optsPlotFunc);
 
 %% plot waveforms (raw and filtered)
 optsWaveforms = [];
@@ -90,6 +59,7 @@ optsWaveforms.FIGURE_PREFIX = 'Chips_20171024_';
 
 optsWaveforms.YLIM = [-800,800];
 optsWaveforms.TIME_AFTER_STIMULATION_ARTIFACT = 4/1000;
+%% BROKEN WITH NEW CODE -- ALL BELOW ARE PROBABLY ALSO BROKEN
 WaveformPlots = plotWaveformsStim(cds,optsExtract.NEURON_NUMBER,optsWaveforms);
 
 %% plot artifacts (raw and filtered)
