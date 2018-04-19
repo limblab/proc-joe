@@ -1,11 +1,11 @@
-function [ figureHandle ] = plotArrayMap( cds,NEURON_NUMBER,MAP_FILE_NAME, opts )
+function [ figureHandle ] = plotArrayMap( unitData,MAP_FILE_NAME, opts )
 % this function plots things on a 10x10 grid of the array. Namely the
 % stimulated and recording channel, though other functionality may be added
 % in the future
 
     %% configure opts and set default values
     opts = configureOpts(opts);
-
+    
     %% load map file
     arrayMap=loadMapFile(MAP_FILE_NAME);
 
@@ -79,8 +79,9 @@ function [ figureHandle ] = plotArrayMap( cds,NEURON_NUMBER,MAP_FILE_NAME, opts 
 
     ax = gca;
     set(ax,'Visible','off')
+    axis square
     if(opts.FIGURE_SAVE && strcmpi(opts.FIGURE_PREFIX,'')~=1 && strcmpi(opts.FIGURE_DIR,'')~=1)
-        saveFiguresLIB(gcf,opts.FIGURE_DIR,strcat(opts.FIGURE_PREFIX,'_nn',num2str(NEURON_NUMBER),'_chan',num2str(cds.units(NEURON_NUMBER).chan),'_arrayMap'));
+        saveFiguresLIB(gcf,opts.FIGURE_DIR,strcat(opts.FIGURE_PREFIX,'_nn',num2str(unitData.NN),'_chan',num2str(unitData.CHAN_REC),'_arrayMap'));
     end
 
 end
