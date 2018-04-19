@@ -13,34 +13,13 @@ pwd=cd;
 cd(inputData.folderpath)
 fileList = dir('*spikesExtracted.nev*');
 stimInfoFileList = dir('*outputData*');
-%% load file and parse for stim electrode number
-fileNumber = 3;
-disp(fileList(fileNumber).name)
 
-cds = commonDataStructure();
-cdsPreSync = commonDataStructure();
 
-cds.file2cds([inputData.folderpath fileList(1).name],inputData.task,inputData.ranBy,...
-    inputData.monkey,inputData.labnum,inputData.array1,inputData.mapFileName);
-cd(inputData.folderpath)
-cdsPreSync.file2cds([inputData.folderpath fileList(1).name],inputData.task,inputData.ranBy,...
-    inputData.monkey,inputData.labnum,inputData.array1,inputData.mapFileName,'recoverPreSync');
+%% extract relevant data for a given unit(s)
+% optsExtract.NEURON_NUMBER_ALL = [26,32];
 
-load(stimInfoFileList(fileNumber).name);
-% cd(pwd);
-
-%% make stimInfo struct
-stimInfo.chanSent = outputData.waveforms.chanSent;
-stimInfo.waveSent = outputData.waveforms.waveSent;
-stimInfo.stimOn = outputData.stimInfo.stimOn'/30000;
-stimInfo.stimOff = outputData.stimInfo.stimOn'/30000;
-stimInfo.parameters = outputData.waveforms.parameters;
-
-%% extract relevant data for a given unit
-optsExtract.NEURON_NUMBER = 1;
-
+optsExtract.NEURON_NUMBER_ALL = find([cds.units(:).ID] ~= 0 & [cds.units.ID] ~= 255); % gets all units sorted
 optsExtract.STIMULI_RESPONSE = 'all';
-optsExtract.STIM_ELECTRODE = unique(stimInfo.chanSent);
 optsExtract.STIMULATIONS_PER_TRAIN = 1;
 optsExtract.STIMULATION_BATCH_SIZE = 1000;
 
@@ -49,7 +28,14 @@ optsExtract.POST_TIME = 80/1000;
 optsExtract.BIN_SIZE = 0.2/1000;
 optsExtract.TIME_AFTER_STIMULATION_WAVEFORMS = 10/1000;
 
-unitData = extractDataAroundStimulations(cds,stimInfo,optsExtract);
+optsExtract.USE_ANALOG_FOR_STIM_TIMES = 1;
+
+arrayData = extractDataAroundStimulations(inputData,fileList,stimInfoFileList,optsExtract);
+
+
+
+%% define unit data
+unitData = arrayData{3};
 
 %% plot raster, and PSTH for the given unit above
 
@@ -133,22 +119,11 @@ optsISI.FIGURE_DIR = folderpath;
 [ISIPlot,ISIdata] = plotInterspikeIntervalHistogram(cds,optsExtract.NEURON_NUMBER,optsISI);
 
 
-%% whole array analysis
-% extract data across whole array
-tic
 
-optsExtract.STIMULI_RESPONSE = 'all';
-optsExtract.STIM_ELECTRODE = unique(stimInfo.waveforms.chanSent);
-optsExtract.STIMULATIONS_PER_TRAIN = 1;
-optsExtract.STIMULATION_BATCH_SIZE = 1000;
 
-optsExtract.PRE_TIME = 20/1000; % made negative in the function
-optsExtract.POST_TIME = 80/1000;
-optsExtract.BIN_SIZE = 0.5/1000;
-optsExtract.TIME_AFTER_STIMULATION_WAVEFORMS = 10/1000;
 
-arrayData = extractDataAroundStimulationsWholeArray(cds,stimInfo,mapFileName,optsExtract);
-toc
+
+
 
 %% label as excitatory or inhibitory based on Hao 2016 (which is based on 
 % Kraskov 2011)
@@ -249,3 +224,23 @@ v.FrameRate = 30;
 open(v)
 writeVideo(v,imind)
 close(v)
+
+
+
+% legacy code below
+% % % % %% extract unit data for whole array -- recommend saving after this to avoid long loading times
+% % % % % extract data across whole array
+% % % % tic
+% % % % 
+% % % % optsExtract.STIMULI_RESPONSE = 'all';
+% % % % optsExtract.STIM_ELECTRODE = unique(stimInfo.waveforms.chanSent);
+% % % % optsExtract.STIMULATIONS_PER_TRAIN = 1;
+% % % % optsExtract.STIMULATION_BATCH_SIZE = 1000;
+% % % % 
+% % % % optsExtract.PRE_TIME = 20/1000; % made negative in the function
+% % % % optsExtract.POST_TIME = 80/1000;
+% % % % optsExtract.BIN_SIZE = 0.5/1000;
+% % % % optsExtract.TIME_AFTER_STIMULATION_WAVEFORMS = 10/1000;
+% % % % 
+% % % % arrayData = extractDataAroundStimulationsWholeArray(cds,stimInfo,mapFileName,optsExtract);
+% % % % toc

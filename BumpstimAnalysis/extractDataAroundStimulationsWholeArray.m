@@ -1,4 +1,4 @@
-function [outputData] = extractDataAroundStimulationsWholeArray(cds,stimInfo,mapFileName,opts)
+function [outputData] = extractDataAroundStimulationsWholeArray(inputData,fileList,stimInfoFileList,opts)
 
 
     %% configure opts and set default values
@@ -6,7 +6,7 @@ function [outputData] = extractDataAroundStimulationsWholeArray(cds,stimInfo,map
     outputData = [];
     
     %% load in mapfile
-    MAP_DATA = loadMapFile(mapFileName);
+    MAP_DATA = loadMapFile(inputData.mapFileName(8:end));
     POS_LIST = [MAP_DATA.row,MAP_DATA.col];
     
     %% iterate through units in cds and build a cell array with responses
@@ -14,7 +14,7 @@ function [outputData] = extractDataAroundStimulationsWholeArray(cds,stimInfo,map
         if(cds.units(unit).ID ~= 0 && cds.units(unit).ID ~= 255)
             % extract and store data
             opts.NEURON_NUMBER = unit;
-            unitData = extractDataAroundStimulations(cds,stimInfo,opts);
+            unitData = extractDataAroundStimulations(inputData,fileList,stimInfoFileList,opts);
             
             outputData{end+1,1} = unitData;
             outputData{end}.CHAN = cds.units(unit).chan;
