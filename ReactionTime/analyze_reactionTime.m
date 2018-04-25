@@ -1,6 +1,6 @@
 %% script to process reaction time data 
 %% determine filename and input data
-    inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\Han_20180423_training\';
+    inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\Han_20180425_training_onlySomeTrials\';
     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 
     inputData.task='taskRT';
@@ -20,62 +20,24 @@
     cds.file2cds([inputData.folderpath fileList(fileNumber).name],inputData.task,inputData.ranBy,...
         inputData.monkey,inputData.labnum,inputData.array1,inputData.mapFileName,'recoverPreSync');
     cd(pwd);
-    % need to figure out exactly how I will get the true go cue times 
-    % problem is that there is a delay for the stim times (for sure) and
-    % possibly one for the force onset (not 100% sure)
-    
-    % stim can come from sync line (ainp16 typically)
-    % force can come from the motor control line
-    
-    % the main problem is feeding them into a trial data structure
-    
-%% move to trial data 
-    params = [];
-    params.event_list = {'bumpTime'};
-    td_all = parseFileByTrial(cds,params);
-    
-%% get movement trials
-    td_move = td_all(~isnan([td_all.idx_bumpTime]));
-    
-%% get movement onset
-    params.peak_idx_offset = 20;
-    params.start_idx_offset = 15;
-    params.min_ds = 1.0;
-    params.which_field = 'vel';
-    params.field_idx = 1;
-    td_move = getMoveOnsetAndPeak(td_move,params);
-    td_move = getSpeed(td_move);
-%% plot a set of trials from go cue to end of trial.
-    figure()
-    hold on
-    presample = 30;
-    for t = 4:5%numel(td_move)
-        yData = (td_move(t).acc(td_move(t).idx_goCueTime-presample:end,1));
-        xData = ((1:numel(yData))-presample-1)*td_move(t).bin_size;
-        plot(xData,yData,'k','linewidth',1.5);
-        hold on
-        plot((td_move(t).idx_movement_on-td_move(t).idx_goCueTime)*td_move(t).bin_size,...
-            td_move(t).acc(td_move(t).idx_movement_on),...
-            'r.','markersize',16)
-    end
-    ax = gca;
-    ax.XLim = [-presample*td_move(1).bin_size,0.8];
-    xlabel('Time after go cue presentation (s)')
-    ylabel('Acc-x (cm/s^2)')
-    ax.FontSize = 16;
-    formatForLee(gcf)
-%% bin the move onset 
-    bE = 10:1:30;
-    move_idx = [td_move.idx_movement_on] - [td_move.idx_goCueTime];
-    [bC,bE] = histcounts(move_idx,bE);
-    figure
-    bE = bE*td_move(1).bin_size;
-    bar(bE(1:end-1)+mode(diff(bE)),bC);
-    
-    ax = gca;
-    ax.FontSize = 16;
-    xlabel('RT (ms)')
-    ylabel('Number of trials')
-    formatForLee(gcf)
+    % tried trial data, ran into potential issues with binning the data and
+    % feeding in the true cue times. Decided to write own code
+%% get cue times and information about the cue
+% get movement onset, reaction time, and kinematics from just before go cue
+% to end of trial for each trial
+    opts.START_VAR = 'tgtOnTime';
+    opts.MOVE_START_OFFSET = floor((mode([cds.trials.bumpHoldPeriod]) + 2*mode([cds.trials.bumpRisePeriod]))/mode(diff(cds.kin.t)));
+    [cueInfo] = getCueInformation(cds,opts);
+    [reachData] = getReachData(cds,cueInfo,opts);
 
+%% plot a set of reaches aligned to go cue with reaction time markers
+    opts.PLOT_VAR = 'vy';
+    plotReaches(reachData,cueInfo,opts);
+    
+%% plot a histogram showing the reaction times to each cue
+    opts.BUMP_MAGS = [];
+    [outputData] = plotReactionTimeHistogram(reachData,cueInfo,opts);
+    
+%% get data related to the % success (false starts, reaches, etc.) for each cue type
 
+    [behaviorData] = getReactionTimeSuccessRates(cds,cueInfo,opts);
