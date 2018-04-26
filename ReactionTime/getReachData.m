@@ -12,16 +12,16 @@ function [reachData] = getReachData(cds,cueInfo,opts)
     %% get reaches for each trial
     for tr = 1:size(cds.trials,1)
         % initialize reach data parameters
-        reachData.kin(tr).x = [];
-        reachData.kin(tr).y = [];
-        reachData.kin(tr).vx = [];
-        reachData.kin(tr).vy = [];
-        reachData.kin(tr).ax = [];
-        reachData.kin(tr).ay = [];
-        reachData.kin(tr).moveOnIdx = [];
-        reachData.kin(tr).t = [];
-        reachData.reactionTime(tr) = NaN;
-        reachData.goCueTime(tr) = NaN;
+        reachData.kin(tr,1).x = [];
+        reachData.kin(tr,1).y = [];
+        reachData.kin(tr,1).vx = [];
+        reachData.kin(tr,1).vy = [];
+        reachData.kin(tr,1).ax = [];
+        reachData.kin(tr,1).ay = [];
+        reachData.kin(tr,1).moveOnIdx = [];
+        reachData.kin(tr,1).t = [];
+        reachData.reactionTime(tr,1) = NaN;
+        reachData.goCueTime(tr,1) = NaN;
         
         % populate reach data parameters
         if(~isnan(cueInfo.cueTrialTime(tr)) && cds.trials.result(tr) == 'R') % if we have a cue time and it was a rewarded trial. Discarding trials where he doesn't react
@@ -46,6 +46,7 @@ function [reachData] = getReachData(cds,cueInfo,opts)
             reachData.kin(tr).moveOnIdx = getMovementOnset(reachData.kin(tr),cueInfo.cueTrialTime(tr),opts);
             if(isnan(reachData.kin(tr).moveOnIdx))
                 reachData.kin(tr).moveOnTime = NaN;
+                disp('could not find a move on time')
             else
                 reachData.kin(tr).moveOnTime = reachData.kin(tr).t(reachData.kin(tr).moveOnIdx);
             end
@@ -76,7 +77,11 @@ function [moveOnIdx] = getMovementOnset(kin,cueTime,opts)
     
     % with remaining data, find peak vel baesd on accel crossing zero,
     % finds first peak
-    peakIdx = find(kin.ax(1:end-1) > 0 & kin.ax(2:end) < 0 & kin.vx(1:end-1) > opts.MIN_SPEED & moveOnMask(1:end-1),1,'first');
+    s = kin.vx;
+    ds = [0;diff(s)];
+    dds = [0;diff(ds)];
+    peaks = [dds(1:end-1) > 0 & dds(2:end) < 0; 0];
+    peakIdx = find(peaks & ds > opts.MIN_DS & moveOnMask,1,'first');
     
     if(~isempty(peakIdx))
         % find latest time at which the acceleration is half maximum
@@ -100,7 +105,7 @@ function [opts] = configureOpts(optsInput)
     opts.END_VAR = 'endTime';
     
     opts.MOVE_START_OFFSET = 0;
-    opts.MIN_SPEED = 1;
+    opts.MIN_DS = 0.2;
     
     %% check if in optsSave and optsSaveInput, overwrite if so
     try

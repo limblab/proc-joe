@@ -31,7 +31,7 @@
     [reachData] = getReachData(cds,cueInfo,opts);
 
 %% plot a set of reaches aligned to go cue with reaction time markers
-    opts.PLOT_VAR = 'vy';
+    opts.PLOT_VAR = 'vx';
     plotReaches(reachData,cueInfo,opts);
     
 %% plot a histogram showing the reaction times to each cue

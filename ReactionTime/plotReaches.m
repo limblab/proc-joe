@@ -9,7 +9,7 @@ function [reachPlot] = plotReaches(reachData,cueInfo,opts)
     %% for each idx in reachIdx, plot the reach and a marker at the reaction time point
     figure();
     hold on
-    for r = reachIdx
+    for r = reachIdx'
         t = reachData.kin(r).t;
         if(strcmpi(opts.ZERO_MARKER,'goCueTime')==1) % shift t over so that goCueTime is 0
             t = t - reachData.goCueTime(r);

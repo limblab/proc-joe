@@ -23,17 +23,19 @@ function [outputData,plots] = plotReactionTimeHistogram(reachData,cueInfo,opts)
     %% get bin counts
     cueIdx = 1;
     bE = opts.MIN_BIN:opts.BIN_SIZE:opts.MAX_BIN;
+    totalCount = 0;
     %  each bump magnitude
     for bM = 1:numel(bumpMags)
-        reactionTimes = reachData.reactionTime(find(round(cueInfo.bumpMag,3) == bumpMags(bM)));
-        bC(cueIdx,:) = histcounts(reactionTimes,bE)/sum(round(cueInfo.bumpMag,3)==bumpMags(bM));
+        reactionTimes = reachData.reactionTime(find(isEqual(cueInfo.bumpMag,bumpMags(bM)) & ~isnan(reachData.reactionTime)));
+        bC(cueIdx,:) = histcounts(reactionTimes,bE)/sum(isEqual(cueInfo.bumpMag,bumpMags(bM))&~isnan(reachData.reactionTime));
         cueIdx = cueIdx + 1;
+        totalCount = totalCount + sum(isEqual(cueInfo.bumpMag,bumpMags(bM))&~isnan(reachData.reactionTime));
     end
     
     %  each stim code
     for sC = 1:numel(stimCodes)
-        reactionTimes = reachData.reactionTime(find(round(cueInfo.stimCode,2) == stimCodes(sC)));
-        bC(cueIdx,:) = histcounts(reactionTimes,bE)/sum(round(cueInfo.stimCode,2)==stimCodes(sC));
+        reactionTimes = reachData.reactionTime(isEqual(cueInfo.stimCode,stimCodes(sC)&~isnan(reachData.reactionTime)));
+        bC(cueIdx,:) = histcounts(reactionTimes,bE)/sum(isEqual(cueInfo.stimCode,stimCodes(sC))&~isnan(reachData.reactionTime));
         cueIdx = cueIdx + 1;
     end
     
@@ -52,6 +54,11 @@ function [outputData,plots] = plotReactionTimeHistogram(reachData,cueInfo,opts)
     
 end
 
+function [out] = isEqual(data1,data2,thresh)
+
+    out = data1 < data2 + eps & data1 > data2 - eps;
+
+end
 
 function [opts] = configureOpts(optsInput)
 
