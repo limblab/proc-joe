@@ -17,15 +17,17 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
         cds = commonDataStructure();
         load(stimInfoFileList(fileNumber).name);
         cd(inputData.folderpath)
-        cds.file2cds([inputData.folderpath fileList(1).name],inputData.task,inputData.ranBy,...
+        cds.file2cds([inputData.folderpath fileList(fileNumber).name],inputData.task,inputData.ranBy,...
             inputData.monkey,inputData.labnum,inputData.array1,inputData.mapFileName); % DO NOT USE RECOVER PRE SYNC, currently this shifts the units and the analog signal differently
 
-
-        stimInfo.chanSent = outputData.waveforms.chanSent;
-        stimInfo.waveSent = outputData.waveforms.waveSent;
-        stimInfo.parameters = outputData.waveforms.parameters;
-
-
+%         stimInfo.chanSent = outputData.waveforms.chanSent;
+%         stimInfo.waveSent = outputData.waveforms.waveSent;
+%         stimInfo.parameters = outputData.waveforms.parameters;
+%         
+        if(isempty(opts.NEURON_NUMBER_ALL))
+            opts.NEURON_NUMBER_ALL = find([cds.units.ID]~=0 & [cds.units.ID]~=255);
+        end
+        
         %% find stim times based on sync line, store in stimInfo
         if(opts.USE_ANALOG_FOR_STIM_TIMES)
             for j=1:numel(cds.analog)
@@ -181,7 +183,6 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
             if(fileNumber == 1)
                 %% store unit data
                 arrayData{arrayDataIdx}.spikeTrialTimes = spikeTrialTimes;
-                arrayData{arrayDataIdx}.spikeTrueTimes = spikeTrueTimes;
                 arrayData{arrayDataIdx}.stimData = stimuliData;
                 arrayData{arrayDataIdx}.numStims = numStims;
                 arrayData{arrayDataIdx}.bC = binCounts;
@@ -208,18 +209,17 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
                 for chan = 1:NUM_CHANS
                     for wave = 1:NUM_WAVEFORM_TYPES
                         arrayData{arrayDataIdx}.spikeTrialTimes{chan,wave} = [arrayData{arrayDataIdx}.spikeTrialTimes{chan,wave},spikeTrialTimes{chan,wave}];
-                        arrayData{arrayDataIdx}.spikeTrueTimes{chan,wave} = [arrayData{arrayDataIdx}.spikeTrueTimes{chan,wave},spikeTrueTimes{chan,wave}];
                         arrayData{arrayDataIdx}.stimData{chan,wave} = [arrayData{arrayDataIdx}.stimData{chan,wave},stimuliData{chan,wave}+arrayData{arrayDataIdx}.numStims(chan,wave)];
                         arrayData{arrayDataIdx}.numStims(chan,wave) = arrayData{arrayDataIdx}.numStims(chan,wave)+numStims(chan,wave);
                         arrayData{arrayDataIdx}.bC{chan,wave} = arrayData{arrayDataIdx}.bC{chan,wave}+binCounts{chan,wave};
 
                         arrayData{arrayDataIdx}.kin{chan,wave} = [arrayData{arrayDataIdx}.kin{chan,wave};kinData];
-                        %% append useful stim related info
-                        arrayData{arrayDataIdx}.WAVEFORM_SENT = [arrayData{arrayDataIdx}.WAVEFORM_SENT;stimInfo.waveSent];
-                        arrayData{arrayDataIdx}.CHAN_SENT = [arrayData{arrayDataIdx}.CHAN_SENT;stimInfo.chanSent];
+                        
                     end
                 end
-
+                %% append useful stim related info
+                arrayData{arrayDataIdx}.WAVEFORM_SENT = [arrayData{arrayDataIdx}.WAVEFORM_SENT;stimInfo.waveSent];
+                arrayData{arrayDataIdx}.CHAN_SENT = [arrayData{arrayDataIdx}.CHAN_SENT;stimInfo.chanSent];
             end
             
         end
@@ -256,7 +256,7 @@ function [opts] = configureOpts(optsInput)
     
     opts.TIME_AFTER_STIMULATION_WAVEFORMS = 10/1000;
     
-    opts.NEURON_NUMBER_ALL = 1;
+    opts.NEURON_NUMBER_ALL = [];
     
     opts.GET_KIN = 0;
     opts.USE_ANALOG_FOR_STIM_TIMES = 0;

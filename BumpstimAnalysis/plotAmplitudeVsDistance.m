@@ -29,31 +29,31 @@ function [figureHandles,FITS] = plotAmplitudeVsDistance(arrayData,mapFileName,op
     for chan = opts.STIM_ELECTRODE_PLOT
         for wave = opts.WAVEFORM_TYPES_PLOT
             %% get data in the correct ranges from arrayData
-            postStim_binEdgePre = max(find(arrayData{1,1}.bE{chan,wave} <= opts.STIM_PRE_TIME*1000));
-            postStim_binEdgePost = max(find(arrayData{1,1}.bE{chan,wave} <= opts.STIM_POST_TIME*1000)) - 1;
-            numPostStimBins = ones(size(arrayData,1),1)*(postStim_binEdgePost - postStim_binEdgePre);
+            postStim_binEdgePre = max(find(arrayData{1}.bE{chan,wave} <= opts.STIM_PRE_TIME*1000));
+            postStim_binEdgePost = max(find(arrayData{1}.bE{chan,wave} <= opts.STIM_POST_TIME*1000)) - 1;
+            numPostStimBins = ones(numel(arrayData),1)*(postStim_binEdgePost - postStim_binEdgePre);
             
-            baseline_binEdgePre = max(find(arrayData{1,1}.bE{chan,wave} <= opts.BASELINE_PRE_TIME*1000));
-            baseline_binEdgePost = max(find(arrayData{1,1}.bE{chan,wave} <= opts.BASELINE_POST_TIME*1000)) - 1; % one more bin edge than bin count
+            baseline_binEdgePre = max(find(arrayData{1}.bE{chan,wave} <= opts.BASELINE_PRE_TIME*1000));
+            baseline_binEdgePost = max(find(arrayData{1}.bE{chan,wave} <= opts.BASELINE_POST_TIME*1000)) - 1; % one more bin edge than bin count
             
-            dataPre = zeros(size(arrayData,1),1);
-            dataPost = zeros(size(arrayData,1),1);
-            distances = zeros(size(arrayData,1),1);
-            STIMCHAN_POS = [11-MAP_DATA.row(find(MAP_DATA.chan == arrayData{1,1}.CHAN_LIST(chan))), MAP_DATA.col(find(MAP_DATA.chan == arrayData{1,1}.CHAN_LIST(chan)))];
+            dataPre = zeros(numel(arrayData),1);
+            dataPost = zeros(numel(arrayData),1);
+            distances = zeros(numel(arrayData),1);
+            STIMCHAN_POS = [11-MAP_DATA.row(find(MAP_DATA.chan == arrayData{1}.CHAN_LIST(chan))), MAP_DATA.col(find(MAP_DATA.chan == arrayData{1}.CHAN_LIST(chan)))];
             
-            for unit = 1:size(arrayData,1)
+            for unit = 1:numel(arrayData)
                 if(opts.AUTO_WINDOW && arrayData{unit}.isExcitatory{chan,wave})
-                    tempPre = max(find(arrayData{1,1}.bE{chan,wave} <= arrayData{unit}.excitatoryLatency{chan,wave}(1)));
-                    tempPost = max(find(arrayData{1,1}.bE{chan,wave} <= arrayData{unit}.excitatoryLatency{chan,wave}(3)));
+                    tempPre = max(find(arrayData{1}.bE{chan,wave} <= arrayData{unit}.excitatoryLatency{chan,wave}(1)));
+                    tempPost = max(find(arrayData{1}.bE{chan,wave} <= arrayData{unit}.excitatoryLatency{chan,wave}(3)));
                     
                     dataPost(unit) = sum(arrayData{unit}.bC{chan,wave}(tempPre:tempPost));
                     numPostStimBins(unit) = tempPost-tempPre;
                 else
-                    dataPost(unit) = sum(arrayData{unit,1}.bC{chan,wave}(postStim_binEdgePre:postStim_binEdgePost));
+                    dataPost(unit) = sum(arrayData{unit}.bC{chan,wave}(postStim_binEdgePre:postStim_binEdgePost));
                 end
-                dataPre(unit) = numPostStimBins(unit)*mean(arrayData{unit,1}.bC{chan,wave}(baseline_binEdgePre:baseline_binEdgePost));
+                dataPre(unit) = numPostStimBins(unit)*mean(arrayData{unit}.bC{chan,wave}(baseline_binEdgePre:baseline_binEdgePost));
 
-                distances(unit) = 400*sqrt((arrayData{unit,1}.ROW-STIMCHAN_POS(1)).^2 + (arrayData{unit,1}.COL-STIMCHAN_POS(2)).^2);
+                distances(unit) = 400*sqrt((arrayData{unit}.ROW-STIMCHAN_POS(1)).^2 + (arrayData{unit}.COL-STIMCHAN_POS(2)).^2);
             end
             
             dataRatio = dataPost-dataPre;

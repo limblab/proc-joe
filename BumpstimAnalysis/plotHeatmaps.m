@@ -26,33 +26,33 @@ function [figureHandles] = plotHeatmaps(arrayData,mapFileName,opts)
     for chan = opts.STIM_ELECTRODE_PLOT
         for wave = opts.WAVEFORM_TYPES_PLOT
             %% get data in the correct ranges from arrayData
-            postStim_binEdgePre = max(find(arrayData{1,1}.bE{chan,wave} <= opts.STIM_PRE_TIME*1000));
-            postStim_binEdgePost = max(find(arrayData{1,1}.bE{chan,wave} <= opts.STIM_POST_TIME*1000));
-            numPostStimBins = ones(size(arrayData,1))*(postStim_binEdgePost - postStim_binEdgePre);
+            postStim_binEdgePre = max(find(arrayData{1}.bE{chan,wave} <= opts.STIM_PRE_TIME*1000));
+            postStim_binEdgePost = max(find(arrayData{1}.bE{chan,wave} <= opts.STIM_POST_TIME*1000));
+            numPostStimBins = ones(numel(arrayData))*(postStim_binEdgePost - postStim_binEdgePre);
             
-            baseline_binEdgePre = max(find(arrayData{1,1}.bE{chan,wave} <= opts.BASELINE_PRE_TIME*1000));
-            baseline_binEdgePost = max(find(arrayData{1,1}.bE{chan,wave} <= opts.BASELINE_POST_TIME*1000));
+            baseline_binEdgePre = max(find(arrayData{1}.bE{chan,wave} <= opts.BASELINE_PRE_TIME*1000));
+            baseline_binEdgePost = max(find(arrayData{1}.bE{chan,wave} <= opts.BASELINE_POST_TIME*1000));
             
-            dataPre = zeros(size(arrayData,1),1);
-            dataPost = zeros(size(arrayData,1),1);
+            dataPre = zeros(numel(arrayData),1);
+            dataPost = zeros(numel(arrayData),1);
             
-            for unit = 1:size(arrayData,1)
+            for unit = 1:numel(arrayData)
                 if(opts.AUTO_WINDOW && opts.EXCITATORY && arrayData{unit}.isExcitatory{chan,wave})
-                    tempPre = max(find(arrayData{1,1}.bE{chan,wave} <= arrayData{unit}.excitatoryLatency{chan,wave}(1)));
-                    tempPost = max(find(arrayData{1,1}.bE{chan,wave} <= arrayData{unit}.excitatoryLatency{chan,wave}(3)));
+                    tempPre = max(find(arrayData{1}.bE{chan,wave} <= arrayData{unit}.excitatoryLatency{chan,wave}(1)));
+                    tempPost = max(find(arrayData{1}.bE{chan,wave} <= arrayData{unit}.excitatoryLatency{chan,wave}(3)));
                     
                     dataPost(unit) = sum(arrayData{unit}.bC{chan,wave}(tempPre:tempPost));
                     numPostStimBins(unit) = tempPost-tempPre;
                 elseif(opts.AUTO_WINDOW && opts.INHIBITORY && arrayData{unit}.isInhibitory{chan,wave})
-                    tempPre = max(find(arrayData{1,1}.bE{chan,wave} <= arrayData{unit}.inhibitoryLatency{chan,wave}(1)));
-                    tempPost = max(find(arrayData{1,1}.bE{chan,wave} <= arrayData{unit}.inhibitoryLatency{chan,wave}(2)));
+                    tempPre = max(find(arrayData{1}.bE{chan,wave} <= arrayData{unit}.inhibitoryLatency{chan,wave}(1)));
+                    tempPost = max(find(arrayData{1}.bE{chan,wave} <= arrayData{unit}.inhibitoryLatency{chan,wave}(2)));
                     
                     dataPost(unit) = sum(arrayData{unit}.bC{chan,wave}(tempPre:tempPost));
                     numPostStimBins(unit) = tempPost-tempPre;
                 else
-                    dataPost(unit) = sum(arrayData{unit,1}.bC{chan,wave}(postStim_binEdgePre:postStim_binEdgePost));
+                    dataPost(unit) = sum(arrayData{unit}.bC{chan,wave}(postStim_binEdgePre:postStim_binEdgePost));
                 end
-                dataPre(unit) = numPostStimBins(unit)*mean(arrayData{unit,1}.bC{chan,wave}(baseline_binEdgePre:baseline_binEdgePost));
+                dataPre(unit) = numPostStimBins(unit)*mean(arrayData{unit}.bC{chan,wave}(baseline_binEdgePre:baseline_binEdgePost));
 
             end
             
@@ -94,7 +94,7 @@ function [figureHandles] = plotHeatmaps(arrayData,mapFileName,opts)
             
             hold on
             % plot each unit
-            for unit = 1:size(arrayData,1)
+            for unit = 1:numel(arrayData)
                 if(dataRatio(unit) < 0)
                     if(~opts.LOG_SCALE)
                         mapping = floor(size(colorsBelowOne,1)*(-dataRatio(unit))/(-opts.MIN_RATIO));

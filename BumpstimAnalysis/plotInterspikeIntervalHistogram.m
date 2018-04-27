@@ -1,10 +1,10 @@
-function [ figureHandle, outputData ] = plotInterspikeIntervalHistogram( cds,stimInfo NEURON_NUMBER, opts )
+function [ figureHandle, outputData ] = plotInterspikeIntervalHistogram( cds,NEURON_NUMBER, opts )
 
     %% configure opts and set default values
     opts = configureOpts(opts);
     
     %% get data
-    spikeTimes = cds.units(NEURON_NUMBER).spikes.ts;
+    spikeTimes = unitData.spikeTrialTimes;
     
     % clean out spike times
     ts_postStim = [];
