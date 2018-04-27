@@ -1,6 +1,6 @@
 %% script to process reaction time data 
 %% determine filename and input data
-    inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\Han_20180426_training\';
+    inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\Han_20180427_training\';
     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 
     inputData.task='taskRT';
@@ -27,14 +27,14 @@
 % to end of trial for each trial
     opts.START_VAR = 'tgtOnTime';
     opts.MOVE_START_OFFSET = floor((mode([cds.trials.bumpHoldPeriod]) + 2*mode([cds.trials.bumpRisePeriod]))/mode(diff(cds.kin.t)));
-    
+    opts.MOVE_END_OFFSET = 60 + floor((mode([cds.trials.bumpHoldPeriod]) + 2*mode([cds.trials.bumpRisePeriod]))/mode(diff(cds.kin.t)));
     opts.METHOD = 'peakAcceleration';
-    opts.THRESH_MULT = 0.5;
+    opts.THRESH_MULT = 0.2;
     [cueInfo] = getCueInformation(cds,opts);
     [reachData] = getReachData(cds,cueInfo,opts);
-
+    
 %% plot a set of reaches aligned to go cue with reaction time markers
-    opts.PLOT_VAR = 'y';
+    opts.PLOT_VAR = 'vx';
     opts.NUM_PLOT = 4;
     plotReaches(reachData,cueInfo,opts);
     
@@ -45,6 +45,19 @@
     opts.BIN_SIZE = 0.01;
     [outputData] = plotReactionTimeHistogram(reachData,cueInfo,opts);
     
+%% plot the mean reaction time to each cue based on magnitude
+    opts.PLOT_FIT = 1;
+    [f] = plotReactionTimeMeans(reachData,opts);
+    
+    
 %% get data related to the % success (false starts, reaches, etc.) for each cue type
-
-    [behaviorData] = getReactionTimeSuccessRates(cds,cueInfo,opts);
+    [behaviorData] = getReactionTimeSuccessRates(cds,cueInfo,opts);    
+    
+    
+%% plot a psychometic curve fitting detection probability for the provided data
+    [psychometricData] = plotReachSuccessProbabilities(behaviorData,opts);
+    
+    
+    
+    
+    

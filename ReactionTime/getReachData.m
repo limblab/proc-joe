@@ -55,6 +55,50 @@ function [reachData] = getReachData(cds,cueInfo,opts)
             
         end
     end
+    
+    
+    
+    %% now break reach data up based on cue 
+    % assumption -- bumpMag and stimCode will cover all of the cues
+    
+    if(isempty(opts.BUMP_MAGS))
+        bumpMags = unique(cueInfo.bumpMag(~isnan(cueInfo.bumpMag)));
+    else
+        bumpMags = opts.BUMP_MAGS;
+    end
+    
+    if(isempty(opts.STIM_CODES))
+        stimCodes = unique(cueInfo.stimCode(~isnan(cueInfo.stimCode)));
+    else
+        stimCodes = opts.STIM_CODES;
+    end
+    
+    % split reaction times up based on cue, store reaction time
+    cueIdx = 1;
+    reactionTimse = {};
+    %  each bump magnitude
+    for bM = 1:numel(bumpMags)
+        reactionTimes{cueIdx} = reachData.reactionTime(find(isEqual(cueInfo.bumpMag,bumpMags(bM)) & ~isnan(reachData.reactionTime)));
+        cueIdx = cueIdx + 1;
+    end
+    
+    %  each stim code
+    for sC = 1:numel(stimCodes)
+        reactionTimes{cueIdx} = reachData.reactionTime(isEqual(cueInfo.stimCode,stimCodes(sC)&~isnan(reachData.reactionTime)));
+        cueIdx = cueIdx + 1;
+    end
+    
+    % store relavant data into reachData
+    reachData.bumpMags = [bumpMags;NaN(numel(stimCodes),1)];
+    reachData.stimCodes = [NaN(numel(bumpMags),1);stimCodes];
+    reachData.reactionTimes = reactionTimes;
+    
+end
+
+function [out] = isEqual(data1,data2,thresh)
+
+    out = data1 < data2 + eps & data1 > data2 - eps;
+
 end
 
 function [moveOnIdx] = getMovementOnset(kin,cueTime,opts)
@@ -73,8 +117,8 @@ function [moveOnIdx] = getMovementOnset(kin,cueTime,opts)
     % moveOnMask representes potential movement onset positions
     moveOnMask = ones(numel(kin.x),1);
     % remove those before the cue and offset
-    moveOnMask(1:find(kin.t > cueTime,1,'first')+opts.MOVE_START_OFFSET) = 0;
-    
+    cueIdx = find(kin.t > cueTime,1,'first');
+    moveOnMask(1:(cueIdx+opts.MOVE_START_OFFSET)) = 0;
     % with remaining data, find peak vel baesd on accel crossing zero,
     % finds first peak
     s = kin.vx;
@@ -82,10 +126,12 @@ function [moveOnIdx] = getMovementOnset(kin,cueTime,opts)
     dds = [0;diff(ds)];
     switch opts.METHOD
         case 'peakAcceleration'
-            peaks = [dds(1:end-1) > 0 & dds(2:end) < 0; 0]; % find peak acceleration
-            peakIdx = find(peaks & ds > opts.MIN_VAR & moveOnMask,1,'first'); % peak acceleration is first peak in the data range
-
+%             peaks = [dds(1:end-1) > 0 & dds(2:end) < 0; 0]; % find peak acceleration
+%             peakIdx = find(peaks & ds > opts.MIN_VAR & moveOnMask,1,'first'); % peak acceleration is first peak in the data range
+            [~,peakIdx] = max(ds(cueIdx:cueIdx+opts.MOVE_END_OFFSET)); % find peak acceleration, make sure its within a certain range
+            
             if(~isempty(peakIdx))
+                peakIdx = peakIdx + cueIdx;
                 % find latest time at which the acceleration is half maximum --
                 % define that as movement onset
                 thresh = ds(peakIdx)*opts.THRESH_MULT;
@@ -115,16 +161,21 @@ function [opts] = configureOpts(optsInput)
 
     opts = [];
     
-    opts.PRE_TIME = -1.2;
+    opts.PRE_TIME = -0.5;
     opts.POST_TIME = 1.2;
     
     opts.START_VAR = 'tgtOnTime';
     opts.END_VAR = 'endTime';
     
     opts.MOVE_START_OFFSET = 0;
-    opts.MIN_VAR = 0.2;
+    opts.MOVE_END_OFFSET = 100000;
+    
+    opts.MIN_VAR = 1.5;
     opts.THRESH_MULT = 0.5;
     opts.METHOD = 'peakAcceleration';
+    
+    opts.BUMP_MAGS = [];
+    opts.STIM_CODES = [];
     
     %% check if in optsSave and optsSaveInput, overwrite if so
     try

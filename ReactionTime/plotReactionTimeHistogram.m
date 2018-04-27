@@ -6,38 +6,16 @@ function [outputData,plots] = plotReactionTimeHistogram(reachData,cueInfo,opts)
     plots = [];
     
     %% for each cue idx, plot a histogram of the reaction times
-    % assumption -- bumpMag and stimCode will cover all of the cues
-    
-    if(isempty(opts.BUMP_MAGS))
-        bumpMags = unique(cueInfo.bumpMag(~isnan(cueInfo.bumpMag)));
-    else
-        bumpMags = opts.BUMP_MAGS;
-    end
-    
-    if(isempty(opts.STIM_CODES))
-        stimCodes = unique(cueInfo.stimCode(~isnan(cueInfo.stimCode)));
-    else
-        stimCodes = opts.STIM_CODES;
-    end
 
     %% get bin counts
     cueIdx = 1;
     bE = opts.MIN_BIN:opts.BIN_SIZE:opts.MAX_BIN;
-    totalCount = 0;
-    %  each bump magnitude
-    for bM = 1:numel(bumpMags)
-        reactionTimes = reachData.reactionTime(find(isEqual(cueInfo.bumpMag,bumpMags(bM)) & ~isnan(reachData.reactionTime)));
-        bC(cueIdx,:) = histcounts(reactionTimes,bE)/sum(isEqual(cueInfo.bumpMag,bumpMags(bM))&~isnan(reachData.reactionTime));
+    %  each cue
+    for cue = 1:numel(reachData.reactionTimes)
+        bC(cueIdx,:) = histcounts(reachData.reactionTimes{cue},bE)/numel(reachData.reactionTimes{cue});
         cueIdx = cueIdx + 1;
-        totalCount = totalCount + sum(isEqual(cueInfo.bumpMag,bumpMags(bM))&~isnan(reachData.reactionTime));
     end
     
-    %  each stim code
-    for sC = 1:numel(stimCodes)
-        reactionTimes = reachData.reactionTime(isEqual(cueInfo.stimCode,stimCodes(sC)&~isnan(reachData.reactionTime)));
-        bC(cueIdx,:) = histcounts(reactionTimes,bE)/sum(isEqual(cueInfo.stimCode,stimCodes(sC))&~isnan(reachData.reactionTime));
-        cueIdx = cueIdx + 1;
-    end
     
     %% make plot
     plots = figure();
@@ -47,18 +25,10 @@ function [outputData,plots] = plotReactionTimeHistogram(reachData,cueInfo,opts)
     end
     
     %% set output data
-    outputData.bC = bC;
-    outputData.bE = bE;
-    outputData.bumpMags = [bumpMags;NaN(numel(stimCodes),1)];
-    outputData.stimCodes = [NaN(numel(bumpMags),1);stimCodes];
+    
     
 end
 
-function [out] = isEqual(data1,data2,thresh)
-
-    out = data1 < data2 + eps & data1 > data2 - eps;
-
-end
 
 function [opts] = configureOpts(optsInput)
 
@@ -71,9 +41,7 @@ function [opts] = configureOpts(optsInput)
     opts.LINE_WIDTH = 1.5;
     
     opts.COLORS = {'r',[0 0.5 0],'b','k','m',[0.5,0.5,0.2]};
-    
-    opts.BUMP_MAGS = [];
-    opts.STIM_CODES = [];
+
     %% check if in optsSave and optsSaveInput, overwrite if so
     try
         inputFieldnames = fieldnames(optsInput);
@@ -86,12 +54,5 @@ function [opts] = configureOpts(optsInput)
         % do nothing, [] was inputted which means use default setting
     end
     
-    % check for row vectors instead of column vectors
-    if(size(opts.BUMP_MAGS,2) > 1)
-        opts.BUMP_MAGS = opts.BUMP_MAGS';
-    end
-    if(size(opts.STIM_CODES,2) > 1)
-        opts.STIM_CODES = opts.STIM_CODES';
-    end
 
 end
