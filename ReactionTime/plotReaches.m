@@ -4,6 +4,9 @@ function [reachPlot] = plotReaches(reachData,cueInfo,opts)
     opts = configureOpts(opts);
     
     %% find a set of reaches to plot based on opts.NUM_PLOT
+    
+    
+    
     reachIdx = datasample(find(~isnan(reachData.reactionTime)),min(opts.NUM_PLOT,sum(~isnan(reachData.reactionTime))),'replace',false);
 
     %% for each idx in reachIdx, plot the reach and a marker at the reaction time point

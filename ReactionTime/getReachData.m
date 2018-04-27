@@ -80,15 +80,32 @@ function [moveOnIdx] = getMovementOnset(kin,cueTime,opts)
     s = kin.vx;
     ds = [0;diff(s)];
     dds = [0;diff(ds)];
-    peaks = [dds(1:end-1) > 0 & dds(2:end) < 0; 0];
-    peakIdx = find(peaks & ds > opts.MIN_DS & moveOnMask,1,'first');
+    switch opts.METHOD
+        case 'peakAcceleration'
+            peaks = [dds(1:end-1) > 0 & dds(2:end) < 0; 0]; % find peak acceleration
+            peakIdx = find(peaks & ds > opts.MIN_VAR & moveOnMask,1,'first'); % peak acceleration is first peak in the data range
+
+            if(~isempty(peakIdx))
+                % find latest time at which the acceleration is half maximum --
+                % define that as movement onset
+                thresh = ds(peakIdx)*opts.THRESH_MULT;
+                moveOnIdx = find(moveOnMask & ds < thresh & (1:numel(moveOnMask))' < peakIdx,1,'last');
+
+            end
+        case 'peakVelocity'
+            peaks = [ds(1:end-1) > 0 & ds(2:end) < 0; 0]; % find peak acceleration
+            peakIdx = find(peaks & s > opts.MIN_VAR & moveOnMask,1,'first'); % peak acceleration is first peak in the data range
+
+            if(~isempty(peakIdx))
+                % find latest time at which the acceleration is half maximum --
+                % define that as movement onset
+                thresh = s(peakIdx)*opts.THRESH_MULT;
+                moveOnIdx = find(moveOnMask & s < thresh & (1:numel(moveOnMask))' < peakIdx,1,'last');
+            end
+    end
     
-    if(~isempty(peakIdx))
-        % find latest time at which the acceleration is half maximum
-        thresh = kin.ax(peakIdx)/2;
-        moveOnMask = moveOnMask & kin.ax > thresh;
-        
-        moveOnIdx = find(moveOnMask,1,'first');
+    if(isempty(moveOnIdx))
+        moveOnIdx = NaN;
     end
     
     
@@ -105,7 +122,9 @@ function [opts] = configureOpts(optsInput)
     opts.END_VAR = 'endTime';
     
     opts.MOVE_START_OFFSET = 0;
-    opts.MIN_DS = 0.2;
+    opts.MIN_VAR = 0.2;
+    opts.THRESH_MULT = 0.5;
+    opts.METHOD = 'peakAcceleration';
     
     %% check if in optsSave and optsSaveInput, overwrite if so
     try
