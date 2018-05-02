@@ -46,7 +46,7 @@ function [opts] = configureOpts(optsInput)
     opts.COLORS = {'r',[0 0.5 0],'b','k','m',[0.5,0.5,0.2]};
     opts.MARKER_SIZE = 20;
 
-    opts.USE_ML_FIT = 1;
+    opts.USE_ML_FIT = 0;
     %% check if in optsSave and optsSaveInput, overwrite if so
     try
         inputFieldnames = fieldnames(optsInput);

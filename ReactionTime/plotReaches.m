@@ -5,9 +5,20 @@ function [reachPlot] = plotReaches(reachData,cueInfo,opts)
     
     %% find a set of reaches to plot based on opts.NUM_PLOT
     
+    if(isempty(opts.BUMP_MAGS))
+        bumpMags = unique(cueInfo.bumpMag(~isnan(cueInfo.bumpMag)));
+    else
+        bumpMags = opts.BUMP_MAGS;
+    end
     
+    if(isempty(opts.STIM_CODES))
+        stimCodes = unique(cueInfo.stimCode(~isnan(cueInfo.stimCode)));
+    else
+        stimCodes = opts.STIM_CODES;
+    end
     
-    reachIdx = datasample(find(~isnan(reachData.reactionTime)),min(opts.NUM_PLOT,sum(~isnan(reachData.reactionTime))),'replace',false);
+    reachMask = ~isnan(reachData.reactionTime) & (sum(cueInfo.bumpMag == bumpMags',2) > 0 | sum(cueInfo.stimCode == stimCodes',2) > 0);
+    reachIdx = datasample(find(reachMask),min(opts.NUM_PLOT,sum(reachMask)),'replace',false);
 
     %% for each idx in reachIdx, plot the reach and a marker at the reaction time point
     figure();
@@ -47,6 +58,9 @@ function [opts] = configureOpts(optsInput)
     opts.PLOT_VAR = 'vx';
     opts.LINE_WIDTH = 1.5;
     opts.MARKER_SIZE = 20;
+    
+    opts.BUMP_MAGS = [];
+    opts.STIM_CODES = [];
     
     %% check if in optsSave and optsSaveInput, overwrite if so
     try

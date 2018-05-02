@@ -49,6 +49,10 @@ function [reachData] = getReachData(cds,cueInfo,opts)
                 disp('could not find a move on time')
             else
                 reachData.kin(tr).moveOnTime = reachData.kin(tr).t(reachData.kin(tr).moveOnIdx);
+                if(reachData.kin(tr).moveOnTime-cueInfo.cueTrialTime(tr) > opts.MAX_REACTION_TIME)
+                    reachData.kin(tr).moveOnIdx = NaN;
+                    reachData.kin(tr).moveOnTime = NaN;
+                end
             end
             % find reaction time
             reachData.reactionTime(tr) = reachData.kin(tr).moveOnTime - reachData.goCueTime(tr);
@@ -177,6 +181,7 @@ function [opts] = configureOpts(optsInput)
     opts.BUMP_MAGS = [];
     opts.STIM_CODES = [];
     
+    opts.MAX_REACTION_TIME = 0.4; % in s
     %% check if in optsSave and optsSaveInput, overwrite if so
     try
         inputFieldnames = fieldnames(optsInput);

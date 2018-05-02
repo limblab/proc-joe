@@ -7,15 +7,16 @@ function [f] = plotReactionTimeMeans(reachData,opts)
     opts = configureOpts(opts);
     
     %% plot bump data against bump magnitude
-    figure();
-    hold on
-    bumpIndices = find(~isnan(reachData.bumpMags))';
-
+    
+    bumpIndices = find(~isnan(reachData.bumpMags) & ~cellfun(@isempty,reachData.reactionTimes)')';
+    
     % fit with a decaying exponential
     f = [];
-    [f.fitObj,f.gof] = fit(reachData.bumpMags(bumpIndices),cellfun(@mean,reachData.reactionTimes(bumpIndices))','a*exp(b*x)+c','startPoint',[0,0,0.2]);
+    [f.fitObj,f.gof] = fit(reachData.bumpMags(bumpIndices),cellfun(@mean,reachData.reactionTimes(bumpIndices))','a*exp(b*x)+c','startPoint',[0,0,0.15]);
     
     % plot decaying exponential
+    figure();
+    hold on
     xData = linspace(min(reachData.bumpMags(bumpIndices)*0.9),max(reachData.bumpMags(bumpIndices)*1.1),100);
     yData = f.fitObj.a*exp(f.fitObj.b*xData)+f.fitObj.c;
     plot(xData,yData,'k--','linewidth',opts.LINE_WIDTH);
@@ -24,7 +25,6 @@ function [f] = plotReactionTimeMeans(reachData,opts)
     for bM = bumpIndices
         plot(reachData.bumpMags(bM),mean(reachData.reactionTimes{bM}),'.','color','k','markersize',opts.MARKER_SIZE)
     end
-    
     % plot stim data against stim parameters
     
     % plot all conditions against probability of detection
