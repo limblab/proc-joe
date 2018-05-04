@@ -13,49 +13,23 @@
     cd(inputData.folderpath)
     fileList = dir('*.nev*');
 
-%% load in cds
+%% load in cds and extract data
 
-    fileNumber = 1;
     cds = commonDataStructure();
     cds.file2cds([inputData.folderpath fileList(fileNumber).name],inputData.task,inputData.ranBy,...
         inputData.monkey,inputData.labnum,inputData.array1,inputData.mapFileName,'recoverPreSync');
     cd(pwd);
-    % tried trial data, ran into potential issues with binning the data and
-    % feeding in the true cue times. Decided to write own code
-%% get cue times and information about the cue
-% get movement onset, reaction time, and kinematics from just before go cue
-% to end of trial for each trial
-    opts.START_VAR = 'tgtOnTime';
-    opts.MOVE_START_OFFSET = floor((mode([cds.trials.bumpHoldPeriod]) + 2*mode([cds.trials.bumpRisePeriod]))/mode(diff(cds.kin.t)));
-    opts.MOVE_END_OFFSET = 60 + floor((mode([cds.trials.bumpHoldPeriod]) + 2*mode([cds.trials.bumpRisePeriod]))/mode(diff(cds.kin.t)));
-    opts.METHOD = 'peakAcceleration';
-    opts.THRESH_MULT = 0.2;
-    [cueInfo] = getCueInformation(cds,opts);
-    [reachData] = getReachData(cds,cueInfo,opts);
-    % get data related to the % success (false starts, reaches, etc.) for each cue type
-    [behaviorData] = getReactionTimeSuccessRates(cds,cueInfo,opts);    
     
 %% plot a set of reaches aligned to go cue with reaction time markers
-    opts.PLOT_VAR = 'vy';
-    opts.NUM_PLOT = 4;
-    
-    opts.BUMP_MAGS = behaviorData.bumpMag(2);
-    
-    plotReaches(reachData,cueInfo,opts);
+
     
 %% plot a histogram showing the reaction times to each cue
-    opts.BUMP_MAGS = [];
-    opts.MIN_BIN = 0.1;
-    opts.MAX_BIN = 0.4;
-    opts.BIN_SIZE = 0.02;
-    [outputData] = plotReactionTimeHistogram(reachData,cueInfo,opts);
+
     
 %% plot the mean reaction time to each cue based on magnitude
-    opts.PLOT_FIT = 1;
-    [f] = plotReactionTimeMeans(reachData,opts);
+
     
 %% plot a psychometic curve fitting detection probability for the provided data
-    [psychometricData] = plotReachSuccessProbabilities(behaviorData,opts);
     
     
     

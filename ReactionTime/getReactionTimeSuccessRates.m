@@ -32,10 +32,11 @@ function [behaviorData] = getReactionTimeSuccessRates(cds,cueInfo,opts)
     
     %  each stim code
     for sC = 1:numel(stimCodes)
+        cueIdx = find(cueInfo.stimCode == stimCodes(sC));
         behaviorData.reachSuccess(c) = sum(cds.trials.result(cueIdx) == 'R')/numel(cueIdx);
         behaviorData.reachNums(c) = numel(cueIdx);
         behaviorData.bumpMag(c) = NaN;
-        behaviorData.stimCode(c) = stimCodes(sc);
+        behaviorData.stimCode(c) = stimCodes(sC);
         c = c + 1;
     end
 

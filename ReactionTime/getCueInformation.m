@@ -56,9 +56,11 @@ function [cueInfo] = getCueInformation(cds,opts)
             cueInfo.bumpMag(tr) = cds.trials.bumpMagnitude(tr);
             cueInfo.bumpRamp(tr) = cds.trials.bumpRisePeriod(tr);
             cueInfo.bumpDir(tr) = cds.trials.bumpDir(tr);
-        elseif(cds.trials.isStimTrial(tr) && ~isnan(cds.trials.stimCode(tr)) && ~isempty(find(stimOn > cds.trials.startTime(tr) & stimOn < cds.trials.endTime)))
-            cueInfo.cueTrueTime(tr) = find(stimOn > cds.trials.startTime(tr) & stimOn < cds.trials.endTime,'first');
-            cueInfo.cueTrialTime(tr) = cueInfo.cueTrueTime(tr) - cds.trials.(opts.START_VAR)(tr);
+        end
+        
+        if(cds.trials.isStimTrial(tr) && ~isnan(cds.trials.stimCode(tr)) && ~isempty(find(stimOn > cds.trials.startTime(tr) & stimOn < cds.trials.endTime(tr))))
+%             cueInfo.cueTrueTime(tr) = stimOn(find(stimOn > cds.trials.startTime(tr) & stimOn < cds.trials.endTime(tr),1,'first'));
+%             cueInfo.cueTrialTime(tr) = cueInfo.cueTrueTime(tr) - cds.trials.(opts.START_VAR)(tr);
             cueInfo.stimCode(tr) = cds.trials.stimCode(tr);
         end        
         

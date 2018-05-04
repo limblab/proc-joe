@@ -40,7 +40,7 @@ function [opts] = configureOpts(optsInput)
     
     opts.LINE_WIDTH = 1.5;
     
-    opts.COLORS = {'r',[0 0.5 0],'b','k','m',[0.5,0.5,0.2]};
+    opts.COLORS = {'r',[0 0.5 0],'b','k','m',[0.5,0.5,0.2],[0.3,0.3,0.3]};
 
     %% check if in optsSave and optsSaveInput, overwrite if so
     try
