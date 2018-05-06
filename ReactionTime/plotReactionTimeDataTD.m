@@ -1,14 +1,14 @@
-function [outputData,plots] = plotReactionTimeDataTD(td,opts)
+function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
 
     %% configure opts
     opts = configureOpts(opts);
     
     
     %% get indexes for each cue type
-    bumpList = unique([td.bumpMagnitude]);
+    bumpList = unique([td_reward.bumpMagnitude]);
     bumpList = bumpList(~isnan(bumpList)); % bump mag of 0 means no bump
     
-    stimCodeList = unique([td.stimCode]);
+    stimCodeList = unique([td_reward.stimCode]);
     stimCodeList = stimCodeList(~isnan(stimCodeList)); 
     stimCodeList(end+1) = -1; % representing no stim
     
@@ -16,18 +16,23 @@ function [outputData,plots] = plotReactionTimeDataTD(td,opts)
     cueInfo = [];
     
     
-    %% for each cue, store indexes in td, get reaction time
+    %% for each cue, store indexes in td_reward, get reaction time
     for b = 1:numel(bumpList)
         for s = 1:numel(stimCodeList)
-            % get idx in td
+            % get idx in td_reward
             if(stimCodeList(s) == -1) % handle no stim, just a bump case
-                cueInfo(cueIdx).td_idx = find(isEqual(bumpList(b),[td.bumpMagnitude]) & ~[td.isStimTrial]);
-            else % handle bump and stim (note, bump == 0 means no bump)
-                cueInfo(cueIdx).td_idx = find(isEqual(bumpList(b),[td.bumpMagnitude]) & isEqual(stimCodeList(s),[td.stimCode]) & [td.isStimTrial]);
+                cueInfo(cueIdx).td_idx_reward = find(isEqual(bumpList(b),[td_reward.bumpMagnitude]) & ~[td_reward.isStimTrial] & [td_reward.result]=='R');
+                cueInfo(cueIdx).td_idx_all = find(isEqual(bumpList(b),[td_all.bumpMagnitude]) & ~[td_all.isStimTrial]);
+            else % handle bump and stim (note, bump == 0 means no bump), so the stim only cases are covered here as well
+                cueInfo(cueIdx).td_idx_reward = find(isEqual(bumpList(b),[td_reward.bumpMagnitude]) & isEqual(stimCodeList(s),[td_reward.stimCode]) & [td_reward.isStimTrial] & [td_reward.result]=='R');
+                cueInfo(cueIdx).td_idx_all = find(isEqual(bumpList(b),[td_all.bumpMagnitude]) & isEqual(stimCodeList(s),[td_all.stimCode]) & [td_all.isStimTrial]);
             end
             
             % find reaction time
-            cueInfo(cueIdx).rt = mode([td.bin_size])*[(td(cueInfo(cueIdx).td_idx).idx_movement_on)] -  [td(cueInfo(cueIdx).td_idx).goCueTime];
+            cueInfo(cueIdx).rt = mode([td_reward.bin_size])*[(td_reward(cueInfo(cueIdx).td_idx_reward).idx_movement_on)] - [td_reward(cueInfo(cueIdx).td_idx_reward).goCueTime];
+            
+            % find % responsive
+            cueInfo(cueIdx).percent_respond = numel(cueInfo(cueIdx).td_idx_reward)/(numel(cueInfo(cueIdx).td_idx_all));
             
             % store cue info
             cueInfo(cueIdx).bumpMag = bumpList(b);
@@ -69,7 +74,6 @@ function [outputData,plots] = plotReactionTimeDataTD(td,opts)
             fitData.y(end+1,1) = mean(cueInfo(cueIdx).rt);
         end
     end
-  
     
     % if fit, fit with a decaying exponential
     if(opts.FIT)
@@ -97,11 +101,50 @@ function [outputData,plots] = plotReactionTimeDataTD(td,opts)
     xlim([0,max(fitData.x)]);
     ylim([0,ax.YLim(2)]);
     
-    %% plot as a function of stim code
+    %% plot rt as a function of stim code
 %     
 %     
 
         
+
+    %% plot psychometric curve for bump data
+    figure();
+    hold on
+    fitData.x = [];
+    fitData.y = [];
+    for cueIdx = 1:numel(cueInfo)
+        if(cueInfo(cueIdx).bumpMag ~= 0)
+            plot(cueInfo(cueIdx).bumpMag,cueInfo(cueIdx).percent_respond,'k.','markersize',opts.MARKER_SIZE)
+            fitData.x(end+1,1) = cueInfo(cueIdx).bumpMag;
+            fitData.y(end+1,1) = cueInfo(cueIdx).percent_respond;
+        end
+    end
+    
+    % fit psychometric curve
+    
+    g = [];
+    xData = linspace(0,max(fitData.x*1.1),100);
+
+    if(opts.USE_ML_FIT)
+        mlFit_fun = @(params)(sum((fitData.y-(params(1)+params(2)*erf(params(3)*(fitData.x-params(4))))).^2));
+        min_options = optimset('MaxIter',10000,'MaxFunEvals',10000);
+        g = fminsearch(mlFit_fun, [.45 .4 .05 1],min_options);
+
+        yData = g(1) + g(2)*erf(g(3)*(xData-g(4))); 
+    else
+        s = fitoptions('Method','NonlinearLeastSquares', 'Startpoint', [.5 .5 .1 90], 'Lower', [0 0 0 0], 'Upper', [1 1 10 1.5],...
+            'MaxFunEvals',10000,'MaxIter',1000,'TolFun',10E-8,'TolX',10E-8);
+        ft = fittype('a+b*(erf(c*(x-d)))','options',s);
+        [g.fitObj,g.gof] = fit(fitData.x', fitData.y', ft);
+
+        yData = feval(g.fitObj,xData);
+    end
+    
+    plot(xData,yData,'k--','linewidth',opts.LINE_WIDTH);
+    
+    xlim([0,max(fitData.x)*1.1]);
+    ylim([0,1])
+    
     %% setup output data
     outputData.fit = f.fitObj;
     outputData.gof = f.gof;
@@ -120,6 +163,7 @@ function [opts] = configureOpts(optsInput)
     opts.LINE_WIDTH = 1.5;
     opts.MARKER_SIZE = 12;
     opts.FIT = 1;
+    opts.USE_ML_FIT = 1;
     
     opts.COLORS = {'r',[0 0.5 0],'b','k','m',[0.5,0.5,0.2],[0.3,0.3,0.3]};
 
