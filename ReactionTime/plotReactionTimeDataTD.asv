@@ -28,11 +28,14 @@ function [outputData,plots] = plotReactionTimeDataTD(td,opts)
             
             % find reaction time
             cueInfo(cueIdx).rt = mode([td.bin_size])*[(td(cueInfo(cueIdx).td_idx).idx_movement_on)] -  [td(cueInfo(cueIdx).td_idx).goCueTime];
-            cueIdx = cueIdx + 1;
             
             % store cue info
             cueInfo(cueIdx).bumpMag = bumpList(b);
-            cueInfo(cueIdx).stimCode = stimCodeList(s)
+            cueInfo(cueIdx).stimCode = stimCodeList(s);
+            
+            
+            cueIdx = cueIdx + 1;
+
         end
     end
     
@@ -56,25 +59,39 @@ function [outputData,plots] = plotReactionTimeDataTD(td,opts)
     figure();
     hold on
     
+    fitData.x = [];
+    fitData.y = [];
     for cueIdx = 1:numel(cueInfo)
         if(cueInfo(cueIdx).bumpMag ~= 0)
             plot(cueInfo(cueIdx).bumpMag,mean(cueInfo(cueIdx).rt),'k.','markersize',opts.MARKER_SIZE)
-            fitData.x = cueInfo(cueIdx).bumpMag;
-            
+            fitData.x(end+1,1) = cueInfo(cueIdx).bumpMag;
+            fitData.y(end+1,1) = mean(cueInfo(cueIdx).rt);
         end
     end
     
     % if fit, fit with a decaying exponential
     if(opts.FIT)
-        xData = linspace(min(reachData.bumpMags(bumpIndices)*0.9),max(reachData.bumpMags(bumpIndices)*1.1),100);
+        f = [];
+        [f.fitObj,f.gof] = fit(fitData.x,fitData.y,'a*exp(b*x)+c','startPoint',[0,0,0.15]);
+    
+        xData = linspace(min(fitData.x*0.9),max(fitData.x)*1.1,100);
         yData = f.fitObj.a*exp(f.fitObj.b*xData)+f.fitObj.c;
         plot(xData,yData,'k--','linewidth',opts.LINE_WIDTH);
     end
+    
+    % plot all rt's
+    figure();
+    hold on
+    for
+    
     %% plot as a function of stim code
 %     
 %     
 
         
+    %% setup output data
+    outputData.fit = f.fitObj;
+    outputData.gof = f.gof;
     
 end
 

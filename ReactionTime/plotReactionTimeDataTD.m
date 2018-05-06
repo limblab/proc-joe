@@ -57,13 +57,14 @@ function [outputData,plots] = plotReactionTimeDataTD(td,opts)
     
     %% plot mean rt as a function of bump magnitude
     figure();
-    hold on
     
     fitData.x = [];
     fitData.y = [];
     for cueIdx = 1:numel(cueInfo)
         if(cueInfo(cueIdx).bumpMag ~= 0)
             plot(cueInfo(cueIdx).bumpMag,mean(cueInfo(cueIdx).rt),'k.','markersize',opts.MARKER_SIZE)
+            hold on
+            plot(cueInfo(cueIdx).bumpMag + [0,0],mean(cueInfo(cueIdx).rt) + [-std(cueInfo(cueIdx).rt), std(cueInfo(cueIdx).rt)],'k')
             fitData.x(end+1,1) = cueInfo(cueIdx).bumpMag;
             fitData.y(end+1,1) = mean(cueInfo(cueIdx).rt);
         end
@@ -78,6 +79,23 @@ function [outputData,plots] = plotReactionTimeDataTD(td,opts)
         yData = f.fitObj.a*exp(f.fitObj.b*xData)+f.fitObj.c;
         plot(xData,yData,'k--','linewidth',opts.LINE_WIDTH);
     end
+    
+    xlim([0,max(xData)]);
+    ylim([0,max(yData)*1.1]);
+    
+    % plot all rt's
+    figure();
+    hold on
+    for cueIdx = 1:numel(cueInfo)
+        if(cueInfo(cueIdx).bumpMag ~= 0)
+            plot(cueInfo(cueIdx).bumpMag,cueInfo(cueIdx).rt,'k.','markersize',opts.MARKER_SIZE)
+        end
+    end
+    
+    ax = gca;
+    xlim([0,max(fitData.x)]);
+    ylim([0,ax.YLim(2)]);
+    
     %% plot as a function of stim code
 %     
 %     

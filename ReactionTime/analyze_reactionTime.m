@@ -1,6 +1,7 @@
 %% script to process reaction time data 
 %% determine filename and input data
-    inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\Han_20180501\';
+%     inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\Han_20180501\';
+    inputData.folderpath = 'D:\Lab\Data\ReactionTime\Han_20180501_training\';
     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 
     inputData.task='taskRT';
