@@ -69,6 +69,7 @@ function [outputData,plots] = plotReactionTimeDataTD(td,opts)
             fitData.y(end+1,1) = mean(cueInfo(cueIdx).rt);
         end
     end
+  
     
     % if fit, fit with a decaying exponential
     if(opts.FIT)
