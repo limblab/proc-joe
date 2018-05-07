@@ -54,15 +54,21 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
         cueIdx = cueIdx + 1;
     end
     % make plot
-    plots = figure();
+    plots(1) = figure();
+    plots(1).Name = strcat(opts.FIGURE_PREFIX,'_rtHistogram');
     hold on
     for cueIdx = 1:size(bC,1)
         plot(bE(1:end-1)+mode(diff(bE))/2,bC(cueIdx,:),'-','color',opts.COLORS{cueIdx},'linewidth',opts.LINE_WIDTH)
     end
+    l=legend(num2str([cueInfo.bumpMag]'));
+    set(l,'box','off','location','best');
+    xlabel('RT (s)');
+    ylabel('Proportion of trials');
+    formatForLee(gcf);
     
     %% plot mean rt as a function of bump magnitude
-    figure();
-    
+    plots(2) = figure();
+    plots(2).Name = strcat(opts.FIGURE_PREFIX,'_rtMeans');
     fitData.x = [];
     fitData.y = [];
     for cueIdx = 1:numel(cueInfo)
@@ -87,9 +93,13 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
     
     xlim([0,max(xData)]);
     ylim([0,max(yData)*1.1]);
-    
+    ax1 = gca;
+    xlabel('Bump Magnitude (N)');
+    ylabel('RT (s)');
+    formatForLee(gcf);
     % plot all rt's
-    figure();
+    plots(3) = figure();
+    plots(3).Name = strcat(opts.FIGURE_PREFIX,'_rtAllDots');
     hold on
     for cueIdx = 1:numel(cueInfo)
         if(cueInfo(cueIdx).bumpMag ~= 0)
@@ -97,10 +107,13 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
         end
     end
     
-    ax = gca;
+    ax2 = gca;
     xlim([0,max(fitData.x)]);
-    ylim([0,ax.YLim(2)]);
-    
+    ylim([0,max(ax1.YLim(2),ax2.YLim(2))]);
+    xlabel('Bump Magnitude (N)')
+    ylabel('RT (s)');
+    formatForLee(gcf);
+    ax1.YLim(2) = max(ax1.YLim(2),ax2.YLim(2));
     %% plot rt as a function of stim code
 %     
 %     
@@ -108,7 +121,8 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
         
 
     %% plot psychometric curve for bump data
-    figure();
+    plots(4) = figure();
+    plots(4).Name = strcat(opts.FIGURE_PREFIX,'_detectionCurve');
     hold on
     fitData.x = [];
     fitData.y = [];
@@ -144,7 +158,16 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
     
     xlim([0,max(fitData.x)*1.1]);
     ylim([0,1])
+    xlabel('Bump Magnitude (N)');
+    ylabel('Proportion detected');
+    formatForLee(gcf);
     
+    %% deal with saving figures
+    if(opts.SAVE_FIGURES && strcmp(opts.FOLDER_PATH,'')==0)
+        for p = 1:numel(plots)
+            saveFiguresLIB(plots(p),opts.FOLDER_PATH,plots(p).Name);
+        end
+    end
     %% setup output data
     outputData.fit = f.fitObj;
     outputData.gof = f.gof;
@@ -167,16 +190,20 @@ function [opts] = configureOpts(optsInput)
     
     opts.COLORS = {'r',[0 0.5 0],'b','k','m',[0.5,0.5,0.2],[0.3,0.3,0.3]};
 
+    opts.SAVE_FIGURES = 0;
+    opts.FIGURE_PREFIX = '';
+    opts.FOLDER_PATH = '';
     %% check if in optsSave and optsSaveInput, overwrite if so
     try
-        inputFieldnames = fieldnames(optsInput);
-        for fn = 1:numel(inputFieldnames)
-           if(isfield(opts,inputFieldnames{fn}))
-               opts.(inputFieldnames{fn}) = optsInput.(inputFieldnames{fn});
+        inputFieldNames = fieldnames(optsInput);
+        for fn = 1:numel(inputFieldNames)
+           if(isfield(opts,inputFieldNames{fn}))
+               opts.(inputFieldNames{fn}) = optsInput.(inputFieldNames{fn});
            end
         end
     catch
         % do nothing, [] was inputted which means use default setting
+        error('could not parse opts');
     end
     
 

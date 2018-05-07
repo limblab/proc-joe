@@ -1,7 +1,7 @@
 %% script to process reaction time data 
 %% determine filename and input data
-%     inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\Han_20180501\';
-    inputData.folderpath = 'D:\Lab\Data\ReactionTime\Han_20180427_training\';
+    inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\Han_20180501\';
+%     inputData.folderpath = 'D:\Lab\Data\ReactionTime\Han_20180427_training\';
     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 
     inputData.task='taskRT';
@@ -32,11 +32,11 @@
     [~, td_reward] = getTDidx(td_all, 'result', 'r');
     td_reward = td_reward(~isnan([td_reward.idx_goCueTime]));
     
-% get movement onset
+%% get movement onset
     params.which_field = 'vel';
     params.field_idx = 1;
     params.start_idx_offset = 15;
-    params.threshold_mult = 0.3;
+    params.threshold_mult = 0.2;
     td_reward = getMoveOnsetAndPeak(td_reward,params);
     
 % put movement on back into td_all
@@ -49,11 +49,16 @@
             
 %% plot a set of reaches aligned to go cue with reaction time markers
     opts.MAX_PLOT = 4;
+    opts.WHICH_FIELD ='acc';
+    opts.WHICH_IDX = 1;
     plotReachesTD(td_reward,opts);
     
 %% plot reaction times for each cue, psychometric curve
     opts = [];
-    plotReactionTimeDataTD(td_reward,td_all,opts);
+    opts.FOLDER_PATH = inputData.folderpath;
+    opts.SAVE_FIGURES = 1;
+    opts.FIGURE_PREFIX = 'Han_20180501'; % no _ required
+    [~,plots] = plotReactionTimeDataTD(td_reward,td_all,opts);
 
 
     
