@@ -21,7 +21,7 @@
         inputData.monkey,inputData.labnum,inputData.array1,inputData.mapFileName,'recoverPreSync');
     cd(pwd);
     
-%% convert cds to trial data
+% convert cds to trial data
     params.event_list = {'bumpTime';'bumpMagnitude';'bumpDir';'isStimTrial';'stimCode'};
     params.trial_results = {'R','F'};
 %     params.include_stim_times = 1;
@@ -36,7 +36,7 @@
     params.which_field = 'vel';
     params.field_idx = 1;
     params.start_idx_offset = 15;
-    params.threshold_mult = 0.2;
+    params.threshold_mult = 0.25;
     td_reward = getMoveOnsetAndPeak(td_reward,params);
     
 % put movement on back into td_all
@@ -49,16 +49,18 @@
             
 %% plot a set of reaches aligned to go cue with reaction time markers
     opts.MAX_PLOT = 4;
-    opts.WHICH_FIELD ='acc';
-    opts.WHICH_IDX = 1;
+    opts.WHICH_FIELD ='vel';
+    opts.WHICH_IDX = [1];
+    opts.BUMP_MAGS = [];
+    opts.YLIM = [];
     plotReachesTD(td_reward,opts);
     
 %% plot reaction times for each cue, psychometric curve
     opts = [];
     opts.FOLDER_PATH = inputData.folderpath;
-    opts.SAVE_FIGURES = 1;
-    opts.FIGURE_PREFIX = 'Han_20180501'; % no _ required
-    [~,plots] = plotReactionTimeDataTD(td_reward,td_all,opts);
+    opts.SAVE_FIGURES = 0;
+    opts.FIGURE_PREFIX = 'Han_20180427'; % no _ required
+    [data,plots] = plotReactionTimeDataTD(td_reward,td_all,opts);
 
 
     

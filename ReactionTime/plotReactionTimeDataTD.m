@@ -171,7 +171,7 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
     %% setup output data
     outputData.fit = f.fitObj;
     outputData.gof = f.gof;
-    
+    outputData.cueInfo = cueInfo;
 end
 
 

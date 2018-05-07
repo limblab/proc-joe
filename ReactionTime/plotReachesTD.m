@@ -15,17 +15,26 @@ function [reachPlot] = plotReachesTD(td,opts)
     
     %% plot reaches with movement onset label
     figure();
-    for r = 1:numel(td_reachPlot)
-        t = ((1:size(td_reachPlot(r).pos,1))-td_reachPlot(r).idx_goCueTime)*td_reachPlot(r).bin_size;
- 
-        plot(t,td_reachPlot(r).(opts.WHICH_FIELD)(:,opts.WHICH_IDX),'k','linewidth',opts.LINE_WIDTH)
-        
-        % plot a dot for the reaction time
-        hold on
-        plot(t(td_reachPlot(r).idx_movement_on),td_reachPlot(r).(opts.WHICH_FIELD)(td_reachPlot(r).idx_movement_on,opts.WHICH_IDX),'r.','markersize',opts.MARKER_SIZE);
+    for i = 1:numel(opts.WHICH_IDX)
+        subplot(numel(opts.WHICH_IDX),1,i);
+        for r = 1:numel(td_reachPlot)
+            t = ((1:size(td_reachPlot(r).pos,1))-td_reachPlot(r).idx_goCueTime)*td_reachPlot(r).bin_size;
+
+            plot(t,td_reachPlot(r).(opts.WHICH_FIELD)(:,opts.WHICH_IDX(i)),'k','linewidth',opts.LINE_WIDTH)
+
+            % plot a dot for the reaction time
+            hold on
+            plot(t(td_reachPlot(r).idx_movement_on),td_reachPlot(r).(opts.WHICH_FIELD)(td_reachPlot(r).idx_movement_on,opts.WHICH_IDX(i)),'r.','markersize',opts.MARKER_SIZE);
+        end
+        if(~isempty(opts.XLIM))
+            xlim(opts.XLIM);
+        end
+        if(~isempty(opts.YLIM))
+            ylim(opts.YLIM);
+        end
+        formatForLee(gcf);
     end
     
-    xlim([opts.PRE_TIME,opts.POST_TIME])
 
 end
 
@@ -34,8 +43,8 @@ function [opts] = configureOpts(optsInput)
 
     opts = [];
     
-    opts.PRE_TIME = -0.2;
-    opts.POST_TIME = 0.5;
+    opts.XLIM = [-0.2,0.5];
+    opts.YLIM = [];
     
     opts.MAX_PLOT = 10;
     
