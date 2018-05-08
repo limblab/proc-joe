@@ -1,6 +1,6 @@
 %% script to process reaction time data 
 %% determine filename and input data
-    inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\Han_20180501\';
+    inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\Han_20180508_stimTraining\';
 %     inputData.folderpath = 'D:\Lab\Data\ReactionTime\Han_20180427_training\';
     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 
@@ -21,11 +21,9 @@
         inputData.monkey,inputData.labnum,inputData.array1,inputData.mapFileName,'recoverPreSync');
     cd(pwd);
     
-% convert cds to trial data
-    params.event_list = {'bumpTime';'bumpMagnitude';'bumpDir';'isStimTrial';'stimCode'};
+%% convert cds to trial data
+    params.event_list = {'isBumpTrial';'bumpTime';'bumpMagnitude';'bumpDir';'isStimTrial';'stimCode'};
     params.trial_results = {'R','F'};
-%     params.include_stim_times = 1;
-%     params.include_true_bump_times = 1;
     td_all = parseFileByTrial(cds,params);
     td_all = getGoCueTime(td_all,cds);
     
@@ -36,7 +34,7 @@
     params.which_field = 'vel';
     params.field_idx = 1;
     params.start_idx_offset = 15;
-    params.threshold_mult = 0.25;
+    params.threshold_mult = 0.5;
     td_reward = getMoveOnsetAndPeak(td_reward,params);
     
 % put movement on back into td_all
@@ -60,6 +58,10 @@
     opts.FOLDER_PATH = inputData.folderpath;
     opts.SAVE_FIGURES = 0;
     opts.FIGURE_PREFIX = 'Han_20180427'; % no _ required
+    opts.BUMP_MAGS = [];
+    opts.STIM_CODES = 0;
+    opts.FIT = 1;
+    
     [data,plots] = plotReactionTimeDataTD(td_reward,td_all,opts);
 
 
