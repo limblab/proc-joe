@@ -60,7 +60,7 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
     end
         
     
-%     %% make a histogram
+    %% make a histogram
 %     % get bin counts
 %     bE = opts.MIN_BIN:opts.BIN_SIZE:opts.MAX_BIN;
 %     %  each cue
@@ -97,13 +97,12 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
     end
     
     % if fit, fit with a decaying exponential
-    f = [];
+    f1 = [];
     if(opts.FIT)
-
-        [f.fitObj,f.gof] = fit(fitData.x,fitData.y,'a*exp(b*x)+c','startPoint',[0,0,0.15]);
+        [f1.fitObj,f1.gof] = fit(fitData.x,fitData.y,'a*exp(b*x)+c','startPoint',[0,0,0.15]);
     
         xData = linspace(min(fitData.x*0.9),max(fitData.x)*1.1,100);
-        yData = f.fitObj.a*exp(f.fitObj.b*xData)+f.fitObj.c;
+        yData = f1.fitObj.a*exp(f1.fitObj.b*xData)+f1.fitObj.c;
         plot(xData,yData,'k--','linewidth',opts.LINE_WIDTH);
     end
     
@@ -117,10 +116,23 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
     plots{end+1} = figure();
     plots{end}.Name = strcat(opts.FIGURE_PREFIX,'_rtAllDots');
     hold on
+    fitData.x = [];
+    fitData.y = [];
     for cueIdx = 1:numel(cueInfo)
         if(cueInfo(cueIdx).bumpMag ~= 0 && ~isempty(cueInfo(cueIdx).rt))
             plot(cueInfo(cueIdx).bumpMag,cueInfo(cueIdx).rt,'k.','markersize',opts.MARKER_SIZE)
+            fitData.x = [fitData.x,cueInfo(cueIdx).bumpMag+zeros(size(cueInfo(cueIdx).rt))];
+            fitData.y = [fitData.y,cueInfo(cueIdx).rt];
         end
+    end
+    
+    f2 = [];
+    if(opts.FIT)
+        [f2.fitObj,f2.gof] = fit(fitData.x',fitData.y','a*exp(b*x)+c','startPoint',[0,0,0.15]);
+    
+        xData = linspace(min(fitData.x*0.9),max(fitData.x)*1.1,100);
+        yData = f2.fitObj.a*exp(f2.fitObj.b*xData)+f2.fitObj.c;
+        plot(xData,yData,'k--','linewidth',opts.LINE_WIDTH);
     end
     
     ax2 = gca;
@@ -183,11 +195,12 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
     %% deal with saving figures
     if(opts.SAVE_FIGURES && strcmp(opts.FOLDER_PATH,'')==0)
         for p = 1:numel(plots)
-            saveFiguresLIB(plots{p},opts.FOLDER_PATH,plots(p).Name);
+            saveFiguresLIB(plots{p},opts.FOLDER_PATH,plots{p}.Name);
         end
     end
     %% setup output data
-    outputData.rt_fit = f;
+    outputData.rt_fit_means = f1;
+    outputData.rt_fit_all = f2;
     outputData.psychometric_fit = g;
     outputData.cueInfo = cueInfo;
 end
@@ -199,7 +212,7 @@ function [opts] = configureOpts(optsInput)
     
     opts.MIN_BIN = 0.1;
     opts.MAX_BIN = 0.6;
-    opts.BIN_SIZE = 0.025;
+    opts.BIN_SIZE = 0.02;
     
     opts.LINE_WIDTH = 1.5;
     opts.MARKER_SIZE = 12;

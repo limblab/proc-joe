@@ -57,9 +57,9 @@
     opts = [];
     opts.FOLDER_PATH = inputData.folderpath;
     opts.SAVE_FIGURES = 0;
-    opts.FIGURE_PREFIX = 'Han_20180508'; % no _ required
+    opts.FIGURE_PREFIX = 'Han_20180427'; % no _ required
     opts.BUMP_MAGS = [];
-    opts.STIM_CODES = 0;
+    opts.STIM_CODES = -1;
     opts.FIT = 1;
     
     [data,plots] = plotReactionTimeDataTD(td_reward,td_all,opts);

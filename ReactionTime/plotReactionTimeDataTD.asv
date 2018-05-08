@@ -24,6 +24,12 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
     cueIdx = 1;
     cueInfo = [];
     
+    %% remove fastest 5% and slowest 5%
+    num_remove = floor(size(td_reward,2)*0.05);
+    rt_all = [td_reward.idx_movement_on]-[td_reward.idx_goCueTime];
+    [~,rt_sort_idx] = sort(rt_all);
+    rt_remove = [rt_sort_idx(1:num_remove),rt_sort_idx(end-num_remove+1:end)];
+    td_reward(rt_remove) = [];
     
     %% for each cue, store indexes in td_reward, get reaction time
     for b = 1:numel(bumpList)
@@ -52,14 +58,9 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
 
         end
     end
+        
     
-    %% remove outliers (fastest 5%, slowest 5%)
-    [~,sortIdx] = sort([cueInfo.rt]);
-    num_remove = floor(numel(sortIdx)*0.05);
-    for 1
-    
-    
-%     %% make a histogram
+    %% make a histogram
 %     % get bin counts
 %     bE = opts.MIN_BIN:opts.BIN_SIZE:opts.MAX_BIN;
 %     %  each cue
@@ -86,7 +87,7 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
     fitData.x = [];
     fitData.y = [];
     for cueIdx = 1:numel(cueInfo)
-        if(cueInfo(cueIdx).bumpMag ~= 0)
+        if(cueInfo(cueIdx).bumpMag ~= 0 && ~isempty(cueInfo(cueIdx).rt))
             plot(cueInfo(cueIdx).bumpMag,mean(cueInfo(cueIdx).rt),'k.','markersize',opts.MARKER_SIZE)
             hold on
             plot(cueInfo(cueIdx).bumpMag + [0,0],mean(cueInfo(cueIdx).rt) + [-std(cueInfo(cueIdx).rt), std(cueInfo(cueIdx).rt)],'k')
@@ -116,9 +117,13 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
     plots{end+1} = figure();
     plots{end}.Name = strcat(opts.FIGURE_PREFIX,'_rtAllDots');
     hold on
+    fitData.x = [];
+    fitData.y = [];
     for cueIdx = 1:numel(cueInfo)
-        if(cueInfo(cueIdx).bumpMag ~= 0)
+        if(cueInfo(cueIdx).bumpMag ~= 0 && ~isempty(cueInfo(cueIdx).rt))
             plot(cueInfo(cueIdx).bumpMag,cueInfo(cueIdx).rt,'k.','markersize',opts.MARKER_SIZE)
+            fitData.x = [fitData.x,cueInfo(cueIdx).bumpMag+zeros(size(cueInfo(cueIdx).rt))];
+            fitData.y = [fitData.y,cueInfo(cueIdx).rt];
         end
     end
     
@@ -142,7 +147,7 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
     fitData.x = [];
     fitData.y = [];
     for cueIdx = 1:numel(cueInfo)
-        if(cueInfo(cueIdx).bumpMag ~= 0)
+        if(cueInfo(cueIdx).bumpMag ~= 0 && ~isempty(cueInfo(cueIdx).rt))
             plot(cueInfo(cueIdx).bumpMag,cueInfo(cueIdx).percent_respond,'k.','markersize',opts.MARKER_SIZE)
             fitData.x(end+1,1) = cueInfo(cueIdx).bumpMag;
             fitData.y(end+1,1) = cueInfo(cueIdx).percent_respond;
@@ -182,7 +187,7 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
     %% deal with saving figures
     if(opts.SAVE_FIGURES && strcmp(opts.FOLDER_PATH,'')==0)
         for p = 1:numel(plots)
-            saveFiguresLIB(plots{p},opts.FOLDER_PATH,plots(p).Name);
+            saveFiguresLIB(plots{p},opts.FOLDER_PATH,plots{p}.Name);
         end
     end
     %% setup output data
@@ -198,7 +203,7 @@ function [opts] = configureOpts(optsInput)
     
     opts.MIN_BIN = 0.1;
     opts.MAX_BIN = 0.6;
-    opts.BIN_SIZE = 0.025;
+    opts.BIN_SIZE = 0.02;
     
     opts.LINE_WIDTH = 1.5;
     opts.MARKER_SIZE = 12;
