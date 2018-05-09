@@ -37,16 +37,16 @@ arrIdx = 18;
 
 % plot raster, and PSTH for the given unit above
 
-% optsPlotFunc.BIN_SIZE = optsExtract.BIN_SIZE;
-% optsPlotFunc.FIGURE_SAVE = 0;
-% optsPlotFunc.FIGURE_DIR = folderpath;
-% optsPlotFunc.FIGURE_PREFIX = 'Chips_20171024_short_';
-% 
-% optsPlotFunc.PRE_TIME = 15/1000;
-% optsPlotFunc.POST_TIME = 60/1000;
-% optsPlotFunc.SORT_DATA = 'postStimuliTime';
-% 
-% rasterPlots = plotRasterStim(arrayData{arrIdx},arrayData{arrIdx}.NN,optsPlotFunc);
+optsPlotFunc.BIN_SIZE = optsExtract.BIN_SIZE;
+optsPlotFunc.FIGURE_SAVE = 0;
+optsPlotFunc.FIGURE_DIR = folderpath;
+optsPlotFunc.FIGURE_PREFIX = 'Chips_20171024_short_';
+
+optsPlotFunc.PRE_TIME = 15/1000;
+optsPlotFunc.POST_TIME = 60/1000;
+optsPlotFunc.SORT_DATA = 'postStimuliTime';
+
+rasterPlots = plotRasterStim(arrayData{arrIdx},arrayData{arrIdx}.NN,optsPlotFunc);
 
 optsPlotFunc.PLOT_ALL_ONE_FIGURE = 1;
 optsPlotFunc.PLOT_LINE = 1;
