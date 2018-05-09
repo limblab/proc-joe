@@ -1,6 +1,6 @@
 %% script to process reaction time data 
 %% determine filename and input data
-    inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\Han_20180508_stimTraining\';
+    inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\Han_20180509_stimTraining\';
 %     inputData.folderpath = 'D:\Lab\Data\ReactionTime\Han_20180427_training\';
     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 
@@ -15,18 +15,28 @@
     fileList = dir('*.nev*');
     cd(pwd)
 %% load in cds and extract data
-
+td_all = [];
+num_trials = 0;
+for fileNumber = 1:numel(fileList)
     cds = commonDataStructure();
-    cds.file2cds([inputData.folderpath fileList(1).name],inputData.task,inputData.ranBy,...
+    cds.file2cds([inputData.folderpath fileList(fileNumber).name],inputData.task,inputData.ranBy,...
         inputData.monkey,inputData.labnum,inputData.array1,inputData.mapFileName,'recoverPreSync');
     cd(pwd);
     
-%% convert cds to trial data
+    % convert cds to trial data
     params.event_list = {'isBumpTrial';'bumpTime';'bumpMagnitude';'bumpDir';'isStimTrial';'stimCode'};
     params.trial_results = {'R','F'};
-    td_all = parseFileByTrial(cds,params);
-    td_all = getGoCueTime(td_all,cds);
+    td_temp = parseFileByTrial(cds,params);
+    td_temp = getGoCueTime(td_temp,cds);
+    % append trial data into a single struct
+    for t = 1:numel(td_temp)
+        td_temp(t).trial_id = td_temp(t).trial_id + num_trials;
+    end
+    num_trials = num_trials + size(cds.trials,1);
     
+    td_all = [td_all,td_temp];
+end
+%% separate out trials with results and go cue's
     [~, td_reward] = getTDidx(td_all, 'result', 'r');
     td_reward = td_reward(~isnan([td_reward.idx_goCueTime]));
     
@@ -57,9 +67,10 @@
     opts = [];
     opts.FOLDER_PATH = inputData.folderpath;
     opts.SAVE_FIGURES = 0;
-    opts.FIGURE_PREFIX = 'Han_20180508'; % no _ required
+    opts.FIGURE_PREFIX = 'Han_20180509'; % no _ required
     opts.BUMP_MAGS = [];
-    opts.STIM_CODES = 0;
+    opts.STIM_CODES = -1:6;
+    opts.STIM_PARAMS = [40,50,60,70,80,90,100];
     opts.FIT = 1;
     
     [data,plots] = plotReactionTimeDataTD(td_reward,td_all,opts);

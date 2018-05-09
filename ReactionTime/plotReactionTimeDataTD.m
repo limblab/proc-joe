@@ -83,7 +83,7 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
     
     %% plot mean rt as a function of bump magnitude
     plots{end+1} = figure();
-    plots{end}.Name = strcat(opts.FIGURE_PREFIX,'_rtMeans');
+    plots{end}.Name = strcat(opts.FIGURE_PREFIX,'_bump_rtMeans');
     fitData.x = [];
     fitData.y = [];
     for cueIdx = 1:numel(cueInfo)
@@ -97,12 +97,12 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
     end
     
     % if fit, fit with a decaying exponential
-    f1 = [];
+    f_means_bump = [];
     if(opts.FIT)
-        [f1.fitObj,f1.gof] = fit(fitData.x,fitData.y,'a*exp(b*x)+c','startPoint',[0,0,0.15]);
+        [f_means_bump.fitObj,f_means_bump.gof] = fit(fitData.x,fitData.y,'a*exp(b*x)+c','startPoint',[0,0,0.15]);
     
         xData = linspace(min(fitData.x*0.9),max(fitData.x)*1.1,100);
-        yData = f1.fitObj.a*exp(f1.fitObj.b*xData)+f1.fitObj.c;
+        yData = f_means_bump.fitObj.a*exp(f_means_bump.fitObj.b*xData)+f_means_bump.fitObj.c;
         plot(xData,yData,'k--','linewidth',opts.LINE_WIDTH);
     end
     
@@ -112,9 +112,9 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
     xlabel('Bump Magnitude (N)');
     ylabel('RT (s)');
     formatForLee(gcf);
-    % plot all rt's
+    % plot all rt's for bumps
     plots{end+1} = figure();
-    plots{end}.Name = strcat(opts.FIGURE_PREFIX,'_rtAllDots');
+    plots{end}.Name = strcat(opts.FIGURE_PREFIX,'_bump_rtAllDots');
     hold on
     fitData.x = [];
     fitData.y = [];
@@ -126,12 +126,12 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
         end
     end
     
-    f2 = [];
+    f_all_bump = [];
     if(opts.FIT)
-        [f2.fitObj,f2.gof] = fit(fitData.x',fitData.y','a*exp(b*x)+c','startPoint',[0,0,0.15]);
+        [f_all_bump.fitObj,f_all_bump.gof] = fit(fitData.x',fitData.y','a*exp(b*x)+c','startPoint',[0,0,0.15]);
     
         xData = linspace(min(fitData.x*0.9),max(fitData.x)*1.1,100);
-        yData = f2.fitObj.a*exp(f2.fitObj.b*xData)+f2.fitObj.c;
+        yData = f_all_bump.fitObj.a*exp(f_all_bump.fitObj.b*xData)+f_all_bump.fitObj.c;
         plot(xData,yData,'k--','linewidth',opts.LINE_WIDTH);
     end
     
@@ -142,15 +142,72 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
     ylabel('RT (s)');
     formatForLee(gcf);
     ax1.YLim(2) = max(ax1.YLim(2),ax2.YLim(2));
-    %% plot rt as a function of stim code
-%     
-%     
-
+%% plot mean rt as a function of stim code
+    plots{end+1} = figure();
+    plots{end}.Name = strcat(opts.FIGURE_PREFIX,'_stim_rtMeans');
+    fitData.x = [];
+    fitData.y = [];
+    for cueIdx = 1:numel(cueInfo)
+        if(cueInfo(cueIdx).stimCode ~= -1 && ~isempty(cueInfo(cueIdx).rt) && cueInfo(cueIdx).bumpMag == 0)
+            plot(opts.STIM_PARAMS(cueInfo(cueIdx).stimCode+1),mean(cueInfo(cueIdx).rt),'k.','markersize',opts.MARKER_SIZE)
+            hold on
+            plot(opts.STIM_PARAMS(cueInfo(cueIdx).stimCode+1) + [0,0],mean(cueInfo(cueIdx).rt) + [-std(cueInfo(cueIdx).rt), std(cueInfo(cueIdx).rt)],'k')
+            fitData.x(end+1,1) = opts.STIM_PARAMS(cueInfo(cueIdx).stimCode+1);
+            fitData.y(end+1,1) = mean(cueInfo(cueIdx).rt);
+        end
+    end
+    
+    % if fit, fit with a decaying exponential
+    f_means_stim = [];
+    if(opts.FIT)
+        [f_means_stim.fitObj,f_means_stim.gof] = fit(fitData.x,fitData.y,'a*exp(b*x)+c','startPoint',[0,0,0.15]);
+    
+        xData = linspace(min(fitData.x*0.9),max(fitData.x)*1.1,100);
+        yData = f_means_stim.fitObj.a*exp(f_means_stim.fitObj.b*xData)+f_means_stim.fitObj.c;
+        plot(xData,yData,'k--','linewidth',opts.LINE_WIDTH);
+    end
+    
+    ax1 = gca;
+    ax1.XLim(1) = 0;
+    ax1.YLim(1) = 0;
+    xlabel('Stim Amp \muA');
+    ylabel('RT (s)');
+    formatForLee(gcf);
+    % plot all rt's for bumps
+    plots{end+1} = figure();
+    plots{end}.Name = strcat(opts.FIGURE_PREFIX,'_stim_rtAllDots');
+    fitData.x = [];
+    fitData.y = [];
+    for cueIdx = 1:numel(cueInfo)
+        if(cueInfo(cueIdx).stimCode ~= -1 && ~isempty(cueInfo(cueIdx).rt) && cueInfo(cueIdx).bumpMag == 0)
+            plot(opts.STIM_PARAMS(cueInfo(cueIdx).stimCode+1),cueInfo(cueIdx).rt,'k.','markersize',opts.MARKER_SIZE)
+            hold on
+            fitData.x = [fitData.x,opts.STIM_PARAMS(cueInfo(cueIdx).stimCode+1)+zeros(size(cueInfo(cueIdx).rt))];
+            fitData.y = [fitData.y,cueInfo(cueIdx).rt];
+        end
+    end
+    
+    f_all_stim = [];
+    if(opts.FIT)
+        [f_all_stim.fitObj,f_all_stim.gof] = fit(fitData.x',fitData.y','a*exp(b*x)+c','startPoint',[0,0,0.15]);
+    
+        xData = linspace(min(fitData.x*0.9),max(fitData.x)*1.1,100);
+        yData = f_all_stim.fitObj.a*exp(f_all_stim.fitObj.b*xData)+f_all_stim.fitObj.c;
+        plot(xData,yData,'k--','linewidth',opts.LINE_WIDTH);
+    end
+    
+    ax2 = gca;
+    ax2.XLim(1) = 0;
+    ylim([0,max(ax1.YLim(2),ax2.YLim(2))]);
+    xlabel('Stim Amp (\muA)')
+    ylabel('RT (s)');
+    formatForLee(gcf);
+    ax1.YLim(2) = max(ax1.YLim(2),ax2.YLim(2));
         
 
     %% plot psychometric curve for bump data
     plots{end+1} = figure();
-    plots{end}.Name = strcat(opts.FIGURE_PREFIX,'_detectionCurve');
+    plots{end}.Name = strcat(opts.FIGURE_PREFIX,'_bump_detectionCurve');
     hold on
     fitData.x = [];
     fitData.y = [];
@@ -192,6 +249,50 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
     ylabel('Proportion detected');
     formatForLee(gcf);
     
+    %% plot psychometric curve for stim data
+    plots{end+1} = figure();
+    plots{end}.Name = strcat(opts.FIGURE_PREFIX,'_stim_detectionCurve');
+    hold on
+    fitData.x = [];
+    fitData.y = [];
+    for cueIdx = 1:numel(cueInfo)
+        if(cueInfo(cueIdx).stimCode ~= -1 && ~isempty(cueInfo(cueIdx).rt))
+            plot(opts.STIM_PARAMS(cueInfo(cueIdx).stimCode+1),cueInfo(cueIdx).percent_respond,'k.','markersize',opts.MARKER_SIZE)
+            fitData.x(end+1,1) = opts.STIM_PARAMS(cueInfo(cueIdx).stimCode+1);
+            fitData.y(end+1,1) = cueInfo(cueIdx).percent_respond;
+        end
+    end
+    
+    % fit psychometric curve
+    g = [];
+    if(opts.FIT)
+        xData = linspace(0,max(fitData.x*1.1),100);
+
+        if(opts.USE_ML_FIT)
+            mlFit_fun = @(params)(sum((fitData.y-(params(1)+params(2)*erf(params(3)*(fitData.x-params(4))))).^2));
+            min_options = optimset('MaxIter',10000,'MaxFunEvals',10000);
+            g = fminsearch(mlFit_fun, [.45 .4 .05 1],min_options);
+
+            yData = g(1) + g(2)*erf(g(3)*(xData-g(4))); 
+        else
+            s = fitoptions('Method','NonlinearLeastSquares', 'Startpoint', [.5 .5 .1 90], 'Lower', [0 0 0 0], 'Upper', [1 1 10 1.5],...
+                'MaxFunEvals',10000,'MaxIter',1000,'TolFun',10E-8,'TolX',10E-8);
+            ft = fittype('a+b*(erf(c*(x-d)))','options',s);
+            [g.fitObj,g.gof] = fit(fitData.x', fitData.y', ft);
+
+            yData = feval(g.fitObj,xData);
+        end
+
+        plot(xData,yData,'k--','linewidth',opts.LINE_WIDTH);
+    end
+    
+    ax = gca;
+    ax.XLim(1) = 0;
+    ax.YLim = [0,1];
+    xlabel('Stim Amp (\muA)');
+    ylabel('Proportion detected');
+    formatForLee(gcf);
+    
     %% deal with saving figures
     if(opts.SAVE_FIGURES && strcmp(opts.FOLDER_PATH,'')==0)
         for p = 1:numel(plots)
@@ -199,8 +300,10 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
         end
     end
     %% setup output data
-    outputData.rt_fit_means = f1;
-    outputData.rt_fit_all = f2;
+    outputData.rt_fit_means_stim = f_means_stim;
+    outputData.rt_fit_all_stim = f_all_stim;
+    outputData.rt_fit_means_bump = f_means_bump;
+    outputData.rt_fit_all_bump = f_all_bump;
     outputData.psychometric_fit = g;
     outputData.cueInfo = cueInfo;
 end
@@ -227,6 +330,7 @@ function [opts] = configureOpts(optsInput)
     
     opts.BUMP_MAGS = [];
     opts.STIM_CODES = [];
+    opts.STIM_PARAMS = [];
     %% check if in optsSave and optsSaveInput, overwrite if so
     try
         inputFieldNames = fieldnames(optsInput);

@@ -15,7 +15,7 @@ fileList = dirSorted('*spikesExtracted.nev*');
 stimInfoFileList = dirSorted('*stimInfo*');
 
 
-%% extract relevant data for all units -- highly recommend saving after this step
+%% extract relevant data for all units -- highly recommend saving arrayData after this step
 tic
 
 optsExtract.STIMULI_RESPONSE = 'all';
@@ -72,6 +72,9 @@ optsGrid.FIGURE_PREFIX = 'Chips_20171026_';
 
 ArrayPlots = plotArrayMap(arrayData{arrIdx},inputData.mapFileName(8:end),optsGrid);
 
+
+
+%% below are whole array analyses
 %% label as excitatory or inhibitory based on Hao 2016 (which is based on 
 % Kraskov 2011)
 %% this is buggy and not really great.....probably should implement a different
