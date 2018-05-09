@@ -1,12 +1,12 @@
 %% set file names 
-inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\testingCode\';
+inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20171026\processed\';
 inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
 folderpath = inputData.folderpath; % rest of code uses folderpath currently
 
 inputData.task='taskCObump';
 inputData.ranBy='ranByJoseph'; 
 inputData.array1='arrayLeftS1'; 
-inputData.monkey='monkeyHan';
+inputData.monkey='monkeyChips';
 inputData.labnum = 6;
 
 pwd=cd;
@@ -33,20 +33,20 @@ arrayData = extractDataAroundStimulations(inputData,fileList,stimInfoFileList,op
 
 toc
 %% pick a unit (index in array data)
-arrIdx = 1;
+arrIdx = 18;
 
-%% plot raster, and PSTH for the given unit above
+% plot raster, and PSTH for the given unit above
 
-optsPlotFunc.BIN_SIZE = optsExtract.BIN_SIZE;
-optsPlotFunc.FIGURE_SAVE = 0;
-optsPlotFunc.FIGURE_DIR = folderpath;
-optsPlotFunc.FIGURE_PREFIX = 'Chips_20171024_short_';
-
-optsPlotFunc.PRE_TIME = 15/1000;
-optsPlotFunc.POST_TIME = 60/1000;
-optsPlotFunc.SORT_DATA = 'postStimuliTime';
-
-rasterPlots = plotRasterStim(arrayData{arrIdx},arrayData{arrIdx}.NN,optsPlotFunc);
+% optsPlotFunc.BIN_SIZE = optsExtract.BIN_SIZE;
+% optsPlotFunc.FIGURE_SAVE = 0;
+% optsPlotFunc.FIGURE_DIR = folderpath;
+% optsPlotFunc.FIGURE_PREFIX = 'Chips_20171024_short_';
+% 
+% optsPlotFunc.PRE_TIME = 15/1000;
+% optsPlotFunc.POST_TIME = 60/1000;
+% optsPlotFunc.SORT_DATA = 'postStimuliTime';
+% 
+% rasterPlots = plotRasterStim(arrayData{arrIdx},arrayData{arrIdx}.NN,optsPlotFunc);
 
 optsPlotFunc.PLOT_ALL_ONE_FIGURE = 1;
 optsPlotFunc.PLOT_LINE = 1;

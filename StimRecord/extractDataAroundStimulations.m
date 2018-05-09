@@ -20,10 +20,14 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
         cds.file2cds([inputData.folderpath fileList(fileNumber).name],inputData.task,inputData.ranBy,...
             inputData.monkey,inputData.labnum,inputData.array1,inputData.mapFileName); % DO NOT USE RECOVER PRE SYNC, currently this shifts the units and the analog signal differently
 
-%         stimInfo.chanSent = outputData.waveforms.chanSent;
-%         stimInfo.waveSent = outputData.waveforms.waveSent;
-%         stimInfo.parameters = outputData.waveforms.parameters;
-%         
+        % check to make sure stimInfo.() are all column vectors
+        fnames = fieldnames(stimInfo);
+        for fIdx = 1:numel(fnames)
+            if(size(stimInfo.(fnames{fIdx}),1) < size(stimInfo.(fnames{fIdx}),2))
+                stimInfo.(fnames{fIdx}) = stimInfo.(fnames{fIdx})';
+            end
+        end
+        
         if(isempty(opts.NEURON_NUMBER_ALL))
             opts.NEURON_NUMBER_ALL = find([cds.units.ID]~=0 & [cds.units.ID]~=255);
         end
