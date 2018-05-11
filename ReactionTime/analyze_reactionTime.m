@@ -64,6 +64,7 @@ end
     plotReachesTD(td_reward,opts);
     
 %% plot reaction times for each cue, psychometric curve
+    td_reward_rt = td_reward(~isnan([td_reward.idx_movement_on]));
     opts = [];
     opts.FOLDER_PATH = inputData.folderpath;
     opts.SAVE_FIGURES = 0;
@@ -71,11 +72,12 @@ end
     opts.BUMP_MAGS = 0;
     opts.STIM_CODES = 0:7;
     opts.STIM_PARAMS = [50,100,150,200,250,300,350,400];
+
     
     opts.FIT = 1;
-    opts.PLOT_BUMP = 0;
+    opts.PLOT_BUMP = 1;
     opts.PLOT_STIM = 1;
-    [data,plots] = plotReactionTimeDataTD(td_reward,td_all,opts);
+    [data,plots] = plotReactionTimeDataTD(td_reward_rt,td_all,opts);
 
 
     

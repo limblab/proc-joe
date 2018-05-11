@@ -36,8 +36,8 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
     
     %% remove chains of fail from td_all -- this is when the monkey is not paying attention
     fail_idx = find([td_all.result] == 'F');
-    td_all_remove = fail_idx(find(fail_idx(opts.NUM_SEQUENCE_FAILS:end) - fail_idx(1:end-opts.NUM_SEQUENCE_FAILS+1) == opts.NUM_SEQUENCE_FAILS-1));
-    td_all_remove = unique([td_all_remove,reshape(td_all_remove + [1:opts.NUM_SEQUENCE_FAILS-1]',1,numel(td_all_remove)*(opts.NUM_SEQUENCE_FAILS-1))]);
+    td_all_remove = find(fail_idx(opts.NUM_SEQUENCE_FAILS:end) - fail_idx(1:end-opts.NUM_SEQUENCE_FAILS+1) == opts.NUM_SEQUENCE_FAILS-1);
+    td_all_remove = [td_all_remove,reshape(td_all_remove + [1:opts.NUM_SEQUENCE_FAILS-1]'];
     td_all(td_all_remove) = [];
     %% for each cue, store indexes in td_reward, get reaction time
     for b = 1:numel(bumpList)
@@ -347,7 +347,7 @@ function [opts] = configureOpts(optsInput)
     opts.PLOT_BUMP = 1;
     opts.PLOT_STIM = 1;
     
-    opts.NUM_SEQUENCE_FAILS = 3;
+    opts.NUM_SEQUENCE_FAILS = 5;
     %% check if in optsSave and optsSaveInput, overwrite if so
     try
         inputFieldNames = fieldnames(optsInput);
