@@ -1,6 +1,6 @@
 %% script to process reaction time data 
 %% determine filename and input data
-    inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\Han_20180509_stimTraining\';
+    inputData.folderpath = 'D:\Lab\Data\ReactionTime\Han_20180510_stim\';
 %     inputData.folderpath = 'D:\Lab\Data\ReactionTime\Han_20180427_training\';
     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 
@@ -64,18 +64,19 @@ end
     plotReachesTD(td_reward,opts);
     
 %% plot reaction times for each cue, psychometric curve
+    td_reward_rt = td_reward(~isnan([td_reward.idx_movement_on]));
     opts = [];
     opts.FOLDER_PATH = inputData.folderpath;
     opts.SAVE_FIGURES = 0;
     opts.FIGURE_PREFIX = 'Han_20180509'; % no _ required
-    opts.BUMP_MAGS = 0;
-    opts.STIM_CODES = -1:6;
-    opts.STIM_PARAMS = [40,50,60,70,80,90,100];
+    opts.BUMP_MAGS = [];
+    opts.STIM_CODES = [];
+    opts.STIM_PARAMS = [10,20,30,40,50,60,70,80,90,100];
     
     opts.FIT = 1;
-    opts.PLOT_BUMP = 0;
+    opts.PLOT_BUMP = 1;
     opts.PLOT_STIM = 1;
-    [data,plots] = plotReactionTimeDataTD(td_reward,td_all,opts);
+    [data,plots] = plotReactionTimeDataTD(td_reward_rt,td_all,opts);
 
 
     
