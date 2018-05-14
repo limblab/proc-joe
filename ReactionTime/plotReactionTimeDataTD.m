@@ -305,6 +305,30 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
         ylabel('Proportion detected');
         formatForLee(gcf);
     end
+    
+    %% plot reaction time vs trial idx
+    if(opts.PLOT_STIM)
+        plots{end+1} = figure();
+        plots{end}.Name = strcat(opts.FIGURE_PREFIX,'_stim_learning');
+        td_rt = td_reward([td_reward.isStimTrial]);
+        rt = [td_rt.idx_movement_on] - [td_rt.idx_goCueTime];
+        rt = rt*mode([td_rt.bin_size]);
+        plot(rt,'k','linewidth',1.5)
+        xlabel('Trial')
+        ylabel('Reaction time (s)');
+        ax = gca;
+        ax.YLim(1) = 0;
+        if(opts.FIT)
+            rt_learn = [];
+            xFit = 1:numel(rt);
+            yFit = rt;
+            tbl = table(xFit',yFit','VariableNames',{'trial','rt'});
+            learn_mdl = fitlm(tbl,'rt ~ trial');
+%             [rt_learn.fitObj, rt_learn.gof] = fit(xFit',yFit','a*x+b');
+            hold on
+            plot(xFit, learn_mdl.Coefficients.Estimate(2)*xFit+learn_mdl.Coefficients.Estimate(1),'r--','linewidth',1.5);
+        end
+    end
     %% deal with saving figures
     if(opts.SAVE_FIGURES && strcmp(opts.FOLDER_PATH,'')==0)
         for p = 1:numel(plots)
@@ -318,6 +342,7 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
     outputData.rt_fit_all_bump = f_all_bump;
     outputData.psychometric_fit = g;
     outputData.cueInfo = cueInfo;
+    outputData.stim_learn_fit = learn_mdl;
 end
 
 
