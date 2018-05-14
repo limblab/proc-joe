@@ -4,7 +4,7 @@ function [reachPlot] = plotReachesTD(td,opts)
     opts = configureOpts(opts);
     
     %% extract td idxs for the plot
-    if(~isempty(opts.BUMP_MAGS) || ~isempty(opts.STIM_CODES))
+    if(~isempty(opts.BUMP_MAGS) && ~isempty(opts.STIM_CODES))
         td = td(isEqual([td.bumpMagnitude],opts.BUMP_MAGS) | isEqual([td.stimCode],opts.STIM_CODES));
     elseif(~isempty(opts.BUMP_MAGS))
         td = td(isEqual([td.bumpMagnitude],opts.BUMP_MAGS));

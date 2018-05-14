@@ -28,11 +28,11 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
     cueInfo = [];
     
     %% remove fastest 5% and slowest 5%
-%     num_remove = floor(size(td_reward,2)*0.05);
-%     rt_all = [td_reward.idx_movement_on]-[td_reward.idx_goCueTime];
-%     [~,rt_sort_idx] = sort(rt_all);
-%     rt_remove = [rt_sort_idx(1:num_remove),rt_sort_idx(end-num_remove+1:end)];
-%     td_reward(rt_remove) = [];
+    num_remove = floor(size(td_reward,2)*0.05);
+    rt_all = [td_reward.idx_movement_on]-[td_reward.idx_goCueTime];
+    [~,rt_sort_idx] = sort(rt_all);
+    rt_remove = [rt_sort_idx(1:num_remove),rt_sort_idx(end-num_remove+1:end)];
+    td_reward(rt_remove) = [];
     
     %% remove chains of fail from td_all -- this is when the monkey is not paying attention
     fail_idx = find([td_all.result] == 'F');
@@ -231,23 +231,23 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
         end
 
         % fit psychometric curve
-        g_bump = [];
+        g_bu = [];
         if(opts.FIT)
             xData = linspace(0,max(fitData.x*1.1),100);
 
             if(opts.USE_ML_FIT)
                 mlFit_fun = @(params)(sum((fitData.y-(params(1)+params(2)*erf(params(3)*(fitData.x-params(4))))).^2));
                 min_options = optimset('MaxIter',10000,'MaxFunEvals',10000);
-                g_bump = fminsearch(mlFit_fun, [.45 .4 .05 1],min_options);
+                g = fminsearch(mlFit_fun, [.45 .4 .05 1],min_options);
 
-                yData = g_bump(1) + g_bump(2)*erf(g_bump(3)*(xData-g_bump(4))); 
+                yData = g(1) + g(2)*erf(g(3)*(xData-g(4))); 
             else
                 s = fitoptions('Method','NonlinearLeastSquares', 'Startpoint', [.5 .5 .1 90], 'Lower', [0 0 0 0], 'Upper', [1 1 10 1.5],...
                     'MaxFunEvals',10000,'MaxIter',1000,'TolFun',10E-8,'TolX',10E-8);
                 ft = fittype('a+b*(erf(c*(x-d)))','options',s);
-                [g_bump.fitObj,g_bump.gof] = fit(fitData.x', fitData.y', ft);
+                [g.fitObj,g.gof] = fit(fitData.x', fitData.y', ft);
 
-                yData = feval(g_bump.fitObj,xData);
+                yData = feval(g.fitObj,xData);
             end
 
             plot(xData,yData,'k--','linewidth',opts.LINE_WIDTH);
@@ -276,23 +276,23 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
         end
 
         % fit psychometric curve
-        g_stim = [];
+        g = [];
         if(opts.FIT)
             xData = linspace(0,max(fitData.x*1.1),100);
 
             if(opts.USE_ML_FIT)
                 mlFit_fun = @(params)(sum((fitData.y-(params(1)+params(2)*erf(params(3)*(fitData.x-params(4))))).^2));
                 min_options = optimset('MaxIter',10000,'MaxFunEvals',10000);
-                g_stim = fminsearch(mlFit_fun, [.45 .4 .05 1],min_options);
+                g = fminsearch(mlFit_fun, [.45 .4 .05 1],min_options);
 
-                yData = g_stim(1) + g_stim(2)*erf(g_stim(3)*(xData-g_stim(4))); 
+                yData = g(1) + g(2)*erf(g(3)*(xData-g(4))); 
             else
                 s = fitoptions('Method','NonlinearLeastSquares', 'Startpoint', [.5 .5 .1 90], 'Lower', [0 0 0 0], 'Upper', [1 1 10 1.5],...
                     'MaxFunEvals',10000,'MaxIter',1000,'TolFun',10E-8,'TolX',10E-8);
                 ft = fittype('a+b*(erf(c*(x-d)))','options',s);
-                [g_stim.fitObj,g_stim.gof] = fit(fitData.x', fitData.y', ft);
+                [g.fitObj,g.gof] = fit(fitData.x', fitData.y', ft);
 
-                yData = feval(g_stim.fitObj,xData);
+                yData = feval(g.fitObj,xData);
             end
 
             plot(xData,yData,'k--','linewidth',opts.LINE_WIDTH);
