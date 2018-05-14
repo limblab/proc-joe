@@ -1,6 +1,6 @@
 %% script to process reaction time data 
 %% determine filename and input data
-    inputData.folderpath = 'D:\Lab\Data\ReactionTime\Han_20180510_stim\';
+    inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\Han_20180511_stim\';
 %     inputData.folderpath = 'D:\Lab\Data\ReactionTime\Han_20180427_training\';
     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 
@@ -69,9 +69,10 @@ end
     opts.FOLDER_PATH = inputData.folderpath;
     opts.SAVE_FIGURES = 0;
     opts.FIGURE_PREFIX = 'Han_20180509'; % no _ required
-    opts.BUMP_MAGS = [];
-    opts.STIM_CODES = [];
-    opts.STIM_PARAMS = [10,20,30,40,50,60,70,80,90,100];
+    opts.BUMP_MAGS = 0;
+    opts.STIM_CODES = 0:7;
+    opts.STIM_PARAMS = [50,100,150,200,250,300,350,400];
+
     
     opts.FIT = 1;
     opts.PLOT_BUMP = 1;
