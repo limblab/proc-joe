@@ -69,7 +69,7 @@ end
     opts.FOLDER_PATH = inputData.folderpath;
     opts.SAVE_FIGURES = 0;
     opts.FIGURE_PREFIX = 'Han_20180509'; % no _ required
-    opts.BUMP_MAGS = 0;
+    opts.BUMP_MAGS = [];
     opts.STIM_CODES = 0:7;
     opts.STIM_PARAMS = [50,100,150,200,250,300,350,400];
 
