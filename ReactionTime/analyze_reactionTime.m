@@ -43,7 +43,7 @@ end
 %% get movement onset
     params.which_field = 'vel';
     params.field_idx = 1;
-    params.start_idx_offset = 15;
+    params.start_idx_offset = 18;
     params.threshold_mult = 0.5;
     td_reward = getMoveOnsetAndPeak(td_reward,params);
     
