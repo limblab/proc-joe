@@ -124,6 +124,7 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
         xlabel('Bump Magnitude (N)');
         ylabel('RT (s)');
         formatForLee(gcf);
+        set(gca,'fontsize',opts.FONT_SIZE);
         % plot all rt's for bumps
         plots{end+1} = figure();
         plots{end}.Name = strcat(opts.FIGURE_PREFIX,'_bump_rtAllDots');
@@ -154,6 +155,8 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
         ylabel('RT (s)');
         formatForLee(gcf);
         ax1.YLim(2) = max(ax1.YLim(2),ax2.YLim(2));
+        set(gca,'fontsize',opts.FONT_SIZE);
+
     end
 %% plot mean rt as a function of stim code
     if(opts.PLOT_STIM)
@@ -187,6 +190,8 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
         xlabel(opts.STIM_LABEL);
         ylabel('RT (s)');
         formatForLee(gcf);
+        set(gca,'fontsize',opts.FONT_SIZE);
+
         % plot all rt's for bumps
         plots{end+1} = figure();
         plots{end}.Name = strcat(opts.FIGURE_PREFIX,'_stim_rtAllDots');
@@ -216,6 +221,7 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
         xlabel(opts.STIM_LABEL)
         ylabel('RT (s)');
         formatForLee(gcf);
+        set(gca,'fontsize',opts.FONT_SIZE);
         ax1.YLim(2) = max(ax1.YLim(2),ax2.YLim(2));
     end
 
@@ -263,6 +269,8 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
         xlabel('Bump Magnitude (N)');
         ylabel('Proportion detected');
         formatForLee(gcf);
+        set(gca,'fontsize',opts.FONT_SIZE);
+
     end
     %% plot psychometric curve for stim data
     if(opts.PLOT_STIM)
@@ -308,6 +316,8 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
         xlabel(opts.STIM_LABEL);
         ylabel('Proportion detected');
         formatForLee(gcf);
+        set(gca,'fontsize',opts.FONT_SIZE);
+
     end
     %% plot BUMP reaction time vs trial idx
     if(opts.PLOT_BUMP)
@@ -337,6 +347,8 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
             plot(xFit, learn_mdl_bump.Coefficients.Estimate(2)*xFit+learn_mdl_bump.Coefficients.Estimate(1),'r--','linewidth',1.5);
         end
         formatForLee(gcf);
+        set(gca,'fontsize',opts.FONT_SIZE);
+
     end
     
     %% plot STIM reaction time vs trial idx
@@ -362,6 +374,8 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
             plot(xFit, learn_mdl_stim.Coefficients.Estimate(2)*xFit+learn_mdl_stim.Coefficients.Estimate(1),'r--','linewidth',1.5);
         end
         formatForLee(gcf);
+        set(gca,'fontsize',opts.FONT_SIZE);
+
     end
     %% deal with saving figures
     if(opts.SAVE_FIGURES && strcmp(opts.FOLDER_PATH,'')==0)
@@ -394,6 +408,7 @@ function [opts] = configureOpts(optsInput)
     opts.MARKER_SIZE = 12;
     opts.FIT = 1;
     opts.USE_ML_FIT = 1;
+    opts.FONT_SIZE = 16;
     
     opts.COLORS = {'r',[0 0.5 0],'b','k','m',[0.5,0.5,0.2],[0.3,0.3,0.3]};
 

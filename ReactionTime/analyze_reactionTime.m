@@ -59,7 +59,7 @@ end
     end
             
 %% plot a set of reaches aligned to go cue with reaction time markers
-    opts.MAX_PLOT = 20;
+    opts.MAX_PLOT = 4;
     opts.WHICH_FIELD ='vel';
     opts.WHICH_IDX = [1];
     opts.BUMP_MAGS = [];
@@ -74,7 +74,7 @@ end
 
     td_reward_rt = td_reward(~isnan([td_reward.idx_movement_on]));
     opts.FOLDER_PATH = inputData.folderpath;
-    opts.FIGURE_PREFIX = 'Han_20180509'; % no _ required
+    opts.FIGURE_PREFIX = 'Han_20180511'; % no _ required
     opts.BUMP_MAGS = [];
     opts.STIM_CODES = [];
     opts.STIM_PARAMS = [40,50,60,70,80,90,100];
