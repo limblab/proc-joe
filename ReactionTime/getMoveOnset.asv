@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% function trial_data = get(trial_data,min_ds)
+% function trial_data = getMoveOnset(trial_data,min_ds)
 %
 %   This will find a time bin representing movement onset and peak speed
 % Currently for kinematics but could be easily adapted to force, etc.
@@ -27,50 +27,62 @@
 % Written by Matt Perich. Updated Feb 2017.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function trial_data = getMoveOnsetAndPeak(trial_data,params)
+function trial_data = getMoveOnset(trial_data,params)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % DEFAULT PARAMETERS
 which_method  =  'peak';
-min_ds        =  0.3;
+min_s        =  0.3;
 s_thresh      =  7;
-peak_idx_offset = 0;
+peak_idx_offset = [0,100];
 start_idx_offset = 0;
 which_field = 'speed';
 field_idx = 1;
 threshold_mult = 0.5;
+pre_move_thresh = 0.6;
+max_rt = 0.5;
 % these parameters aren't documented because I expect them to not need to
 % change but you can overwrite them if you need to.
 start_idx     =  'idx_goCueTime';
 end_idx       =  'idx_endTime';
 onset_name    =  'movement_on';
-peak_name     =  'peak_speed';
 if nargin > 1, assignParams(who,params); end % overwrite defaults
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % some pre-processing
 td = getSpeed(trial_data);
 
 for trial = 1:length(trial_data)
-    % use velocity to find bin corresponding to movement onset, movement offset, and peak speed
+    % use which_field to find bin corresponding to movement onset, movement offset, and peak speed
     s = td(trial).(which_field)(:,field_idx);
     
     % find the time bins where the monkey may be moving
     move_inds = false(size(s));
     move_inds(td(trial).(start_idx)+start_idx_offset:td(trial).(end_idx)) = true;
     
-    [on_idx,peak_idx] = deal(NaN);
-    if strcmpi(which_method,'peak')
+    [on_idx] = deal(NaN);
+    
+    % detect moving before go cue
+    flag_move = 0;
+    if(sum(s(max(1,td(trial).(start_idx)-30):td(trial).(start_idx)) > pre_move_thresh) > 2)
+        flag_move = 1;
+        on_idx = [];
+    end
+    if ~flag_move && strcmpi(which_method,'peak')
         ds = [0; diff(s)];
-        dds = [0; diff(ds)];
-        peaks = [dds(1:end-1)>0 & dds(2:end)<0; 0];
-        mvt_peak = find(peaks & (1:length(peaks))' > td(trial).(start_idx)+peak_idx_offset & ds > min_ds & move_inds, 1, 'first');
+        peaks = [ds(1:end-1)>0 & ds(2:end)<0; 0];
+        mvt_peaks = find(peaks & (1:length(peaks))' > td(trial).(start_idx)+peak_idx_offset(1) & (1:length(peaks))' < td(trial).(start_idx)+peak_idx_offset(2) & s > min_s & move_inds);
+        [~,mvt_peak] = max(s(mvt_peaks));
+        mvt_peak = mvt_peaks(mvt_peak);
         if ~isempty(mvt_peak)
-            thresh = ds(mvt_peak)*threshold_mult; % default threshold is half max acceleration peak
-            on_idx = find(ds<thresh & (1:length(ds))'<mvt_peak & move_inds,1,'last');
+            thresh = s(mvt_peak)*threshold_mult; % default threshold is half max acceleration peak
+            on_idx = find(s<thresh & (1:length(s))'<mvt_peak & move_inds,1,'last');
             
             % check to make sure the numbers make sense
             if on_idx <= td(trial).(start_idx)
                 % something is fishy. Fall back on threshold method
+                on_idx = NaN;
+            elseif(on_idx > td(trial).(start_idx) + max_rt))
                 on_idx = NaN;
             end
         end
@@ -80,19 +92,20 @@ for trial = 1:length(trial_data)
     end
     
     if isempty(on_idx) || isnan(on_idx)
-        on_idx = find(s > s_thresh & move_inds,1,'first');
+%         on_idx = find(s > s_thresh & move_inds,1,'first');
         if isempty(on_idx) % usually means it never crosses threshold
             warning('Could not identify movement onset');
             on_idx = NaN;
         end
     end
     trial_data(trial).(['idx_' onset_name]) = on_idx;
-    if strcmpi(which_method,'peak')
-        trial_data(trial).(['idx_' peak_name]) = peak_idx;
-    end
+
 end
 
 % restore logical order
 trial_data = reorderTDfields(trial_data);
 
 end
+
+
+

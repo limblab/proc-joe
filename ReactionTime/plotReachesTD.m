@@ -11,6 +11,8 @@ function [reachPlot] = plotReachesTD(td,opts)
     elseif(~isempty(opts.STIM_CODES))
         td = td(isEqual([td.stimCode],opts.STIM_CODES));
     end
+    
+    td = td(~isnan([td.idx_movement_on]));
     td_reachPlot = datasample(td,min(numel(td),opts.MAX_PLOT),'replace',false);
     
     %% plot reaches with movement onset label
