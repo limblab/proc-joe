@@ -102,7 +102,7 @@ function [opts] = configureOpts(optsInput)
     opts.FIGURE_PREFIX = '';
     
     opts.PLOT_ON_ONE_FIGURE = 1;
-    opts.COLORS = {'k','r','b',[0,0.5,0],'m'};
+    opts.COLORS = {'k','r','b',[0,0.5,0],'m',[0.5 0.5 0.5]};
 
     opts.AUTO_WINDOW = 0;
     %% check if in optsSave and optsSaveInput, overwrite if so

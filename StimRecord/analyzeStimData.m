@@ -1,12 +1,12 @@
 %% set file names 
-inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20171026\processed\';
-inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
+inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_20170714\';
+inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 folderpath = inputData.folderpath; % rest of code uses folderpath currently
 
 inputData.task='taskCObump';
 inputData.ranBy='ranByJoseph'; 
 inputData.array1='arrayLeftS1'; 
-inputData.monkey='monkeyChips';
+inputData.monkey='monkeyHan';
 inputData.labnum = 6;
 
 pwd=cd;
@@ -28,12 +28,12 @@ optsExtract.BIN_SIZE = 0.2/1000;
 optsExtract.TIME_AFTER_STIMULATION_WAVEFORMS = 10/1000;
 
 optsExtract.USE_ANALOG_FOR_STIM_TIMES = 1;
-
+optsExtract.GET_KIN = 0;
 arrayData = extractDataAroundStimulations(inputData,fileList,stimInfoFileList,optsExtract);
 
 toc
 %% pick a unit (index in array data)
-arrIdx = 18;
+arrIdx = 14;
 
 % plot raster, and PSTH for the given unit above
 
@@ -98,9 +98,9 @@ opts.BASELINE_POST_TIME = -2/1000;
 opts.STIM_PRE_TIME = 1/1000;
 opts.STIM_POST_TIME = 10/1000;
 
-opts.AUTO_WINDOW = 0; % 
-opts.INHIBITORY = 1;
-opts.EXCITATORY = 0;
+opts.AUTO_WINDOW = 1; % 
+opts.INHIBITORY = 0;
+opts.EXCITATORY = 1;
 
 opts.MAX_RATIO = 1.0;
 opts.MIN_RATIO = -0.1;
@@ -109,10 +109,10 @@ opts.LOG_PARAM = 9;
 
 opts.RELATIVE_INHIBITION = 0;
 
-opts.FIGURE_SAVE = 0;
-opts.FIGURE_DIR = '';
-opts.FIGURE_PREFIX = 'Chips_20171026';
-    plotHeatmaps(arrayData,inputData.mapFileName(8:end),opts);
+opts.FIGURE_SAVE = 1;
+opts.FIGURE_DIR = inputData.folderpath;
+opts.FIGURE_PREFIX = 'Han_20170714';
+    [heatmaps, heatmap_data] = plotHeatmaps(arrayData,inputData.mapFileName(8:end),opts);
 
 %% amplitude vs. distance curve for each condition -- excitation
 opts.STIM_ELECTRODE_PLOT = [1:numel(unique(arrayData{1}.CHAN_SENT))];

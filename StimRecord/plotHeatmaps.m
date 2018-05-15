@@ -1,4 +1,4 @@
-function [figureHandles] = plotHeatmaps(arrayData,mapFileName,opts)
+function [figureHandles,unit_data] = plotHeatmaps(arrayData,mapFileName,opts)
 
     %% configure opts and set default values
     opts = configureOpts(opts);
@@ -118,6 +118,8 @@ function [figureHandles] = plotHeatmaps(arrayData,mapFileName,opts)
                 rectangle('Position',[arrayData{unit}.COL,arrayData{unit}.ROW,1,1],'EdgeColor','k',...
                             'FaceColor',colorToPlot,'linewidth',0.1);
                 plottedHere(arrayData{unit}.COL,arrayData{unit}.ROW) = 1;
+                unit_location(unit,:) = [arrayData{unit}.COL,arrayData{unit}.ROW];
+                unit_channel(unit) = arrayData{unit}.CHAN_REC;
             end
             
             % plot stim chan
@@ -136,7 +138,9 @@ function [figureHandles] = plotHeatmaps(arrayData,mapFileName,opts)
             
             set(gca,'Visible','off')
             axis square
-
+            unit_data{chan,wave}.data = dataRatio;
+            unit_data{chan,wave}.loc = unit_location;
+            unit_data{chan,wave}.chan = unit_channel;
             %% save figures
             if(opts.FIGURE_SAVE && strcmpi(opts.FIGURE_DIR,'')~=1)
                 if(~opts.AUTO_WINDOW)

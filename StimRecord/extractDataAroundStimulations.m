@@ -217,7 +217,7 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
                         arrayData{arrayDataIdx}.numStims(chan,wave) = arrayData{arrayDataIdx}.numStims(chan,wave)+numStims(chan,wave);
                         arrayData{arrayDataIdx}.bC{chan,wave} = arrayData{arrayDataIdx}.bC{chan,wave}+binCounts{chan,wave};
 
-                        arrayData{arrayDataIdx}.kin{chan,wave} = [arrayData{arrayDataIdx}.kin{chan,wave};kinData];
+                        arrayData{arrayDataIdx}.kin{chan,wave} = [arrayData{arrayDataIdx}.kin{chan,wave};kinData{chan,wave}];
                         
                     end
                 end
