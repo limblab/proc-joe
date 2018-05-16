@@ -1,12 +1,12 @@
 %% set file names 
-inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_20170714\';
+inputData.folderpath = 'D:\Lab\Data\StimArtifact\Chips\Chips_20171026_stimRecord\';
 inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 folderpath = inputData.folderpath; % rest of code uses folderpath currently
 
 inputData.task='taskCObump';
 inputData.ranBy='ranByJoseph'; 
 inputData.array1='arrayLeftS1'; 
-inputData.monkey='monkeyHan';
+inputData.monkey='monkeyChips';
 inputData.labnum = 6;
 
 pwd=cd;
@@ -98,18 +98,18 @@ opts.BASELINE_POST_TIME = -2/1000;
 opts.STIM_PRE_TIME = 1/1000;
 opts.STIM_POST_TIME = 10/1000;
 
-opts.AUTO_WINDOW = 1; % 
+opts.AUTO_WINDOW = 0; % 
 opts.INHIBITORY = 0;
 opts.EXCITATORY = 1;
 
-opts.MAX_RATIO = 1.0;
+opts.MAX_RATIO = 0.3;
 opts.MIN_RATIO = -0.1;
 opts.LOG_SCALE = 1;
 opts.LOG_PARAM = 9;
 
 opts.RELATIVE_INHIBITION = 0;
 
-opts.FIGURE_SAVE = 1;
+opts.FIGURE_SAVE = 0;
 opts.FIGURE_DIR = inputData.folderpath;
 opts.FIGURE_PREFIX = 'Han_20170714';
     [heatmaps, heatmap_data] = plotHeatmaps(arrayData,inputData.mapFileName(8:end),opts);
