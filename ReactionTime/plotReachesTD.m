@@ -13,8 +13,8 @@ function [reachPlot] = plotReachesTD(td,opts)
     end
     
     td = td(~isnan([td.idx_movement_on]));
-%     td_reachPlot = datasample(td,min(numel(td),opts.MAX_PLOT),'replace',false);
-    td_reachPlot = td(1:opts.MAX_PLOT);
+    td_reachPlot = datasample(td,min(numel(td),opts.MAX_PLOT),'replace',false);
+%     td_reachPlot = td(1:opts.MAX_PLOT);
     %% plot reaches with movement onset label
     figure();
     for i = 1:numel(opts.WHICH_IDX)

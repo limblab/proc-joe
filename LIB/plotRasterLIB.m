@@ -1,7 +1,7 @@
 function [ figHandle ] = plotRasterLIB(xData,yData,optsPlotInput,optsSaveInput)
 % takes in a set of data, plots that data with a bunch of parameters for
 % making plots pretty and whatnot, returns figure handle
-
+% xdata is the ts, ydata is the row number, both should be column vectors
 
     %% deal with both sets of options
 

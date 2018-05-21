@@ -25,31 +25,32 @@ function [output_data] = plotProbDetectRT(data,opts)
     end
     xlim([0,1.0])
     
-%     % for each dataset, plot rt vs axis for the first dataset
-%     figure()
-%     for d = 1:numel(data)
-%         if(d == 1)
-%             base_fit = data{d}.psychometric_fit_stim;
-%             x_data = data{d}.opts.STIM_PARAMS;
-%         else
-%             % use the psychometric fit to get a prob detect for each stim param
-%             stim_params = data{d}.opts.STIM_PARAMS;
-%             fit_stim = data{d}.psychometric_fit_stim;
-%             stim_detect_prob = fit_stim(1) + fit_stim(2)*erf(fit_stim(3)*(stim_params-fit_stim(4)));
-%             zero_val = max(0,fit_stim(1) + fit_stim(2)*erf(fit_stim(3)*(0-fit_stim(4))));
-% %             stim_detect_prob = (stim_detect_prob - zero_val)/(1-zero_val)/(fit_stim(1)+fit_stim(2));
-%             stim_detect_prob = (stim_detect_prob - zero_val)/(1-zero_val);
-%             x_data = erfinv((stim_detect_prob - base_fit(1))/base_fit(2))/base_fit(3) + base_fit(4);
-%         end
-%         % plot rt vs. stim_detect_prob
-%         for cueIdx = 1:numel(data{d}.cueInfo)
-%             if(data{d}.cueInfo(cueIdx).stimCode ~= -1 && data{d}.cueInfo(cueIdx).bumpMag == 0 && ~isempty(data{d}.cueInfo(cueIdx).rt))
-%                 stimCode = data{d}.cueInfo(cueIdx).stimCode + 1;
-%                 plot(x_data(stimCode),mean(data{d}.cueInfo(cueIdx).rt),'.','color',opts.COLORS{d},'markersize',opts.MARKER_SIZE);
-%                 hold on
-%             end
-%         end
-%     end
+    % for each dataset, plot rt vs axis for the first dataset
+    figure()
+    for d = 1:numel(data)
+        if(d == 1)
+            base_fit = data{d}.psychometric_fit_stim;
+            x_data = data{d}.opts.STIM_PARAMS;
+        else
+            % use the psychometric fit to get a prob detect for each stim param
+            stim_params = data{d}.opts.STIM_PARAMS;
+            fit_stim = data{d}.psychometric_fit_stim;
+            stim_detect_prob = fit_stim(1) + fit_stim(2)*erf(fit_stim(3)*(stim_params-fit_stim(4)));
+            zero_val = max(0,fit_stim(1) + fit_stim(2)*erf(fit_stim(3)*(0-fit_stim(4))));
+            max_val = min(1,fit_stim(1) + fit_stim(2));
+%             stim_detect_prob = (stim_detect_prob - zero_val)/(1-zero_val)/(fit_stim(1)+fit_stim(2));
+            stim_detect_prob = (stim_detect_prob - zero_val)/(max_val-zero_val);
+            x_data = erfinv((stim_detect_prob - base_fit(1))/base_fit(2))/base_fit(3) + base_fit(4);
+        end
+        % plot rt vs. stim_detect_prob
+        for cueIdx = 1:numel(data{d}.cueInfo)
+            if(data{d}.cueInfo(cueIdx).stimCode ~= -1 && data{d}.cueInfo(cueIdx).bumpMag == 0 && ~isempty(data{d}.cueInfo(cueIdx).rt))
+                stimCode = data{d}.cueInfo(cueIdx).stimCode + 1;
+                plot(x_data(stimCode),mean(data{d}.cueInfo(cueIdx).rt),'.','color',opts.COLORS{d},'markersize',opts.MARKER_SIZE);
+                hold on
+            end
+        end
+    end
     
     
     

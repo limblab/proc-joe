@@ -7,6 +7,10 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
     f_all_bump = [];
     f_all_stim = [];
     f_means_stim = [];
+    g_bump = [];
+    g_stim = [];
+    learn_mdl_bump = [];
+    learn_mdl_stim = [];
     %% get indexes for each cue type
     if(isempty(opts.BUMP_MAGS))
         bumpList = unique([td_reward.bumpMagnitude]);
@@ -139,7 +143,7 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
             end
         end
 
-        f_all_bump = [];
+        
         if(opts.FIT)
             [f_all_bump.fitObj,f_all_bump.gof] = fit(fitData.x',fitData.y','a*exp(b*x)+c','startPoint',[0,0,0.15]);
 
@@ -206,7 +210,7 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
             end
         end
 
-        f_all_stim = [];
+        
         if(opts.FIT)
             [f_all_stim.fitObj,f_all_stim.gof] = fit(fitData.x',fitData.y','a*exp(b*x)+c','startPoint',[0,0,0.15]);
 
@@ -226,6 +230,7 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
     end
 
     %% plot psychometric curve for bump data
+    
     if(opts.PLOT_BUMP)
         plots{end+1} = figure();
         plots{end}.Name = strcat(opts.FIGURE_PREFIX,'_bump_detectionCurve');
@@ -241,7 +246,7 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
         end
 
         % fit psychometric curve
-        g_bump = [];
+
         if(opts.FIT)
             xData = linspace(0,max(fitData.x*1.1),100);
 
@@ -273,6 +278,7 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
 
     end
     %% plot psychometric curve for stim data
+    
     if(opts.PLOT_STIM)
         plots{end+1} = figure();
         plots{end}.Name = strcat(opts.FIGURE_PREFIX,'_stim_detectionCurve');
@@ -288,7 +294,6 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
         end
 
         % fit psychometric curve
-        g_stim = [];
         if(opts.FIT)
             xData = linspace(0,max(fitData.x*1.1),100);
 
@@ -320,6 +325,7 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
 
     end
     %% plot BUMP reaction time vs trial idx
+    
     if(opts.PLOT_BUMP)
         plots{end+1} = figure();
         plots{end}.Name = strcat(opts.FIGURE_PREFIX,'_bump_learning');
@@ -377,6 +383,17 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
         set(gca,'fontsize',opts.FONT_SIZE);
 
     end
+    
+    %% plot reaction time as a function of hold period
+    plots{end+1} = figure();
+    plots{end}.Name = strcat(opts.FIGURE_PREFIX,'_holdPeriod_rt');
+    hold_period = ([td_rt.idx_goCueTime] - [td_rt.idx_tgtOnTime])*mode([td_rt.bin_size]);
+    rt = ([td_rt.idx_movement_on] - [td_rt.idx_goCueTime])*mode([td_rt.bin_size]);
+    plot(hold_period,rt,'k.','markersize',opts.MARKER_SIZE)
+    xlabel('Hold period (s)')
+    ylabel('RT (s)')
+    formatForLee(gcf)
+    set(gca,'fontsize',opts.FONT_SIZE);
     %% deal with saving figures
     if(opts.SAVE_FIGURES && strcmp(opts.FOLDER_PATH,'')==0)
         for p = 1:numel(plots)

@@ -31,8 +31,10 @@ function [td] = getGoCueTime(td,cds)
         bumpTime = cds.trials.bumpTime(td(tr).trial_id)-cds.trials.startTime(td(tr).trial_id);
         
         % determine stim on time for this trial
-        stimTime = stimOn(find(stimOn > cds.trials.startTime(td(tr).trial_id) & stimOn < cds.trials.endTime(td(tr).trial_id),1,'first'));
-        stimTime = stimTime - cds.trials.startTime(td(tr).trial_id);
+        if(~isempty(stimSyncIdx))
+            stimTime = stimOn(find(stimOn > cds.trials.startTime(td(tr).trial_id) & stimOn < cds.trials.endTime(td(tr).trial_id),1,'first'));
+            stimTime = stimTime - cds.trials.startTime(td(tr).trial_id);
+        end
         
         if(~isnan(bumpTime)) %prioritize bump time as go cue as stim has some delays
             td(tr).goCueTime = bumpTime + td(tr).idx_startTime*td(tr).bin_size;

@@ -40,8 +40,6 @@ for fileNumber = 1:numel(fileList)
         td_all = [td_all,td_temp];
     end
 end
-clear cds
-clear td_temp
 %% separate out trials with results and go cue's
     [~, td_reward] = getTDidx(td_all, 'result', 'r');
     td_reward = td_reward(~isnan([td_reward.idx_goCueTime]));
@@ -63,7 +61,7 @@ clear td_temp
         td_all_idx = find([td_all.trial_id] == td_reward(td_reward_idx).trial_id);
         td_all_rt(td_all_idx).idx_movement_on = td_reward(td_reward_idx).idx_movement_on;
     end
-    clear td_all
+            
 %% plot a set of reaches aligned to go cue with reaction time markers
     opts.MAX_PLOT = 400;
     opts.WHICH_FIELD ='vel';
@@ -101,10 +99,9 @@ clear td_temp
     
     
 %% plot rasters
-    plotRasterRT(td_reward,opts);
     optsPlot = [];
     optsSave = [];
-    optsPlot.X_LIMITS = [-0.3,0.3];
+    optsPlot.X_LIMITS = [-0.5,1.5];
     for unit = 1:size(td_reward(1).LeftS1_spikes,2)
         xData = [];
         yData = [];
@@ -116,14 +113,14 @@ clear td_temp
     end
     
 %% plot histograms
-    offset = floor(optsPlot.X_LIMITS/td_reward(1).bin_size); % offset(1) should be negative
-    for unit = 1:size(td_reward(1).LeftS1_spikes,2)
-        yData = 0;
-        xData = ([offset(1):1:offset(2)]*td_reward(1).bin_size)'; 
+    for unit = 1:size(td_reward(1).leftS1_spikes,2)
         for trial = 1:numel(td_reward)
-            yData = yData + td_reward(trial).LeftS1_spikes(td_reward(trial).idx_goCueTime+offset(1):td_reward(trial).idx_goCueTime+offset(2),unit);
+            yData = [];
+            xData = [-offset(1):offse    
+            for trial = 1:numel(td_reward)
+                yData = yData + td_reward(trial).LeftS1_spikes(td_reward(trial).idx_goCueTime-offset(1):td_reward(trial).idx_goCueTime+offset(2));
+            end
         end
-        plotPSTHLIB(xData,yData,optsPlot,optsSave);
     end
     
     

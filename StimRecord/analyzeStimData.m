@@ -1,12 +1,13 @@
 %% set file names 
-inputData.folderpath = 'D:\Lab\Data\StimArtifact\Chips\Chips_20171026_stimRecord\';
-inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20171026\';
+% inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
 folderpath = inputData.folderpath; % rest of code uses folderpath currently
 
 inputData.task='taskCObump';
 inputData.ranBy='ranByJoseph'; 
 inputData.array1='arrayLeftS1'; 
-inputData.monkey='monkeyChips';
+inputData.monkey='monkeyHan';
 inputData.labnum = 6;
 
 pwd=cd;
@@ -33,7 +34,7 @@ arrayData = extractDataAroundStimulations(inputData,fileList,stimInfoFileList,op
 
 toc
 %% pick a unit (index in array data)
-arrIdx = 14;
+arrIdx = 15;
 
 % plot raster, and PSTH for the given unit above
 
@@ -95,14 +96,14 @@ opts.WAVEFORM_TYPES_PLOT = unique(arrayData{1}.WAVEFORM_SENT);
 
 opts.BASELINE_PRE_TIME = -20/1000;
 opts.BASELINE_POST_TIME = -2/1000;
-opts.STIM_PRE_TIME = 1/1000;
+opts.STIM_PRE_TIME = 1.2/1000;
 opts.STIM_POST_TIME = 10/1000;
 
-opts.AUTO_WINDOW = 0; % 
+opts.AUTO_WINDOW = 1; % 
 opts.INHIBITORY = 0;
 opts.EXCITATORY = 1;
 
-opts.MAX_RATIO = 0.3;
+opts.MAX_RATIO = 0.9;
 opts.MIN_RATIO = -0.1;
 opts.LOG_SCALE = 1;
 opts.LOG_PARAM = 9;
@@ -110,7 +111,7 @@ opts.LOG_PARAM = 9;
 opts.RELATIVE_INHIBITION = 0;
 
 opts.FIGURE_SAVE = 0;
-opts.FIGURE_DIR = inputData.folderpath;
+opts.FIGURE_DIR = 'C:\Users\Joseph\Desktop\Han_20170714_smallerScale_wave2';
 opts.FIGURE_PREFIX = 'Han_20170714';
     [heatmaps, heatmap_data] = plotHeatmaps(arrayData,inputData.mapFileName(8:end),opts);
 
