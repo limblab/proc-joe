@@ -22,6 +22,7 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
     if(isempty(opts.STIM_CODES))
         stimCodeList = unique([td_reward.stimCode]);
         stimCodeList = stimCodeList(~isnan(stimCodeList)); 
+        stimCodeList = 0:max(stimCodeList);
         stimCodeList(end+1) = -1; % representing no stim
     else
         stimCodeList = opts.STIM_CODES;
@@ -43,10 +44,12 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
         td_all(td_all_idx) = [];
     end
     %% remove chains of fail from td_all -- this is when the monkey is not paying attention
-    fail_idx = find([td_all.result] == 'F');
-    td_all_remove = fail_idx(find(fail_idx(opts.NUM_SEQUENCE_FAILS:end) - fail_idx(1:end-opts.NUM_SEQUENCE_FAILS+1) == opts.NUM_SEQUENCE_FAILS-1));
-    td_all_remove = unique([td_all_remove,reshape(td_all_remove + [1:opts.NUM_SEQUENCE_FAILS-1]',1,numel(td_all_remove)*(opts.NUM_SEQUENCE_FAILS-1))]);
-    td_all(td_all_remove) = [];
+%     fail_idx = find([td_all.result] == 'F');
+%     td_all_remove = fail_idx(find(fail_idx(opts.NUM_SEQUENCE_FAILS:end) - fail_idx(1:end-opts.NUM_SEQUENCE_FAILS+1) == opts.NUM_SEQUENCE_FAILS-1));
+%     if(~isempty(td_all_remove))
+%         td_all_remove = unique([td_all_remove,reshape(td_all_remove + [1:opts.NUM_SEQUENCE_FAILS-1]',1,numel(td_all_remove)*(opts.NUM_SEQUENCE_FAILS-1))]);
+%         td_all(td_all_remove) = [];
+%     end
     %% for each cue, store indexes in td_reward, get reaction time
     for b = 1:numel(bumpList)
         for s = 1:numel(stimCodeList)
@@ -64,7 +67,9 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
             
             % find % responsive
             cueInfo(cueIdx).percent_respond = numel(cueInfo(cueIdx).td_idx_reward)/(numel(cueInfo(cueIdx).td_idx_all));
-            
+            if(numel(cueInfo(cueIdx).td_idx_all) > 0 && isnan(cueInfo(cueIdx).percent_respond))
+                cueInfo(cueIdx).percent_respond = 0;
+            end
             % store cue info
             cueInfo(cueIdx).bumpMag = bumpList(b);
             cueInfo(cueIdx).stimCode = stimCodeList(s);
@@ -427,7 +432,7 @@ function [opts] = configureOpts(optsInput)
     opts.USE_ML_FIT = 1;
     opts.FONT_SIZE = 16;
     
-    opts.COLORS = {'r',[0 0.5 0],'b','k','m',[0.5,0.5,0.2],[0.3,0.3,0.3]};
+    opts.COLORS = {'k','r',[0 0.6 0],'b','m',[0.5,0.5,0.5],[0.4,0.4,0.2]};
 
     opts.SAVE_FIGURES = 0;
     opts.FIGURE_PREFIX = '';

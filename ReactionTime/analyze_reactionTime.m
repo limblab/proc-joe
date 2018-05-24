@@ -1,6 +1,6 @@
 %% script to process reaction time data 
 %% determine filename and input data
-    inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\Han_20180501\';
+    inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\Han_20180521_stim\';
 %     inputData.folderpath = 'D:\Lab\Data\ReactionTime\Han_20180427_training\';
     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 
@@ -15,33 +15,33 @@
     fileList = dir('*.nev*');
     cd(pwd)
 %% load in cds and extract data
-td_all = [];
-num_trials = 0;
-for fileNumber = 1:numel(fileList)
-    cds = commonDataStructure();
-    cds.file2cds([inputData.folderpath fileList(fileNumber).name],inputData.task,inputData.ranBy,...
-        inputData.monkey,inputData.labnum,inputData.array1,inputData.mapFileName,'recoverPreSync');
-    cd(pwd);
-    
-    if(~isempty(cds.trials) && sum(cds.trials.result == 'R' | cds.trials.result == 'F') ~= 0)
-        % convert cds to trial data
-        params.event_list = {'tgtOnTime';'isBumpTrial';'bumpTime';'bumpMagnitude';'bumpDir';'isStimTrial';'stimCode'};
-        params.trial_results = {'R','F'};
-        params.extra_time = [1,2];
-        params.include_ts = 1;
-        td_temp = parseFileByTrial(cds,params);
-        td_temp = getGoCueTime(td_temp,cds);
-        % append trial data into a single struct
-        for t = 1:numel(td_temp)
-            td_temp(t).trial_id = td_temp(t).trial_id + num_trials;
-        end
-        num_trials = num_trials + size(cds.trials,1);
+    td_all = [];
+    num_trials = 0;
+    for fileNumber = 1:numel(fileList)
+        cds = commonDataStructure();
+        cds.file2cds([inputData.folderpath fileList(fileNumber).name],inputData.task,inputData.ranBy,...
+            inputData.monkey,inputData.labnum,inputData.array1,inputData.mapFileName,'recoverPreSync');
+        cd(pwd);
 
-        td_all = [td_all,td_temp];
+        if(~isempty(cds.trials) && size(cds.trials,1) > 1 && sum(cds.trials.result == 'R' | cds.trials.result == 'F') ~= 0)
+            % convert cds to trial data
+            params.event_list = {'tgtOnTime';'isBumpTrial';'bumpTime';'bumpMagnitude';'bumpDir';'isStimTrial';'stimCode'};
+            params.trial_results = {'R','F'};
+            params.extra_time = [1,2];
+            params.include_ts = 1;
+            td_temp = parseFileByTrial(cds,params);
+            td_temp = getGoCueTime(td_temp,cds);
+            % append trial data into a single struct
+            for t = 1:numel(td_temp)
+                td_temp(t).trial_id = td_temp(t).trial_id + num_trials;
+            end
+            num_trials = num_trials + size(cds.trials,1);
+
+            td_all = [td_all,td_temp];
+        end
     end
-end
-clear cds
-clear td_temp
+    clear cds
+    clear td_temp
 %% separate out trials with results and go cue's
     [~, td_reward] = getTDidx(td_all, 'result', 'r');
     td_reward = td_reward(~isnan([td_reward.idx_goCueTime]));
@@ -51,9 +51,9 @@ clear td_temp
     params.field_idx = 1;
     params.start_idx_offset = 15;
     params.threshold_mult = 0.4; % chosen so that bumps match with tactile reported in (Godlove, 2014). Probably shouldn't change
-%     params.min_s = 10;
     params.min_s = 50;
     params.pre_move_thresh = 50;
+    params.be_aggressive = 1;
     td_reward = getMoveOnset(td_reward,params);
     
 % put movement on back into td_all
@@ -70,74 +70,96 @@ clear td_temp
     opts.WHICH_IDX = [1];
     opts.BUMP_MAGS = [];
     opts.YLIM = [];
-    opts.STIM_CODES = [0:9]';
+    opts.STIM_CODES = [];
     plotReachesTD(td_reward,opts);
     
 %% plot reaction times for each cue, psychometric curve
     opts = [];
     
-    opts.SAVE_FIGURES = 0;
+    opts.SAVE_FIGURES = 1;
 
     td_reward_rt = td_reward(~isnan([td_reward.idx_movement_on]));
     opts.FOLDER_PATH = inputData.folderpath;
-    opts.FIGURE_PREFIX = 'Han_20180517'; % no _ required
+    opts.FIGURE_PREFIX = 'Han_20180521'; % no _ required
     opts.BUMP_MAGS = [];
     opts.STIM_CODES = [];
-    opts.STIM_PARAMS = [25,50,75,100,125,150,175,200,250,300]*0.001;
-    opts.STIM_LABEL = 'Train duration (s)';
+    opts.STIM_PARAMS = [10,20,30,40,50,60,70,80,90,100];
+    opts.STIM_LABEL = 'Amp (\muA)';
     
     opts.FIT = 1;
     opts.PLOT_BUMP = 1;
-    opts.PLOT_STIM = 0;
+    opts.PLOT_STIM = 1;
     [data,plots] = plotReactionTimeDataTD(td_reward_rt,td_all_rt,opts);
 
     data.opts = opts;
-%% plot the reaction time to different days/parameter sets together based on
-% probability of detection
 
-    % load in the two data files, feed them to the function below
-    
-    plotProbDetectRT({Han_20180515_data,Han_20180516_data},[]);
-    
     
 %% plot rasters
-    plotRasterRT(td_reward,opts);
-    optsPlot = [];
-    optsSave = [];
-    optsPlot.X_LIMITS = [-0.3,0.3];
-    for unit = 1:size(td_reward(1).LeftS1_spikes,2)
-        xData = [];
-        yData = [];
-        for trial = 1:numel(td_reward)
-            xData = [xData;td_reward(trial).LeftS1_ts{unit}-td_reward(trial).goCueTime+params.extra_time(1)];
-            yData = [yData;trial*ones(numel(td_reward(trial).LeftS1_ts{unit}),1)];
-        end
-        plotRasterLIB(xData,yData,optsPlot,optsSave);
+    opts = [];
+    opts.X_LIMITS = [-0.3,0.3];
+    opts.EXTRA_TIME = params.extra_time;
+    opts.PLOT_RASTER = 1;
+    opts.PLOT_PSTH = 0;
+    opts.PLOT_BUMP = 0;
+    plotRasterPSTHRT(td_reward,opts);
+    
+    
+%% do a glm to predict reaction time from neural data? or kinematics?
+    window = [0,10];
+    for t = 1:numel(td_reward)
+        td_reward(t).reaction_time = td_reward(t).idx_movement_on - td_reward(t).idx_goCueTime;
     end
-    
-%% plot histograms
-    offset = floor(optsPlot.X_LIMITS/td_reward(1).bin_size); % offset(1) should be negative
-    for unit = 1:size(td_reward(1).LeftS1_spikes,2)
-        yData = 0;
-        xData = ([offset(1):1:offset(2)]*td_reward(1).bin_size)'; 
-        for trial = 1:numel(td_reward)
-            yData = yData + td_reward(trial).LeftS1_spikes(td_reward(trial).idx_goCueTime+offset(1):td_reward(trial).idx_goCueTime+offset(2),unit);
-        end
-        plotPSTHLIB(xData,yData,optsPlot,optsSave);
+    td_stim = td_reward([td_reward.isStimTrial]);
+    td_stim = td_stim(~isnan(([td_stim.reaction_time])));
+    td_stim = binTD(td_stim,5);
+    td_stim = trimTD(td_stim,{'idx_goCueTime'},{'idx_goCueTime',3});
+    for t = 1:numel(td_stim)
+        td_stim(t).LeftS1_spikes = td_stim(t).LeftS1_spikes(:)';
     end
+    mdl_struct = [];
+    mdl_struct.model_type = 'glm';
+    mdl_struct.model_name = 'reaction_time_pred';
+    mdl_struct.in_signals = {'LeftS1_spikes','all'};
+    mdl_struct.out_signals = {'reaction_time','all'};
+    [td_stim,mdl_info] = getModel(td_stim,mdl_struct);
+
+%%
     
     
     
     
+    % %% plot the reaction time to different days/parameter sets together based on
+% % probability of detection
+% 
+%     % load in the two data files, feed them to the function below
+%     
+%     plotProbDetectRT({Han_20180515_data,Han_20180516_data},[]);
     
-    
-    
-    
-    
-    
-    
-    
-    
+    % %% plot # spikes in a window vs. rt for each trial
+%     rt = zeros(numel(td_reward),1)-1000;
+%     num_spikes = zeros(numel(td_reward),1)-1000;
+%     offset = [0,10]; % 10 ms bins, these are idxs
+%     for trial = 1:numel(td_reward)
+%         if(~isnan(td_reward(trial).idx_movement_on))
+%             rt(trial) = (td_reward(trial).idx_movement_on - td_reward(trial).idx_goCueTime)*td_reward(trial).bin_size;
+%             window = td_reward(trial).idx_goCueTime + offset;
+%             num_spikes(trial) = sum(sum(td_reward(trial).LeftS1_spikes(window(1):window(2),:)));
+%         end
+%     end
+%     
+%     rt(rt < 0) = [];
+%     num_spikes(num_spikes < 0) = [];
+% %     num_spikes(rt > 0.35) = [];
+% %     rt(rt > 0.35) = [];
+%     
+%     figure();
+%     plot(rt,num_spikes,'k.','markersize',12)
+%     [f,gof] = fit(rt,num_spikes,'a*x+b');
+%     hold on
+%     xData = min(rt):0.01:max(rt);
+%     plot(xData,f.a*xData+f.b,'k--')
+% %     xlim([0,0.5])
+
     
     
     
