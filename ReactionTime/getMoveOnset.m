@@ -40,6 +40,7 @@ field_idx = 1;
 threshold_mult = 0.5;
 pre_move_thresh = 0.6;
 max_rt = 0.5;
+be_aggressive = 0;
 % these parameters aren't documented because I expect them to not need to
 % change but you can overwrite them if you need to.
 start_idx     =  'idx_goCueTime';
@@ -53,8 +54,8 @@ if nargin > 1, assignParams(who,params); end % overwrite defaults
 td = getSpeed(trial_data);
 
 for trial = 1:length(trial_data)
-    % use which_field to find bin corresponding to movement onset, movement offset, and peak speed
-    s = td(trial).(which_field)(:,field_idx);
+    % project (which_field) onto the target axis
+    s = sum([cos(td(trial).tgtDir),sin(td(trial).tgtDir)].*td(trial).(which_field),2);
     
     % find the time bins where the monkey may be moving
     move_inds = false(size(s));

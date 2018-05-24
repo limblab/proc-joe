@@ -25,7 +25,7 @@
 
         if(~isempty(cds.trials) && size(cds.trials,1) > 1 && sum(cds.trials.result == 'R' | cds.trials.result == 'F') ~= 0)
             % convert cds to trial data
-            params.event_list = {'tgtOnTime';'isBumpTrial';'bumpTime';'bumpMagnitude';'bumpDir';'isStimTrial';'stimCode'};
+            params.event_list = {'tgtOnTime';'isBumpTrial';'bumpTime';'bumpMagnitude';'bumpDir';'isStimTrial';'stimCode';'tgtDir'};
             params.trial_results = {'R','F'};
             params.extra_time = [1,2];
             params.include_ts = 1;
