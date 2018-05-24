@@ -42,7 +42,7 @@
     end
     clear cds
     clear td_temp
-% sanitize td_all spike information since we are merging files, units go in and out
+%% sanitize td_all spike information since we are merging files, units go in and out
     % get master list of units
     master_list = [-1,-1];
     for trial = 1:length(td_all)
@@ -58,15 +58,13 @@
     % adjust spike data to match master list of units
     for trial = 1:length(td_all)
         temp_spikes = nan(size(td_all(trial).LeftS1_spikes,1),size(master_list,1));
-        temp_ts = cell(size(master_list,1),1);
+        temp_ts = cell(size(td_all(trial).LeftS1_ts,1),1);
         for unit = 1:size(td_all(trial).LeftS1_unit_guide,1)
-            master_idx = find(sum(master_list == td_all(trial).LeftS1_unit_guide(unit,:),2) == 2);
-            temp_spikes(:,master_idx) = td_all(trial).LeftS1_spikes(:,unit);
+            master_idx = find(sum(master_list == td_all(trial).LeftS1_unit_guide(unit,:)) == 2);
+            temp_spikes(master_idx) = td_all(trial).LeftS1_spikes(:,unit);
             temp_ts{master_idx} = td_all(trial).LeftS1_ts{unit};
         end
         td_all(trial).LeftS1_unit_guide = master_list;
-        td_all(trial).LeftS1_spikes = temp_spikes;
-        td_all(trial).LeftS1_ts = temp_ts;
     end
 %% separate out trials with results and go cue's
     [~, td_reward] = getTDidx(td_all, 'result', 'r');
@@ -123,10 +121,10 @@
     
 %% plot rasters
     opts = [];
-    opts.X_LIMITS = [-0.3,0.5];
+    opts.X_LIMITS = [-0.3,0.3];
     opts.EXTRA_TIME = params.extra_time;
-    opts.PLOT_RASTER = 0;
-    opts.PLOT_PSTH = 1;
+    opts.PLOT_RASTER = 1;
+    opts.PLOT_PSTH = 0;
     opts.PLOT_BUMP = 0;
     plotRasterPSTHRT(td_reward,opts);
     

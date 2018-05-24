@@ -53,6 +53,16 @@ if nargin > 1, assignParams(who,params); end % overwrite defaults
 % some pre-processing
 td = getSpeed(trial_data);
 
+
+if(be_aggressive) % find a threshold based on all trials
+    s_all = [];
+    for trial = 1:length(trial_data)
+        % project (which_field) onto the target axis
+        s_all = [s_all;sum([cos(td(trial).tgtDir),sin(td(trial).tgtDir)].*td(trial).(which_field)(td(trial).idx_tgtOnTime+35:td(trial).(start_idx),:),2)];
+        thresh_all = std(s_all);
+    end
+end
+
 for trial = 1:length(trial_data)
     % project (which_field) onto the target axis
     s = sum([cos(td(trial).tgtDir),sin(td(trial).tgtDir)].*td(trial).(which_field),2);
@@ -76,8 +86,12 @@ for trial = 1:length(trial_data)
         [~,mvt_peak] = max(s(mvt_peaks));
         mvt_peak = mvt_peaks(mvt_peak);
         if ~isempty(mvt_peak)
-            thresh = s(mvt_peak)*threshold_mult; % default threshold is half max acceleration peak
-            on_idx = find(s<thresh & (1:length(s))'<mvt_peak & move_inds,1,'last');
+            if(~be_aggressive)
+                thresh = s(mvt_peak)*threshold_mult; % default threshold is half max acceleration peak
+            else
+                thresh = thresh_all*threshold_mult;
+            end
+            on_idx = find(s>=thresh & (1:length(s))'<mvt_peak & move_inds,1,'first');
             
             % check to make sure the numbers make sense
             if on_idx <= td(trial).(start_idx)

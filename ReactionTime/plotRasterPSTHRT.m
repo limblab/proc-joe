@@ -33,8 +33,10 @@ function [plots] = plotRasterPSTHRT(td,opts)
                 yData_raster = [];
                 for trial = 1:numel(plot_order)
                     trial_idx = plot_order(trial);
-                    xData_raster = [xData_raster;td(trial_idx).LeftS1_ts{unit}-td(trial_idx).goCueTime+opts.EXTRA_TIME(1)];
-                    yData_raster = [yData_raster;trial*ones(numel(td(trial_idx).LeftS1_ts{unit}),1)];
+                    if(~iempty(td(trial_idx).LeftS1_ts{unit}))
+                        xData_raster = [xData_raster;td(trial_idx).LeftS1_ts{unit}-td(trial_idx).goCueTime+opts.EXTRA_TIME(1)];
+                        yData_raster = [yData_raster;trial*ones(numel(td(trial_idx).LeftS1_ts{unit}),1)];
+                    end
                 end
                 % deal with optsSave and optsPlot
                 optsSave.FIGURE_SAVE = opts.SAVE_FIGURES;
@@ -53,16 +55,20 @@ function [plots] = plotRasterPSTHRT(td,opts)
         offset = floor(opts.X_LIMITS/td(1).bin_size);
         if(opts.PLOT_PSTH)
             for unit = 1:size(td(1).LeftS1_spikes,2)
+                num_trials = 0;
                 f = figure();
                 xData_PSTH = repmat(([offset(1):1:offset(2)]*td(1).bin_size)',1,numel(dividing_marks)-1);
                 yData_PSTH = zeros(size(xData_PSTH));
                 for dm = 1:numel(dividing_marks)-1
                     trials = plot_order(dividing_marks(dm):dividing_marks(dm+1)-1);
                     for t = 1:numel(trials)
-                        yData_PSTH(:,dm) = yData_PSTH(:,dm) + td(trials(t)).LeftS1_spikes(td(trials(t)).idx_goCueTime+offset(1):td(trials(t)).idx_goCueTime+offset(2),unit);
+                        if(~isnan(td(trials(t)).LeftS1_spikes(1,unit)))
+                            yData_PSTH(:,dm) = yData_PSTH(:,dm) + td(trials(t)).LeftS1_spikes(td(trials(t)).idx_goCueTime+offset(1):td(trials(t)).idx_goCueTime+offset(2),unit);
+                            num_trials = num_trials+1;
+                        end
                     end
                     % normalize by number of trials
-                    yData_PSTH(:,dm) = yData_PSTH(:,dm)/numel(trials);
+                    yData_PSTH(:,dm) = yData_PSTH(:,dm)/num_trials;
                 end
                 % deal with optsSave and optsPlot
                 optsSave.FIGURE_SAVE = opts.SAVE_FIGURES;
@@ -114,7 +120,7 @@ function [plots] = plotRasterPSTHRT(td,opts)
                 end
                 % deal with optsSave and optsPlot
                 optsSave.FIGURE_SAVE = opts.SAVE_FIGURES;
-                f.Name = strcat(opts.FIGURE_PREFIX,'_nn',num2str(unit),'_chan',num2str(td(1).LeftS1_unit_guide(1)),'_unit',num2str(td(1).LeftS1_unit_guide(2)),'_bumpRaster');
+                f.Name = strcat(opts.FIGURE_PREFIX,'_nn',num2str(unit),'_chan',num2str(td(1).LeftS1_unit_guide(1)),'_unit',num2str(td(1).LeftS1_unit_guide(2)),'_stimRaster');
                 optsSave.FIGURE_NAME = f.Name;
                 optsSave.FIGURE_DIR = opts.FIGURE_PATH;
 
@@ -124,7 +130,7 @@ function [plots] = plotRasterPSTHRT(td,opts)
                 plotRasterLIB(xData_raster,yData_raster,optsPlot,optsSave);
             end
         end
-        % plot the PSTH, a line for each bump mag
+        % plot the PSTH, a line for each stim code
         dividing_marks = [1,dividing_lines + 0.5];
         offset = floor(opts.X_LIMITS/td(1).bin_size);
         if(opts.PLOT_PSTH)
