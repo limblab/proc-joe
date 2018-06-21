@@ -33,23 +33,24 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
     cueInfo = [];
     
     %% remove fastest 5% and slowest 5%
-    num_remove = floor(size(td_reward,2)*0.05);
-    rt_all = [td_reward.idx_movement_on]-[td_reward.idx_goCueTime];
-    [~,rt_sort_idx] = sort(rt_all);
-    rt_remove = [rt_sort_idx(1:num_remove),rt_sort_idx(end-num_remove+1:end)];
-    trial_id_remove = [td_reward(rt_remove).trial_id];
-    td_reward(rt_remove) = [];
-    for i = 1:numel(trial_id_remove)
-        td_all_idx = find([td_all.trial_id] == trial_id_remove(i));
-        td_all(td_all_idx) = [];
-    end
-    %% remove chains of fail from td_all -- this is when the monkey is not paying attention
-%     fail_idx = find([td_all.result] == 'F');
-%     td_all_remove = fail_idx(find(fail_idx(opts.NUM_SEQUENCE_FAILS:end) - fail_idx(1:end-opts.NUM_SEQUENCE_FAILS+1) == opts.NUM_SEQUENCE_FAILS-1));
-%     if(~isempty(td_all_remove))
-%         td_all_remove = unique([td_all_remove,reshape(td_all_remove + [1:opts.NUM_SEQUENCE_FAILS-1]',1,numel(td_all_remove)*(opts.NUM_SEQUENCE_FAILS-1))]);
-%         td_all(td_all_remove) = [];
+%     num_remove = floor(size(td_reward,2)*0.05);
+%     rt_all = [td_reward.idx_movement_on]-[td_reward.idx_goCueTime];
+%     [~,rt_sort_idx] = sort(rt_all);
+%     rt_remove = [rt_sort_idx(1:num_remove),rt_sort_idx(end-num_remove+1:end)];
+%     trial_id_remove = [td_reward(rt_remove).trial_id];
+%     td_reward(rt_remove) = [];
+%     for i = 1:numel(trial_id_remove)
+%         td_all_idx = find([td_all.trial_id] == trial_id_remove(i));
+%         td_all(td_all_idx) = [];
 %     end
+    %% remove chains of fail from td_all -- this is when the monkey is not paying attention
+    fail_idx = find([td_all.result] == 'F');
+    td_all_remove = fail_idx(find(fail_idx(opts.NUM_SEQUENCE_FAILS:end) - fail_idx(1:end-opts.NUM_SEQUENCE_FAILS+1) == opts.NUM_SEQUENCE_FAILS-1));
+    if(~isempty(td_all_remove))
+        td_all_remove = unique([td_all_remove,reshape(td_all_remove + [1:opts.NUM_SEQUENCE_FAILS-1]',1,numel(td_all_remove)*(opts.NUM_SEQUENCE_FAILS-1))]);
+        td_all(td_all_remove) = [];
+    end
+    
     %% for each cue, store indexes in td_reward, get reaction time
     for b = 1:numel(bumpList)
         for s = 1:numel(stimCodeList)

@@ -39,7 +39,7 @@ which_field = 'speed';
 field_idx = 1;
 threshold_mult = 0.5;
 pre_move_thresh = 0.6;
-max_rt = 0.5;
+max_rt = 0.35;
 be_aggressive = 0;
 % these parameters aren't documented because I expect them to not need to
 % change but you can overwrite them if you need to.
@@ -57,16 +57,23 @@ td = getSpeed(trial_data);
 if(be_aggressive) % find a threshold based on all trials
     s_all = [];
     for trial = 1:length(trial_data)
-        % project (which_field) onto the target axis
-        s_all = [s_all;sum([cos(td(trial).tgtDir),sin(td(trial).tgtDir)].*td(trial).(which_field)(td(trial).idx_tgtOnTime+35:td(trial).(start_idx),:),2)];
-        thresh_all = std(s_all);
+        if(isfield(td(trial),'tgtDir'))
+            % project (which_field) onto the target axis
+            s_all = [s_all;sum([cos(td(trial).tgtDir),sin(td(trial).tgtDir)].*td(trial).(which_field)(td(trial).idx_tgtOnTime+35:td(trial).(start_idx),:),2)];
+        else
+            s_all = [s_all;td(trial).(which_field)(td(trial).idx_tgtOnTime+35:td(trial).(start_idx),1)];
+        end
     end
+    thresh_all = std(s_all);
 end
 
 for trial = 1:length(trial_data)
-    % project (which_field) onto the target axis
-    s = sum([cos(td(trial).tgtDir),sin(td(trial).tgtDir)].*td(trial).(which_field),2);
-    
+    if(isfield(td(trial),'tgtDir'))
+        % project (which_field) onto the target axis
+        s = sum([cos(td(trial).tgtDir),sin(td(trial).tgtDir)].*td(trial).(which_field),2);
+    else
+        s = td(trial).(which_field)(:,1);
+    end
     % find the time bins where the monkey may be moving
     move_inds = false(size(s));
     move_inds(td(trial).(start_idx)+start_idx_offset:td(trial).(end_idx)) = true;
@@ -94,7 +101,7 @@ for trial = 1:length(trial_data)
             on_idx = find(s>=thresh & (1:length(s))'<mvt_peak & move_inds,1,'first');
             
             % check to make sure the numbers make sense
-            if on_idx <= td(trial).(start_idx)
+            if on_idx <= td(trial).(start_idx)+start_idx_offset
                 % something is fishy. Fall back on threshold method
                 on_idx = NaN;
             elseif(on_idx > td(trial).(start_idx) + max_rt/mode([td.bin_size]))
