@@ -162,21 +162,27 @@
 %         xlim([0.1,0.3]);
 %     end
 %% do a linear regression to predict reaction time from neural data? or kinematics?
-    window = [0,10];
+    window = [0,25];
     for t = 1:numel(td_reward_rt)
         td_reward_rt(t).reaction_time = td_reward_rt(t).idx_movement_on - td_reward_rt(t).idx_goCueTime;
     end
     td_stim = td_reward_rt([td_reward_rt.isStimTrial]);
     td_stim = td_stim(~isnan(([td_stim.reaction_time])));
     td_stim = trimTD(td_stim,{'idx_goCueTime',window(1)},{'idx_goCueTime',window(2)});
-    td_stim = binTD(td_stim,5);
-
-    for t = 1:numel(td_stim)
-        td_stim(
+    td_stim = binTD(td_stim,2);
+    num_shift = 6;
+    p = {};
+    for i = 1:num_shift
+        p{end+1} = 'LeftS1_spikes';
+        p{end+1} = i;
+    end
+    td_stim = dupeAndShift(td_stim,p);
+    td_stim = trimTD(td_stim,'start',1);
+    
     mdl_struct = [];
     mdl_struct.model_type = 'linmodel';
     mdl_struct.model_name = 'reaction_time_pred';
-    mdl_struct.in_signals = {'LeftS1_spikes','all'};
+    mdl_struct.in_signals = {'LeftS1_spikes','all';'LeftS1_spikes_shift','all'};
     mdl_struct.out_signals = {'reaction_time','all'};
     [td_stim,mdl_info] = getModel(td_stim,mdl_struct);
 
