@@ -128,8 +128,8 @@
     opts = [];
     opts.X_LIMITS = [-0.3,0.5];
     opts.EXTRA_TIME = params.extra_time;
-    opts.PLOT_RASTER = 1;
-    opts.PLOT_PSTH = 0;
+    opts.PLOT_RASTER = 0;
+    opts.PLOT_PSTH = 1;
     opts.PLOT_BUMP = 0;
     opts.PLOT_STIM = 1;
     plotRasterPSTHRT(td_reward,opts);
@@ -140,13 +140,14 @@
     num_spikes = zeros(numel(td_reward_rt_stim),1);
     offset = 12;
     tau = 0.2; % exponential decaying window
-    exp_window = exp(-(mode([td_reward_rt_stim.bin_size])*(0:offset)')/tau);
+    exp_window = exp(-(mode([td_reward_rt_stim.bin_size])*(0:offset))/tau);
     for t = 1:numel(td_reward_rt_stim)
         rt(t) = td_reward_rt_stim(t).bin_size*(td_reward_rt_stim(t).idx_movement_on - td_reward_rt_stim(t).idx_goCueTime);
-        num_spikes(t) = sum(sum(td_reward_rt_stim(t).LeftS1_spikes(td_reward_rt_stim(t).idx_movement_on:td_reward_rt_stim(t).idx_movement_on+offset,:).*exp_window));
+        num_spikes(t) = sum(sum(exp_window*td_reward_rt_stim(t).LeftS1_spikes(td_reward_rt_stim(t).idx_movement_on:td_reward_rt_stim(t).idx_movement_on+offset,:)));
         stim_code(t) = td_reward_rt_stim(t).stimCode;
     end
     
+    stim_codes = unique(stim_code);
     colors = [228,26,28;55,126,184;77,175,74;152,78,163;255,127,0;255,255,51;166,86,40;247,129,191;153,153,153]/255;
     figure;
     for s = 1:numel(stim_codes)
@@ -163,27 +164,32 @@
 %     end
 %% do a linear regression to predict reaction time from neural data? or kinematics?
     window = [0,25];
+    mdl_struct = [];
+
     for t = 1:numel(td_reward_rt)
         td_reward_rt(t).reaction_time = td_reward_rt(t).idx_movement_on - td_reward_rt(t).idx_goCueTime;
     end
     td_stim = td_reward_rt([td_reward_rt.isStimTrial]);
     td_stim = td_stim(~isnan(([td_stim.reaction_time])));
     td_stim = trimTD(td_stim,{'idx_goCueTime',window(1)},{'idx_goCueTime',window(2)});
-    td_stim = binTD(td_stim,1);
-    num_shift = 12;
-    p = {};
-    for i = 1:num_shift
-        p{end+1} = 'LeftS1_spikes';
-        p{end+1} = i;
+    td_stim = binTD(td_stim,10);
+    num_shift = 0;
+    if(num_shift > 0)
+        p = {};
+        for i = 1:num_shift
+            p{end+1} = 'LeftS1_spikes';
+            p{end+1} = i;
+        end
+        td_stim = dupeAndShift(td_stim,p);
+        mdl_struct.in_signals = {'LeftS1_spikes','all';'LeftS1_spikes_shift','all'};
+    else
+        mdl_struct.in_signals = {'LeftS1_spikes','all'};
     end
-    td_stim = dupeAndShift(td_stim,p);
     td_stim = trimTD(td_stim,'start',1);
     
-    mdl_struct = [];
     mdl_struct.model_type = 'nn';
     mdl_struct.model_name = 'reaction_time_pred';
     mdl_struct.glm_distribution = 'normal';
-    mdl_struct.in_signals = {'LeftS1_spikes','all';'LeftS1_spikes_shift','all'};
     mdl_struct.out_signals = {'reaction_time','all'};
     
     mdl_struct.train_idx = 1:78;

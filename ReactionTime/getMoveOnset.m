@@ -59,7 +59,7 @@ if(be_aggressive) % find a threshold based on all trials
     for trial = 1:length(trial_data)
         if(isfield(td(trial),'tgtDir'))
             % project (which_field) onto the target axis
-            s_all = [s_all;sum([cos(td(trial).tgtDir),sin(td(trial).tgtDir)].*td(trial).(which_field)(td(trial).idx_tgtOnTime+35:td(trial).(start_idx),:),2)];
+            s_all = [s_all;sum(td(trial).(which_field)(td(trial).idx_tgtOnTime+35:td(trial).(start_idx),:)*[cos(td(trial).tgtDir);sin(td(trial).tgtDir)],2)];
         else
             s_all = [s_all;td(trial).(which_field)(td(trial).idx_tgtOnTime+35:td(trial).(start_idx),1)];
         end
@@ -70,7 +70,7 @@ end
 for trial = 1:length(trial_data)
     if(isfield(td(trial),'tgtDir'))
         % project (which_field) onto the target axis
-        s = sum([cos(td(trial).tgtDir),sin(td(trial).tgtDir)].*td(trial).(which_field),2);
+        s = sum(td(trial).(which_field)*[cos(td(trial).tgtDir);sin(td(trial).tgtDir)],2);
     else
         s = td(trial).(which_field)(:,1);
     end
