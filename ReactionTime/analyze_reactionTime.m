@@ -172,8 +172,8 @@
     td_stim = td_reward_rt([td_reward_rt.isStimTrial]);
     td_stim = td_stim(~isnan(([td_stim.reaction_time])));
     td_stim = trimTD(td_stim,{'idx_goCueTime',window(1)},{'idx_goCueTime',window(2)});
-    td_stim = binTD(td_stim,10);
-    num_shift = 0;
+    td_stim = binTD(td_stim,5);
+    num_shift = 1;
     if(num_shift > 0)
         p = {};
         for i = 1:num_shift
@@ -200,11 +200,34 @@
     
     [td_stim,mdl_info] = getModel(td_stim,mdl_struct);
 
-%%
+%% stepwise regression
+    x = [];
+    y = [];
+    train_idx = randperm(numel(td_stim));
+    train_idx = train_idx(1:floor(numel(train_idx)/2));
+    test_idx = setdiff(1:numel(td_stim),train_idx);
+    for t = train_idx
+        x = [x;td_stim(t).LeftS1_spikes, td_stim(t).LeftS1_spikes_shift];
+        y = [y;td_stim(t).reaction_time];
+    end
     
+    [b,se,pval,inmodel,stats,nextstep,history] = stepwisefit(x,y,'display','on','penter',0.2,'scale','on');
+ % test model   
+    b_use = b;
+    b_use(~inmodel) = 0;
+    intercept = stats.intercept;
     
-    
-    
+    x_test = [];
+    y_test = [];
+    for t = test_idx
+        x_test = [x;td_stim(t).LeftS1_spikes, td_stim(t).LeftS1_spikes_shift];
+        y_test = [y;td_stim(t).reaction_time];
+    end
+    y_pred = intercept + x_test*b_use;
+    figure();
+    plot(y_test,y_pred,'.','markersize',12)
+    hold on
+    plot([15:30],[15:30],'k--')
     % %% plot the reaction time to different days/parameter sets together based on
 % % probability of detection
 % 
