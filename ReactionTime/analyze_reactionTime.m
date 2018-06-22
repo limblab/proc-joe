@@ -180,7 +180,7 @@
     td_stim = trimTD(td_stim,'start',1);
     
     mdl_struct = [];
-    mdl_struct.model_type = 'nn';
+    mdl_struct.model_type = 'linmodel';
     mdl_struct.model_name = 'reaction_time_pred';
     mdl_struct.glm_distribution = 'normal';
     mdl_struct.in_signals = {'LeftS1_spikes','all';'LeftS1_spikes_shift','all'};
@@ -188,8 +188,8 @@
     
     mdl_struct.train_idx = 1:78;
     
-    mdl_struct.do_lasso = true;
-    mdl_struct.lasso_lambda = 0;
+    mdl_struct.do_lasso = false;
+    mdl_struct.lasso_lambda = 0.5;
     mdl_struct.lasso_alpha = 1;
     
     [td_stim,mdl_info] = getModel(td_stim,mdl_struct);
