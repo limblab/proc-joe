@@ -47,7 +47,7 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
     fail_idx = find([td_all.result] == 'F');
     td_all_remove = fail_idx(find(fail_idx(opts.NUM_SEQUENCE_FAILS:end) - fail_idx(1:end-opts.NUM_SEQUENCE_FAILS+1) == opts.NUM_SEQUENCE_FAILS-1));
     if(~isempty(td_all_remove))
-        td_all_remove = unique([td_all_remove,reshape(td_all_remove + [1:opts.NUM_SEQUENCE_FAILS-1]',1,numel(td_all_remove)*(opts.NUM_SEQUENCE_FAILS-1))]);
+        td_all_remove = unique([td_all_remove;repmat(td_all_remove,opts.NUM_SEQUENCE_FAILS-1,1) + repmat([1:opts.NUM_SEQUENCE_FAILS-1]',1,size(td_all_remove,2))]);
         td_all(td_all_remove) = [];
     end
     

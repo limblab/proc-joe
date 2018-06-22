@@ -91,6 +91,7 @@ function [plots] = plotRasterPSTHRT(td,opts)
         plot_order(~[td(plot_order).isStimTrial]) = []; % remove non stim trials
         plot_order([td(plot_order).stimCode]==-1) = []; % remove bad stim trials (sanity check)
         plot_order(isnan([td(plot_order).idx_movement_on])) = []; % remove nan movement on trials
+        
         [~,stim_sort] = sort([td(plot_order).stimCode]);% sort by stim code
         plot_order = plot_order(stim_sort);
 

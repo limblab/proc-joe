@@ -28,9 +28,7 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
             end
         end
         
-        if(isempty(opts.NEURON_NUMBER_ALL))
-            opts.NEURON_NUMBER_ALL = find([cds.units.ID]~=0 & [cds.units.ID]~=255);
-        end
+        opts.NEURON_NUMBER_ALL = find([cds.units.ID]~=0 & [cds.units.ID]~=255);
         
         %% find stim times based on sync line, store in stimInfo
         if(opts.USE_ANALOG_FOR_STIM_TIMES)
@@ -44,24 +42,61 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
         end
 
         %% setup useful variables
-        if(any(isfield(stimInfo,'waveSent')))
-            NUM_WAVEFORM_TYPES = numel(unique(stimInfo.waveSent));
-        else
-            NUM_WAVEFORM_TYPES = 1;
-        end
-
-        if(any(isfield(stimInfo,'chanSent')))
-            NUM_CHANS = numel(unique(stimInfo.chanSent));
-            CHAN_LIST = unique(stimInfo.chanSent);
-        else
-            CHAN_LIST = opts.STIM_ELECTRODE;
+        % if opts.USE_STIM_CODE, then rebuild
+        % stimInfo.waveSent/stimInfo.chanSent
+        if(opts.USE_STIM_CODE)
+            stim_codes = [cds.trials.stimCode];
+            start_time = [cds.trials.startTime];
+            stim_info_mask = ones(numel(stimInfo.stimOn),1);
+            for st = 1:numel(stimInfo.waveSent)
+                % find most recent stim code
+                trial_idx = find(stimInfo.stimOn(st) > start_time,1,'last');
+                if(isempty(trial_idx))
+                    stim_info_mask(st) = 0;
+                else
+                    stimInfo.waveSent(st) = stim_codes(trial_idx);
+                end
+            end
+            stimInfo.stimOn = stimInfo.stimOn(stim_info_mask==1);
+            stimInfo.stimOff = stimInfo.stimOff(stim_info_mask==1);
+            stimInfo.chanSent = stimInfo.chanSent(stim_info_mask==1);
+            stimInfo.chanSent(:) = opts.STIM_ELECTRODE;
+            stimInfo.waveSent = stimInfo.waveSent(stim_info_mask==1);
+            
+            NUM_WAVEFORM_TYPES = 15;
             NUM_CHANS = 1;
+            CHAN_LIST = opts.STIM_ELECTRODE; % placeholder because this isn't given that info
+        else
+            if(any(isfield(stimInfo,'waveSent')))
+                NUM_WAVEFORM_TYPES = numel(unique(stimInfo.waveSent));
+            else
+                NUM_WAVEFORM_TYPES = 1;
+            end
+
+            if(any(isfield(stimInfo,'chanSent')))
+                NUM_CHANS = numel(unique(stimInfo.chanSent));
+                CHAN_LIST = unique(stimInfo.chanSent);
+            else
+                CHAN_LIST = opts.STIM_ELECTRODE;
+                NUM_CHANS = 1;
+            end
         end
 
-        flagResponse = 1;
-
-        for arrayDataIdx = 1:numel(opts.NEURON_NUMBER_ALL)
-            opts.NEURON_NUMBER = opts.NEURON_NUMBER_ALL(arrayDataIdx);
+        for nn_all_idx = 1:numel(opts.NEURON_NUMBER_ALL)
+            opts.NEURON_NUMBER = opts.NEURON_NUMBER_ALL(nn_all_idx);
+            
+            %% find array data idx based on chan and unit #
+            arrayDataIdx = [];
+            for arr_idx = 1:size(arrayData,2)
+                if(cds.units(opts.NEURON_NUMBER).chan == arrayData{arr_idx}.CHAN_REC && ...
+                        cds.units(opts.NEURON_NUMBER).ID == arrayData{arr_idx}.ID)
+                    arrayDataIdx = arr_idx;
+                end
+            end
+            
+            if(isempty(arrayDataIdx))
+                arrayDataIdx = size(arrayData,2) + 1;
+            end
             
             %% setup arrays
             spikeTrialTimes = cell(NUM_CHANS,NUM_WAVEFORM_TYPES);
@@ -87,7 +122,7 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
                     % find artifacts from channel and wave combination
                     stimsPerTrainMask = zeros(min(numel(stimInfo.stimOn),numel(stimInfo.waveSent)),1);
                     stimsPerTrainMask(1:opts.STIMULATIONS_PER_TRAIN:end) = 1;
-                    stimIdx = find(stimsPerTrainMask == 1& stimInfo.waveSent(1:numel(stimsPerTrainMask)) == wave & stimInfo.chanSent(1:numel(stimsPerTrainMask)) == CHAN_LIST(chan));
+                    stimIdx = find(stimsPerTrainMask == 1 & stimInfo.waveSent(1:numel(stimsPerTrainMask)) == wave & stimInfo.chanSent(1:numel(stimsPerTrainMask)) == CHAN_LIST(chan));
 
                     numStims(chan,wave) = numel(stimIdx);
                     % process stims in batches to improve speed but control memory
@@ -183,8 +218,8 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
                 end
             end
 
-
-            if(fileNumber == 1)
+            
+            if(size(arrayData,2) < arrayDataIdx) % append data
                 %% store unit data
                 arrayData{arrayDataIdx}.spikeTrialTimes = spikeTrialTimes;
                 arrayData{arrayDataIdx}.stimData = stimuliData;
@@ -208,7 +243,7 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
                 posIdx = find(MAP_DATA.chan==cds.units(opts.NEURON_NUMBER).chan);
                 arrayData{arrayDataIdx}.ROW = 11 - POS_LIST(posIdx,1);
                 arrayData{arrayDataIdx}.COL = POS_LIST(posIdx,2);
-            else
+            else % merge data with prexisting data
                 %% append unit data
                 for chan = 1:NUM_CHANS
                     for wave = 1:NUM_WAVEFORM_TYPES
@@ -230,13 +265,32 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
         
     end
 
+    %% prune waveform/chan combos that have 0 stims
+    for arrayDataIdx = 1:numel(arrayData)
+        arrayData_mask = ones(size(arrayData{arrayDataIdx}.bC));
+        for chan = 1:size(arrayData{arrayDataIdx}.bC,1)
+            for wave = 1:size(arrayData{arrayDataIdx}.bC,2)
+                if(arrayData{arrayDataIdx}.numStims(chan,wave) == 0)
+                    arrayData_mask(chan,wave) = 0;
+                end
+            end
+        end
+        arrayData{arrayDataIdx}.spikeTrialTimes = arrayData{arrayDataIdx}.spikeTrialTimes(arrayData_mask==1);
+        arrayData{arrayDataIdx}.stimData = arrayData{arrayDataIdx}.stimData(arrayData_mask==1);
+        arrayData{arrayDataIdx}.bC = arrayData{arrayDataIdx}.bC(arrayData_mask==1);
+        arrayData{arrayDataIdx}.bE = arrayData{arrayDataIdx}.bE(arrayData_mask==1);
+        arrayData{arrayDataIdx}.kin = arrayData{arrayDataIdx}.kin(arrayData_mask==1);
+        arrayData{arrayDataIdx}.numStims = arrayData{arrayDataIdx}.numStims(arrayData_mask == 1);
+        arrayData{arrayDataIdx}.waveList = find(arrayData_mask == 1);
+    end
+    
+    %% adjust bC based on number of stims
     for arrayDataIdx = 1:numel(arrayData)
         arrayData{arrayDataIdx}.binMaxYLim = 0;
-        for chan = 1:NUM_CHANS
-            for wave = 1:NUM_WAVEFORM_TYPES
+        for chan = 1:size(arrayData{arrayDataIdx}.bC,1)
+            for wave = 1:size(arrayData{arrayDataIdx}.bC,2)
                 arrayData{arrayDataIdx}.bC{chan,wave} = arrayData{arrayDataIdx}.bC{chan,wave}/arrayData{arrayDataIdx}.numStims(chan,wave);
                 arrayData{arrayDataIdx}.binMaxYLim = max(arrayData{arrayDataIdx}.binMaxYLim,max(arrayData{arrayDataIdx}.bC{chan,wave}));
-
             end
         end
         arrayData{arrayDataIdx}.binMaxYLim = arrayData{arrayDataIdx}.binMaxYLim*1.1;
@@ -248,7 +302,7 @@ function [opts] = configureOpts(optsInput)
     opts.ALIGN_WAVES = 1;
     opts.STIMULI_RESPONSE = 'all'; %'all', 'responsive' or 'nonresponsive'
 
-    opts.STIM_ELECTRODE = 1;
+    opts.STIM_ELECTRODE = -1;
     opts.STIMULATIONS_PER_TRAIN = 1;
     opts.INITIAL_ARRAY_SIZE = 6000;
     opts.ADDITIONAL_ARRAY_SIZE = ceil(opts.INITIAL_ARRAY_SIZE*1/3);
@@ -265,7 +319,8 @@ function [opts] = configureOpts(optsInput)
     opts.GET_KIN = 0;
     opts.USE_ANALOG_FOR_STIM_TIMES = 0;
     opts.ANALOG_SYNC_LINE = 'ainp16';
-    
+    opts.USE_STIM_CODE = 0;
+
     %% check if in optsSave and optsSaveInput, overwrite if so
     try
         inputFieldnames = fieldnames(optsInput);
