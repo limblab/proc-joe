@@ -302,7 +302,8 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
         % fit psychometric curve
         if(opts.FIT)
             xData = linspace(0,max(fitData.x*1.1),100);
-
+            fitData.x = fitData.x(~isnan(fitData.y));
+            fitData.y = fitData.y(~isnan(fitData.y));
             if(opts.USE_ML_FIT)
                 mlFit_fun = @(params)(sum((fitData.y-(params(1)+params(2)*erf(params(3)*(fitData.x-params(4))))).^2));
                 min_options = optimset('MaxIter',10000,'MaxFunEvals',10000);

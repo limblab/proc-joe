@@ -1,8 +1,7 @@
 %% script to process reaction time data 
 %% determine filename and input data
-    inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\Han_20180510_stim\';
-%     inputData.folderpath = 'D:\Lab\Data\ReactionTime\Han_20180427_training\';
-    inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+    inputData.folderpath = '/Users/Sam/Documents/MLL Research/Han RT/Han_20180525/';
+    inputData.mapFileName = 'mapFile/Users/Sam/Documents/MLL Research/Han RT/SN 6251-001459.cmp';
 
     inputData.task='taskRT';
     inputData.ranBy='ranByJoseph'; 
@@ -28,7 +27,7 @@
             params.event_list = {'bumpStaircaseIdx';'tgtOnTime';'isBumpTrial';'bumpTime';'bumpMagnitude';'bumpDir';'isStimTrial';'stimCode';'tgtDir'};
             params.trial_results = {'R','F'};
             params.extra_time = [1,2];
-            params.include_ts = 1;
+            params.include_ts = 0;
             td_temp = parseFileByTrial(cds,params);
             td_temp = getGoCueTime(td_temp,cds);
             % append trial data into a single struct
@@ -110,12 +109,12 @@
     opts.FIGURE_PREFIX = 'Han_20180528'; % no _ required
     opts.BUMP_MAGS = [];
     opts.STIM_CODES = [];
-    opts.STIM_PARAMS = [10,20,30,40,50,60,70,80,90,100];
-    opts.STIM_LABEL = 'Amplitude (\muA)';
+%     opts.STIM_PARAMS = [10,20,30,40,50,60,70,80,90,100];
+%     opts.STIM_LABEL = 'Amplitude (\muA)';
 %     opts.STIM_PARAMS = [50,100,150,200,250,300,350,400,450,500];
 %     opts.STIM_LABEL = 'Frequency (Hz)';
-%     opts.STIM_PARAMS = [25,50,75,100,125,150,200,250,300];
-%     opts.STIM_LABEL = 'Train length (ms)';
+    opts.STIM_PARAMS = [25,50,75,100,125,150,175,200,250,300];
+    opts.STIM_LABEL = 'Train length (ms)';
     opts.FIT = 1;
     opts.PLOT_BUMP = 1;
     opts.PLOT_STIM = 1;
