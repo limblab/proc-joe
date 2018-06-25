@@ -1,10 +1,10 @@
 %% set file names 
-inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\Han_20180510_stim\';
-inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
-% inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
+inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20161201\';
+% inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
 folderpath = inputData.folderpath; % rest of code uses folderpath currently
 
-inputData.task='taskRT';
+inputData.task='taskRW';
 inputData.ranBy='ranByJoseph'; 
 inputData.array1='arrayLeftS1'; 
 inputData.monkey='monkeyChips';
@@ -20,14 +20,15 @@ stimInfoFileList = dirSorted('*stimInfo*');
 tic
 
 optsExtract.STIMULI_RESPONSE = 'all';
-optsExtract.STIMULATIONS_PER_TRAIN = 50;
+optsExtract.STIMULATIONS_PER_TRAIN = 1;
 optsExtract.STIMULATION_BATCH_SIZE = 1000;
-optsExtract.USE_STIM_CODE = 1;
-optsExtract.STIM_ELECTRODE = 20;
+optsExtract.USE_STIM_CODE = 0;
+% optsExtract.STIM_ELECTRODE = 20;
+optsExtract.CHAN_LIST = 1:96;
 
-optsExtract.PRE_TIME = 30/1000; % made negative in the function
-optsExtract.POST_TIME = 300/1000;
-optsExtract.BIN_SIZE = 0.2/1000;
+optsExtract.PRE_TIME = 20/1000; % made negative in the function
+optsExtract.POST_TIME = 100/1000;
+optsExtract.BIN_SIZE = 1/1000;
 optsExtract.TIME_AFTER_STIMULATION_WAVEFORMS = 10/1000;
 optsExtract.USE_ANALOG_FOR_STIM_TIMES = 1;
 optsExtract.GET_KIN = 0;
@@ -36,7 +37,7 @@ arrayData = extractDataAroundStimulations(inputData,fileList,stimInfoFileList,op
 
 toc
 %% pick a unit (index in array data)
-arrIdx =  15;
+arrIdx =  3;
 
 % plot raster, and PSTH for the given unit above
 
@@ -46,16 +47,16 @@ optsPlotFunc.FIGURE_DIR = folderpath;
 optsPlotFunc.FIGURE_PREFIX = 'Chips_20171024_short_';
 
 optsPlotFunc.PRE_TIME = 15/1000;
-optsPlotFunc.POST_TIME = 200/1000;
+optsPlotFunc.POST_TIME = 50/1000;
 optsPlotFunc.SORT_DATA = '';
 
-rasterPlots = plotRasterStim(arrayData{arrIdx},arrayData{arrIdx}.NN,optsPlotFunc);
+% rasterPlots = plotRasterStim(arrayData{arrIdx},arrayData{arrIdx}.NN,optsPlotFunc);
 
 optsPlotFunc.PLOT_ALL_ONE_FIGURE = 0;
 optsPlotFunc.PLOT_LINE = 1;
 optsPlotFunc.PLOT_TITLE = 0;
 
-% PSTHPlots = plotPSTHStim(arrayData{arrIdx},arrayData{arrIdx}.NN,optsPlotFunc);
+PSTHPlots = plotPSTHStim(arrayData{arrIdx},arrayData{arrIdx}.NN,optsPlotFunc);
 
 
 %% plot grid
@@ -100,13 +101,13 @@ opts.WAVEFORM_TYPES_PLOT = [1:size(arrayData{1}.bE,2)];
 opts.BASELINE_PRE_TIME = -20/1000;
 opts.BASELINE_POST_TIME = -2/1000;
 opts.STIM_PRE_TIME = 1.2/1000;
-opts.STIM_POST_TIME = 100/1000;
+opts.STIM_POST_TIME = 10/1000;
 
 opts.AUTO_WINDOW = 0; % 
 opts.INHIBITORY = 0;
 opts.EXCITATORY = 1;
 
-opts.MAX_RATIO = 8;
+opts.MAX_RATIO = 1;
 opts.MIN_RATIO = -1;
 opts.LOG_SCALE = 1;
 opts.LOG_PARAM = 9;

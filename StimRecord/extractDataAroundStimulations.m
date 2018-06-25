@@ -67,21 +67,44 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
             NUM_CHANS = 1;
             CHAN_LIST = opts.STIM_ELECTRODE; % placeholder because this isn't given that info
         else
-            if(any(isfield(stimInfo,'waveSent')))
+            if(~isempty(opts.NUM_WAVEFORM_TYPES))
+                NUM_WAVEFORM_TYPES = opts.NUM_WAVEFORM_TYPES;
+            elseif(any(isfield(stimInfo,'waveSent')))
                 NUM_WAVEFORM_TYPES = numel(unique(stimInfo.waveSent));
             else
                 NUM_WAVEFORM_TYPES = 1;
             end
 
-            if(any(isfield(stimInfo,'chanSent')))
+            if(~isempty(opts.CHAN_LIST))
+                NUM_CHANS = numel(opts.CHAN_LIST);
+                CHAN_LIST = opts.CHAN_LIST;
+            elseif(any(isfield(stimInfo,'chanSent')))
                 NUM_CHANS = numel(unique(stimInfo.chanSent));
                 CHAN_LIST = unique(stimInfo.chanSent);
             else
                 CHAN_LIST = opts.STIM_ELECTRODE;
                 NUM_CHANS = 1;
             end
+            
+            if(stimInfo.chanSent(1) == -1) % try to get chan stim from filename
+                fname = fileList(fileNumber).name;
+                underscoreIdx = strfind(fname,'_');
+                if(~isempty(strfind(fname,'chanStim')))
+                    strIdx = strfind(fname,'chanStim');
+                    underscoreIdx = underscoreIdx(find(underscoreIdx < strIdx,1,'last'));
+                    chanStim = str2num(fname(underscoreIdx+1:strIdx-1));
+                elseif(~isempty(strfind(fname,'stim')) && ~isempty(strfind(fname,'chan')))
+                    strIdx = [strfind(fname,'chan'), strfind(fname,'stim')];
+                    chanStim = str2num(fname(strIdx(end-1)+4:strIdx(end)-1)); % some files have chans....chan#stim
+                end
+                
+                if(~isempty(chanStim))
+                    stimInfo.chanSent(:) = chanStim;
+                end
+                
+            end
         end
-
+    
         for nn_all_idx = 1:numel(opts.NEURON_NUMBER_ALL)
             opts.NEURON_NUMBER = opts.NEURON_NUMBER_ALL(nn_all_idx);
             
@@ -282,6 +305,7 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
         arrayData{arrayDataIdx}.kin = arrayData{arrayDataIdx}.kin(arrayData_mask==1);
         arrayData{arrayDataIdx}.numStims = arrayData{arrayDataIdx}.numStims(arrayData_mask == 1);
         arrayData{arrayDataIdx}.waveList = find(arrayData_mask == 1);
+        arrayData{arrayDataIdx}.CHAN_LIST = find(arrayData_mask == 1);
     end
     
     %% adjust bC based on number of stims
@@ -321,6 +345,8 @@ function [opts] = configureOpts(optsInput)
     opts.ANALOG_SYNC_LINE = 'ainp16';
     opts.USE_STIM_CODE = 0;
 
+    opts.CHAN_LIST = [];
+    opts.NUM_WAVEFORM_TYPES = [];
     %% check if in optsSave and optsSaveInput, overwrite if so
     try
         inputFieldnames = fieldnames(optsInput);

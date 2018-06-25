@@ -137,9 +137,9 @@
 %% plot # spikes vs rt for each trial
     td_reward_rt_stim = td_reward_rt(isnan([td_reward_rt.idx_bumpTime]));
 %     output_data = plotSpikesRT(td_reward_rt_stim,opts);
-    
     output_data = cell(size(td_reward_rt_stim(1).LeftS1_spikes,2),1);
     rsquares = [];
+    opts.TAU = 0.2;
     for s = 1:size(td_reward_rt_stim(1).LeftS1_spikes,2)
         opts.SPIKE_LIST = s;
         output_data{s} = plotSpikesRT(td_reward_rt_stim,opts);
@@ -148,55 +148,32 @@
     end
     
 %%
-    opts.SPIKE_LIST = 20;
-    opts.STIM_CODES = 6;
+    opts.SPIKE_LIST = []; % 15 16 20 13 1 8 5 7
+    opts.TAU = 0.2;
+    opts.STIM_CODES = [];
     corr_data = plotSpikesRT(td_reward_rt_stim,opts);
     corr_data.fit_all_codes.stats
+    xlim([0.15,0.35]);
+%     ylim([0,10]);
 %% do a linear regression to predict reaction time from neural data
 % fuck TD, write our own code
     td_reward_rt_stim = td_reward_rt(isnan([td_reward_rt.idx_bumpTime]));
     
-    pred_data = predictRT(td,opts);
+    opts.SPIKE_LIST = [15 16 17 20];
+    opts.BIN_SIZE = 5;
+    opts.WINDOW = [0,14];
+    num_train = 140;
+    train_temp = randperm(numel(td_reward_rt_stim));
+    opts.TRAIN_IDX = train_temp(1:num_train);
+    pred_data = predictRT(td_reward_rt_stim,opts);
+    test_idx = setdiff(1:numel(td_reward_rt_stim),opts.TRAIN_IDX);
     
-    
-    window = [0,25];
-    mdl_struct = [];
-    spike_list = [6,7,8,10,13,15,16,20];
-    
-    for t = 1:numel(td_reward_rt)
-        td_reward_rt(t).reaction_time = td_reward_rt(t).idx_movement_on - td_reward_rt(t).idx_goCueTime;
-    end
-    td_stim = td_reward_rt([td_reward_rt.isStimTrial]);
-    td_stim = td_stim(~isnan(([td_stim.reaction_time])));
-    td_stim = trimTD(td_stim,{'idx_goCueTime',window(1)},{'idx_goCueTime',window(2)});
-    td_stim = binTD(td_stim,5);
-    num_shift = 1;
-    if(num_shift > 0)
-        p = {};
-        for i = 1:num_shift
-            p{end+1} = 'LeftS1_spikes';
-            p{end+1} = i;
-        end
-        td_stim = dupeAndShift(td_stim,p);
-        mdl_struct.in_signals = {'LeftS1_spikes',spike_list;'LeftS1_spikes_shift',spike_list};
-    else
-        mdl_struct.in_signals = {'LeftS1_spikes',spike_list};
-    end
-    td_stim = trimTD(td_stim,'start',1);
-    
-    mdl_struct.model_type = 'linmodel';
+    figure();
+    plot(pred_data.y_true(opts.TRAIN_IDX),pred_data.y_pred(opts.TRAIN_IDX),'k.','markersize',12)
+    hold on
+    plot(0.01*[15:35],0.01*[15:35],'k--')
+    plot(pred_data.y_true(test_idx),pred_data.y_pred(test_idx),'r.','markersize',12)
 
-    mdl_struct.model_name = 'reaction_time_pred';
-    mdl_struct.glm_distribution = 'normal';
-    mdl_struct.out_signals = {'reaction_time','all'};
-    
-    mdl_struct.train_idx = 1:78;
-    
-    mdl_struct.do_lasso = false;
-    mdl_struct.lasso_lambda = 0.5;
-    mdl_struct.lasso_alpha = 1;
-    
-    [td_stim,mdl_info] = getModel(td_stim,mdl_struct);
 
 %% stepwise regression
     x = [];
@@ -259,7 +236,47 @@
 % %     xlim([0,0.5])
 
     
-    
+        
+%     window = [0,25];
+%     mdl_struct = [];
+% %     spike_list = [6,7,8,10,13,15,16,20];
+%     spike_list = [15,20];
+%     
+%     for t = 1:numel(td_reward_rt)
+%         td_reward_rt(t).reaction_time = td_reward_rt(t).idx_movement_on - td_reward_rt(t).idx_goCueTime;
+%     end
+%     td_stim = td_reward_rt([td_reward_rt.isStimTrial]);
+%     td_stim = td_stim(~isnan(([td_stim.reaction_time])));
+%     td_stim = trimTD(td_stim,{'idx_goCueTime',window(1)},{'idx_goCueTime',window(2)});
+%     td_stim = binTD(td_stim,1);
+%     num_shift = 0;
+%     if(num_shift > 0)
+%         p = {};
+%         for i = 1:num_shift
+%             p{end+1} = 'LeftS1_spikes';
+%             p{end+1} = i;
+%         end
+%         td_stim = dupeAndShift(td_stim,p);
+%         mdl_struct.in_signals = {'LeftS1_spikes',spike_list;'LeftS1_spikes_shift',spike_list};
+%     else
+%         mdl_struct.in_signals = {'LeftS1_spikes',spike_list};
+%     end
+%     td_stim = trimTD(td_stim,'start',1);
+%     
+%     mdl_struct.model_type = 'linmodel';
+% 
+%     mdl_struct.model_name = 'reaction_time_pred';
+%     mdl_struct.glm_distribution = 'normal';
+%     mdl_struct.out_signals = {'reaction_time','all'};
+%     
+%     mdl_struct.train_idx = 1:78;
+%     
+%     mdl_struct.do_lasso = false;
+%     mdl_struct.lasso_lambda = 0.5;
+%     mdl_struct.lasso_alpha = 1;
+%     
+%     [td_stim,mdl_info] = getModel(td_stim,mdl_struct);
+
     
     
     
