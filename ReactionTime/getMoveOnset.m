@@ -64,6 +64,7 @@ if(be_aggressive) % find a threshold based on all trials
             s_all = [s_all;td(trial).(which_field)(td(trial).idx_tgtOnTime+35:td(trial).(start_idx),1)];
         end
     end
+    s_all = s_all(~isnan(s_all));
     thresh_all = std(s_all);
 end
 
