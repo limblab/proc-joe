@@ -1,12 +1,13 @@
 %% set file names 
-inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\testingCode\';
+inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20161201\';
+% inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
 folderpath = inputData.folderpath; % rest of code uses folderpath currently
 
-inputData.task='taskCObump';
+inputData.task='taskRW';
 inputData.ranBy='ranByJoseph'; 
 inputData.array1='arrayLeftS1'; 
-inputData.monkey='monkeyHan';
+inputData.monkey='monkeyChips';
 inputData.labnum = 6;
 
 pwd=cd;
@@ -15,27 +16,30 @@ fileList = dirSorted('*spikesExtracted.nev*');
 stimInfoFileList = dirSorted('*stimInfo*');
 
 
-%% extract relevant data for all units -- highly recommend saving after this step
+%% extract relevant data for all units -- highly recommend saving arrayData after this step
 tic
 
 optsExtract.STIMULI_RESPONSE = 'all';
 optsExtract.STIMULATIONS_PER_TRAIN = 1;
 optsExtract.STIMULATION_BATCH_SIZE = 1000;
+optsExtract.USE_STIM_CODE = 0;
+% optsExtract.STIM_ELECTRODE = 20;
+optsExtract.CHAN_LIST = 1:96;
 
 optsExtract.PRE_TIME = 20/1000; % made negative in the function
-optsExtract.POST_TIME = 80/1000;
-optsExtract.BIN_SIZE = 0.2/1000;
+optsExtract.POST_TIME = 100/1000;
+optsExtract.BIN_SIZE = 1/1000;
 optsExtract.TIME_AFTER_STIMULATION_WAVEFORMS = 10/1000;
-
 optsExtract.USE_ANALOG_FOR_STIM_TIMES = 1;
+optsExtract.GET_KIN = 0;
 
 arrayData = extractDataAroundStimulations(inputData,fileList,stimInfoFileList,optsExtract);
 
 toc
 %% pick a unit (index in array data)
-arrIdx = 1;
+arrIdx =  3;
 
-%% plot raster, and PSTH for the given unit above
+% plot raster, and PSTH for the given unit above
 
 optsPlotFunc.BIN_SIZE = optsExtract.BIN_SIZE;
 optsPlotFunc.FIGURE_SAVE = 0;
@@ -43,12 +47,12 @@ optsPlotFunc.FIGURE_DIR = folderpath;
 optsPlotFunc.FIGURE_PREFIX = 'Chips_20171024_short_';
 
 optsPlotFunc.PRE_TIME = 15/1000;
-optsPlotFunc.POST_TIME = 60/1000;
-optsPlotFunc.SORT_DATA = 'postStimuliTime';
+optsPlotFunc.POST_TIME = 50/1000;
+optsPlotFunc.SORT_DATA = '';
 
-rasterPlots = plotRasterStim(arrayData{arrIdx},arrayData{arrIdx}.NN,optsPlotFunc);
+% rasterPlots = plotRasterStim(arrayData{arrIdx},arrayData{arrIdx}.NN,optsPlotFunc);
 
-optsPlotFunc.PLOT_ALL_ONE_FIGURE = 1;
+optsPlotFunc.PLOT_ALL_ONE_FIGURE = 0;
 optsPlotFunc.PLOT_LINE = 1;
 optsPlotFunc.PLOT_TITLE = 0;
 
@@ -72,6 +76,9 @@ optsGrid.FIGURE_PREFIX = 'Chips_20171026_';
 
 ArrayPlots = plotArrayMap(arrayData{arrIdx},inputData.mapFileName(8:end),optsGrid);
 
+
+
+%% below are whole array analyses
 %% label as excitatory or inhibitory based on Hao 2016 (which is based on 
 % Kraskov 2011)
 %% this is buggy and not really great.....probably should implement a different
@@ -88,28 +95,29 @@ optsLabel.BRUTE_FORCE_INHIB_GAMMA = 0.5;
 
 opts.STIM_ELECTRODE_PLOT = [1:numel(unique(arrayData{1}.CHAN_SENT))];
 % opts.STIM_ELECTRODE_PLOT = 1;
-opts.WAVEFORM_TYPES_PLOT = unique(arrayData{1}.WAVEFORM_SENT);
+% opts.WAVEFORM_TYPES_PLOT = unique(arrayData{1}.WAVEFORM_SENT);
+opts.WAVEFORM_TYPES_PLOT = [1:size(arrayData{1}.bE,2)];
 
 opts.BASELINE_PRE_TIME = -20/1000;
 opts.BASELINE_POST_TIME = -2/1000;
-opts.STIM_PRE_TIME = 1/1000;
+opts.STIM_PRE_TIME = 1.2/1000;
 opts.STIM_POST_TIME = 10/1000;
 
 opts.AUTO_WINDOW = 0; % 
-opts.INHIBITORY = 1;
-opts.EXCITATORY = 0;
+opts.INHIBITORY = 0;
+opts.EXCITATORY = 1;
 
-opts.MAX_RATIO = 1.0;
-opts.MIN_RATIO = -0.1;
+opts.MAX_RATIO = 1;
+opts.MIN_RATIO = -1;
 opts.LOG_SCALE = 1;
 opts.LOG_PARAM = 9;
 
-opts.RELATIVE_INHIBITION = 0;
+opts.RELATIVE_INHIBITION = 1;
 
 opts.FIGURE_SAVE = 0;
-opts.FIGURE_DIR = '';
-opts.FIGURE_PREFIX = 'Chips_20171026';
-    plotHeatmaps(arrayData,inputData.mapFileName(8:end),opts);
+opts.FIGURE_DIR = 'C:\Users\Joseph\Desktop\Han_20170714_smallerScale_wave2';
+opts.FIGURE_PREFIX = 'Han_20170714';
+    [heatmaps, heatmap_data] = plotHeatmaps(arrayData,inputData.mapFileName(8:end),opts);
 
 %% amplitude vs. distance curve for each condition -- excitation
 opts.STIM_ELECTRODE_PLOT = [1:numel(unique(arrayData{1}.CHAN_SENT))];

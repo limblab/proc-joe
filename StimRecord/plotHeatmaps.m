@@ -1,4 +1,4 @@
-function [figureHandles] = plotHeatmaps(arrayData,mapFileName,opts)
+function [figureHandles,unit_data] = plotHeatmaps(arrayData,mapFileName,opts)
 
     %% configure opts and set default values
     opts = configureOpts(opts);
@@ -29,69 +29,74 @@ function [figureHandles] = plotHeatmaps(arrayData,mapFileName,opts)
             postStim_binEdgePre = max(find(arrayData{1}.bE{chan,wave} <= opts.STIM_PRE_TIME*1000));
             postStim_binEdgePost = max(find(arrayData{1}.bE{chan,wave} <= opts.STIM_POST_TIME*1000));
             numPostStimBins = ones(numel(arrayData))*(postStim_binEdgePost - postStim_binEdgePre);
-            
+
             baseline_binEdgePre = max(find(arrayData{1}.bE{chan,wave} <= opts.BASELINE_PRE_TIME*1000));
             baseline_binEdgePost = max(find(arrayData{1}.bE{chan,wave} <= opts.BASELINE_POST_TIME*1000));
-            
+
             dataPre = zeros(numel(arrayData),1);
             dataPost = zeros(numel(arrayData),1);
-            
-            for unit = 1:numel(arrayData)
-                if(opts.AUTO_WINDOW && opts.EXCITATORY && arrayData{unit}.isExcitatory{chan,wave})
-                    tempPre = max(find(arrayData{1}.bE{chan,wave} <= arrayData{unit}.excitatoryLatency{chan,wave}(1)));
-                    tempPost = max(find(arrayData{1}.bE{chan,wave} <= arrayData{unit}.excitatoryLatency{chan,wave}(3)));
-                    
-                    dataPost(unit) = sum(arrayData{unit}.bC{chan,wave}(tempPre:tempPost));
-                    numPostStimBins(unit) = tempPost-tempPre;
-                elseif(opts.AUTO_WINDOW && opts.INHIBITORY && arrayData{unit}.isInhibitory{chan,wave})
-                    tempPre = max(find(arrayData{1}.bE{chan,wave} <= arrayData{unit}.inhibitoryLatency{chan,wave}(1)));
-                    tempPost = max(find(arrayData{1}.bE{chan,wave} <= arrayData{unit}.inhibitoryLatency{chan,wave}(2)));
-                    
-                    dataPost(unit) = sum(arrayData{unit}.bC{chan,wave}(tempPre:tempPost));
-                    numPostStimBins(unit) = tempPost-tempPre;
-                else
-                    dataPost(unit) = sum(arrayData{unit}.bC{chan,wave}(postStim_binEdgePre:postStim_binEdgePost));
-                end
-                dataPre(unit) = numPostStimBins(unit)*mean(arrayData{unit}.bC{chan,wave}(baseline_binEdgePre:baseline_binEdgePost));
 
+            for unit = 1:numel(arrayData)
+                try
+                    if(opts.AUTO_WINDOW && opts.EXCITATORY && arrayData{unit}.isExcitatory{chan,wave})
+                        tempPre = max(find(arrayData{1}.bE{chan,wave} <= arrayData{unit}.excitatoryLatency{chan,wave}(1)));
+                        tempPost = max(find(arrayData{1}.bE{chan,wave} <= arrayData{unit}.excitatoryLatency{chan,wave}(3)));
+
+                        dataPost(unit) = sum(arrayData{unit}.bC{chan,wave}(tempPre:tempPost));
+                        numPostStimBins(unit) = tempPost-tempPre;
+                    elseif(opts.AUTO_WINDOW && opts.INHIBITORY && arrayData{unit}.isInhibitory{chan,wave})
+                        tempPre = max(find(arrayData{1}.bE{chan,wave} <= arrayData{unit}.inhibitoryLatency{chan,wave}(1)));
+                        tempPost = max(find(arrayData{1}.bE{chan,wave} <= arrayData{unit}.inhibitoryLatency{chan,wave}(2)));
+
+                        dataPost(unit) = sum(arrayData{unit}.bC{chan,wave}(tempPre:tempPost));
+                        numPostStimBins(unit) = tempPost-tempPre;
+                    else
+                        dataPost(unit) = sum(arrayData{unit}.bC{chan,wave}(postStim_binEdgePre:postStim_binEdgePost));
+                    end
+                    dataPre(unit) = numPostStimBins(unit)*mean(arrayData{unit}.bC{chan,wave}(baseline_binEdgePre:baseline_binEdgePost));
+                catch
+                    dataPre(unit) = 0;
+                    dataPost(unit) = 0;
+                    numPostStimBins(unit) = 0;
+                end
             end
-            
+
             dataRatio = dataPost-dataPre;
-        
+
             if(opts.LOG_SCALE)
                 dataRatio = dataRatio+eps;
                 if(opts.MAX_RATIO == 0)
                     opts.MAX_RATIO = eps;
                 end
             end
-            
+
             if(opts.RELATIVE_INHIBITION)
                 dataRatio(dataRatio < 0) = dataRatio(dataRatio < 0)./dataPre(dataRatio<0);
             end
-            
+
             dataRatio(dataRatio > opts.MAX_RATIO) = opts.MAX_RATIO;
             dataRatio(dataRatio < opts.MIN_RATIO) = opts.MIN_RATIO;
             
-            
+
             %% plot heatmap
             figureHandles{end+1} = figure();
             figureHandles{end}.Position(4) = figureHandles{end}.Position(3);
             figureHandles{end}.Position(2) = figureHandles{end}.Position(2) - 200; % move down to not be annoyingly off my screen
 
             plottedHere = zeros(10,10);
-            
+
             % no grid lines
 %             surface(zeros(opts.NUM_ROWS+1,opts.NUM_COLS+1));
             plot([1,opts.NUM_ROWS+1,opts.NUM_ROWS+1,1,1],[1,1,opts.NUM_COLS+1,opts.NUM_COLS+1,1],'-k','linewidth',1.5)
-            
+
             ax = gca;
 %             ax.Children(1).LineWidth = 1.5; % thicker box boundaries
-            
+
             colormap([1,1,1]);
-            
+
             ax.YTickLabel = {};
             ax.XTickLabel = {};
-            
+
             hold on
             % plot each unit
             for unit = 1:numel(arrayData)
@@ -114,29 +119,33 @@ function [figureHandles] = plotHeatmaps(arrayData,mapFileName,opts)
                     colorIdx = min(size(colorsAboveOne,1),max(1,mapping));
                     colorToPlot = colorsAboveOne(colorIdx,:);
                 end
-                
+
                 rectangle('Position',[arrayData{unit}.COL,arrayData{unit}.ROW,1,1],'EdgeColor','k',...
                             'FaceColor',colorToPlot,'linewidth',0.1);
                 plottedHere(arrayData{unit}.COL,arrayData{unit}.ROW) = 1;
+                unit_location(unit,:) = [arrayData{unit}.COL,arrayData{unit}.ROW];
+                unit_channel(unit) = arrayData{unit}.CHAN_REC;
             end
-            
+
             % plot stim chan
             posIdx = find(MAP_DATA.chan == arrayData{1,1}.CHAN_LIST(chan));
             posList = [MAP_DATA.row,MAP_DATA.col];
             stimRow = 11 - posList(posIdx,1);
             stimCol = posList(posIdx,2);
-            
+
             % magenta box
             plot([stimCol,stimCol+1,stimCol+1,stimCol,stimCol],[stimRow,stimRow,stimRow+1,stimRow+1,stimRow],'m','linewidth',3)
-            
+
             if(~plottedHere(stimCol,stimRow))
                 plot([stimCol,stimCol+1],[stimRow,stimRow+1],'m','linewidth',3);
                 plot([stimCol+1,stimCol],[stimRow,stimRow+1],'m','linewidth',3);
             end
-            
+
             set(gca,'Visible','off')
             axis square
-
+            unit_data{chan,wave}.data = dataRatio;
+            unit_data{chan,wave}.loc = unit_location;
+            unit_data{chan,wave}.chan = unit_channel;
             %% save figures
             if(opts.FIGURE_SAVE && strcmpi(opts.FIGURE_DIR,'')~=1)
                 if(~opts.AUTO_WINDOW)
@@ -148,8 +157,7 @@ function [figureHandles] = plotHeatmaps(arrayData,mapFileName,opts)
                 end
                 saveFiguresLIB(figureHandles{end},opts.FIGURE_DIR,FIGURE_NAME);
             end
-            
-            
+
         end
     end
     

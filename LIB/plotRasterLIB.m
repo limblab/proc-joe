@@ -1,7 +1,7 @@
 function [ figHandle ] = plotRasterLIB(xData,yData,optsPlotInput,optsSaveInput)
 % takes in a set of data, plots that data with a bunch of parameters for
 % making plots pretty and whatnot, returns figure handle
-
+% xdata is the ts, ydata is the row number, both should be column vectors
 
     %% deal with both sets of options
 
@@ -166,7 +166,7 @@ function [optsPlot] = configureOptionsPlot(optsPlotInput,xData,yData)
     optsPlot.MARKER_COLOR = 'k';
     optsPlot.MARKER_SIZE = 3;
     optsPlot.DIVIDING_LINES = '';
-    optsPlot.DIVIDING_LINES_COLORS = '';
+    optsPlot.DIVIDING_LINES_COLORS = {'k','k','k','k','k','k','k','k','k','k','k','k','k','k','k'};
     optsPlot.PLOT_STIM_TIME = 0;
     optsPlot.STIM_DATA_X = [];
     optsPlot.STIM_DATA_Y = [];
