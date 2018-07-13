@@ -5,7 +5,7 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
     %% configure opts and set default values
     opts = configureOpts(opts);
     arrayData = {};
-    
+    amplitude_master_list = []; % 
     %% load in mapfile
     MAP_DATA = loadMapFile(inputData.mapFileName(8:end));
     POS_LIST = [MAP_DATA.row,MAP_DATA.col];
@@ -29,7 +29,7 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
         end
         
         opts.NEURON_NUMBER_ALL = find([cds.units.ID]~=0 & [cds.units.ID]~=255);
-        
+%         opts.NEURON_NUMBER_ALL = find([cds.units.ID]~=255);
         %% find stim times based on sync line, store in stimInfo
         if(opts.USE_ANALOG_FOR_STIM_TIMES)
             for j=1:numel(cds.analog)
@@ -103,6 +103,21 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
                 end
                 
             end
+            
+            if(opts.FLAG_WAVEFORM) % try to get stim amp from file name, get idx for master list of waveforms
+                fname = fileList(fileNumber).name;
+                underscoreIdx = strfind(fname,'_');
+                strIdx = strfind(fname,'uA');
+                underscoreIdx = underscoreIdx(find(underscoreIdx < strIdx,1,'last'));
+                ampStim = str2num(fname(underscoreIdx+1:strIdx-1));
+                amplitude_master_list_idx = find(amplitude_master_list == ampStim);
+                if(isempty(amplitude_master_list_idx))
+                    amplitude_master_list(end+1) = ampStim;
+                    amplitude_master_list_idx = numel(amplitude_master_list);
+                end
+                
+                stimInfo.waveSent(:) = amplitude_master_list_idx;
+            end
         end
     
         for nn_all_idx = 1:numel(opts.NEURON_NUMBER_ALL)
@@ -174,7 +189,7 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
                             arraySize(chan,wave) = arraySize(chan,wave) + numWaves;
                         end
 
-                        if(arraySize(chan,wave) > 2/3*size(spikeTrialTimes{chan,wave},2))
+                        if(arraySize(chan,wave) > 3/4*size(spikeTrialTimes{chan,wave},2))
                             spikeTrialTimes{chan,wave} = [spikeTrialTimes{chan,wave},zeros(1,opts.ADDITIONAL_ARRAY_SIZE)];
                             spikeTrueTimes{chan,wave} = [spikeTrueTimes{chan,wave},zeros(1,opts.ADDITIONAL_ARRAY_SIZE)];
                             stimuliData{chan,wave} = [stimuliData{chan,wave},zeros(1,opts.ADDITIONAL_ARRAY_SIZE)];
@@ -266,6 +281,8 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
                 posIdx = find(MAP_DATA.chan==cds.units(opts.NEURON_NUMBER).chan);
                 arrayData{arrayDataIdx}.ROW = 11 - POS_LIST(posIdx,1);
                 arrayData{arrayDataIdx}.COL = POS_LIST(posIdx,2);
+                
+                
             else % merge data with prexisting data
                 %% append unit data
                 for chan = 1:NUM_CHANS
@@ -304,8 +321,12 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
         arrayData{arrayDataIdx}.bE = arrayData{arrayDataIdx}.bE(arrayData_mask==1);
         arrayData{arrayDataIdx}.kin = arrayData{arrayDataIdx}.kin(arrayData_mask==1);
         arrayData{arrayDataIdx}.numStims = arrayData{arrayDataIdx}.numStims(arrayData_mask == 1);
-        arrayData{arrayDataIdx}.waveList = find(arrayData_mask == 1);
-        arrayData{arrayDataIdx}.CHAN_LIST = find(arrayData_mask == 1);
+        temp = repmat(arrayData{arrayDataIdx}.CHAN_LIST,1,NUM_WAVEFORM_TYPES)
+        arrayData{arrayDataIdx}.STIM_PARAM_LIST(:,1) = temp(arrayData_mask == 1);
+        temp = repmat(amplitude_master_list,NUM_CHANS,1);
+        arrayData{arrayDataIdx}.STIM_PARAM_LIST(:,2) = temp(arrayData_mask == 1);
+        arrayData{arrayDataIdx}.CHAN_LIST = arrayData{arrayDataIdx}.CHAN_LIST(find(sum(arrayData_mask,2) > 0));
+
     end
     
     %% adjust bC based on number of stims
@@ -318,6 +339,10 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
             end
         end
         arrayData{arrayDataIdx}.binMaxYLim = arrayData{arrayDataIdx}.binMaxYLim*1.1;
+        
+        % put in amp master list that correspond to waveform
+        arrayData{arrayDataIdx}.amp_list = amplitude_master_list;
+
     end
 end
 
@@ -341,10 +366,11 @@ function [opts] = configureOpts(optsInput)
     opts.NEURON_NUMBER_ALL = [];
     
     opts.GET_KIN = 0;
-    opts.USE_ANALOG_FOR_STIM_TIMES = 0;
+    opts.USE_ANALOG_FOR_STIM_TIMES = 1;
     opts.ANALOG_SYNC_LINE = 'ainp16';
     opts.USE_STIM_CODE = 0;
 
+    opts.FLAG_WAVEFORM = 0;
     opts.CHAN_LIST = [];
     opts.NUM_WAVEFORM_TYPES = [];
     %% check if in optsSave and optsSaveInput, overwrite if so

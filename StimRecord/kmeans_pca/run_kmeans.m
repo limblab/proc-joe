@@ -46,7 +46,6 @@ function [dist] = computeDistance(data,cluster_center,opts)
     data  = data(:,opts.INDEX(1):opts.INDEX(2));
     cluster_center = cluster_center(:,opts.INDEX(1):opts.INDEX(2));
     
-    
     data = permute(data,[1,3,2]);
     data = repmat(data,1,opts.NUM_CLUSTERS,1);
     
