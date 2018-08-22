@@ -48,13 +48,16 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
             stim_codes = [cds.trials.stimCode];
             start_time = [cds.trials.startTime];
             stim_info_mask = ones(numel(stimInfo.stimOn),1);
-            for st = 1:numel(stimInfo.waveSent)
+            stimInfo.waveSent = ones(size(stimInfo.stimOn));
+            stimInfo.chanSent = ones(size(stimInfo.stimOn));
+            
+            for st = 1:numel(stimInfo.stimOn)
                 % find most recent stim code
                 trial_idx = find(stimInfo.stimOn(st) > start_time,1,'last');
                 if(isempty(trial_idx))
                     stim_info_mask(st) = 0;
                 else
-                    stimInfo.waveSent(st) = stim_codes(trial_idx);
+                    stimInfo.waveSent(st) = stim_codes(trial_idx)+1;
                 end
             end
             stimInfo.stimOn = stimInfo.stimOn(stim_info_mask==1);
@@ -323,10 +326,11 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
         arrayData{arrayDataIdx}.numStims = arrayData{arrayDataIdx}.numStims(arrayData_mask == 1);
         temp = repmat(arrayData{arrayDataIdx}.CHAN_LIST,1,NUM_WAVEFORM_TYPES)
         arrayData{arrayDataIdx}.STIM_PARAM_LIST(:,1) = temp(arrayData_mask == 1);
-        temp = repmat(amplitude_master_list,NUM_CHANS,1);
-        arrayData{arrayDataIdx}.STIM_PARAM_LIST(:,2) = temp(arrayData_mask == 1);
-        arrayData{arrayDataIdx}.CHAN_LIST = arrayData{arrayDataIdx}.CHAN_LIST(find(sum(arrayData_mask,2) > 0));
-
+        if(~isempty(amplitude_master_list))
+            temp = repmat(amplitude_master_list,NUM_CHANS,1);
+            arrayData{arrayDataIdx}.STIM_PARAM_LIST(:,2) = temp(arrayData_mask == 1);
+            arrayData{arrayDataIdx}.CHAN_LIST = arrayData{arrayDataIdx}.CHAN_LIST(find(sum(arrayData_mask,2) > 0));
+        end
     end
     
     %% adjust bC based on number of stims

@@ -39,6 +39,7 @@ function [figureHandles,FITS] = plotAmplitudeVsDistance(arrayData,mapFileName,op
             dataPre = zeros(numel(arrayData),1);
             dataPost = zeros(numel(arrayData),1);
             distances = zeros(numel(arrayData),1);
+            p_val = zeros(numel(arrayData),1);
             STIMCHAN_POS = [11-MAP_DATA.row(find(MAP_DATA.chan == arrayData{1}.CHAN_LIST(chan))), MAP_DATA.col(find(MAP_DATA.chan == arrayData{1}.CHAN_LIST(chan)))];
             
             for unit = 1:numel(arrayData)
@@ -47,20 +48,32 @@ function [figureHandles,FITS] = plotAmplitudeVsDistance(arrayData,mapFileName,op
                     tempPost = max(find(arrayData{1}.bE{chan,wave} <= arrayData{unit}.excitatoryLatency{chan,wave}(3)));
                     
                     dataPost(unit) = sum(arrayData{unit}.bC{chan,wave}(tempPre:tempPost));
+                    dataPost_bins = arrayData{unit}.bC{chan,wave}(tempPre:tempPost);
                     numPostStimBins(unit) = tempPost-tempPre;
                 else
                     dataPost(unit) = sum(arrayData{unit}.bC{chan,wave}(postStim_binEdgePre:postStim_binEdgePost));
+                    dataPost_bins = arrayData{unit}.bC{chan,wave}(postStim_binEdgePre:postStim_binEdgePost);
                 end
                 dataPre(unit) = numPostStimBins(unit)*mean(arrayData{unit}.bC{chan,wave}(baseline_binEdgePre:baseline_binEdgePost));
-
+                dataPre_bins = arrayData{unit}.bC{chan,wave}(baseline_binEdgePre:baseline_binEdgePost);
+                
+                [~,p_val(unit)] = kstest2(dataPre_bins,dataPost_bins);
+                
                 distances(unit) = 400*sqrt((arrayData{unit}.ROW-STIMCHAN_POS(1)).^2 + (arrayData{unit}.COL-STIMCHAN_POS(2)).^2);
             end
             
             dataRatio = dataPost-dataPre;
+
+            if(opts.PLOT_SIGNIFICANT_ONLY)
+                dataRatio = dataRatio(p_val < 0.05);
+                distances = distances(p_val < 0.05);
+            end
             
             %% plot distance vs amplitude
             if(~opts.PLOT_ON_ONE_FIGURE)
                 figureHandles{end+1} = figure();
+                c = 'k';
+            elseif(numel(opts.STIM_ELECTRODE_PLOT)*numel(opts.WAVEFORM_TYPES_PLOT) > numel(opts.COLORS))
                 c = 'k';
             else
                 c = opts.COLORS{chan*wave};
@@ -100,9 +113,10 @@ function [opts] = configureOpts(optsInput)
     opts.FIGURE_SAVE = 0;
     opts.FIGURE_DIR = '';
     opts.FIGURE_PREFIX = '';
+    opts.PLOT_SIGNIFICANT_ONLY = 1;
     
     opts.PLOT_ON_ONE_FIGURE = 1;
-    opts.COLORS = {'k','r','b',[0,0.5,0],'m',[0.5 0.5 0.5]};
+    opts.COLORS = {'k','r','b',[0,0.5,0],'m',[0.5 0.5 0.5],[0.25,0.25,0.25]};
 
     opts.AUTO_WINDOW = 0;
     %% check if in optsSave and optsSaveInput, overwrite if so

@@ -50,10 +50,12 @@ function [output_data] = plotSpikesRT(td,opts)
         if(opts.MAKE_PLOTS)
             if(size(opts.COLORS,1) > 1)
     %             plot(rt(code == opts.STIM_CODES(s)),num_spikes(code == opts.STIM_CODES(s)),'.','markersize',12,'color',opts.COLORS(s,:));
-                plot(num_spikes(isEqual(code',opts.STIM_CODES(s))),rt(isEqual(code',opts.STIM_CODES(s))),'.','markersize',12,'color',opts.COLORS(s,:));
+                plot(rt(isEqual(code',opts.STIM_CODES(s))),num_spikes(isEqual(code',opts.STIM_CODES(s))),...
+                    '.','markersize',16,'color',opts.COLORS(s,:));
             else
     %             plot(rt(code == opts.STIM_CODES(s)),num_spikes(code == opts.STIM_CODES(s)),'.','markersize',12,'color',opts.COLORS(1,:));
-                plot(num_spikes(isEqual(code',opts.STIM_CODES(s))),rt(isEqual(code',opts.STIM_CODES(s))),'.','markersize',12,'color',opts.COLORS(1,:));
+                plot(rt(isEqual(code',opts.STIM_CODES(s))),num_spikes(isEqual(code',opts.STIM_CODES(s))),...
+                    '.','markersize',16,'color',opts.COLORS(1,:));
             end
         end
         if(sum(code == opts.STIM_CODES(s)) > opts.MIN_POINTS)

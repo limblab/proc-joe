@@ -99,7 +99,7 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
     
     for cueIdx = 1:numel(cueInfo)
         if(cueInfo(cueIdx).bumpMag~=0 && cueInfo(cueIdx).stimCode == -1)
-            if(mean(cueInfo(cueIdx).rt) < fastest_bump_data.mean && numel(cueInfo(cueIdx).rt)>=2)
+            if(mean(cueInfo(cueIdx).rt) < fastest_bump_data.mean && numel(cueInfo(cueIdx).rt)>=3)
                 fastest_bump_data.mean = mean(cueInfo(cueIdx).rt);
                 fastest_bump_data.std_err = std(cueInfo(cueIdx).rt)/sqrt(numel(cueInfo(cueIdx).rt));
             end
@@ -338,10 +338,11 @@ function [fig,fit_out] = plotRTvsCue(plot_data,figure_name,bump_flag,opts)
     ax1.XLim(1) = 0;
     ax1.YLim(1) = 0;
     if(isfield(plot_data,'bump_data') && ~bump_flag)
-        fill([ax1.XLim,flip(ax1.XLim)],plot_data.bump_data.mean(1)+plot_data.bump_data.std_err*[-1,-1,1,1],opts.COLOR,'linestyle','none');
-        alpha(opts.ALPHA);
-        plot(ax1.XLim,plot_data.bump_data.mean+[0,0],'-','linewidth',1,'color',opts.COLOR)
-
+        fill([ax1.XLim,ax1.XLim],plot_data.bump_data.mean+plot_data.bump_data.std_err*[-1,1],opts.COLOR,'linestyle','none');
+        alpha(opts.ALPHA)
+        plot(ax1.XLim,plot_data.bump_data.mean+[0,0],'-','linewidth',opts.LINE_WIDTH,'color',opts.COLOR)
+        plot(ax1.XLim,plot_data.bump_data.mean+plot_data.bump_data.std_err+[0,0],'--','linewidth',opts.LINE_WIDTH,'color',opts.COLOR)
+        plot(ax1.XLim,plot_data.bump_data.mean-plot_data.bump_data.std_err+[0,0],'--','linewidth',opts.LINE_WIDTH,'color',opts.COLOR)
     end
     
     
@@ -363,7 +364,6 @@ end
 function [fig, psych_fit] = plotDetectionCurve(plot_data,figure_name,bump_flag,opts)
     psych_fit = [];
     fig = figure();
-    fig.Name = figure_name;
     hold on
 
     plot(plot_data.x,plot_data.y,'.','markersize',opts.MARKER_SIZE,'color',opts.COLOR);

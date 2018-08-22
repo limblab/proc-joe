@@ -6,7 +6,7 @@
 <setting alwaysvectorfont="no"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="0.01" unitdist="mm" unit="mm" style="lines" multiple="1" display="yes" altdistance="5" altunitdist="mil" altunit="mil"/>
+<grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="no" altdistance="0.01" altunitdist="inch" altunit="inch"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
 <layer number="16" name="Bottom" color="1" fill="1" visible="yes" active="yes"/>
@@ -607,6 +607,10 @@
 <package name="WIREPAD_0,5/0,3">
 <pad name="P$1" x="0" y="0" drill="0.3" diameter="0.5"/>
 </package>
+<package name="WIREPAD_0,6/0,4_PAD">
+<pad name="P$1" x="0" y="0.0508" drill="0.45" diameter="0.8128" rot="R270"/>
+<smd name="P$2" x="0" y="-0.8382" dx="1.27" dy="0.762" layer="1" rot="R90"/>
+</package>
 </packages>
 <symbols>
 <symbol name="MIS-019-01-H-D">
@@ -832,6 +836,10 @@
 <wire x1="12.7" y1="-12.7" x2="12.7" y2="12.7" width="0.254" layer="94"/>
 <wire x1="12.7" y1="12.7" x2="-12.7" y2="12.7" width="0.254" layer="94"/>
 <pin name="0.GND" x="0" y="-15.24" length="middle" rot="R90"/>
+</symbol>
+<symbol name="WIREPAD_PAD">
+<pin name="P$1" x="0" y="0" length="middle" rot="R180"/>
+<pin name="P$2" x="0" y="5.08" length="middle" rot="R180"/>
 </symbol>
 </symbols>
 <devicesets>
@@ -1153,6 +1161,22 @@
 <connect gate="G$1" pin="7.INT" pad="P$7"/>
 <connect gate="G$1" pin="8.GND" pad="P$8"/>
 <connect gate="G$1" pin="9.GND" pad="P$9"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="WIREPAD_PAD">
+<gates>
+<gate name="G$1" symbol="WIREPAD_PAD" x="2.54" y="-2.54"/>
+</gates>
+<devices>
+<device name="WIREPAD_0,6/0,4_PAD" package="WIREPAD_0,6/0,4_PAD">
+<connects>
+<connect gate="G$1" pin="P$1" pad="P$1"/>
+<connect gate="G$1" pin="P$2" pad="P$2"/>
 </connects>
 <technologies>
 <technology name=""/>

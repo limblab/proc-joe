@@ -106,11 +106,11 @@
 %% plot reaction times for each cue, psychometric curve
     opts = [];
     
-    opts.SAVE_FIGURES = 0;
+    opts.SAVE_FIGURES = 1;
 
     td_reward_rt = td_reward(~isnan([td_reward.idx_movement_on]));
     opts.FOLDER_PATH = inputData.folderpath;
-    opts.FIGURE_PREFIX = 'Han_20180528'; % no _ required
+    opts.FIGURE_PREFIX = 'Han_20180521'; % no _ required
     opts.BUMP_MAGS = [];
     opts.STIM_CODES = [];
     opts.STIM_PARAMS = [10,20,30,40,50,60,70,80,90,100];

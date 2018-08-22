@@ -599,8 +599,16 @@
 <smd name="P$6" x="-0.325" y="-0.725" dx="0.4" dy="0.6" layer="16" rot="R180"/>
 <smd name="P$7" x="0.325" y="-0.725" dx="0.4" dy="0.6" layer="16" rot="R180"/>
 <smd name="P$8" x="0.975" y="-0.725" dx="0.4" dy="0.6" layer="16" rot="R180"/>
-<circle x="1.13" y="-1.283" radius="0.0559" width="0.127" layer="21"/>
-<text x="-1.24" y="-0.34" size="0.254" layer="21">Edge</text>
+<text x="0.99" y="-1.14" size="0.254" layer="21" rot="R180">Edge</text>
+<wire x1="1.18" y1="-1.38" x2="1.18" y2="-1.15" width="0.0762" layer="21"/>
+<wire x1="1.06" y1="-1.24" x2="1.18" y2="-1.15" width="0.0762" layer="21"/>
+<wire x1="1.18" y1="-1.15" x2="1.3" y2="-1.24" width="0.0762" layer="21"/>
+</package>
+<package name="WIREPAD_0,5/0,3">
+<pad name="P$1" x="0" y="0" drill="0.3" diameter="0.5"/>
+</package>
+<package name="WIREPAD_0,2/0,1_PAD">
+<pad name="P$1" x="0" y="0.0508" drill="0.3" diameter="0.6096" shape="offset" rot="R270"/>
 </package>
 </packages>
 <symbols>
@@ -706,7 +714,7 @@
 <wire x1="12.7" y1="-12.7" x2="12.7" y2="7.62" width="0.254" layer="94"/>
 <wire x1="12.7" y1="7.62" x2="-10.16" y2="7.62" width="0.254" layer="94"/>
 </symbol>
-<symbol name="WIREPAD_0,8/0,45">
+<symbol name="WIREPAD">
 <pin name="P$1" x="-5.08" y="0" length="middle"/>
 <wire x1="-7.62" y1="2.54" x2="-2.54" y2="-2.54" width="0.254" layer="94"/>
 <wire x1="-7.62" y1="-2.54" x2="-2.54" y2="2.54" width="0.254" layer="94"/>
@@ -971,12 +979,28 @@
 </device>
 </devices>
 </deviceset>
-<deviceset name="WIREPAD_0,8/0,45">
+<deviceset name="WIREPAD">
 <gates>
-<gate name="G$1" symbol="WIREPAD_0,8/0,45" x="2.54" y="0"/>
+<gate name="G$1" symbol="WIREPAD" x="2.54" y="0"/>
 </gates>
 <devices>
 <device name="" package="WIREPAD_0,8/0,45">
+<connects>
+<connect gate="G$1" pin="P$1" pad="P$1"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+<device name="WIREPAD_0,5/0,3" package="WIREPAD_0,5/0,3">
+<connects>
+<connect gate="G$1" pin="P$1" pad="P$1"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+<device name="WIREPAD_0,2/0,1_PAD" package="WIREPAD_0,2/0,1_PAD">
 <connects>
 <connect gate="G$1" pin="P$1" pad="P$1"/>
 </connects>

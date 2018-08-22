@@ -12,12 +12,12 @@ function [behaviorData,figureHandles] = processBehaviorRingReporting(cds,opts)
     end
     
     for bm = 1:numel(opts.BUMP_MAGS)
-        behaviorData.percentCorrect(bm) = sum(cds.trials.result == 'R' & cds.trials.hideCursorDuringMovement == 1 & cds.trials.showOuterTarget == 0 & ~isnan(cds.trials.bumpMagnitude) & cds.trials.bumpMagnitude == opts.BUMP_MAGS(bm))/...
-            sum((cds.trials.result == 'R' | cds.trials.result == 'F') & cds.trials.hideCursorDuringMovement == 1 & cds.trials.showOuterTarget == 0 & ~isnan(cds.trials.bumpMagnitude) & cds.trials.bumpMagnitude == opts.BUMP_MAGS(bm));
+        behaviorData.percentCorrect(bm) = sum(cds.trials.result == 'R' & cds.trials.hideCursorDuringBump == 1 & cds.trials.showOuterTarget == 0 & ~isnan(cds.trials.bumpMagnitude) & cds.trials.bumpMagnitude == opts.BUMP_MAGS(bm))/...
+            sum((cds.trials.result == 'R' | cds.trials.result == 'F') & cds.trials.hideCursorDuringBump == 1 & cds.trials.showOuterTarget == 0 & ~isnan(cds.trials.bumpMagnitude) & cds.trials.bumpMagnitude == opts.BUMP_MAGS(bm));
     end
     
-    behaviorData.percentCorrect_all = sum(cds.trials.result == 'R' & cds.trials.hideCursorDuringMovement == 1 & cds.trials.showOuterTarget == 0 & ~isnan(cds.trials.bumpMagnitude))/...
-            sum((cds.trials.result == 'R' | cds.trials.result == 'F') & cds.trials.hideCursorDuringMovement == 1 & cds.trials.showOuterTarget == 0 & ~isnan(cds.trials.bumpMagnitude));
+    behaviorData.percentCorrect_all = sum(cds.trials.result == 'R' & cds.trials.hideCursorDuringBump == 1 & cds.trials.showOuterTarget == 0 & ~isnan(cds.trials.bumpMagnitude))/...
+            sum((cds.trials.result == 'R' | cds.trials.result == 'F') & cds.trials.hideCursorDuringBump == 1 & cds.trials.showOuterTarget == 0 & ~isnan(cds.trials.bumpMagnitude));
     
 %     %% look at % correct as a function of trials
 %     trials_attempted = find((cds.trials.result == 'R' | cds.trials.result == 'F') & cds.trials.showOuterTarget == 0 & ~isnan(cds.trials.bumpMagnitude));
@@ -34,9 +34,9 @@ function [behaviorData,figureHandles] = processBehaviorRingReporting(cds,opts)
     behaviorData.bin_percentCorrect = zeros(1,opts.NUM_BINS_DIR);
     for bm = 1:numel(opts.BUMP_MAGS)
         for b = 1:opts.NUM_BINS_DIR
-            behaviorData.bin_percentCorrect(bm,b) = sum(cds.trials.result == 'R' & cds.trials.hideCursorDuringMovement == 1 & cds.trials.showOuterTarget == 0 & cds.trials.bumpMagnitude == opts.BUMP_MAGS(bm) &...
+            behaviorData.bin_percentCorrect(bm,b) = sum(cds.trials.result == 'R' & cds.trials.hideCursorDuringBump == 1 & cds.trials.showOuterTarget == 0 & cds.trials.bumpMagnitude == opts.BUMP_MAGS(bm) &...
                 cds.trials.tgtDir >= behaviorData.bin_edges(b) & cds.trials.tgtDir < behaviorData.bin_edges(b+1))/...
-                sum((cds.trials.result == 'R' | cds.trials.result == 'F') & cds.trials.hideCursorDuringMovement == 1 & cds.trials.showOuterTarget == 0 & cds.trials.bumpMagnitude == opts.BUMP_MAGS(bm) &...
+                sum((cds.trials.result == 'R' | cds.trials.result == 'F') & cds.trials.hideCursorDuringBump == 1 & cds.trials.showOuterTarget == 0 & cds.trials.bumpMagnitude == opts.BUMP_MAGS(bm) &...
                 cds.trials.tgtDir >= behaviorData.bin_edges(b) & cds.trials.tgtDir < behaviorData.bin_edges(b+1));
         end
     end
@@ -49,7 +49,7 @@ function [behaviorData,figureHandles] = processBehaviorRingReporting(cds,opts)
             if(opts.PLOT_POLAR)
                 theta = deg2rad([behaviorData.bin_edges(1:end-1),behaviorData.bin_edges(1)] + (behaviorData.bin_edges(2)-behaviorData.bin_edges(1))/2);
                 rho = [behaviorData.bin_percentCorrect(bm,:),behaviorData.bin_percentCorrect(bm,1)]; % closing the cirlce by including the first value twice
-                polarplot(theta,rho,'-.','markersize',opts.MARKER_SIZE,'linewidth',opts.LINE_WIDTH);
+                polarplot(theta,rho,'-.','markersize',opts.MARKER_SIZE,'linewidth',opts.LINE_WIDTH,'color',opts.COLORS(bm,:));
                 figureHandles{end}.Children(1).RLim = [0,1]; % radius limits from 0 to 1
                 ax = gca;
                 ax.ThetaTickLabel = {'0','30','60','90','120','150','180','-150','-120','-90','-60','-30'};
@@ -77,12 +77,12 @@ function [behaviorData,figureHandles] = processBehaviorRingReporting(cds,opts)
     % make figure of reaches (all to one fake target or bin based on target?)
     if(opts.MAKE_FIGURES || 1)
 
-        % plot all reaches regardless of target direction to start
-        timeOffsets = [0,0];
-        rotateReaches = 0;
-        removeBumpOffset = 0;
-        [~,reachData_withOffset] = plotReaches(cds,{'goCueTime','endTime'},timeOffsets,[min(cds.trials.tgtDir),max(cds.trials.tgtDir)],rotateReaches,removeBumpOffset,opts);
-        
+%         % plot all reaches regardless of target direction to start
+%         timeOffsets = [0,0];
+%         rotateReaches = 0;
+%         removeBumpOffset = 0;
+%         [~,reachData_withOffset] = plotReaches(cds,{'goCueTime','endTime'},timeOffsets,[min(cds.trials.tgtDir),max(cds.trials.tgtDir)],rotateReaches,removeBumpOffset,opts);
+%         
         
 %         for i = 1:numel(reachData_normal.x)
 %             try
@@ -99,26 +99,26 @@ function [behaviorData,figureHandles] = processBehaviorRingReporting(cds,opts)
 %             end
 %         end
         
-%         % plot all reaches to a 0 degree target (combine and rotate)
-        timeOffsets = [0,0];
-        rotateReaches = 1;
-        angleWindow = [-1000,1000];
-        removeBumpOffset = 0;
-        plotReaches(cds,{'goCueTime','endTime'},timeOffsets,angleWindow,rotateReaches,removeBumpOffset,opts);
+% %         % plot all reaches to a 0 degree target (combine and rotate)
+%         timeOffsets = [0,0];
+%         rotateReaches = 1;
+%         angleWindow = [-1000,1000];
+%         removeBumpOffset = 0;
+%         plotReaches(cds,{'goCueTime','endTime'},timeOffsets,angleWindow,rotateReaches,removeBumpOffset,opts);
 
         % plot distribution of target errors
         angleWindow = [-1000,1000];
-        opts.PLOT_ALL_BUMP_MAGS = 0;
-        removeBumpOffset = 1;
+        opts.PLOT_ALL_BUMP_MAGS = 1;
+        removeBumpOffset = 0;
         plotReachDistribution(cds,angleWindow,removeBumpOffset,opts);
 
-        % plot kinematics during a bump
-        timeOffsets = [0,0];
-        angleWindow = [-150,-50];
-        rotateReaches = 0;
-        removeBumpOffset = 1;
-        [~,~] = plotReaches(cds,{'bumpTime','goCueTime'},timeOffsets,angleWindow,rotateReaches,removeBumpOffset,opts);
-        [~,reaches] = plotReaches(cds,{'goCueTime','endTime'},timeOffsets,angleWindow,rotateReaches,removeBumpOffset,opts);
+%         % plot kinematics during a bump
+%         timeOffsets = [0,0];
+%         angleWindow = [-150,-50];
+%         rotateReaches = 0;
+%         removeBumpOffset = 1;
+%         [~,~] = plotReaches(cds,{'bumpTime','goCueTime'},timeOffsets,angleWindow,rotateReaches,removeBumpOffset,opts);
+%         [~,reaches] = plotReaches(cds,{'goCueTime','endTime'},timeOffsets,angleWindow,rotateReaches,removeBumpOffset,opts);
 %         reach_angle = zeros(numel(reaches),1);
 %         for ra = 1:numel(reaches.x)
 %             reach_angle(ra) = 180/pi*atan2(reaches.y{ra}(end)-reaches.y{ra}(1),reaches.x{ra}(end)-reaches.x{ra}(1));
@@ -165,7 +165,7 @@ function [figureHandle,reachData] = plotReaches(cds,timeCues,timeOffsets,tgtAngl
     
     for tr = 1:numel(cds.trials.number)
         if((cds.trials.result(tr) == 'R' || cds.trials.result(tr) == 'F') && cds.trials.tgtDir(tr) > tgtAngleWindow(1) && cds.trials.tgtDir(tr) <= tgtAngleWindow(2) && numTrialsPlotted < opts.MAX_TRIALS_PLOT && ...
-                ~isnan(cds.trials.(timeCues{1})(tr)) && ~isnan(cds.trials.(timeCues{2})(tr)) && cds.trials.hideCursorDuringMovement(tr) == 1 && cds.trials.showRing(tr) && ~cds.trials.showOuterTarget(tr))
+                ~isnan(cds.trials.(timeCues{1})(tr)) && ~isnan(cds.trials.(timeCues{2})(tr)) && cds.trials.hideCursorDuringBump(tr) == 1 && cds.trials.showRing(tr) && ~cds.trials.showOuterTarget(tr))
             kinIdx = [find(cds.trials.(timeCues{1})(tr)+timeOffsets(tr,1) <= cds.kin.t,1,'first'),find(cds.trials.(timeCues{2})(tr)+timeOffsets(tr,2) <= cds.kin.t,1,'first')];
             xData = kinX(kinIdx(1):kinIdx(2));
             yData = kinY(kinIdx(1):kinIdx(2));
@@ -252,18 +252,24 @@ function [figureHandle] = plotReachDistribution(cds,tgtAngleWindow,removeBumpOff
     
     for tr = 1:numel(cds.trials.number)
         if((cds.trials.result(tr) == 'R' || cds.trials.result(tr) == 'F') && cds.trials.tgtDir(tr) > tgtAngleWindow(1) && cds.trials.tgtDir(tr) <= tgtAngleWindow(2) && ...
-                ~isnan(cds.trials.goCueTime(tr)) && ~isnan(cds.trials.endTime(tr)) && cds.trials.hideCursorDuringMovement(tr) == 1 && cds.trials.showRing(tr) && ~cds.trials.showOuterTarget(tr))
+                ~isnan(cds.trials.goCueTime(tr)) && ~isnan(cds.trials.endTime(tr)) && cds.trials.hideCursorDuringBump(tr) == 1 && cds.trials.showRing(tr) && ~cds.trials.showOuterTarget(tr))
             kinIdx = [find(cds.trials.goCueTime(tr) <= cds.kin.t,1,'first'),find(cds.trials.endTime(tr) <= cds.kin.t,1,'first')];
             xData = kinX(kinIdx(1):kinIdx(2));
             yData = kinY(kinIdx(1):kinIdx(2));
+            tData = cds.kin.t(kinIdx(1):kinIdx(2));
             
             if(removeBumpOffset)
                 xData = xData - kinX(kinIdx(1));
                 yData = yData - kinY(kinIdx(1));
             end
-            outerCircleIdx = find(sqrt((xData.^2 + yData.^2)) > opts.CIRCLE_RADIUS - 0.5*opts.CIRCLE_DEPTH - 0.5,1,'first');
-            if(isempty(outerCircleIdx)) 
-                outerCircleIdx = numel(xData);
+            
+            if(ismember('otHoldTime',cds.trials.Properties.VariableNames)) % 
+                outerCircleIdx = find(tData > cds.trials.otHoldTime(tr),1,'first');
+            else
+                outerCircleIdx = find(sqrt((xData.^2 + yData.^2)) > opts.CIRCLE_RADIUS - 0.5*opts.CIRCLE_DEPTH,1,'first');
+                if(isempty(outerCircleIdx)) 
+                    outerCircleIdx = numel(xData);
+                end
             end
             reachAngles(sizeReachAngle+1,1) = 180/pi*atan2(yData(outerCircleIdx-1),xData(outerCircleIdx-1));
             [~,offsetIdx] = min(abs(cds.trials.tgtDir(tr) - (reachAngles(sizeReachAngle+1,1)+angleOffsets)));
@@ -283,7 +289,7 @@ function [figureHandle] = plotReachDistribution(cds,tgtAngleWindow,removeBumpOff
         for bm = 1:numel(opts.BUMP_MAGS)
             [bC,bE] = histcounts(reachError(bumpMag == opts.BUMP_MAGS(bm)),'BinWidth',opts.DISTRIBUTION_BIN_SIZE);
             bC = bC/sum(bumpMag == opts.BUMP_MAGS(bm));
-            plot(bE(1:end-1) + (bE(2)-bE(1))/2,bC,'linewidth',opts.LINE_WIDTH);
+            plot(bE(1:end-1) + (bE(2)-bE(1))/2,bC,'linewidth',opts.LINE_WIDTH,'color',opts.COLORS(bm,:));
             hold on
         end
     else
@@ -307,9 +313,18 @@ function [figureHandle] = plotReachDistribution(cds,tgtAngleWindow,removeBumpOff
     
     % plot reach direction vs bump direction
     figure();
-    plot(bumpAngles(abs(bumpAngles) < 180 & abs(reachAngles) < 180),...
-        reachAngles(abs(bumpAngles) < 180 & abs(reachAngles) < 180),...
-        '.','markersize',10);
+    if(opts.PLOT_ALL_BUMP_MAGS)
+        for bm = 1:numel(opts.BUMP_MAGS)
+            plot(bumpAngles(abs(bumpAngles) < 180 & abs(reachAngles) < 180 & bumpMag == opts.BUMP_MAGS(bm)),...
+                reachAngles(abs(bumpAngles) < 180 & abs(reachAngles) < 180 & bumpMag == opts.BUMP_MAGS(bm)),...
+                '.','markersize',10,'color',opts.COLORS(bm,:));
+            hold on
+        end
+    else
+        plot(bumpAngles(abs(bumpAngles) < 180 & abs(reachAngles) < 180),...
+            reachAngles(abs(bumpAngles) < 180 & abs(reachAngles) < 180),...
+            '.','markersize',10);
+    end
     xlabel('Bump direction (deg)')
     ylabel('Reach direction (deg)')
     hold on
@@ -363,6 +378,8 @@ function [opts] = configureOpts(optsInput)
     opts.FIGURE_SAVE = 0;
     opts.FIGURE_PREFIX = '';
     opts.FIGURE_DIR = '';
+    
+    opts.COLORS = [228,26,28;55,126,184;77,175,74;152,78,163;255,127,0;255,255,51;166,86,40;247,129,191;153,153,153]/255;
     
     %% check if in opts and optsInput, overwrite if so
     try

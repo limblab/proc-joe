@@ -13,14 +13,18 @@ function [reachPlot] = plotReachesTD(td,opts)
     end
     
     td = td(~isnan([td.idx_movement_on]));
-    td_reachPlot = datasample(td,min(numel(td),opts.MAX_PLOT),'replace',false);
+    if(opts.RANDOM)
+        td_reachPlot = datasample(td,min(numel(td),opts.MAX_PLOT),'replace',false);
+    else
+        td_reachPlot = td(10:10+min(numel(td),opts.MAX_PLOT));
+    end
 %     td_reachPlot = td(1:opts.MAX_PLOT);
     %% plot reaches with movement onset label
     figure();
     for i = 1:numel(opts.WHICH_IDX)
         subplot(numel(opts.WHICH_IDX),1,i);
         for r = 1:numel(td_reachPlot)
-            t = ((1:size(td_reachPlot(r).pos,1))-td_reachPlot(r).idx_goCueTime)*td_reachPlot(r).bin_size;
+            t = ((1:size(td_reachPlot(r).pos,1)))*td_reachPlot(r).bin_size - td_reachPlot(r).goCueTime + td_reachPlot(r).bin_size; % handle off by 1 error
 
             plot(t,td_reachPlot(r).(opts.WHICH_FIELD)(:,opts.WHICH_IDX(i)),'k','linewidth',opts.LINE_WIDTH)
 
@@ -50,7 +54,7 @@ function [opts] = configureOpts(optsInput)
     
     opts.MAX_PLOT = 10;
     
-    opts.ZERO_MARKER = 'goCueTime'; % goCueTime and an else are the only supported options currently
+    opts.ZERO_MARKER = 'goCueTime'; % goCueTime is only supported option currently
     opts.WHICH_FIELD = 'vel';
     opts.WHICH_IDX = 1;
     opts.LINE_WIDTH = 1.5;
@@ -59,6 +63,7 @@ function [opts] = configureOpts(optsInput)
     opts.BUMP_MAGS = [];
     opts.STIM_CODES = [];
     
+    opts.RANDOM = 1;
     %% check if in optsSave and optsSaveInput, overwrite if so
     try
         inputFieldnames = fieldnames(optsInput);
