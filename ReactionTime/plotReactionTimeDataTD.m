@@ -97,6 +97,7 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
     fastest_bump_data.mean = 10000;
     fastest_bump_data.std_err = [];
     
+    
     for cueIdx = 1:numel(cueInfo)
         if(cueInfo(cueIdx).bumpMag~=0 && cueInfo(cueIdx).stimCode == -1)
             if(mean(cueInfo(cueIdx).rt) < fastest_bump_data.mean && numel(cueInfo(cueIdx).rt)>=2)
