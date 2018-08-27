@@ -1,4 +1,4 @@
-function [ color_out ] = getColorFromList( color_idx,list_idx )
+function [ color_out ] = getColorFromList( list_idx,color_idx )
 % just a function to get a color from a predefined list
 % color_idx = 0 is the first entry due to mod weirdness
 
