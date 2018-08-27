@@ -50,12 +50,11 @@ function [output_data] = plotSpikesRT(td,opts)
         if(opts.MAKE_PLOTS)
             if(size(opts.COLORS,1) > 1)
     %             plot(rt(code == opts.STIM_CODES(s)),num_spikes(code == opts.STIM_CODES(s)),'.','markersize',12,'color',opts.COLORS(s,:));
-                plot(rt(isEqual(code',opts.STIM_CODES(s))),num_spikes(isEqual(code',opts.STIM_CODES(s))),...
-                    '.','markersize',16,'color',opts.COLORS(s,:));
+                plot(num_spikes(isEqual(code',opts.STIM_CODES(s))),rt(isEqual(code',opts.STIM_CODES(s))),'.','markersize',12,'color',opts.COLORS(s,:));
             else
     %             plot(rt(code == opts.STIM_CODES(s)),num_spikes(code == opts.STIM_CODES(s)),'.','markersize',12,'color',opts.COLORS(1,:));
-                plot(rt(isEqual(code',opts.STIM_CODES(s))),num_spikes(isEqual(code',opts.STIM_CODES(s))),...
-                    '.','markersize',16,'color',opts.COLORS(1,:));
+                plot(num_spikes(isEqual(code',opts.STIM_CODES(s))),rt(isEqual(code',opts.STIM_CODES(s))),'.','markersize',12,'color',opts.COLORS(1,:));
+
             end
         end
         if(sum(code == opts.STIM_CODES(s)) > opts.MIN_POINTS)
@@ -84,7 +83,11 @@ end
 function [opts] = configureOpts(optsInput,td)
 
     opts = [];
+<<<<<<< HEAD
+    opts.OFFSET = 13;
+=======
     opts.OFFSET = 9;
+>>>>>>> bc01da619cff94c6e9bb2aedc67e358321903bf4
     opts.SPIKE_LIST = [];
     opts.TAU = 0.12; % exponential decaying window, set to large # for no decay
     opts.COLORS = [228,26,28;55,126,184;77,175,74;152,78,163;255,127,0;255,255,51;166,86,40;247,129,191;153,153,153]/255;

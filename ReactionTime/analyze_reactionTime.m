@@ -1,6 +1,7 @@
 %% script to process reaction time data 
 %% determine filename and input data
     inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\Han_20180826_FCreactTime';
+
 %     inputData.folderpath = 'D:\Lab\Data\ReactionTime\Han_20180427_training\';
     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 
@@ -26,8 +27,9 @@
         if(~isempty(cds.trials) && size(cds.trials,1) > 1 && sum(cds.trials.result == 'R' | cds.trials.result == 'F') ~= 0)
             % convert cds to trial data
             params.event_list = {'bumpStaircaseIdx';'tgtOnTime';'isBumpTrial';'bumpTime';'bumpMagnitude';'bumpDir';'isStimTrial';'stimCode';'tgtDir'};
-            params.trial_results = {'R','F','A','I'};
-            params.extra_time = [1,2];
+            params.trial_results = {'R','F'};
+            params.extra_time = [0.8,2];
+
             params.include_ts = 1;
             params.exclude_units = [0,255];
             td_temp = parseFileByTrial(cds,params);
@@ -41,6 +43,7 @@
             td_all = [td_all,td_temp];
         end
     end
+
     clear td_temp
 % sanitize td_all spike information since we are merging files, units go in and out
     % get master list of units
@@ -93,12 +96,14 @@
         td_all_rt(td_all_idx).idx_movement_on = td_reward(td_reward_idx).idx_movement_on;
     end
 %% plot a set of reaches aligned to go cue with reaction time markers
+
     opts.MAX_PLOT = 10;
     opts.WHICH_FIELD ='acc';
     opts.WHICH_IDX = [1];
-    opts.BUMP_MAGS = [];
+    opts.BUMP_MAGS = [1];
     opts.YLIM = [];
     opts.STIM_CODES = [];
+
     opts.RANDOM = 1;
     
     plotReachesTD(td_reward,opts);
@@ -110,7 +115,8 @@
 
     td_reward_rt = td_reward(~isnan([td_reward.idx_movement_on]));
     opts.FOLDER_PATH = inputData.folderpath;
-    opts.FIGURE_PREFIX = 'Han_20180825'; % no _ required
+    opts.FIGURE_PREFIX = 'Han_20180809'; % no _ required
+    
     opts.BUMP_MAGS = [];
     opts.STIM_CODES = [];
 %     opts.STIM_PARAMS = [10,20,30,40,50,60,70,80,90,100];
@@ -121,6 +127,7 @@
 %     opts.STIM_LABEL = 'Train length (ms)';
     opts.STIM_PARAMS = [1,2,3,4,5,6,7,8,9,10,11,12];
     opts.STIM_X_LABEL = {'1','2','3','4','5','6','7','8','9','10','11','12'};
+
 %     opts.STIM_LABEL = 'Bump Mag';
     opts.FIT = 0;
     opts.PLOT_BUMP = 0;
@@ -202,13 +209,25 @@
     opts.PLOT_STIM = 1;
     plotRasterPSTHRT(td_reward,opts);
     
+%% plot rasters
+    opts = [];
+    opts.X_LIMITS = [-0.3,0.5];
+    opts.EXTRA_TIME = params.extra_time;
+    opts.PLOT_RASTER = 0;
+    opts.PLOT_PSTH = 1;
+    opts.PLOT_BUMP = 0;
+    opts.PLOT_STIM = 1;
+    plotRasterPSTHRT(td_reward,opts);
+    
 %% plot # spikes vs rt for each trial
     td_reward_rt = td_reward(~isnan([td_reward.idx_movement_on]));
     td_reward_rt_stim = td_reward_rt(isnan([td_reward_rt.idx_bumpTime]));
 %     output_data = plotSpikesRT(td_reward_rt_stim,opts);
     output_data = cell(size(td_reward_rt_stim(1).LeftS1_spikes,2),1);
     rsquares = [];
+
     opts.TAU = 1000000;
+    
     for s = 1:size(td_reward_rt_stim(1).LeftS1_spikes,2)
         opts.STIM = 1;
         opts.SPIKE_LIST = s;
@@ -222,6 +241,7 @@
 corr_all = [];
 for max_idx = 1
     opts.SPIKE_LIST = [];
+
     opts.TAU = 1000000;
     opts.STIM = 1;
     opts.STIM_CODES = [];
@@ -310,6 +330,24 @@ for s = 1:numel(stim_codes)
     end
 end
 
+%% count # of spikes for each condition
+
+stim_codes = unique(data_stim.code);
+% bump_codes = unique(data_bump.code);
+
+num_spikes_all = [];
+labels = {};
+
+for s = 1:numel(stim_codes)
+    data_stim_mask = data_stim.code == stim_codes(s);
+    num_spikes_all = [num_spikes_all; data_stim.num_spikes(data_stim_mask)];
+    cueInfo_idx = find([data.cueInfo.stimCode] == stim_codes(s) & [data.cueInfo.bumpMag] == 0);
+    data.cueInfo(cueInfo_idx).num_spikes = data_stim.num_spikes(data_stim_mask);
+    for i = 1:sum(data_stim_mask)
+        labels{end+1,1} = ['stim-',num2str(s)];
+    end
+end
+
 % for b = 5:numel(bump_codes)
 %     data_bump_mask = data_bump.code == bump_codes(b);
 %     num_spikes_all = [num_spikes_all; data_bump.num_spikes(data_bump_mask)];
@@ -318,8 +356,9 @@ end
 %     end
 % end
 
-% figure();
-% boxplot(num_spikes_all,labels)
+figure();
+boxplot(num_spikes_all,labels)
+
 
 %%
 % figure();
@@ -327,10 +366,6 @@ for i = 1:7
     plot(mean(data.cueInfo(i).rt),mean(data.cueInfo(i).num_spikes),'.','color',c,'markersize',12);
     hold on
 end
-
-
-
-
 
 
     
