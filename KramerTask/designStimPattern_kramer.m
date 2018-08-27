@@ -2,10 +2,11 @@
 
 
 %% determine filename and input data
-    input_data.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\Psychophysics\Han_20180801_COBump\';
+    input_data.folderpath = 'C:\Users\jts3256\Desktop\Han_CObump\';
 %     inputData.folderpath = 'D:\Lab\Data\ReactionTime\Han_20180427_training\';
-    input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
-
+%     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+    input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\RetiredMonkeys\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
+    
     input_data.task='taskCObump';
     input_data.ranBy='ranByJoseph'; 
     input_data.array1='arrayLeftS1'; 
@@ -14,7 +15,7 @@
     
     pwd=cd;
     cd(input_data.folderpath)
-    fileList = dir('*s.nev*');
+    fileList = dir('*.nev*');
     cd(pwd)
     
 %% load cds, convert to td, compute PDs for all units, determine if units are well tuned
@@ -23,7 +24,7 @@
         input_data.monkey,input_data.labnum,input_data.array1,input_data.mapFileName,'recoverPreSync');
     cd(pwd);
     
-% convert into td
+%% convert into td
     params.event_list = {'goCueTime';'tgtDir';'bumpDir';'bumpTime'};
     params.trial_results = {'R'};
     params.extra_time = [1,2];
