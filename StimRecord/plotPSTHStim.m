@@ -98,7 +98,7 @@ function [figureHandle] = plotPSTHStim(unitData,NEURON_NUMBER,optsPlot)
             optsPlot.NO_RECORDING_WINDOW = opts.NO_RECORDING_WINDOW;
             optsPlot.NO_RECORDING_BOX_COLOR = opts.NO_RECORDING_BOX_COLOR;
             
-            figureHandle{chan,wave} = plotPSTHLIB(xData,yData,optsPlot,optsSave);
+            figureHandle{chan,wave} = plotPSTHLib(xData,yData,optsPlot,optsSave);
 
         end
 

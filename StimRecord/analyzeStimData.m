@@ -1,13 +1,13 @@
 %% set file names 
-inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Chips_20161201\';
-% inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
-inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
+inputData.folderpath = 'C:\Users\jts3256\Desktop\Han_20180717_RW_dukeProjBox_asymmetric\chan70\';
+inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+% inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
 folderpath = inputData.folderpath; % rest of code uses folderpath currently
 
 inputData.task='taskRW';
 inputData.ranBy='ranByJoseph'; 
 inputData.array1='arrayLeftS1'; 
-inputData.monkey='monkeyChips';
+inputData.monkey='monkeyHan';
 inputData.labnum = 6;
 
 pwd=cd;
@@ -24,11 +24,11 @@ optsExtract.STIMULATIONS_PER_TRAIN = 1;
 optsExtract.STIMULATION_BATCH_SIZE = 1000;
 optsExtract.USE_STIM_CODE = 0;
 % optsExtract.STIM_ELECTRODE = 20;
-optsExtract.CHAN_LIST = 1:96;
+optsExtract.CHAN_LIST = [];
 
 optsExtract.PRE_TIME = 20/1000; % made negative in the function
 optsExtract.POST_TIME = 100/1000;
-optsExtract.BIN_SIZE = 1/1000;
+optsExtract.BIN_SIZE = 0.2/1000;
 optsExtract.TIME_AFTER_STIMULATION_WAVEFORMS = 10/1000;
 optsExtract.USE_ANALOG_FOR_STIM_TIMES = 1;
 optsExtract.GET_KIN = 0;
@@ -37,7 +37,7 @@ arrayData = extractDataAroundStimulations(inputData,fileList,stimInfoFileList,op
 
 toc
 %% pick a unit (index in array data)
-arrIdx =  3;
+arrIdx =  1;
 
 % plot raster, and PSTH for the given unit above
 
@@ -52,7 +52,7 @@ optsPlotFunc.SORT_DATA = '';
 
 % rasterPlots = plotRasterStim(arrayData{arrIdx},arrayData{arrIdx}.NN,optsPlotFunc);
 
-optsPlotFunc.PLOT_ALL_ONE_FIGURE = 0;
+optsPlotFunc.PLOT_ALL_ONE_FIGURE = 1;
 optsPlotFunc.PLOT_LINE = 1;
 optsPlotFunc.PLOT_TITLE = 0;
 

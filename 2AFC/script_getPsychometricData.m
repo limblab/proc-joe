@@ -67,7 +67,7 @@
     
 %% draw circle with line in 0 deg direction
     f = figure;
-    theta = [45,45;225,225];
+    theta = 90+[0,0;180,180];
     
     rho = [0,1];
     polarplot(theta(1,:)*pi/180,rho,'color','r','linewidth',3);
@@ -79,9 +79,8 @@
     ax.ThetaTickLabel = {'0','180'};
     ax.ThetaMinorGrid = 'on';
     ax.LineWidth = 2;
-    ax.LineColor = 'k';
 
-    f.Name = 'Han_20180803_BD_polarDir';
+    f.Name = 'Han_20180805_BD_polarDir_90deg270deg';
     saveFiguresLIB(f,input_data.folderpath,f.Name);
     
            

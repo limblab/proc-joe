@@ -3,7 +3,7 @@ function [] = writeNEV(data, packetWidth, filename, mapfileName, comments )
 % information and writes a .NEV file with the given filepath and filename
 
 timeSpikes = data.ts;
-waveformSpikes = data.waveforms/0.254; % 1 bit is 254nV 
+waveformSpikes = data.waveforms; % 1 bit is 254nV 
 chanSpikes = data.elec;
 
 % open the NEV file -- add .nev extension if necessary

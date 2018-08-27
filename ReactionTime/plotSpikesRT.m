@@ -13,10 +13,23 @@ function [output_data] = plotSpikesRT(td,opts)
     code = zeros(numel(td),1);
     
     exp_window = exp(-(mode([td.bin_size])*(0:opts.OFFSET))/opts.TAU);
-
+    if(1 || isempty(opts.CORR_DIR))
+        opts.CORR_DIR = ones(1,numel(opts.SPIKE_LIST));
+    end
+    
+    baseline = [];
     for t = 1:numel(td)
-        rt(t) = td(t).bin_size*(td(t).idx_movement_on - td(t).idx_goCueTime);
-        num_spikes(t) = sum(sum(exp_window*td(t).LeftS1_spikes(td(t).idx_goCueTime:td(t).idx_goCueTime+opts.OFFSET,opts.SPIKE_LIST)));
+        if t == 1
+            baseline = (td(t).LeftS1_spikes(td(t).idx_goCueTime-30:td(t).idx_goCueTime-1,opts.SPIKE_LIST));
+        else
+            baseline = baseline + (td(t).LeftS1_spikes(td(t).idx_goCueTime-30:td(t).idx_goCueTime-1,opts.SPIKE_LIST));
+        end
+    end
+    baseline = mean(baseline/numel(td));
+    
+    for t = 1:numel(td)
+        rt(t) = td(t).bin_size*(td(t).idx_movement_on) - td(t).goCueTime;
+        num_spikes(t) = sum(exp_window*(opts.CORR_DIR.*(td(t).LeftS1_spikes(td(t).idx_goCueTime:td(t).idx_goCueTime+opts.OFFSET,opts.SPIKE_LIST)-baseline)));
         if(opts.STIM)
             code(t) = td(t).stimCode;
         else
@@ -29,26 +42,36 @@ function [output_data] = plotSpikesRT(td,opts)
     end
     
     output_data.fits(numel(opts.STIM_CODES),1) = struct('stats',[],'fit_obj',[]);
-
-    figure;
+    
+    if(opts.MAKE_PLOTS)
+        figure;
+    end
     for s = 1:numel(opts.STIM_CODES)
-        if(size(opts.COLORS,1) > 1)
-            plot(rt(code == opts.STIM_CODES(s)),num_spikes(code == opts.STIM_CODES(s)),'.','markersize',12,'color',opts.COLORS(s,:));
-        else
-            plot(rt(code == opts.STIM_CODES(s)),num_spikes(code == opts.STIM_CODES(s)),'.','markersize',12,'color',opts.COLORS(1,:));
+        if(opts.MAKE_PLOTS)
+            if(size(opts.COLORS,1) > 1)
+    %             plot(rt(code == opts.STIM_CODES(s)),num_spikes(code == opts.STIM_CODES(s)),'.','markersize',12,'color',opts.COLORS(s,:));
+                plot(num_spikes(isEqual(code',opts.STIM_CODES(s))),rt(isEqual(code',opts.STIM_CODES(s))),'.','markersize',12,'color',opts.COLORS(s,:));
+            else
+    %             plot(rt(code == opts.STIM_CODES(s)),num_spikes(code == opts.STIM_CODES(s)),'.','markersize',12,'color',opts.COLORS(1,:));
+                plot(num_spikes(isEqual(code',opts.STIM_CODES(s))),rt(isEqual(code',opts.STIM_CODES(s))),'.','markersize',12,'color',opts.COLORS(1,:));
+            end
         end
-
         if(sum(code == opts.STIM_CODES(s)) > opts.MIN_POINTS)
-            [output_data.fits(s).fit_obj,output_data.fits(s).stats] = fit(rt(code == opts.STIM_CODES(s)), num_spikes(code == opts.STIM_CODES(s)),'a*x+b');
-            output_data.corr(s) = corr(rt(code == opts.STIM_CODES(s)), num_spikes(code == opts.STIM_CODES(s)));
+%             [output_data.fits(s).fit_obj,output_data.fits(s).stats] = fit(rt(code == opts.STIM_CODES(s)), num_spikes(code == opts.STIM_CODES(s)),'a*x+b');
+            [output_data.fits(s).fit_obj,output_data.fits(s).stats] = fit(num_spikes(isEqual(code',opts.STIM_CODES(s))),rt(isEqual(code',opts.STIM_CODES(s))),'a*x+b');
+ 
+%             output_data.corr(s) = corr(rt(code == opts.STIM_CODES(s)), num_spikes(code == opts.STIM_CODES(s)));
+            output_data.corr(s) = corr(num_spikes(isEqual(code',opts.STIM_CODES(s))),rt(isEqual(code',opts.STIM_CODES(s))));
         end
         
         hold on
     end
 
     output_data.fit_all_codes = [];
-    [output_data.fit_all_codes.fit_obj,output_data.fit_all_codes.stats] = fit(rt,num_spikes,'a*x+b');
-    output_data.corr_all_codes = corr(rt,num_spikes);
+%     [output_data.fit_all_codes.fit_obj,output_data.fit_all_codes.stats] = fit(rt,num_spikes,'a*x+b');
+    [output_data.fit_all_codes.fit_obj,output_data.fit_all_codes.stats] = fit(num_spikes,rt,'a*x+b');
+%     output_data.corr_all_codes = corr(rt,num_spikes);
+    output_data.corr_all_codes = corr(num_spikes,rt);
     
     output_data.rt = rt;
     output_data.num_spikes = num_spikes;
@@ -59,13 +82,17 @@ end
 function [opts] = configureOpts(optsInput,td)
 
     opts = [];
-    opts.OFFSET = 12;
+    opts.OFFSET = 13;
     opts.SPIKE_LIST = [];
     opts.TAU = 0.12; % exponential decaying window, set to large # for no decay
     opts.COLORS = [228,26,28;55,126,184;77,175,74;152,78,163;255,127,0;255,255,51;166,86,40;247,129,191;153,153,153]/255;
     opts.STIM_CODES = [];
     opts.MIN_POINTS = 5;
     opts.STIM = 1;
+    opts.MAKE_PLOTS = 1;
+    
+    opts.CORR_DIR = [];
+    
     %% check if in optsSave and optsSaveInput, overwrite if so
     try
         inputFieldnames = fieldnames(optsInput);
