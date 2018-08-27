@@ -91,7 +91,7 @@ function [figureHandle] = plotPSTHStim(unitData,NEURON_NUMBER,optsPlot)
             if(~opts.MAKE_SUBPLOTS && opts.FIGURE_SAVE && opts.PLOT_ALL_ONE_FIGURE)
                 optsSave.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'nn',num2str(NEURON_NUMBER),'_chan',num2str(unitData.CHAN_REC),'_ALL_PSTH');
             elseif(~opts.MAKE_SUBPLOTS && opts.FIGURE_SAVE)
-                optsSave.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'nn',num2str(NEURON_NUMBER),'_chan',num2str(unitData.CHAN_REC),'_stimChan',num2str(chanList(chan)),'_waveNum',num2str(wave),'_PSTH');
+                optsSave.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'nn',num2str(NEURON_NUMBER),'_chan',num2str(unitData.CHAN_REC),'_stimChan',num2str(unitData.CHAN_LIST(chan)),'_waveNum',num2str(wave),'_PSTH');
             end
             
             optsPlot.PLOT_NO_RECORDING_BOX = opts.PLOT_NO_RECORDING_BOX;
@@ -99,6 +99,7 @@ function [figureHandle] = plotPSTHStim(unitData,NEURON_NUMBER,optsPlot)
             optsPlot.NO_RECORDING_BOX_COLOR = opts.NO_RECORDING_BOX_COLOR;
             
             figureHandle{chan,wave} = plotPSTHLib(xData,yData,optsPlot,optsSave);
+
 
         end
 

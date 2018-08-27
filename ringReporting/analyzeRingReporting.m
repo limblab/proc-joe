@@ -1,10 +1,10 @@
 %% set file name and load file into cds
 
-folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\RingReporting\Chips_20180221\';
+folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\RingReporting\Duncan\Duncan_20180820\';
 mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
 
-inputData.array = 'arrayLeftS1';
-inputData.monkey = 'monkeyChips';
+inputData.array = 'arrayNone';
+inputData.monkey = 'monkeyDuncan';
 inputData.ranBy = 'ranByJoe';
 inputData.lab = 6;
 inputData.mapFile = strcat('mapFile',mapFileName);
@@ -19,8 +19,8 @@ cds.file2cds(strcat(folderpath,fileList(1).name),inputData.array,inputData.monke
 cd(pwd);
 
 %%
-opts.FIGURE_SAVE = 0;
-opts.FIGURE_PREFIX = 'Chips_20180226_RR';
+opts.FIGURE_SAVE = 1;
+opts.FIGURE_PREFIX = 'Duncan_20180820_RR_training';
 opts.FIGURE_DIR = folderpath;
 
 opts.NUM_BINS_DIR = 8;
@@ -31,7 +31,7 @@ opts.CIRCLE_RADIUS = 7;
 opts.CIRCLE_DEPTH = 2;
 
 opts.DISTRIBUTION_BIN_SIZE = 5;
-opts.BUMP_MAGS = [1.25];
+opts.BUMP_MAGS = [1.5];
 
 behaviorData = processBehaviorRingReporting(cds,opts);
 

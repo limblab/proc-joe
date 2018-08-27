@@ -7,12 +7,15 @@ function [arrayData,report] = labelResponse(arrayData,opts)
 
     %% for each unit, compute mean and SD from baseline. Then check for excitatory
     % and inhibitory
-    for chan = 1:size(arrayData{1}.spikeTrialTimes,1)
-        for wave = 1:size(arrayData{1}.spikeTrialTimes,2)
-            report.excitatoryUnits{chan,wave} = [];
-            report.inhibitoryUnits{chan,wave} = [];
+    for arrayIdx = 1:numel(arrayData)
+
             
-            for arrayIdx = 1:numel(arrayData)
+        for chan = 1:size(arrayData{arrayIdx}.spikeTrialTimes,1)
+            for wave = 1:size(arrayData{arrayIdx}.spikeTrialTimes,2)
+                
+                report.excitatoryUnits{chan,wave} = [];
+                report.inhibitoryUnits{chan,wave} = [];
+                
                 % initialize storage
                 arrayData{arrayIdx}.isExcitatory{chan,wave} = 0;
                 arrayData{arrayIdx}.excitatoryLatency{chan,wave} = [1,1,1]; % onset, peak, end
@@ -108,7 +111,7 @@ end
 
 function [opts] = configureOpts(optsInput)
 
-    opts.BASELINE_PRE_TIME = -19/1000;
+    opts.BASELINE_PRE_TIME = -16/1000;
     opts.BASELINE_POST_TIME = -2/1000;
 
     opts.MIN_TIME = 1.2/1000;

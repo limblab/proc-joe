@@ -35,6 +35,7 @@ min_s        =  0.3;
 s_thresh      =  7;
 peak_idx_offset = [0,100];
 start_idx_offset = 0;
+max_rt_offset = 1000;
 which_field = 'speed';
 field_idx = 1;
 threshold_mult = 0.5;
@@ -77,7 +78,7 @@ for trial = 1:length(trial_data)
     end
     % find the time bins where the monkey may be moving
     move_inds = false(size(s));
-    move_inds(td(trial).(start_idx)+start_idx_offset:td(trial).(end_idx)) = true;
+    move_inds(td(trial).(start_idx):td(trial).(end_idx)) = true;
     
     [on_idx] = deal(NaN);
     
@@ -102,10 +103,8 @@ for trial = 1:length(trial_data)
             on_idx = find(s>=thresh & (1:length(s))'<mvt_peak & move_inds,1,'first');
             
             % check to make sure the numbers make sense
-            if on_idx <= td(trial).(start_idx)+start_idx_offset
+            if on_idx <= td(trial).(start_idx)+start_idx_offset || on_idx > td(trial).(start_idx)+max_rt_offset
                 % something is fishy. Fall back on threshold method
-                on_idx = NaN;
-            elseif(on_idx > td(trial).(start_idx) + max_rt/mode([td.bin_size]))
                 on_idx = NaN;
             end
         end
@@ -117,9 +116,10 @@ for trial = 1:length(trial_data)
     if isempty(on_idx) || isnan(on_idx)
 %         on_idx = find(s > s_thresh & move_inds,1,'first');
         if isempty(on_idx) % usually means it never crosses threshold
-            warning('Could not identify movement onset');
             on_idx = NaN;
         end
+        warning('Could not identify movement onset');
+
     end
     trial_data(trial).(['idx_' onset_name]) = on_idx;
 

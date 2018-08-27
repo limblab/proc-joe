@@ -13,13 +13,16 @@ function [output_data] = predictRT(td,opts)
     if(isempty(opts.TRAIN_IDX))
         opts.TRAIN_IDX = 1:numel(td);
     end
+    
+    exp_window = exp(-(mode([td.bin_size])*(opts.WINDOW(1):opts.WINDOW(2)))/opts.TAU)';
+
     %% get x and y
     x = [];
     y = [];
     for t = 1:numel(td)
         y(end+1,1) = td(t).bin_size*(td(t).idx_movement_on - td(t).idx_goCueTime);
         idx = td(t).idx_goCueTime;
-        spike_count = td(t).LeftS1_spikes(idx+opts.WINDOW(1):idx+opts.WINDOW(2),opts.SPIKE_LIST);
+        spike_count = repmat(exp_window,1,numel(opts.SPIKE_LIST)).*td(t).LeftS1_spikes(idx+opts.WINDOW(1):idx+opts.WINDOW(2),opts.SPIKE_LIST);
         % upbin if necessary
         for b = 1:opts.BIN_SIZE
             if(b == 1)
@@ -41,15 +44,17 @@ function [output_data] = predictRT(td,opts)
 %     output_data.y_train_idx = train_idx;
     output_data.y_pred = x*b;
     output_data.b = b;
+    output_data.x = x;
 end
 
 function [opts] = configureOpts(optsInput)
 
-   opts.SPIKE_LIST = [];
-   opts.WINDOW = [0,9];
-   opts.BIN_SIZE = 2; % # bins to combine
-   opts.TRAIN_IDX = [];
-
+    opts.SPIKE_LIST = [];
+    opts.WINDOW = [0,9];
+    opts.BIN_SIZE = 2; % # bins to combine
+    opts.TRAIN_IDX = [];
+    opts.TAU = 0.2;
+    
     %% check if in optsSave and optsSaveInput, overwrite if so
     try
         inputFieldnames = fieldnames(optsInput);
