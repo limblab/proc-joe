@@ -4,7 +4,7 @@
     b_bounds = [0.01,0.05];
     c_bounds = [0.15,0.17];
     std_bounds = [0.005,0.05];
-    num_chans = 1000;
+    num_chans = 100;
 
     a_all = rand(num_chans,1)*(diff(a_bounds)) + a_bounds(1);
     b_all = rand(num_chans,1)*(diff(b_bounds)) + b_bounds(1);
@@ -12,18 +12,18 @@
     std_all = rand(num_chans,1)*diff(std_bounds) + std_bounds(1);
 
 %% plot example RT vs amp curves
-    figure();
-    I_data = 1:1:100;
-    RT_all = a_all.*exp(-b_all.*I_data)+c_all;
-
-    plot(I_data,RT_all')
+%     figure();
+%     I_data = 1:1:100;
+%     RT_all = a_all.*exp(-b_all.*I_data)+c_all;
+% 
+%     plot(I_data,RT_all')
 %% run my linear summation experiment
 % sample N electrodes, compute RT based on the race model (sample each
 % distribution, pick fastest). Store. Do this for different charges on each
 % electrode and for different number of electrodes
 
-    num_elecs = [1:24];
-    total_charge = [240:120:600];
+    num_elecs = [3,6,12,24];
+    total_charge = [360:120:480];
     num_runs_per_condition = 10000;
 
     RT_out = zeros(numel(num_elecs),numel(total_charge),num_runs_per_condition);
@@ -48,12 +48,12 @@
         end
     end
 
-% plot RT_out data
+%% plot RT_out data
     mean_RT = mean(RT_out,3);
     std_err_RT = std(RT_out,[],3)/sqrt(num_runs_per_condition);
     colors = [228,26,28;55,126,184;77,175,74;152,78,163;255,127,0;255,255,51;166,86,40;247,129,191;153,153,153]/255;
     
-    f=figure();
+%     f=figure();
     hold on;
     for c=1:numel(total_charge)
         plot(num_elecs,squeeze(mean_RT(:,c,:)),'.','markersize',24,'color',colors(c,:))
@@ -61,5 +61,26 @@
     for c=1:numel(total_charge)
         plot(repmat(num_elecs',1,2)',(squeeze(mean_RT(:,c,:))+squeeze(std_err_RT(:,c,:)).*[-1,1])','linewidth',1.5,'color',colors(c,:))
     end
+
+%% toy model to show normal distribution shift concept
+
+num_samples = 1000000;
+means = [0.2,0.22];
+std = [0.04,0.05];
+
+data = normrnd(0,1,[num_samples,2]).*std + means;
+
+bE = [0:0.01:0.5];
+
+
+figure();
+hold on
+for i = 1:2
+   bC(i,:) = histcounts(data(:,i),bE)/num_samples;
+   plot(bE(1:end-1)+mode(diff(bE))/2,bC(i,:),'linewidth',1.5,'color',getColorFromList(0,i))
+
+end
+
+
 
 

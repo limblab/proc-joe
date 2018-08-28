@@ -1,0 +1,6 @@
+td = td_code1;
+
+%% get percent 45 deg and percent 225 deg
+percent_45 = sum(([td.result] == 'R' & [td.isPrimaryTgt]) |...
+    ([td.result] == 'F' & ~[td.isPrimaryTgt]))...
+    /numel(td);

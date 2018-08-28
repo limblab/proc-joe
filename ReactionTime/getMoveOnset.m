@@ -78,7 +78,7 @@ for trial = 1:length(trial_data)
     end
     % find the time bins where the monkey may be moving
     move_inds = false(size(s));
-    move_inds(td(trial).(start_idx):td(trial).(end_idx)) = true;
+    move_inds(td(trial).(start_idx)+5:td(trial).(end_idx)) = true;
     
     [on_idx] = deal(NaN);
     

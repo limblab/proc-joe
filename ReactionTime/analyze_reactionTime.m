@@ -100,7 +100,7 @@
     opts.MAX_PLOT = 10;
     opts.WHICH_FIELD ='acc';
     opts.WHICH_IDX = [1];
-    opts.BUMP_MAGS = [1];
+    opts.BUMP_MAGS = [];
     opts.YLIM = [];
     opts.STIM_CODES = [];
 
@@ -118,18 +118,18 @@
     opts.FIGURE_PREFIX = 'Han_20180809'; % no _ required
     opts.BUMP_MAGS = [];
     opts.STIM_CODES = [];
-    opts.STIM_PARAMS = [10,20,30,40,50,60,70,80,90,100];
-    opts.STIM_LABEL = 'Amplitude (\muA)';
+%     opts.STIM_PARAMS = [10,20,30,40,50,60,70,80,90,100];
+%     opts.STIM_LABEL = 'Amplitude (\muA)';
 %     opts.STIM_PARAMS = [50,100,150,200,250,300,350,400,450,500];
 %     opts.STIM_LABEL = 'Frequency (Hz)';
 %     opts.STIM_PARAMS = [25,50,75,100,125,150,175,200,250,300];
 %     opts.STIM_LABEL = 'Train length (ms)';
 
-%     opts.STIM_PARAMS = [1,2,3,4,5,6,7,8,9,10,11,12];
-%     opts.STIM_X_LABEL = {'1','2','3','4','5','6','7','8','9','10','11','12'};
+    opts.STIM_PARAMS = [1,2,3,4,5,6,7,8,9,10,11,12];
+    opts.STIM_X_LABEL = {'1','2','3','4','5','6','7','8','9','10','11','12'};
 %     opts.STIM_LABEL = 'Bump Mag';
-    opts.FIT = 1;
-    opts.PLOT_BUMP = 1;
+    opts.FIT = 0;
+    opts.PLOT_BUMP = 0;
     opts.PLOT_STIM = 1;
     opts.LINE_WIDTH = 2;
     [data,plots] = plotReactionTimeDataTD(td_reward_rt,td_all_rt,opts);

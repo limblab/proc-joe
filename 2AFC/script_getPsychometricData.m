@@ -1,5 +1,5 @@
 %% determine filename and input data
-    input_data.folderpath = 'C:\Users\jts3256\Desktop\Han_20180804-05_90deg270deg\';
+    input_data.folderpath = 'C:\Users\jts3256\Desktop\Han_20180803_BD\';
     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 
     input_data.task='taskBD';
@@ -15,7 +15,7 @@
 %% load in cds and extract data
     td_all = [];
 
-    for fileNumber = 2%:numel(fileList)  
+    for fileNumber = 1:numel(fileList)  
         cds = commonDataStructure();
         cds.file2cds([input_data.folderpath fileList(fileNumber).name],input_data.task,input_data.ranBy,...
             input_data.monkey,input_data.labnum,input_data.array1,input_data.mapFileName,'recoverPreSync');
