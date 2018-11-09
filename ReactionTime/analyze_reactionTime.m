@@ -1,14 +1,17 @@
 %% script to process reaction time data 
 %% determine filename and input data
-    inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\Han_20180826_FCreactTime';
-
+%     inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\Han\Han_20181108_FCreactTime\';
+    inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\Duncan\Duncan_20181108_RT_training\';
+    
 %     inputData.folderpath = 'D:\Lab\Data\ReactionTime\Han_20180427_training\';
-    inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
-
+%     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+    inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\right S1 20180919\SN 6251-001804.cmp';
+    
+    
     inputData.task='taskRT';
     inputData.ranBy='ranByJoseph'; 
     inputData.array1='arrayLeftS1'; 
-    inputData.monkey='monkeyHan';
+    inputData.monkey='monkeyDuncan';
     inputData.labnum = 6;
     
     pwd=cd;
@@ -26,11 +29,11 @@
 
         if(~isempty(cds.trials) && size(cds.trials,1) > 1 && sum(cds.trials.result == 'R' | cds.trials.result == 'F') ~= 0)
             % convert cds to trial data
-            params.event_list = {'bumpStaircaseIdx';'tgtOnTime';'isBumpTrial';'bumpTime';'bumpMagnitude';'bumpDir';'isStimTrial';'stimCode';'tgtDir'};
+            params.event_list = {'bumpStaircaseIdx';'tgtOnTime';'isBumpTrial';'bumpTime';'bumpMagnitude';'bumpDir';'isStimTrial';'stimCode';'tgtDir';'isVisualTrial'};
             params.trial_results = {'R','F'};
             params.extra_time = [0.8,2];
 
-            params.include_ts = 1;
+            params.include_ts = 0;
             params.exclude_units = [0,255];
             td_temp = parseFileByTrial(cds,params);
             td_temp = getGoCueTime(td_temp,cds);
@@ -65,12 +68,13 @@
         for unit = 1:size(td_all(trial).LeftS1_unit_guide,1)
             master_idx = find(sum(master_list == td_all(trial).LeftS1_unit_guide(unit,:),2) == 2);
             temp_spikes(:,master_idx) = td_all(trial).LeftS1_spikes(:,unit);
-            temp_ts{master_idx} = td_all(trial).LeftS1_ts{unit};
+%             temp_ts{master_idx} = td_all(trial).LeftS1_ts{unit};
         end
         td_all(trial).LeftS1_unit_guide = master_list;
         td_all(trial).LeftS1_spikes = temp_spikes;
-        td_all(trial).LeftS1_ts = temp_ts;
+%         td_all(trial).LeftS1_ts = temp_ts;
     end
+    
 %% separate out trials with results and go cue's
     [~, td_reward] = getTDidx(td_all, 'result', 'r');
     td_reward = td_reward(~isnan([td_reward.idx_goCueTime]));
@@ -79,12 +83,14 @@
     params.which_field = 'acc'; % peak acceleration
     params.field_idx = 1;
     params.start_idx_offset = 10;
-    params.max_rt_offset = 40;
-%     params.threshold_mult = 0.4; % chosen so that bumps match with tactile reported in (Godlove, 2014). Probably shouldn't change
     params.be_aggressive = 1;
-    params.threshold_mult = 2.5;
-    params.min_s = 10;
-    params.pre_move_thresh = 50;
+    params.threshold_mult = 1.5;
+    params.threshold_acc = 35; % absolute threshold on acceleration, using this instead of threshold_mult
+    params.min_s = 1;
+    params.pre_move_thresh = 10;
+    
+    params.use_emg = 0;
+    params.emg_idx = 13;
     
     td_reward = getMoveOnset(td_reward,params);
     
@@ -95,15 +101,18 @@
         td_all_idx = find([td_all.trial_id] == td_reward(td_reward_idx).trial_id);
         td_all_rt(td_all_idx).idx_movement_on = td_reward(td_reward_idx).idx_movement_on;
     end
+    
+    
 %% plot a set of reaches aligned to go cue with reaction time markers
 
-    opts.MAX_PLOT = 10;
+    opts.MAX_PLOT = 60;
     opts.WHICH_FIELD ='acc';
-    opts.WHICH_IDX = [1];
-    opts.BUMP_MAGS = [1];
-    opts.YLIM = [];
+    opts.WHICH_IDX = [2];
+    opts.BUMP_MAGS = [];
     opts.STIM_CODES = [];
-
+    opts.KEEP_ONLY_VISUAL_TRIALS = 0;
+    opts.YLIM = [];
+    opts.COLOR = 'k';%getColorFromList(1,1);
     opts.RANDOM = 1;
     
     plotReachesTD(td_reward,opts);
@@ -115,25 +124,29 @@
 
     td_reward_rt = td_reward(~isnan([td_reward.idx_movement_on]));
     opts.FOLDER_PATH = inputData.folderpath;
-    opts.FIGURE_PREFIX = 'Han_20180809'; % no _ required
+    opts.FIGURE_PREFIX = 'Han_20181108'; % no _ required
     
     opts.BUMP_MAGS = [];
     opts.STIM_CODES = [];
-%     opts.STIM_PARAMS = [10,20,30,40,50,60,70,80,90,100];
-%     opts.STIM_LABEL = 'Amplitude (\muA)';
-%     opts.STIM_PARAMS = [50,100,150,200,250,300,350,400,450,500];
+    opts.STIM_PARAMS = [];
+    opts.STIM_LABEL = 'Amplitude (\muA)';
+%     opts.STIM_PARAMS = [5:5:35];
+%     opts.STIM_X_LABEL = {'3','6','9','12','15','30','0'};
+%     opts.STIM_PARAMS = [5:5:35];
 %     opts.STIM_LABEL = 'Frequency (Hz)';
+%     opts.STIM_PARAMS = [50:50:500];
 %     opts.STIM_PARAMS = [25,50,75,100,125,150,200,250,300];
 %     opts.STIM_LABEL = 'Train length (ms)';
-    opts.STIM_PARAMS = [1,2,3,4,5,6,7,8,9,10,11,12];
-    opts.STIM_X_LABEL = {'1','2','3','4','5','6','7','8','9','10','11','12'};
+    opts.STIM_PARAMS = [4,4,4,6,6,6,8,8,8,12,12,12,24,24,24] + repmat([-0.4,0,0.4],1,5);
+    opts.STIM_X_LABEL = {'1','2','3','4','5','6','7','8','9','10','11','12','13','14','15'};
+    opts.STIM_COLOR_IDX = [2,0,1,2,0,1,2,0,1,2,0,1,2,0,1,2,0,1,2,0,1];
 
 %     opts.STIM_LABEL = 'Bump Mag';
     opts.FIT = 0;
     opts.PLOT_BUMP = 0;
     opts.PLOT_STIM = 1;
     
-    opts.LINE_WIDTH = 2;
+    opts.LINE_WIDTH = 1.5;
     [data,plots] = plotReactionTimeDataTD(td_reward_rt,td_all_rt,opts);
 
     data.opts = opts;
@@ -143,19 +156,19 @@
     data.cueInfo(isnan([data.cueInfo.percent_respond])) = [];
     [~,max_bump_idx] = max([data.cueInfo.bumpMag]);
 %     [~,max_stim_idx] = max([data.cueInfo.stimCode]);
-    
+%     max_bump_idx = 16;
     max_stim_idx = 1;
     rt_stim = data.cueInfo(max_stim_idx).rt;
     rt_bump = data.cueInfo(max_bump_idx).rt;
     
-    tail = 'both';
-    if(mean(rt_stim) > mean(rt_bump))
-        tail = 'right';
-    else
-        tail = 'left';
-    end
+    tail = 'left';
+%     if(mean(rt_stim) > mean(rt_bump))
+%         tail = 'right';
+%     else
+%         tail = 'left';
+%     end
     
-    [h,p,ci,stats] = ttest2(rt_stim,rt_bump,0.95,tail);
+    [h,p,ci,stats] = ttest2(rt_stim,rt_bump,0.95,tail,'unequal');
     p
     
     
@@ -169,6 +182,9 @@
 %% plot reaction time as a function of the average distance between each electrode
 % need to feed in the data matrix, EL_all (list of electrodes),
 % stim_code_all
+
+% some matlab states have a variable named data that overrides the one I
+% want. This causes an error and can be fixed by running code above again
     input_data = [];
     input_data.data = data;
     input_data.td_all = td_all;
@@ -179,7 +195,7 @@
     
     opts.SAVE_FIGURES = 0;
     opts.FOLDER_PATH = inputData.folderpath;
-    opts.FIGURE_PREFIX = 'Han_20180807'; % no _ required
+    opts.FIGURE_PREFIX = 'Han_20180826'; % no _ required
     
     
     [dist_data,plots] = plotElectrodeDistanceRT(input_data,opts);

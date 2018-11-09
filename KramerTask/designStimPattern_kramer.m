@@ -55,7 +55,7 @@
     mean_fr_bump = [];
     mean_fr_baseline = [];
     chan_num = [];
-    for unit = 1:10%size(td_all(1).LeftS1_unit_guide,1)
+    for unit = 1:size(td_all(1).S1_unit_guide,1)
         for bd = 1:numel(bump_dir)
             trial_mask = [td_all.bumpDir] == bump_dir(bd);
             fr_data_bump = [];
@@ -65,49 +65,86 @@
                 window_bump = td_temp(t).idx_bumpTime + [0,12];
                 window_baseline = td_temp(t).idx_bumpTime - [14,2];
 %                 window_baseline = [td_all(t).idx_startTime, td_all(t).idx_bumpTime-2];
-                fr_data_bump(t) = sum(td_temp(t).LeftS1_spikes(window_bump(1):window_bump(2),unit))/(diff(window_bump)*td_temp(t).bin_size);
-                fr_data_baseline(t) = sum(td_temp(t).LeftS1_spikes(window_baseline(1):window_baseline(2),unit))/(diff(window_baseline)*td_temp(t).bin_size);
+                fr_data_bump(t) = sum(td_temp(t).S1_spikes(window_bump(1):window_bump(2),unit))/(diff(window_bump)*td_temp(t).bin_size);
+                fr_data_baseline(t) = sum(td_temp(t).S1_spikes(window_baseline(1):window_baseline(2),unit))/(diff(window_baseline)*td_temp(t).bin_size);
             end
             mean_fr_bump(unit,bd) = mean(fr_data_bump);
             mean_fr_baseline(unit,bd) = mean(fr_data_baseline);
         end
-        chan_num(unit,1) = td_all(1).LeftS1_unit_guide(unit,1);
+        chan_num(unit,1) = td_all(1).S1_unit_guide(unit,1);
 
-        figure()
-        plot(bump_dir,mean_fr_bump(unit,:) - mean(mean_fr_baseline(unit,:),2),'.','markersize',14)
+%         figure()
+%         plot(bump_dir,mean_fr_bump(unit,:) - mean(mean_fr_baseline(unit,:),2),'.','markersize',14)
     end
 
 mean_fr = mean_fr_bump - mean(mean_fr_bump,2);
-
+mean_fr_baseline = mean_fr_baseline - mean(mean_fr_baseline,2);
 %% design stim pattern
 mean_fr_norm = mean_fr;
-mean_fr_norm(mean_fr < 0) = 0;
-mean_fr_norm = mean_fr_norm./max(mean_fr_norm,[],2);
+mean_fr_baseline_norm = mean_fr_baseline;
+% mean_fr_norm(mean_fr < 0) = 0;
+
+% % for i = 1:4
+% %     mask = mean_fr( > 0;
+% %     mean_fr_norm(mask,i) = mean_fr_norm(mask,i)./abs(max(mean_fr(mask,:),[],2));
+% %     mean_fr_norm(~mask,i) = mean_fr_norm(~mask,i)./abs(min(mean_fr(~mask,:),[],2));
+% % end
+mean_fr_norm = mean_fr_norm./max(abs(mean_fr),[],2);
+mean_fr_baseline_norm = mean_fr_baseline_norm./max(abs(mean_fr),[],2);
+
+% mean_fr_norm = mean_fr_norm./max(mean_fr_norm,[],2);
 
 %% plot heatmap of stim pattern
+mean_fr_norm = mean_fr_baseline_norm;
+
 map_filename = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 map_data = loadMapFile(map_filename);
-colors = [(0:1:63)'/63 zeros(64,1) zeros(64,1)];
+numColors = 100;
+color_1 = [153,51,255]/256;
+color_2 = [255,153,51]/256;
+colors_1 = [(0:numColors-1)'/numColors,(0:numColors-1)'/numColors,(0:numColors-1)'/numColors].*color_1;
+colors_2 = [1-(0:numColors-1)'/numColors,1-(0:numColors-1)'/numColors,1-(0:numColors-1)'/numColors].*color_2;
+colors = [colors_2;colors_1];
 
-for bd = 1:size(mean_fr_norm,2)
+for bd = 1%:size(mean_fr_norm,2)
     figure();
-    plot([1,11,11,1,1],[1,1,11,11,1],'k','linewidth',1.5)
     hold on
     for elec = 1:size(chan_num,1)
         map_idx = find(chan_num(elec) == map_data.chan);
-        freq_norm = mean_fr_norm(elec,bd);
-        if(freq_norm > 0)
+        freq_norm = (mean_fr_norm(elec,bd)+1)/2;
+        if(freq_norm >= 0)
             color_idx = max(1,min(size(colors,1),ceil(freq_norm*size(colors,1))));
 
-            rectangle('Position',[map_data.row(map_idx),map_data.col(map_idx),1,1],'FaceColor',colors(color_idx,:), 'EdgeColor',colors(color_idx,:));
+            rectangle('Position',[map_data.row(map_idx),map_data.col(map_idx),1,1],'FaceColor',colors(color_idx,:), 'EdgeColor','none');
             hold on
         end
     end
-    
+    plot([1,11,11,1,1],[1,1,11,11,1],'k','linewidth',1.5)
+
     f=gcf;
     set(gca,'visible','off')
-%     f.Name = ['Han_20180802_BD_heatmap_',num2str(bump_dir(bd))];
-%     saveFiguresLIB(f,input_data.folderpath,f.Name);
+    xlim([1,11])
+    ylim([1,11])
+    axis square
+    
+    b = colorbar;
+    colormap(colors);
+    set(gca,'Visible','off');
+    b.FontSize = 14;
+    b.Ticks = [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0];
+    b.TickDirection = 'out';
+    b.Ticks = [-1,-0.5,0,0.5,1];
+    b.Ticks = [0,0.25,0.5,0.75,1];
+    b.TickLabels = {'-1','','0','','1'};
+    b.Label.String = 'Normalized firing rate';
+    b.Label.FontSize = 16;
+    
+%     f.Name = ['Han_20171030_COactpas_bumpHeatmap_',num2str(bump_dir(bd)),'deg'];
+    f.Name = ['Han_20171030_COactpas_centerHoldHeatmap'];
+    saveFiguresLIB(f,fpath,f.Name);
+
+
+
 end
 
 %% put desired axis into wave_mappings

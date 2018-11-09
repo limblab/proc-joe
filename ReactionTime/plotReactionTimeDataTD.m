@@ -3,10 +3,8 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
     %% configure opts
     opts = configureOpts(opts);
     plots = [];
-    f_means_bump = [];
-    f_all_bump = [];
-    f_all_stim = [];
-    f_means_stim = [];
+    f_bump = [];
+    f_stim = [];
     g_bump = [];
     g_stim = [];
     learn_mdl_bump = [];
@@ -82,7 +80,7 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
     %% remove outliers
         % anything above 1.5 Inter quartile range goes bye bye
     for c = 1:numel(cueInfo)
-        if(cueInfo(c).bumpMag == 0)
+%         if(cueInfo(c).bumpMag == 0)
             Q1 = quantile(cueInfo(c).rt,0.25);
             Q3 = quantile(cueInfo(c).rt,0.75);
             outlier_mask = cueInfo(c).rt < Q1-1.5*(Q3-Q1) | cueInfo(c).rt > Q3+1.5*(Q3-Q1);
@@ -90,23 +88,31 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
             cueInfo(c).td_idx_reward(outlier_mask) = [];
             cueInfo(c).td_idx_all(outlier_mask) = [];
             cueInfo(c).rt(outlier_mask) = [];
-        end
+%         end
     end
         
-    %% find fastest bump data
+    %% find fastest bump data (across bump magnitudes)
     fastest_bump_data.mean = 10000;
     fastest_bump_data.std_err = [];
     
     
     for cueIdx = 1:numel(cueInfo)
         if(cueInfo(cueIdx).bumpMag~=0 && cueInfo(cueIdx).stimCode == -1)
-            if(mean(cueInfo(cueIdx).rt) < fastest_bump_data.mean && numel(cueInfo(cueIdx).rt)>=2)
+            if(mean(cueInfo(cueIdx).rt) < fastest_bump_data.mean && numel(cueInfo(cueIdx).rt)>3)
                 fastest_bump_data.mean = mean(cueInfo(cueIdx).rt);
                 fastest_bump_data.std_err = std(cueInfo(cueIdx).rt)/sqrt(numel(cueInfo(cueIdx).rt));
             end
         end
     end
         
+    %% get visual data (if it exists)
+    visual_data = [];
+    cueInfo_idx = find([cueInfo.bumpMag] == 0 & [cueInfo.stimCode] == -1);
+    if(~isempty(cueInfo_idx) && ~isempty(cueInfo(cueInfo_idx).rt))
+        visual_data.mean = mean(cueInfo(cueInfo_idx).rt);
+        visual_data.std_err = std(cueInfo(cueInfo_idx).rt)/sqrt(numel(cueInfo(cueInfo_idx).rt));
+    end
+    
     %% make a histogram
 %     % get bin counts
 %     bE = opts.MIN_BIN:opts.BIN_SIZE:opts.MAX_BIN;
@@ -156,11 +162,17 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
         plot_data.y = [];
         
         plot_data.bump_data = fastest_bump_data;
+        if(~isempty(visual_data))
+            plot_data.visual_data = visual_data;
+        end
         
+        stim_param_idx = 1;
         for cueIdx = 1:numel(cueInfo)
-            if(cueInfo(cueIdx).stimCode ~= -1 && ~isempty(cueInfo(cueIdx).rt) && cueInfo(cueIdx).bumpMag == 0)
-                plot_data.x = [plot_data.x;ones(numel(cueInfo(cueIdx).rt),1)*opts.STIM_PARAMS(cueInfo(cueIdx).stimCode+1)];
+            if(cueInfo(cueIdx).stimCode ~= -1 && (isempty(opts.STIM_CODES) || ~isempty(find(opts.STIM_CODES == cueInfo(cueIdx).stimCode)))...
+                    && cueInfo(cueIdx).bumpMag == 0)
+                plot_data.x = [plot_data.x;ones(numel(cueInfo(cueIdx).rt),1)*opts.STIM_PARAMS(stim_param_idx)];
                 plot_data.y = [plot_data.y;cueInfo(cueIdx).rt'];
+                stim_param_idx = stim_param_idx + 1;                
             end
         end
         
@@ -196,10 +208,12 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
         plot_data.x = [];
         plot_data.y = [];
         
+        stim_param_idx = 1;
         for cueIdx = 1:numel(cueInfo)
             if(cueInfo(cueIdx).stimCode ~= -1 && cueInfo(cueIdx).bumpMag == 0 && ~isnan(cueInfo(cueIdx).percent_respond))
-                plot_data.x = [plot_data.x;opts.STIM_PARAMS(cueInfo(cueIdx).stimCode+1)];
+                plot_data.x = [plot_data.x;opts.STIM_PARAMS(stim_param_idx)];
                 plot_data.y = [plot_data.y;cueInfo(cueIdx).percent_respond];
+                stim_param_idx = stim_param_idx + 1;
             end
         end
         % call plotting function
@@ -308,23 +322,6 @@ function [fig,fit_out] = plotRTvsCue(plot_data,figure_name,bump_flag,opts)
     mean_y = zeros(size(unique_x_vals));
     std_err_y = zeros(size(unique_x_vals));
     
-    for i = 1:numel(unique_x_vals)
-        plot_data_mask = plot_data.x == unique_x_vals(i);
-        mean_y(i) = mean(plot_data.y(plot_data_mask));
-        std_err_y(i) = std(plot_data.y(plot_data_mask))/sqrt(sum(plot_data_mask));
-        % plot means
-        plot(unique_x_vals(i),mean_y(i),'.','color',opts.COLOR,'markersize',opts.MARKER_SIZE)
-        % plot std error
-        plot(unique_x_vals(i)+[0,0],mean_y(i)+[-1,1]*std_err_y(i),'-','color',opts.COLOR,'linewidth',opts.LINE_WIDTH);
-        % plot horizontal bar on std error line
-        plot(unique_x_vals(i)+opts.HORZ_BAR_LENGTH*[-1,1],mean_y(i)+std_err_y(i)+[0,0],'-','color',opts.COLOR,'linewidth',opts.LINE_WIDTH);
-        plot(unique_x_vals(i)+opts.HORZ_BAR_LENGTH*[-1,1],mean_y(i)-std_err_y(i)+[0,0],'-','color',opts.COLOR,'linewidth',opts.LINE_WIDTH);
-    end
-    
-    % plot all dots
-    scatter(plot_data.x,plot_data.y,opts.MARKER_AREA,'markeredgecolor','none','markerfacecolor',opts.COLOR);
-    alpha(opts.ALPHA);
-    
     % if fit, fit with a decaying exponential
     fit_out = [];
     if(opts.FIT)
@@ -336,22 +333,67 @@ function [fig,fit_out] = plotRTvsCue(plot_data,figure_name,bump_flag,opts)
     end
 
     ax1 = gca;
-    ax1.XLim(1) = 0;
-    ax1.YLim(1) = 0;
-    if(isfield(plot_data,'bump_data') && plot_data.bump_data.mean < 100 && ~bump_flag)
-        fill([ax1.XLim,flip(ax1.XLim)],plot_data.bump_data.mean(1)+plot_data.bump_data.std_err*[-1,-1,1,1],opts.COLOR,'linestyle','none');
-        alpha(opts.ALPHA);
-        plot(ax1.XLim,plot_data.bump_data.mean+[0,0],'-','linewidth',1,'color',opts.COLOR)
 
+    if(isfield(plot_data,'bump_data') && plot_data.bump_data.mean < 100 && ~bump_flag)
+        bump_bar = fill([min(plot_data.x)*0.5,max(plot_data.x)*1.1,max(plot_data.x)*1.1,min(plot_data.x)*0.5],...
+            plot_data.bump_data.mean(1)+plot_data.bump_data.std_err*[-1,-1,1,1],opts.COLOR,'linestyle','none');
+        alpha(opts.ALPHA);
+        plot([min(plot_data.x)*0.5,max(plot_data.x)*1.1],plot_data.bump_data.mean+[0,0],'-','linewidth',1,'color','k');
+        uistack(bump_bar,'bottom');
     end
+    
+    if(isfield(plot_data,'visual_data') && plot_data.visual_data.mean < 100 && ~bump_flag)
+        visual_bar = fill([min(plot_data.x)*0.5,max(plot_data.x)*1.1,max(plot_data.x)*1.1,min(plot_data.x)*0.5],...
+            plot_data.visual_data.mean(1)+plot_data.visual_data.std_err*[-1,-1,1,1],opts.COLOR,'linestyle','none');
+        alpha(opts.ALPHA);
+        plot([min(plot_data.x)*0.5,max(plot_data.x)*1.1],plot_data.visual_data.mean+[0,0],'--','linewidth',1,'color','k');
+        uistack(visual_bar,'bottom');
+    end
+    
+    x_diff = max(unique_x_vals)-min(unique_x_vals);
+    for i = 1:numel(unique_x_vals)
+        if(~isempty(opts.STIM_COLOR_IDX))
+            color = getColorFromList(1,opts.STIM_COLOR_IDX(i));
+        else
+            color = opts.COLOR;
+        end
+        plot_data_mask = plot_data.x == unique_x_vals(i);
+        mean_y(i) = mean(plot_data.y(plot_data_mask));
+        std_err_y(i) = std(plot_data.y(plot_data_mask))/sqrt(sum(plot_data_mask));
+
+        % plot std error
+        errorbar(unique_x_vals(i),mean_y(i),std_err_y(i),...
+            'marker','.','markersize',opts.MARKER_SIZE,...
+            'linewidth',opts.LINE_WIDTH,'color',color);
+%         errorbar_LIB(unique_x_vals(i),mean_y(i),std_err_y(i),...
+%             'marker','.','markersize',opts.MARKER_SIZE,...
+%             'linewidth',opts.LINE_WIDTH,'color',color,'caplength',opts.CAPLENGTH_MULTIPLIER*x_diff);
+            
+        % plot means
+%         plot(unique_x_vals(i),mean_y(i),'.','color',color,'markersize',opts.MARKER_SIZE)
+%         plot(unique_x_vals(i)+[0,0],mean_y(i)+[-1,1]*std_err_y(i),'-','color',opts.COLOR,'linewidth',opts.LINE_WIDTH);
+        % plot horizontal bar on std error line
+%         plot(unique_x_vals(i)+opts.HORZ_BAR_LENGTH*[-1,1],mean_y(i)+std_err_y(i)+[0,0],'-','color',opts.COLOR,'linewidth',opts.LINE_WIDTH);
+%         plot(unique_x_vals(i)+opts.HORZ_BAR_LENGTH*[-1,1],mean_y(i)-std_err_y(i)+[0,0],'-','color',opts.COLOR,'linewidth',opts.LINE_WIDTH);
+
+        % plot all dots
+        plot_data_idx = find(plot_data.x == unique_x_vals(i));
+        scatter(plot_data.x(plot_data_idx),plot_data.y(plot_data_idx),opts.MARKER_AREA,'markeredgecolor','none','markerfacecolor',color);
+        alpha(opts.ALPHA);
+    end
+    
+%     % plot all dots
+%     scatter(plot_data.x,plot_data.y,opts.MARKER_AREA,'markeredgecolor','none','markerfacecolor',opts.COLOR);
+%     alpha(opts.ALPHA);
     
     
     if(bump_flag)
         xlabel('Bump Magnitude (N)');
     else
-        xlabel(opts.STIM_LABEL);
+        xlabel(opts.STIM_LABEL,'Interpreter','tex');
         if(~isempty(opts.STIM_X_LABEL))
-            set(gca,'XTick',opts.STIM_PARAMS,'XTickLabel',opts.STIM_X_LABEL);
+            [~,sort_idx] = sort(opts.STIM_PARAMS);
+            set(gca,'XTick',opts.STIM_PARAMS(sort_idx),'XTickLabel',opts.STIM_X_LABEL(sort_idx));
             set(gca,'XMinorTick','off');
         end
     end
@@ -392,14 +434,14 @@ function [fig, psych_fit] = plotDetectionCurve(plot_data,figure_name,bump_flag,o
     end
 
     ax = gca;
-    ax.XLim(1) = 0;
-    ax.YLim = [0,1];
+
     if(bump_flag)
         xlabel('Bump Magnitude (N)');
     else
         xlabel(opts.STIM_LABEL);
         if(~isempty(opts.STIM_X_LABEL))
-            set(gca,'XTick',opts.STIM_PARAMS,'XTickLabel',opts.STIM_X_LABEL);
+            [~,sort_idx] = sort(opts.STIM_PARAMS);
+            set(gca,'XTick',opts.STIM_PARAMS(sort_idx),'XTickLabel',opts.STIM_X_LABEL(sort_idx));
             set(gca,'XMinorTick','off');
         end
     end
@@ -445,6 +487,9 @@ function [opts] = configureOpts(optsInput)
     
     opts.NUM_SEQUENCE_FAILS = 3;
     opts.STIM_LABEL = 'Stim amp (\muA)';
+    opts.STIM_COLOR_IDX = [];
+    
+    opts.CAPLENGTH_MULTIPLIER = 0.01;
     %% check if in optsSave and optsSaveInput, overwrite if so
     try
         inputFieldNames = fieldnames(optsInput);

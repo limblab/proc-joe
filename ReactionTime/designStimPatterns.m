@@ -2,32 +2,33 @@
 
 
 %% determine filename and input data
-    input_data.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\CObump\';
+    input_data.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\CObump\Duncan_20181031\';
 %     inputData.folderpath = 'D:\Lab\Data\ReactionTime\Han_20180427_training\';
-    input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
-
+%     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+    input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\right S1 20180919\SN 6251-001804.cmp';
+    
     input_data.task='taskCObump';
     input_data.ranBy='ranByJoseph'; 
-    input_data.array1='arrayLeftS1'; 
-    input_data.monkey='monkeyHan';
+    input_data.array1='arrayRightS1'; 
+    input_data.monkey='monkeyDuncan';
     input_data.labnum = 6;
     
     pwd=cd;
     cd(input_data.folderpath)
     fileList = dir('*.nev*');
     cd(pwd)
-    
+
 %% load cds, convert to td, compute PDs for all units, determine if units are well tuned
     cds = commonDataStructure();
     cds.file2cds([input_data.folderpath fileList(1).name],input_data.task,input_data.ranBy,...
-        input_data.monkey,input_data.labnum,input_data.array1,input_data.mapFileName,'recoverPreSync');
+        input_data.monkey,input_data.labnum,input_data.array1,input_data.mapFileName);
     cd(pwd);
     
-%% convert into td
+% convert into td
     params.event_list = {'goCueTime';'tgtDir';'bumpTime';'bumpDir'};
     params.trial_results = {'R'};
+    params.include_ts = 1;
     params.extra_time = [1,2];
-    params.include_ts = 0;
     params.exclude_units = [1:255];
     td_all = parseFileByTrial(cds,params);
     td_all = removeBadTrials(td_all);
@@ -35,11 +36,110 @@
     td_all = removeBadTrials(td_all);
     [td_all] = removeBadNeurons(td_all,params);
     
+%% plot raster for each unit and reach direction
+    array_name = 'RightS1';
+    spike_list = [array_name,'_ts'];
+    tgt_dir = [0,90,180,270];%unique([td_all.tgtDir]);
+    tgt_dir = tgt_dir(~isnan(tgt_dir));
+    bump_dir = [0,90,180,270];%unique(round([td_all.bumpDir]));
+    bump_dir = bump_dir(~isnan(bump_dir));
+    
+    for unit = 1:96%numel(td_all(1).(spike_list))
+        f=figure();
+        f.Name = ['Ducnan_CObump_20181031_chan', num2str(unit)];
+        
+        f.Position = [417.8000 104.2000 710.4000 656.8000];
+        subplot(2,1,1)
+        counter = 1;
+        for tgt_idx = 1:numel(tgt_dir)
+            trial_list = find(round([td_all.tgtDir]) == tgt_dir(tgt_idx));
+            for trial_idx = trial_list
+                spike_times = td_all(trial_idx).(spike_list){unit};
+%                 spike_times(spike_times < 0 | spike_times > (td_all(trial_idx).idx_endTime-td_all(trial_idx).idx_startTime)*td_all(trial_idx).bin_size) = [];
+                spike_times = spike_times - (td_all(trial_idx).idx_movement_on - td_all(trial_idx).idx_startTime)*td_all(trial_idx).bin_size;
+                plot(spike_times,counter+zeros(size(spike_times)),'k.','markersize',4)
+                hold on
+                counter = counter+1;
+            end
+            
+            plot([-10,10],[counter,counter]-0.5,'r--')
+            
+        end
+        xlim([-2,2])
+        ylim([0,counter])
+        xlabel('Time after movement onset (s)');
+        ylabel('Trial number');
+        
+        subplot(2,1,2)
+        counter = 1;
+        for bump_idx = 1:numel(bump_dir)
+            trial_list = find(round([td_all.bumpDir]) == bump_dir(bump_idx));
+            for trial_idx = trial_list
+                spike_times = td_all(trial_idx).(spike_list){unit};
+                spike_times = spike_times - (td_all(trial_idx).idx_bumpTime - td_all(trial_idx).idx_startTime)*td_all(trial_idx).bin_size;
+                plot(spike_times,counter+zeros(size(spike_times)),'k.','markersize',4)
+                hold on
+                counter = counter+1;
+            end
+            
+            plot([-10,10],[counter,counter]-0.5,'r--')
+            
+        end
+        xlim([-2,2])
+        ylim([0,counter])
+        xlabel('Time after bump onset (s)');
+        ylabel('Trial number');
+        
+        
+        saveFiguresLIB(f,input_data.folderpath,f.Name);
+    end
+%% plot histograms instead
+    array_name = 'RightS1';
+    spike_list = [array_name,'_spikes'];
+    tgt_dir = [0,90,180,270];%unique([td_all.tgtDir]);
+    tgt_dir = tgt_dir(~isnan(tgt_dir));
+    bump_dir = [0,90,180,270];%unique([td_all.bumpDir]);
+    bump_dir = bump_dir(~isnan(bump_dir));
+    
+    for unit = 1:96%size(td_all(1).(spike_list),2)
+        f=figure();
+        subplot(2,1,1)
+        for tgt_idx = 1:numel(tgt_dir)
+            trial_list = find(round([td_all.tgtDir]) == tgt_dir(tgt_idx));
+            spike_binned = 0;
+            for trial_idx = trial_list
+                window = [td_all(trial_idx).idx_movement_on - 50,td_all(trial_idx).idx_movement_on + 149];
+                spike_binned = spike_binned + td_all(trial_idx).(spike_list)(window(1):window(2),unit);
+            end
+            spike_binned = sum(reshape(spike_binned,5,numel(spike_binned)/5))/0.05;
+            x_data = ((1:numel(spike_binned))-50/5)/100*5;
+            plot(x_data,spike_binned/numel(trial_list))
+            hold on
+        end
+        xlim([-0.5,2.])
+        
+    	subplot(2,1,2)
+        for bump_idx = 1:numel(bump_dir)
+            trial_list = find(round([td_all.bumpDir]) == tgt_dir(bump_idx));
+            spike_binned = 0;
+            for trial_idx = trial_list
+                window = [td_all(trial_idx).idx_bumpTime - 50,td_all(trial_idx).idx_bumpTime + 149];
+                spike_binned = spike_binned + td_all(trial_idx).(spike_list)(window(1):window(2),unit);
+            end
+            spike_binned = sum(reshape(spike_binned,5,numel(spike_binned)/5))/(0.05);
+            x_data = ((1:numel(spike_binned))-50/5)/100*5;
+            plot(x_data,spike_binned/numel(trial_list))
+            hold on
+        end
+        xlim([-0.5,2.])
+    end
+    
+
 %% compute PD for all units
     params = [];
-    params.array = 'LeftS1';
-    params.window = {'idx_bumpTime',0;'idx_bumpTime',12};
-    params.covariate = 'bumpDir';
+    params.array = 'RightS1';
+    params.window = {'idx_movement_on',0;'idx_movement_on',20};
+    params.covariate = 'target';
     clear tcs
     [tcs,confBounds,fr,covar] = getNeuronTuning(td_all,'regress',params);
     % tcs = mean, modulation depth, pd (b0 + b1*cos(x-b2))
@@ -60,7 +160,7 @@
     input_data.pd_elec = pd_elec;
     input_data.dir_model = dir_model;
     input_data.dir_model_all = input_data.dir_model;
-    input_data.chan_list = td_all(1).LeftS1_unit_guide(:,1);
+    input_data.chan_list = td_all(1).([array_name,'_unit_guide'])(:,1);
 %     input_data = rmfield(input_data,'freq_all_norm');
     
     pattern = {};
@@ -239,6 +339,12 @@
     
     
     
+%% open NEV, remove unit labels, save NEV
+for f = 1%:numel(fileList)
+    NEV = openNEV([input_data.folderpath,fileList(f).name],'nosave');
+    NEV.Data.Spikes.Unit(NEV.Data.Spikes.Unit < 255) = 0;
+    saveNEV(NEV, [input_data.folderpath,fileList(f).name],'noreport');
+end
     
     
     

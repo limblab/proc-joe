@@ -1,30 +1,36 @@
 %% define a population of exponential decreasing curves 
 % RT = a*exp(-b*I)+c
-    a_bounds = [0.1,0.25];
-    b_bounds = [0.01,0.05];
-    c_bounds = [0.15,0.17];
-    std_bounds = [0.005,0.05];
-    num_chans = 1000;
+    a_bounds = [0.125,0.175];
+    b_bounds = [0.005,0.01];
+    c_bounds = [0.13,0.18];
+    std_bounds = [0.001,0.005];
+    num_chans = 100;
 
     a_all = rand(num_chans,1)*(diff(a_bounds)) + a_bounds(1);
     b_all = rand(num_chans,1)*(diff(b_bounds)) + b_bounds(1);
     c_all = rand(num_chans,1)*(diff(c_bounds)) + c_bounds(1);
     std_all = rand(num_chans,1)*diff(std_bounds) + std_bounds(1);
 
-%% plot example RT vs amp curves
+% plot example RT vs amp curves
     figure();
-    I_data = 1:1:100;
+    I_data = 1:1:200;
     RT_all = a_all.*exp(-b_all.*I_data)+c_all;
-
+    subplot(2,1,1)
     plot(I_data,RT_all')
+    
+% plot histogram of RT at 100uA
+    subplot(2,1,2)
+    I_idx = find(I_data == 100);
+    histogram(RT_all(:,I_idx));
+
 %% run my linear summation experiment
 % sample N electrodes, compute RT based on the race model (sample each
 % distribution, pick fastest). Store. Do this for different charges on each
 % electrode and for different number of electrodes
 
-    num_elecs = [1:24];
-    total_charge = [240:120:600];
-    num_runs_per_condition = 10000;
+    num_elecs = [1:48];
+    total_charge = [240:120:480,1000,10000];
+    num_runs_per_condition = 1000;
 
     RT_out = zeros(numel(num_elecs),numel(total_charge),num_runs_per_condition);
     for e = 1:numel(num_elecs)
@@ -51,7 +57,8 @@
 % plot RT_out data
     mean_RT = mean(RT_out,3);
     std_err_RT = std(RT_out,[],3)/sqrt(num_runs_per_condition);
-    colors = [228,26,28;55,126,184;77,175,74;152,78,163;255,127,0;255,255,51;166,86,40;247,129,191;153,153,153]/255;
+    colors = [getColorFromList(1,2);getColorFromList(1,0);getColorFromList(1,1);...
+        getColorFromList(1,3);getColorFromList(1,4)];
     
     f=figure();
     hold on;

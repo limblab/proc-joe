@@ -22,6 +22,9 @@ if exist(strcat(targetDirectory,['Raw_Figures' filesep 'PNG']),'file')~=7
     mkdir(strcat(targetDirectory,['Raw_Figures' filesep 'PNG']))
 end
 
+% set(gcf, 'Renderer', 'opengl') % remove grids for contourf and the dashed line in colorbar when saving pdf/eps. in matlab2016a.
+set(gcf,'renderer','painters')
+
 % print all file types
 filename(filename==' ')='_';%replace spaces in name for saving
 print('-deps',figHandle,strcat(targetDirectory,['Raw_Figures' filesep 'EPS' filesep],filename,'.eps'))

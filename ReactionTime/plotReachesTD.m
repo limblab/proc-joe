@@ -6,6 +6,8 @@ function [reachPlot] = plotReachesTD(td,opts)
     %% extract td idxs for the plot
     if(~isempty(opts.BUMP_MAGS) && ~isempty(opts.STIM_CODES))
         td = td(isEqual([td.bumpMagnitude],opts.BUMP_MAGS) | isEqual([td.stimCode],opts.STIM_CODES));
+    elseif(opts.KEEP_ONLY_VISUAL_TRIALS)
+        td = td([td.isVisualTrial] == 1);
     elseif(~isempty(opts.BUMP_MAGS))
         td = td(isEqual([td.bumpMagnitude],opts.BUMP_MAGS));
     elseif(~isempty(opts.STIM_CODES))
@@ -16,7 +18,7 @@ function [reachPlot] = plotReachesTD(td,opts)
     if(opts.RANDOM)
         td_reachPlot = datasample(td,min(numel(td),opts.MAX_PLOT),'replace',false);
     else
-        td_reachPlot = td(10:10+min(numel(td),opts.MAX_PLOT));
+        td_reachPlot = td(3:3-1+min(numel(td),opts.MAX_PLOT));
     end
 %     td_reachPlot = td(1:opts.MAX_PLOT);
     %% plot reaches with movement onset label
@@ -24,9 +26,9 @@ function [reachPlot] = plotReachesTD(td,opts)
     for i = 1:numel(opts.WHICH_IDX)
         subplot(numel(opts.WHICH_IDX),1,i);
         for r = 1:numel(td_reachPlot)
-            t = ((1:size(td_reachPlot(r).pos,1)))*td_reachPlot(r).bin_size - td_reachPlot(r).goCueTime + td_reachPlot(r).bin_size; % handle off by 1 error
+            t = ((1:size(td_reachPlot(r).pos,1)))*td_reachPlot(r).bin_size - td_reachPlot(r).goCueTime + 2*td_reachPlot(r).bin_size; % handle off by 1 error
 
-            plot(t,td_reachPlot(r).(opts.WHICH_FIELD)(:,opts.WHICH_IDX(i)),'k','linewidth',opts.LINE_WIDTH)
+            plot(t,td_reachPlot(r).(opts.WHICH_FIELD)(:,opts.WHICH_IDX(i)),'linewidth',opts.LINE_WIDTH,'color',opts.COLOR)
 
             % plot a dot for the reaction time
             hold on
@@ -62,8 +64,10 @@ function [opts] = configureOpts(optsInput)
     
     opts.BUMP_MAGS = [];
     opts.STIM_CODES = [];
+    opts.KEEP_ONLY_VISUAL_TRIALS = 0;
     
     opts.RANDOM = 1;
+    opts.COLOR = 'k';
     %% check if in optsSave and optsSaveInput, overwrite if so
     try
         inputFieldnames = fieldnames(optsInput);
