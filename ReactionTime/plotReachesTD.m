@@ -27,12 +27,13 @@ function [reachPlot] = plotReachesTD(td,opts)
         subplot(numel(opts.WHICH_IDX),1,i);
         for r = 1:numel(td_reachPlot)
             t = ((1:size(td_reachPlot(r).pos,1)))*td_reachPlot(r).bin_size - td_reachPlot(r).goCueTime + 2*td_reachPlot(r).bin_size; % handle off by 1 error
-
-            plot(t,td_reachPlot(r).(opts.WHICH_FIELD)(:,opts.WHICH_IDX(i)),'linewidth',opts.LINE_WIDTH,'color',opts.COLOR)
+            s = sum(td_reachPlot(r).(opts.WHICH_FIELD)(:,:).*[cos(opts.DIR*pi/180),sin(opts.DIR*pi/180)],2)';
+            
+            plot(t,s,'linewidth',opts.LINE_WIDTH,'color',opts.COLOR)
 
             % plot a dot for the reaction time
             hold on
-            plot(t(td_reachPlot(r).idx_movement_on),td_reachPlot(r).(opts.WHICH_FIELD)(td_reachPlot(r).idx_movement_on,opts.WHICH_IDX(i)),'r.','markersize',opts.MARKER_SIZE);
+            plot(t(td_reachPlot(r).idx_movement_on),s(td_reachPlot(r).idx_movement_on),'r.','markersize',opts.MARKER_SIZE);
         end
         if(~isempty(opts.XLIM))
             xlim(opts.XLIM);
@@ -50,6 +51,8 @@ end
 function [opts] = configureOpts(optsInput)
 
     opts = [];
+    
+    opts.DIR = 0;
     
     opts.XLIM = [-0.2,0.5];
     opts.YLIM = [];

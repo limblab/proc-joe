@@ -13,9 +13,13 @@ function [figureHandle] = plotRasterStim(unitData,NEURON_NUMBER,optsPlot)
     for chan = 1:NUM_CHANS
         for wave = 1:NUM_WAVEFORM_TYPES
             
-            xData = unitData.spikeTrialTimes{chan,wave}*1000;
-            yData = unitData.stimData{chan,wave};
-
+            if(opts.PLOT_AFTER_STIMULATION_END)
+                xData = unitData.spikeTrialTimes{chan,wave}*1000 - opts.STIMULATION_LENGTH;
+                yData = unitData.stimData{chan,wave};
+            else
+                xData = unitData.spikeTrialTimes{chan,wave}*1000;
+                yData = unitData.stimData{chan,wave};
+            end
             if(strcmpi(opts.SORT_DATA,'velocity')) % handle the sort
                 vx = unitData.kin{chan,wave}.vx;
                 vy = unitData.kin{chan,wave}.vy;
@@ -37,16 +41,19 @@ function [figureHandle] = plotRasterStim(unitData,NEURON_NUMBER,optsPlot)
             optsPlot.Y_LIMITS = [-3,unitData.numStims(chan,wave)+1];
             if(~opts.MAKE_SUBPLOTS || wave == NUM_WAVEFORM_TYPES)
                 optsPlot.X_LABEL = 'Time after stimulation onset (ms)';
+            elseif(opts.PLOT_AFTER_STIMULATION_END)
+                optsPlot.X_LABEL = 'Time after stimulation offset (ms)';
             else
                 optsPlot.X_LABEL = '';
             end
+            
             optsPlot.Y_LABEL = 'Stimuli';
             % deals with title requests
             if(opts.PLOT_TITLE)
                 if(strcmp(opts.TITLE_TO_PLOT,'') == 0)
                     optsPlot.TITLE = titleToPlot;
                 else
-                    optsPlot.TITLE = strcat('Stim Chan: ',num2str(CHAN_LIST(chan)),' Wave: ',num2str(wave));
+                    optsPlot.TITLE = strcat('Stim Chan: ',num2str(CHAN_LIST{chan}),' Wave: ',num2str(wave));
                 end
             end
             optsPlot.Y_TICK = [0;max(unitData.numStims(chan,wave))];
@@ -111,6 +118,8 @@ function [opts] = configureOpts(optsInput)
     opts.PRE_TIME = 5/1000;
     opts.POST_TIME = 30/1000;
     
+    opts.PLOT_AFTER_STIMULATION_END = 0;
+    opts.STIMULATION_LENGTH = 0;
     %% check if in optsSave and optsSaveInput, overwrite if so
     try
         inputFieldnames = fieldnames(optsInput);

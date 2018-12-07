@@ -1,10 +1,10 @@
 %% define a population of exponential decreasing curves 
 % RT = a*exp(-b*I)+c
-    a_bounds = [0.125,0.175];
-    b_bounds = [0.005,0.01];
+    a_bounds = [0.1,0.15];
+    b_bounds = [0.1,0.15];
     c_bounds = [0.13,0.18];
     std_bounds = [0.001,0.005];
-    num_chans = 100;
+    num_chans = 50;
 
     a_all = rand(num_chans,1)*(diff(a_bounds)) + a_bounds(1);
     b_all = rand(num_chans,1)*(diff(b_bounds)) + b_bounds(1);
@@ -23,13 +23,13 @@
     I_idx = find(I_data == 100);
     histogram(RT_all(:,I_idx));
 
-%% run my linear summation experiment
+% run my linear summation experiment
 % sample N electrodes, compute RT based on the race model (sample each
 % distribution, pick fastest). Store. Do this for different charges on each
 % electrode and for different number of electrodes
 
-    num_elecs = [1:48];
-    total_charge = [240:120:480,1000,10000];
+    num_elecs = [1:36];
+    total_charge = [240:120:600];
     num_runs_per_condition = 1000;
 
     RT_out = zeros(numel(num_elecs),numel(total_charge),num_runs_per_condition);

@@ -35,7 +35,7 @@ min_s        =  0.3;
 s_thresh      =  7;
 peak_idx_offset = [0,100];
 start_idx_offset = 0;
-max_rt_offset = 1000;
+max_rt_offset = 40;
 which_field = 'speed';
 field_idx = 1;
 threshold_mult = 0.5;
@@ -64,7 +64,7 @@ if(be_aggressive) % find a threshold based on all trials
     for trial = 1:length(trial_data)
         if(isfield(td(trial),'tgtDir'))
             % project (which_field) onto the target axis
-            s_all = [s_all;sum(td(trial).(which_field)(td(trial).idx_tgtOnTime+35:td(trial).(start_idx),:)*[cos(td(trial).tgtDir);sin(td(trial).tgtDir)],2)];
+            s_all = [s_all;sum(td(trial).(which_field)(td(trial).idx_tgtOnTime+35:td(trial).(start_idx),:)*[cos(td(trial).tgtDir*pi/180);sin(td(trial).tgtDir*pi/180)],2)];
         else
             s_all = [s_all;td(trial).(which_field)(td(trial).idx_tgtOnTime+35:td(trial).(start_idx),1)];
         end
@@ -113,9 +113,11 @@ for trial = 1:length(trial_data)
         ds = [0; diff(s)];
         peaks = [ds(1:end-1)>0 & ds(2:end)<0; 0];
         mvt_peaks = find(peaks & (1:length(peaks))' > td(trial).(start_idx)+peak_idx_offset(1) & (1:length(peaks))' < td(trial).(start_idx)+peak_idx_offset(2) & s > min_s & move_inds);
-        [~,mvt_peak] = max(s(mvt_peaks));
-        mvt_peak = mvt_peaks(mvt_peak);
-        if ~isempty(mvt_peak)
+
+        if ~isempty(mvt_peaks)
+            [~,mvt_peak] = max(s(mvt_peaks));
+%             mvt_peak = 1;
+            mvt_peak = mvt_peaks(mvt_peak);
             if(threshold_acc > 0)
                 thresh = threshold_acc;
             elseif(~be_aggressive)
@@ -130,6 +132,9 @@ for trial = 1:length(trial_data)
                 % something is fishy. Fall back on threshold method
                 on_idx = NaN;
             end
+        end
+        if(isempty(mvt_peaks))
+           disp('ugh'); 
         end
         % peak is max velocity during movement
         temp = s; temp(~move_inds) = 0;

@@ -79,7 +79,7 @@ function [figureHandle] = plotPSTHStim(unitData,NEURON_NUMBER,optsPlot)
                 elseif(opts.PLOT_ALL_ONE_FIGURE)
                     % no title
                 else
-                    optsPlot.TITLE = strcat('Stim Chan: ',num2str(CHAN_LIST(chan)),' Wave: ',num2str(wave));
+                    optsPlot.TITLE = strcat('Stim Chan: ',num2str(CHAN_LIST{chan}),' Wave: ',num2str(wave));
                 end
             end
 
@@ -91,14 +91,14 @@ function [figureHandle] = plotPSTHStim(unitData,NEURON_NUMBER,optsPlot)
             if(~opts.MAKE_SUBPLOTS && opts.FIGURE_SAVE && opts.PLOT_ALL_ONE_FIGURE)
                 optsSave.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'nn',num2str(NEURON_NUMBER),'_chan',num2str(unitData.CHAN_REC),'_ALL_PSTH');
             elseif(~opts.MAKE_SUBPLOTS && opts.FIGURE_SAVE)
-                optsSave.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'nn',num2str(NEURON_NUMBER),'_chan',num2str(unitData.CHAN_REC),'_stimChan',num2str(unitData.CHAN_LIST(chan)),'_waveNum',num2str(wave),'_PSTH');
+                optsSave.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'nn',num2str(NEURON_NUMBER),'_chan',num2str(unitData.CHAN_REC),'_stimChan',num2str(unitData.CHAN_LIST{chan}),'_waveNum',num2str(wave),'_PSTH');
             end
             
             optsPlot.PLOT_NO_RECORDING_BOX = opts.PLOT_NO_RECORDING_BOX;
             optsPlot.NO_RECORDING_WINDOW = opts.NO_RECORDING_WINDOW;
             optsPlot.NO_RECORDING_BOX_COLOR = opts.NO_RECORDING_BOX_COLOR;
             
-            figureHandle{chan,wave} = plotPSTHLib(xData,yData,optsPlot,optsSave);
+            figureHandle{chan,wave} = plotPSTHLIB(xData,yData,optsPlot,optsSave);
 
 
         end
@@ -123,7 +123,7 @@ function [opts] = configureOpts(optsInput)
     opts.SMOOTH_STD_DEV = 1;
     
     opts.PLOT_LINE = 0;
-    opts.LINE_COLOR = {'k','r',[0,0.5,0],'b','m',[0.5 0.5 0.5]};
+    opts.LINE_COLOR = {getColorFromList(1,1),getColorFromList(1,2),getColorFromList(1,3),getColorFromList(1,4),getColorFromList(1,5),getColorFromList(1,6)};
     opts.PLOT_NO_RECORDING_BOX = 0;
     opts.NO_RECORDING_WINDOW = [0,1.0/1000];
     opts.NO_RECORDING_BOX_COLOR = [1.0,0.6,0.6];

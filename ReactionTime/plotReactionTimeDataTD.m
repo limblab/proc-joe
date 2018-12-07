@@ -80,7 +80,7 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
     %% remove outliers
         % anything above 1.5 Inter quartile range goes bye bye
     for c = 1:numel(cueInfo)
-%         if(cueInfo(c).bumpMag == 0)
+        if(cueInfo(c).bumpMag == 0)
             Q1 = quantile(cueInfo(c).rt,0.25);
             Q3 = quantile(cueInfo(c).rt,0.75);
             outlier_mask = cueInfo(c).rt < Q1-1.5*(Q3-Q1) | cueInfo(c).rt > Q3+1.5*(Q3-Q1);
@@ -88,7 +88,7 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
             cueInfo(c).td_idx_reward(outlier_mask) = [];
             cueInfo(c).td_idx_all(outlier_mask) = [];
             cueInfo(c).rt(outlier_mask) = [];
-%         end
+        end
     end
         
     %% find fastest bump data (across bump magnitudes)
@@ -141,6 +141,10 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
         % extract data
         plot_data.x = [];
         plot_data.y = [];
+        
+        if(~isempty(visual_data))
+            plot_data.visual_data = visual_data;
+        end
         
         for cueIdx = 1:numel(cueInfo)
             if(cueInfo(cueIdx).bumpMag ~= 0 && ~isempty(cueInfo(cueIdx).rt))

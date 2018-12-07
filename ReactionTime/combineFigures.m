@@ -1,13 +1,13 @@
 % port data over to a new figure
-fig_keep = figure(1);
+fig_keep = figure(2);
 ax_keep = gca;
 hold on
 %
-fig_move = figure(2); % data from this figure will move to the other figure
+fig_move = figure(1); % data from this figure will move to the other figure
 
-color_move = getColorFromList(1,3); % color of data moved to other figure
+color_move = getColorFromList(1,1); % color of data moved to other figure
 % color_move = 'k';
-offset = [0]; % shifts the x_data this much
+offset = [1]; % shifts the x_data this much
 
 line_move = findobj(fig_move,'type','line');
 scatter_move = findobj(fig_move,'type','scatter');
@@ -61,14 +61,14 @@ ax.XAxis.MinorTickValues = [25:25:150,250];
 
 
 %% recolor a plot
-fig_idx = 1;
-color_move = getColorFromList(1,4);
+fig_idx = 2;
+color_move = getColorFromList(1,0);
 line_move = findobj(fig_idx,'type','line');
 scatter_move = findobj(fig_idx,'type','scatter');
 errorbar_move = findobj(fig_idx,'type','errorbar');
 patch_move = findobj(fig_idx,'type','patch');
 
-offset = -0;
+offset = 0;
 
 for s = 1:numel(scatter_move)
     new_handle = scatter_move(s);
