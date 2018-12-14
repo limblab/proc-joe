@@ -16,6 +16,9 @@ function [figureHandle] = plotPSTHStim(unitData,NEURON_NUMBER,optsPlot)
     if(opts.PLOT_ALL_ONE_FIGURE)
         NUM_CHANS_PLOT = 1;
         NUM_WAVEFORM_TYPES_PLOT = 1;
+    elseif(opts.PLOT_ALL_WAVES_ONE_FIGURE)
+        NUM_CHANS_PLOT = NUM_CHANS;
+        NUM_WAVEFORM_TYPES_PLOT = 1;
     else
         NUM_CHANS_PLOT = NUM_CHANS;
         NUM_WAVEFORM_TYPES_PLOT = NUM_WAVEFORM_TYPES;
@@ -39,6 +42,17 @@ function [figureHandle] = plotPSTHStim(unitData,NEURON_NUMBER,optsPlot)
                         xData(:,end+1) = xDataTemp;
                         yData(:,end+1) = yDataTemp;
                     end
+                end
+            elseif(opts.PLOT_ALL_WAVES_ONE_FIGURE)
+                optsPlot.NUM_PLOTS = NUM_WAVEFORM_TYPES;
+                for waveTemp = 1:NUM_WAVEFORM_TYPES
+                    bEtemp = unitData.bE{chan,waveTemp};
+                    xDataTemp = bEtemp(1:end-1)+(bEtemp(2)-bEtemp(1))/2;
+                    xDataTemp = xDataTemp';
+                    yDataTemp = unitData.bC{chan,waveTemp};
+                    yDataTemp = yDataTemp';
+                    xData(:,end+1) = xDataTemp;
+                    yData(:,end+1) = yDataTemp;
                 end
             else
                 optsPlot.NUM_PLOTS = 1;
@@ -115,6 +129,7 @@ end
 function [opts] = configureOpts(optsInput)
 
     opts.PLOT_ALL_ONE_FIGURE = 0;
+    opts.PLOT_ALL_WAVES_ONE_FIGURE = 0;
     
     opts.PLOT_TITLE = 1;
     opts.TITLE_TO_PLOT = '';

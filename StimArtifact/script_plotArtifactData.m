@@ -2,9 +2,9 @@
 % from outputData files through StimRecProcessing scripts
 % also need inputData
 
-    waveSent = 3;
-    chanSent = 36;
-    chanRec = 36;
+    waveSent = 2;
+    chanSent = [75,76];
+    chanRec = 70;
     
     artifactData = outputData.artifactData;
     waveforms = outputData.waveforms;
@@ -16,11 +16,13 @@
         waveforms.parameters(waveSent).pWidth1/1000 - waveforms.parameters(waveSent).pWidth2/1000 - 53/1000;
 
  %% plot artifact and filtered artifact
+    num_plot = 20;
  
     % plot raw artifact
     figure()
     subplot(2,1,1)
-    plot(x_data,squeeze(artifactData.artifact(artifact_idx(1:10:end),chanRec,:))')
+    [~,idx_use] = datasample(artifact_idx,min(num_plot,numel(artifact_idx)),'Replace',false);
+    plot(x_data,squeeze(artifactData.artifact(idx_use,chanRec,:))')
     xlim([-0.3,3]);
     formatForLee(gcf)
     ylabel('Voltage (\muV)');
@@ -28,9 +30,9 @@
     
     % plot artifact after acausal filtering
     subplot(2,1,2)
-    plot(x_data,acausalFilter(squeeze(artifactData.artifact(artifact_idx(1:10:end),chanRec,:))'))
+    plot(x_data,acausalFilter(squeeze(artifactData.artifact(idx_use,chanRec,:))'))
     xlim([-0.3,3]);
-    ylim([-1000,1000])
+    ylim([-500,500])
     formatForLee(gcf)
     xlabel('Time after stimulation offset (ms)');
     ylabel('Voltage (\muV)');
@@ -43,7 +45,7 @@
     mean_latency = 0.5; % ms
     std_latency = 0.2; % ms
     percent_with_spikes = 0.5; % percentage of artifacts with spikes
-    base_artifact_idx = 1;
+    base_artifact_idx = 50;
     
     % get pretty single artifact example
     base_artifact = squeeze(artifactData.artifact(artifact_idx(base_artifact_idx),chanRec,:));

@@ -1,6 +1,6 @@
 %% set file names 
 
-inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\StimRecData\Duncan\Duncan_20181203_multiElec\list2\';
+inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\StimRecData\Duncan\Duncan_20181212_multiElec\';
 % inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 % inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
 inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\right S1 20180919\SN 6251-001804.cmp';
@@ -34,7 +34,7 @@ optsExtract.CHAN_LIST = [];
 optsExtract.PRE_TIME = 30/1000; % made negative in the function
 optsExtract.POST_TIME = 200/1000;
 
-optsExtract.BIN_SIZE = 1/1000;
+optsExtract.BIN_SIZE = 10/1000;
 optsExtract.TIME_AFTER_STIMULATION_WAVEFORMS = 10/1000;
 optsExtract.USE_ANALOG_FOR_STIM_TIMES = 1; % this uses the analog sync line to get stim times, not sure why you would want to do anything else
 optsExtract.GET_KIN = 0;
@@ -52,22 +52,23 @@ arrIdx = 1;
     optsPlotFunc.BIN_SIZE = mode(diff(arrayData{1}.bE{1,1}));
     optsPlotFunc.FIGURE_SAVE = 0;
     optsPlotFunc.FIGURE_DIR = inputData.folderpath;
-    optsPlotFunc.FIGURE_PREFIX = 'Duncan_20181206_postTBS_short';
+    optsPlotFunc.FIGURE_PREFIX = 'Duncan_20181206_baseline';
 
     optsPlotFunc.PRE_TIME = 5/1000;
-    optsPlotFunc.POST_TIME = 15/1000;
+    optsPlotFunc.POST_TIME = 50/1000;
     optsPlotFunc.SORT_DATA = '';
 
     optsPlotFunc.PLOT_AFTER_STIMULATION_END = 0;
     optsPlotFunc.STIMULATION_LENGTH = 0.1+0.5+0.53;
     
-%     rasterPlots = plotRasterStim(arrayData{arrIdx},arrayData{arrIdx}.NN,optsPlotFunc);
+    rasterPlots = plotRasterStim(arrayData{arrIdx},arrayData{arrIdx}.NN,optsPlotFunc);
 
     optsPlotFunc.PLOT_ALL_ONE_FIGURE = 0;
-    optsPlotFunc.PLOT_LINE = 0;
-    optsPlotFunc.PLOT_TITLE = 0;
-
-    PSTHPlots = plotPSTHStim(arrayData{arrIdx},arrayData{arrIdx}.NN,optsPlotFunc);
+    optsPlotFunc.PLOT_LINE = 1;
+    optsPlotFunc.PLOT_TITLE = 0;    
+    optsPlotFunc.PLOT_ALL_WAVES_ONE_FIGURE = 0;
+    
+%     PSTHPlots = plotPSTHStim(arrayData{arrIdx},arrayData{arrIdx}.NN,optsPlotFunc);
 
 % end
 

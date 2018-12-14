@@ -323,18 +323,20 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
                 end
             end
         end
-        arrayData{arrayDataIdx}.spikeTrialTimes = arrayData{arrayDataIdx}.spikeTrialTimes(arrayData_mask==1);
-        arrayData{arrayDataIdx}.stimData = arrayData{arrayDataIdx}.stimData(arrayData_mask==1);
-        arrayData{arrayDataIdx}.bC = arrayData{arrayDataIdx}.bC(arrayData_mask==1);
-        arrayData{arrayDataIdx}.bE = arrayData{arrayDataIdx}.bE(arrayData_mask==1);
-        arrayData{arrayDataIdx}.kin = arrayData{arrayDataIdx}.kin(arrayData_mask==1);
-        arrayData{arrayDataIdx}.numStims = arrayData{arrayDataIdx}.numStims(arrayData_mask == 1);
-        temp = repmat(arrayData{arrayDataIdx}.CHAN_LIST,1,NUM_WAVEFORM_TYPES)
-        arrayData{arrayDataIdx}.STIM_PARAM_LIST(:,1) = temp(arrayData_mask == 1);
-        if(~isempty(amplitude_master_list))
-            temp = repmat(amplitude_master_list,NUM_CHANS,1);
-            arrayData{arrayDataIdx}.STIM_PARAM_LIST(:,2) = temp(arrayData_mask == 1);
-            arrayData{arrayDataIdx}.CHAN_LIST = arrayData{arrayDataIdx}.CHAN_LIST(find(sum(arrayData_mask,2) > 0));
+        if(~sum(sum(arrayData_mask)) == numel(arrayData_mask)) % prune
+            arrayData{arrayDataIdx}.spikeTrialTimes = arrayData{arrayDataIdx}.spikeTrialTimes(arrayData_mask==1);
+            arrayData{arrayDataIdx}.stimData = arrayData{arrayDataIdx}.stimData(arrayData_mask==1);
+            arrayData{arrayDataIdx}.bC = arrayData{arrayDataIdx}.bC(arrayData_mask==1);
+            arrayData{arrayDataIdx}.bE = arrayData{arrayDataIdx}.bE(arrayData_mask==1);
+            arrayData{arrayDataIdx}.kin = arrayData{arrayDataIdx}.kin(arrayData_mask==1);
+            arrayData{arrayDataIdx}.numStims = arrayData{arrayDataIdx}.numStims(arrayData_mask == 1);
+            temp = repmat(arrayData{arrayDataIdx}.CHAN_LIST,1,NUM_WAVEFORM_TYPES)
+            arrayData{arrayDataIdx}.STIM_PARAM_LIST(:,1) = temp(arrayData_mask == 1);
+            if(~isempty(amplitude_master_list))
+                temp = repmat(amplitude_master_list,NUM_CHANS,1);
+                arrayData{arrayDataIdx}.STIM_PARAM_LIST(:,2) = temp(arrayData_mask == 1);
+                arrayData{arrayDataIdx}.CHAN_LIST = arrayData{arrayDataIdx}.CHAN_LIST(find(sum(arrayData_mask,2) > 0));
+            end
         end
     end
     
