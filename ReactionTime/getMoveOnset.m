@@ -61,16 +61,18 @@ td = getSpeed(trial_data);
 
 if(be_aggressive) % find a threshold based on all trials
     s_all = [];
-    for trial = 1:length(trial_data)
-        if(isfield(td(trial),'tgtDir'))
-            % project (which_field) onto the target axis
-            s_all = [s_all;sum(td(trial).(which_field)(td(trial).idx_tgtOnTime+35:td(trial).(start_idx),:)*[cos(td(trial).tgtDir*pi/180);sin(td(trial).tgtDir*pi/180)],2)];
-        else
-            s_all = [s_all;td(trial).(which_field)(td(trial).idx_tgtOnTime+35:td(trial).(start_idx),1)];
+    if(threshold_acc <= 0)
+        for trial = 1:length(trial_data)
+            if(isfield(td(trial),'tgtDir'))
+                % project (which_field) onto the target axis
+                s_all = [s_all;sum(td(trial).(which_field)(td(trial).idx_tgtOnTime+35:td(trial).(start_idx),:)*[cos(td(trial).tgtDir*pi/180);sin(td(trial).tgtDir*pi/180)],2)];
+            else
+                s_all = [s_all;td(trial).(which_field)(td(trial).idx_tgtOnTime+35:td(trial).(start_idx),1)];
+            end
         end
+        s_all = s_all(~isnan(s_all));
+        thresh_all = std(s_all);
     end
-    s_all = s_all(~isnan(s_all));
-    thresh_all = std(s_all);
     
     % if emg exists, do emg as well
     if(use_emg && isfield(td(1),'emg'))
@@ -99,7 +101,7 @@ for trial = 1:length(trial_data)
     
     % find the time bins where the monkey may be moving
     move_inds = false(size(s));
-    move_inds(td(trial).(start_idx)+3:td(trial).(end_idx)) = true;
+    move_inds(td(trial).(start_idx)+start_idx_offset-3:td(trial).(end_idx)) = true;
     
     [on_idx] = deal(NaN);
     
@@ -126,7 +128,8 @@ for trial = 1:length(trial_data)
                 thresh = thresh_all*threshold_mult;
             end
             on_idx = find(s<thresh & (1:length(s))'<mvt_peak & move_inds,1,'last')+1;
-            
+
+%             on_idx = find(s > thresh & (1:length(s))'<mvt_peak & move_inds,1,'first');
             % check to make sure the numbers make sense
             if isempty(on_idx) || on_idx <= td(trial).(start_idx)+start_idx_offset || on_idx > td(trial).(start_idx)+max_rt_offset
                 % something is fishy. Fall back on threshold method
@@ -146,8 +149,9 @@ for trial = 1:length(trial_data)
         if isempty(on_idx) % usually means it never crosses threshold
             on_idx = NaN;
         end
-        warning('Could not identify movement onset');
-
+        if(~isnan(td(trial).tgtDir))
+            warning('Could not identify movement onset');
+        end
     end
     trial_data(trial).(['idx_' onset_name]) = on_idx;
 

@@ -16,6 +16,10 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
         cd(inputData.folderpath)
         cds = commonDataStructure();
         load(stimInfoFileList(fileNumber).name);
+        if(~iscell(stimInfo.chanSent))
+            stimInfo.chanSent = mat2cell(stimInfo.chanSent',ones(numel(stimInfo.chanSent),1));
+            warning('made chan sent a cell array');
+        end
         cd(inputData.folderpath)
         cds.file2cds([inputData.folderpath fileList(fileNumber).name],inputData.task,inputData.ranBy,...
             inputData.monkey,inputData.labnum,inputData.array1,inputData.mapFileName); % DO NOT USE RECOVER PRE SYNC, currently this shifts the units and the analog signal differently
@@ -82,14 +86,19 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
                 NUM_CHANS = numel(opts.CHAN_LIST);
                 CHAN_LIST = opts.CHAN_LIST;
             elseif(any(isfield(stimInfo,'chanSent')))
-                NUM_CHANS = numel(uniquecell(stimInfo.chanSent));
-                CHAN_LIST = uniquecell(stimInfo.chanSent);
+                if(iscell(stimInfo.chanSent))
+                    NUM_CHANS = numel(uniquecell(stimInfo.chanSent));
+                    CHAN_LIST = uniquecell(stimInfo.chanSent);
+                else
+                    NUM_CHANS = numel(unique(stimInfo.chanSent));
+                    CHAN_LIST = unique(stimInfo.chanSent);
+                end
             else
                 CHAN_LIST = opts.STIM_ELECTRODE;
                 NUM_CHANS = 1;
             end
             
-            if(sum(stimInfo.chanSent{1} == -1) == 1) % try to get chan stim from filename, % handles multiple channels
+            if(iscell(stimInfo.chanSent) && sum(stimInfo.chanSent{1} == -1) == 1) % try to get chan stim from filename, % handles multiple channels
                 fname = fileList(fileNumber).name;
                 underscoreIdx = strfind(fname,'_');
                 if(~isempty(strfind(fname,'chanStim')))

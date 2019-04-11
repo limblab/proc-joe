@@ -25,9 +25,29 @@ function [td] = getGoCueTime(td,cds)
     %look for visualTgtSync for visual sync
     for j=1:numel(cds.analog)
         visualSyncIdx=find(strcmp(cds.analog{j}.Properties.VariableNames,'visualTgtSync'));
-        if ~isempty(stimSyncIdx)
+        if ~isempty(visualSyncIdx)
             visualSyncIdx=j;
             visualSyncName='visualTgtSync';
+        end
+    end
+    
+    if(isempty(visualSyncIdx))
+        for j=1:numel(cds.analog)
+            visualSyncIdx=find(strcmp(cds.analog{j}.Properties.VariableNames,'viusalTgt'));
+            if ~isempty(visualSyncIdx)
+                visualSyncIdx=j;
+                visualSyncName='viusalTgt';
+            end
+        end
+    end
+    
+    if(isempty(visualSyncIdx))
+        for j=1:numel(cds.analog)
+            visualSyncIdx=find(strcmp(cds.analog{j}.Properties.VariableNames,'ainp15'));
+            if ~isempty(visualSyncIdx)
+                visualSyncIdx=j;
+                visualSyncName='ainp15';
+            end
         end
     end
     
@@ -69,6 +89,8 @@ function [td] = getGoCueTime(td,cds)
                 mean_sync = mean(cds.analog{visualSyncIdx}.(visualSyncName)([find(cds.analog{visualSyncIdx}.t > trialGoCueTime,1,'first'),...
                     find(cds.analog{visualSyncIdx}.t > trialGoCueTime + 0.04,1,'first')]));
                 visualOn=cds.analog{visualSyncIdx}.t(find(diff(cds.analog{visualSyncIdx}.(visualSyncName)-mean_sync>10)>0.5));
+            else
+                visualOn = trialGoCueTime;
             end
             visualTime = visualOn(find(visualOn > trialGoCueTime,1,'first'));
             visualTime = visualTime - cds.trials.startTime(td(tr).trial_id) + 5/1000; % 8 ms is the measured time between when the corner tgt (the sync line) is on and when t
@@ -83,6 +105,11 @@ function [td] = getGoCueTime(td,cds)
             end
         else % if bumpTime is NaN && stimTime is empty, then no cue was
              % presented, set idx_goCueTime and goCueTime to NaN   
+            td(tr).idx_goCueTime = NaN;
+            td(tr).goCueTime = NaN;
+        end
+        
+        if(~isnan(td(tr).idx_goCueTime) && td(tr).idx_goCueTime > td(tr).idx_endTime) % sanitize data
             td(tr).idx_goCueTime = NaN;
             td(tr).goCueTime = NaN;
         end

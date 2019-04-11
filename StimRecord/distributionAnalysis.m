@@ -14,7 +14,7 @@ opts.CHANNEL_IDX = [1:numel(unique(cds.waveforms.chanSent))];
 toc
 %% get probability of response for all units
 
-opts.WINDOW = [4,8]/1000;
+opts.WINDOW = [2,6]/1000;
 opts.AUTOMATIC_WINDOW = 0; % not implemented currently
 opts.SUBTRACT_BASELINE = 0;
 
@@ -29,7 +29,7 @@ opts.MAKE_DISTRIBUTION_PLOT = 1;
 opts.PLOT_PERCENTAGE_STIMULATIONS = 1;
 opts.PLOT_PERCENTAGE_UNITS = 1;
 
-opts.MAKE_PDF_PLOT = 1; % slow if set to 1
+opts.MAKE_PDF_PLOT = 0; % slow if set to 1
 [spikesPerStim] = getSpikesPerStimulation(arrayData,opts);
 
 

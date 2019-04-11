@@ -53,7 +53,11 @@ function [figureHandle] = plotRasterStim(unitData,NEURON_NUMBER,optsPlot)
                 if(strcmp(opts.TITLE_TO_PLOT,'') == 0)
                     optsPlot.TITLE = titleToPlot;
                 else
-                    optsPlot.TITLE = strcat('Stim Chan: ',num2str(CHAN_LIST{chan}),' Wave: ',num2str(wave));
+                    if(iscell(CHAN_LIST))
+                        optsPlot.TITLE = strcat('Stim Chan: ',num2str(CHAN_LIST{chan}),' Wave: ',num2str(wave));
+                    else
+                        optsPlot.TITLE = strcat('Stim Chan: ',num2str(CHAN_LIST(chan)),' Wave: ',num2str(wave));
+                    end
                 end
             end
             optsPlot.Y_TICK = [0;max(unitData.numStims(chan,wave))];

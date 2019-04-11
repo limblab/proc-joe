@@ -93,7 +93,7 @@ function [figureHandle] = plotPSTHStim(unitData,NEURON_NUMBER,optsPlot)
                 elseif(opts.PLOT_ALL_ONE_FIGURE)
                     % no title
                 else
-                    optsPlot.TITLE = strcat('Stim Chan: ',num2str(CHAN_LIST{chan}),' Wave: ',num2str(wave));
+%                     optsPlot.TITLE = strcat('Stim Chan: ',num2str(CHAN_LIST{chan}),' Wave: ',num2str(wave));
                 end
             end
 
@@ -138,7 +138,7 @@ function [opts] = configureOpts(optsInput)
     opts.SMOOTH_STD_DEV = 1;
     
     opts.PLOT_LINE = 0;
-    opts.LINE_COLOR = {getColorFromList(1,1),getColorFromList(1,2),getColorFromList(1,3),getColorFromList(1,4),getColorFromList(1,5),getColorFromList(1,6)};
+    opts.LINE_COLOR = {getColorFromList(1,0),getColorFromList(1,1),getColorFromList(1,2),getColorFromList(1,3),getColorFromList(1,4),getColorFromList(1,5)};
     opts.PLOT_NO_RECORDING_BOX = 0;
     opts.NO_RECORDING_WINDOW = [0,1.0/1000];
     opts.NO_RECORDING_BOX_COLOR = [1.0,0.6,0.6];

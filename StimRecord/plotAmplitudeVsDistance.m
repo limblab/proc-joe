@@ -1,4 +1,4 @@
-function [figureHandles,FITS] = plotAmplitudeVsDistance(arrayData,mapFileName,opts)
+function [figureHandles,FITS,data_all] = plotAmplitudeVsDistance(arrayData,mapFileName,opts)
     
     %% configure opts and set default values
     opts = configureOpts(opts);
@@ -14,7 +14,11 @@ function [figureHandles,FITS] = plotAmplitudeVsDistance(arrayData,mapFileName,op
     %% useful constants
     figureHandles = {};
     FITS = [];
-    
+    if(numel(opts.WAVEFORM_TYPES_PLOT) == 1)
+        data_all = cell(opts.WAVEFORM_TYPES_PLOT,1);
+    else
+        data_all = cell(numel(opts.WAVEFORM_TYPES_PLOT),1);
+    end
     NUM_CHANS = size(arrayData{1,1}.spikeTrialTimes,1);
     NUM_WAVEFORMS = size(arrayData{1,1}.spikeTrialTimes,2);
     
@@ -73,13 +77,16 @@ function [figureHandles,FITS] = plotAmplitudeVsDistance(arrayData,mapFileName,op
             if(~opts.PLOT_ON_ONE_FIGURE)
                 figureHandles{end+1} = figure();
                 c = 'k';
-            elseif(numel(opts.STIM_ELECTRODE_PLOT)*numel(opts.WAVEFORM_TYPES_PLOT) > numel(opts.COLORS))
-                c = 'k';
             else
-                c = opts.COLORS{chan*wave};
+                c = getColorFromList(1,wave-1);
             end
             plot(distances,dataRatio,'.','markersize',opts.MARKER_SIZE,'color',c);
+            data_all{wave} = [data_all{wave};distances dataRatio];
+            formatForLee(gcf);
+            xlabel('Distance (\mum)');
+            ylabel('Probability of response (spk/stim)');
             ylim([0,1])
+            set(gca,'fontsize',14);
 %             hold on
 %             [FITS.f{chan*wave},FITS.stats{chan*wave}] = fit(distances,dataRatio,'exp1');
 %             plot(FITS.f{chan*wave});

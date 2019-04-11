@@ -105,11 +105,11 @@ function [figureHandles,unit_data] = plotHeatmaps(arrayData,mapFileName,opts)
         %% save figures
         if(opts.FIGURE_SAVE && strcmpi(opts.FIGURE_DIR,'')~=1)
             if(~opts.AUTO_WINDOW)
-                FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'_stimChan',num2str(arrayData{1,1}.CHAN_LIST(chan)),'_wave',num2str(wave),...
-                    '_window',num2str(opts.STIM_PRE_TIME),'-',num2str(opts.STIM_POST_TIME),'_relativeInhib',num2str(opts.RELATIVE_INHIBITION),'_heatmap');
+                FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'_stimChan',num2str(heatmap_data{heatmap_idx}.main_chan),'_wave',num2str(heatmap_data{heatmap_idx}.wave),...
+                    '_heatmap');
             else
-                FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'_stimChan',num2str(arrayData{1,1}.CHAN_LIST(chan)),'_wave',num2str(wave),...
-                    '_windowAUTO','_relativeInhib',num2str(opts.RELATIVE_INHIBITION),'_heatmap');
+                FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'_stimChan',num2str(heatmap_data{heatmap_idx}.main_chan),'_wave',num2str(heatmap_data{heatmap_idx}.wave),...
+                    '_heatmap');
             end
             saveFiguresLIB(figureHandles{end},opts.FIGURE_DIR,FIGURE_NAME);
         end
@@ -162,9 +162,7 @@ function [figureHandles,unit_data] = plotHeatmaps(arrayData,mapFileName,opts)
             end
 
             if(opts.FIGURE_SAVE && strcmpi(opts.FIGURE_DIR,'')~=1)
-                FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'_stimChan',num2str(arrayData{1,1}.CHAN_LIST(chan)),'_wave',num2str(wave),...
-                    '_window',num2str(opts.STIM_PRE_TIME),'-',num2str(opts.STIM_POST_TIME),'_relativeInhib',num2str(opts.RELATIVE_INHIBITION),...
-                    '_heatmapBarPlot_',num2str(barMake));
+                FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'_heatmapBarPlot_',num2str(barMake));
                 saveFiguresLIB(figureHandles{end},opts.FIGURE_DIR,FIGURE_NAME);
             end
         end

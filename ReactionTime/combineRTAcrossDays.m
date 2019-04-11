@@ -1,11 +1,9 @@
 %% set up code:chan mapping
-filename = 'Han_20181126';
+filename = 'Duncan_20190311';
 
-mapping = [0,26;...
-            1,61;...
-            2,44;...
-            3,11;...
-            4,3];
+mapping = [75, 24, 95, 39, 13, 9, 66, 20, 57, 10, 12]';
+
+mapping = [(0:1:(numel(mapping)-1))', mapping];
 %% make struct with mean_rt, std_rt and chan num
     curr_file_data = [];
     curr_file_data.chan = [];
@@ -42,7 +40,9 @@ mapping = [0,26;...
     f=figure();
     hold on;
     f.Position = [278.6000 95.4000 560 420];
-    f.Name = 'Han_singleElectrodes_dotPlot';
+    monkey_name = 'Han';
+    f.Name = [monkey_name,'_singleElectrodes_dotPlot'];
+
     ax=gca;
     % get indexes of each day
     filename_list = unique(all_files_data.filename);
@@ -57,8 +57,17 @@ mapping = [0,26;...
         % bump data [0.1503,0.1401,0.1489,0.1450,0.1476,0.1659,0.1550,0.1639,0.1650,0.1603,0.1439] for [10/15,10/16,10/17,10/19,10/22,11/15,11/15,11/19,11/21,11/27,11/28] in Han
         % std err bump data [0.0017,0.003,0.0029,0.0032,0.0035,0.0028,0.0027,0.0022,0.0015,0.003,0.0034] for
         % [10/15,10/16,10/17,10/19,10/22,11/15,11/16,11/19,11/21,11/27] in Han
-        bump_list = [0.1503,0.1401,0.1489,0.1450,0.1476,0.1659,0.1550,0.1639,0.1650,0.1603,0.1439]; % Han
-        bump_std_list = [0.0017,0.003,0.0029,0.0032,0.0035,0.0028,0.0027,0.0022,0.0015,0.003,0.0034]; % Han
+        
+        % Duncan: 20190308: 0.1803+- 0.0102 (std dev) for 17 trials
+        % 20190309: 0.1773+-0.0056,17 trials
+        % 20190311: 0.178+-0.0118, 19trials
+        if(strcmpi(monkey_name,'Han'))
+            bump_list = [0.1503,0.1401,0.1489,0.1450,0.1476,0.1659,0.1550,0.1639,0.1650,0.1603,0.1439]; % Han
+            bump_std_list = [0.0017,0.003,0.0029,0.0032,0.0035,0.0028,0.0027,0.0022,0.0015,0.003,0.0034]; % Han
+        elseif(strcmpi(monkey_name,'Duncan'))
+            bump_list = [0.1803,0.1773,0.178];
+            bump_std_list = [0.0102,0.0056,0.0118]./sqrt([17,17,19]); 
+        end
         bump_bar = fill([x_data(1)-1,x_data(end)+1,x_data(end)+1,x_data(1)-1,x_data(1)-1],...
             bump_list(fnum)+bump_std_list(fnum).*[-1,-1,1,1,-1],...
             'k','EdgeColor','none','FaceAlpha',0.5);
@@ -70,11 +79,20 @@ mapping = [0,26;...
         % visual data [0.2141 0.2004 0.2170 0.2281, 0.2178,0.2199,0.235,0.2122,0.247,0.2212,0.2133] for [10/15,10/16,10/17,10/19,10/22,11/15,11/16,11/19,11/21,11/27,11/28] in Han
         % std err vis data [0.0076,0.0099,0.0074,0.0089,0.0109,0.0041,0.0105,0.0043,0.0068,0.0075,0.0074] for
         % [10/15,10/16,10/17,10/19,10/22,11/15,11/16,11/19,11/21,11/27,11/28] in Han
-        vis_list = [0.2141 0.2004 0.2170 0.2281, 0.2178,0.2199,0.235 0.2122,0.247,0.2212,0.2133]; % Han
-        vis_std_list = [0.0076,0.0099,0.0074,0.0089,0.0109,0.0041,0.0105 0.0043,0.0068,0.0075,0.0074]; % Han
+        
+        % duncan: 20190308: 0.4338 +- 0.0613, 18 trials
+        % 20190309: 0.3925 +- 0.0439, 18 trials
+        % 20190311: 0.4052 += 0.0356, 18 trials
+        if(strcmpi(monkey_name,'Han'))
+            vis_list = [0.2141 0.2004 0.2170 0.2281, 0.2178,0.2199,0.235 0.2122,0.247,0.2212,0.2133]; % Han
+            vis_std_list = [0.0076,0.0099,0.0074,0.0089,0.0109,0.0041,0.0105 0.0043,0.0068,0.0075,0.0074]; % Han
+        elseif(strcmpi(monkey_name,'Duncan'))
+            vis_list = [0.4338,0.3925,0.4025];
+            vis_std_list = [0.0613,0.0439,0.0356]./sqrt(18);
+        end
         vis_bar = fill([x_data(1)-1,x_data(end)+1,x_data(end)+1,x_data(1)-1,x_data(1)-1],...
-            vis_list(fnum)+vis_std_list(fnum).*[-1,-1,1,1,-1],...
-            'k','EdgeColor','none','FaceAlpha',0.5);
+        vis_list(fnum)+vis_std_list(fnum).*[-1,-1,1,1,-1],...
+        'k','EdgeColor','none','FaceAlpha',0.5);
         
         uistack(vis_bar,'bottom')
         plot([x_data(1)-1,x_data(end)+1],[vis_list(fnum),vis_list(fnum)],'k--','linewidth',1.5)
@@ -92,7 +110,7 @@ mapping = [0,26;...
         
     end
     
-    ylim([0,0.4])
+    ylim([0,0.5])
     xlim([0,x_data(end)+1])
 %     set(gca,'XTickLabel',{});
 %     set(gca,'XTick',[]);
@@ -107,37 +125,43 @@ mapping = [0,26;...
     binSize = 0.01;
     binEdges = 0.1:binSize:0.4;
     f=figure();
-    f.Name = 'Han_singleElectrodes_vertHist';
-    f.Position = [730.6000 155.4000 221.6000 420];
+    f.Name = [monkey_name,'_singleElectrodes_vertHist'];
+    f.Position = [730.6000 155.4000 241.6000 420];
     ax=gca;
-    binCounts = histcounts(all_files_data.mean_rt,binEdges);
+    binCounts = histcounts(all_files_data.mean_rt,binEdges)/numel(all_files_data.chan);
     h = barh(binEdges(1:end-1)+binSize/2,binCounts,'BarWidth',1);
     h.FaceAlpha = 1;
     h.FaceColor = getColorFromList(1,0);
     h.EdgeColor = 'k';
     ax.YAxis.TickLabels = {};
-    
-    xlabel('Number of electrodes');
+   
+    xlabel('Proportion of electrodes');
 %     ylabel('RT (s)');
     formatForLee(gcf)
     set(gca,'fontsize',14)
-    ylim([0.,0.4])
+    ylim([0.,0.5])
 
 %% plot heatmap of RT across array
-    mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+    pos_all = [];
+    if(strcmpi(monkey_name,'Han'))
+        mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+    elseif(strcmpi(monkey_name,'Duncan'))
+        mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
+    end
     map_data = loadMapFile(mapFileName);
     c_map = inferno();
     c_map = flip(c_map,1);
     rt_min = 0.1;
-    rt_max = 0.35;
+    rt_max = 0.4;
     f=figure();
-    f.Name = 'Han_singleElectrodes_arrayMap';
+    f.Name = [monkey_name,'_singleElectrodes_arrayMap'];
     hold on
     for chan_idx = 1:numel(all_files_data.chan)
         map_idx = find(all_files_data.chan(chan_idx) == map_data.chan);
         mean_rt = all_files_data.mean_rt(chan_idx);
         c_map_idx = ceil((mean_rt-rt_min)/(rt_max-rt_min)*size(c_map,1));
         rt_color = c_map(min(max(c_map_idx,1),size(c_map,1)),:);
+        pos_all(chan_idx,:) = [map_data.row(map_idx),11-map_data.col(map_idx)];
         rectangle('Position',[map_data.row(map_idx),11-map_data.col(map_idx),1,1],'FaceColor',rt_color, 'EdgeColor','none');
         hold on
     end
@@ -174,15 +198,19 @@ mapping = [0,26;...
     end
     b.Label.String = 'RT (s)';
     b.Label.FontSize = 16;
-    
+  
+%% linear model/anova (position of electrode predicting RT)
+    lm = fitlm(pos_all,all_files_data.mean_rt,'y~x1+x2')
+
+
 %% plot RT vs impedance of electrodes. 
 %skip the first data as that is the 'internal channel' of the
     %stimulator. data for electrodes 1:96 are in rows 2:97 of the stim
     %impedance object.
-    imp.impedance = imp.impedance(2:97)/1000;
+    imp_use.impedance = double(imp.impedance(2:97))/1000;
     f=figure();
-    f.Name = 'Han_singleElectrodes_impedance';
-    plot(imp.impedance(all_files_data.chan),all_files_data.mean_rt,'k.','markersize',16)
+    f.Name = [monkey_name,'_singleElectrodes_impedance'];
+    plot(imp_use.impedance(all_files_data.chan),all_files_data.mean_rt,'k.','markersize',16)
     formatForLee(gcf)
     xlabel('Impedance (kOhm)');
     ylabel('RT (s)');
@@ -191,7 +219,7 @@ mapping = [0,26;...
             
 %% plot mean rt vs std rt for each channel
     f = figure();
-    f.Name = 'Han_singleElectrodes_meanVsStd';
+    f.Name = [monkey_name,'_singleElectrodes_meanVsStd'];
     plot(all_files_data.mean_rt,all_files_data.std_rt,'k.','markersize',16)
     hold on
     [mean_std_fit,mean_std_gof] = fit(all_files_data.mean_rt',all_files_data.std_rt','a*x+b');
@@ -209,7 +237,7 @@ mapping = [0,26;...
     
 %% plot histogram of std rt's
     f = figure();
-    f.Name = 'Han_singleElectrodes_stdHist';
+    f.Name = [monkey_name,'_singleElectrodes_stdHist'];
     bin_edges = 0:0.01:0.15;
     histogram(all_files_data.std_rt,bin_edges);
     formatForLee(gcf);
@@ -225,7 +253,7 @@ mapping = [0,26;...
     end
     
     f = figure();
-    f.Name = 'Han_singleElectrodes_learning';
+    f.Name = [monkey_name,'_singleElectrodes_learning'];
     bin_edges = [-12:2:12]*0.001;
     histogram(slopes,bin_edges);
     formatForLee(gcf)
@@ -234,12 +262,27 @@ mapping = [0,26;...
     set(gca,'fontsize',14);
             
             
-            
-            
-            
-            
-            
-            
+%% Axis of most variation
+
+angles = [0:1:180]*pi/180;
+pos_all = pos_all - mean(pos_all);
+f_best = []; gof_best = []; angle_best = [];
+
+for angle = angles
+
+    s = [cos(angle),sin(angle)];
+    input = [];
+    for i = 1:size(pos_all,1)
+        input(i) = sum(pos_all(i,:).*s)/(sum(s.*s));
+    end
+    
+    [f,gof] = fit(input',all_files_data.mean_rt','a*x+b');
+    if(isempty(f_best) || gof.rsquare > gof_best.rsquare)
+        f_best = f;
+        gof_best = gof;
+        angle_best = angle*180/pi;
+    end
+end
             
             
             

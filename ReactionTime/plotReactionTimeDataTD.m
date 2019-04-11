@@ -80,15 +80,13 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
     %% remove outliers
         % anything above 1.5 Inter quartile range goes bye bye
     for c = 1:numel(cueInfo)
-        if(cueInfo(c).bumpMag == 0)
-            Q1 = quantile(cueInfo(c).rt,0.25);
-            Q3 = quantile(cueInfo(c).rt,0.75);
-            outlier_mask = cueInfo(c).rt < Q1-1.5*(Q3-Q1) | cueInfo(c).rt > Q3+1.5*(Q3-Q1);
+        Q1 = quantile(cueInfo(c).rt,0.25);
+        Q3 = quantile(cueInfo(c).rt,0.75);
+        outlier_mask = cueInfo(c).rt > Q3+1.5*(Q3-Q1);
 
-            cueInfo(c).td_idx_reward(outlier_mask) = [];
-            cueInfo(c).td_idx_all(outlier_mask) = [];
-            cueInfo(c).rt(outlier_mask) = [];
-        end
+%         cueInfo(c).td_idx_reward(outlier_mask) = [];
+%         cueInfo(c).td_idx_all(outlier_mask) = [];
+        cueInfo(c).rt(outlier_mask) = [];
     end
         
     %% find fastest bump data (across bump magnitudes)
@@ -357,7 +355,10 @@ function [fig,fit_out] = plotRTvsCue(plot_data,figure_name,bump_flag,opts)
     x_diff = max(unique_x_vals)-min(unique_x_vals);
     for i = 1:numel(unique_x_vals)
         if(~isempty(opts.STIM_COLOR_IDX))
-            color = getColorFromList(1,opts.STIM_COLOR_IDX(i));
+            color = getColorFromList(opts.COLOR_LIST,opts.STIM_COLOR_IDX(i));
+            if(~isempty(opts.STIM_COLOR_ALPHA))
+                color = ((1-opts.STIM_COLOR_ALPHA(i))*1+(opts.STIM_COLOR_ALPHA(i)*color));
+            end
         else
             color = opts.COLOR;
         end
@@ -476,7 +477,8 @@ function [opts] = configureOpts(optsInput)
     
     opts.COLORS = [228,26,28;55,126,184;77,175,74;152,78,163;255,127,0;255,255,51;166,86,40;247,129,191;153,153,153]/255;
     opts.COLOR = 'k';
-
+    opts.COLOR_LIST = 1;
+    
     opts.SAVE_FIGURES = 0;
     opts.FIGURE_PREFIX = '';
     opts.FOLDER_PATH = '';
@@ -492,6 +494,7 @@ function [opts] = configureOpts(optsInput)
     opts.NUM_SEQUENCE_FAILS = 3;
     opts.STIM_LABEL = 'Stim amp (\muA)';
     opts.STIM_COLOR_IDX = [];
+    opts.STIM_COLOR_ALPHA = [];
     
     opts.CAPLENGTH_MULTIPLIER = 0.01;
     %% check if in optsSave and optsSaveInput, overwrite if so

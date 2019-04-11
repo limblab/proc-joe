@@ -2,14 +2,14 @@
 
 
 %% determine filename and input data
-    input_data.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\CObump\Duncan_20181031\';
+    input_data.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\CObump\Duncan_20190215_LeftS1\';
 %     inputData.folderpath = 'D:\Lab\Data\ReactionTime\Han_20180427_training\';
 %     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\right S1 20180919\SN 6251-001804.cmp';
     
     input_data.task='taskCObump';
     input_data.ranBy='ranByJoseph'; 
-    input_data.array1='arrayRightS1'; 
+    input_data.array1='arrayLeftS1'; 
     input_data.monkey='monkeyDuncan';
     input_data.labnum = 6;
     
@@ -21,32 +21,32 @@
 %% load cds, convert to td, compute PDs for all units, determine if units are well tuned
     cds = commonDataStructure();
     cds.file2cds([input_data.folderpath fileList(1).name],input_data.task,input_data.ranBy,...
-        input_data.monkey,input_data.labnum,input_data.array1,input_data.mapFileName);
+        input_data.monkey,input_data.labnum,input_data.array1,input_data.mapFileName,'recoverPreSync');
     cd(pwd);
     
-% convert into td
+%% convert into td
     params.event_list = {'goCueTime';'tgtDir';'bumpTime';'bumpDir'};
     params.trial_results = {'R'};
     params.include_ts = 1;
     params.extra_time = [1,2];
     params.exclude_units = [1:255];
     td_all = parseFileByTrial(cds,params);
-    td_all = removeBadTrials(td_all);
+%     td_all = removeBadTrials(td_all);
     td_all = getMoveOnsetAndPeak(td_all);
-    td_all = removeBadTrials(td_all);
+%     td_all = removeBadTrials(td_all);
     [td_all] = removeBadNeurons(td_all,params);
     
 %% plot raster for each unit and reach direction
-    array_name = 'RightS1';
+    array_name = 'LeftS1';
     spike_list = [array_name,'_ts'];
     tgt_dir = [0,90,180,270];%unique([td_all.tgtDir]);
     tgt_dir = tgt_dir(~isnan(tgt_dir));
     bump_dir = [0,90,180,270];%unique(round([td_all.bumpDir]));
     bump_dir = bump_dir(~isnan(bump_dir));
     
-    for unit = 1:96%numel(td_all(1).(spike_list))
+    for unit = 1:numel(td_all(1).(spike_list))
         f=figure();
-        f.Name = ['Ducnan_CObump_20181031_chan', num2str(unit)];
+        f.Name = ['Ducnan_CObump_20190215_chan', num2str(unit)];
         
         f.Position = [417.8000 104.2000 710.4000 656.8000];
         subplot(2,1,1)
@@ -65,7 +65,7 @@
             plot([-10,10],[counter,counter]-0.5,'r--')
             
         end
-        xlim([-2,2])
+        xlim([-1,1.5])
         ylim([0,counter])
         xlabel('Time after movement onset (s)');
         ylabel('Trial number');
@@ -85,16 +85,16 @@
             plot([-10,10],[counter,counter]-0.5,'r--')
             
         end
-        xlim([-2,2])
+        xlim([-1,1.5])
         ylim([0,counter])
         xlabel('Time after bump onset (s)');
         ylabel('Trial number');
         
         
-        saveFiguresLIB(f,input_data.folderpath,f.Name);
+%         saveFiguresLIB(f,input_data.folderpath,f.Name);
     end
 %% plot histograms instead
-    array_name = 'RightS1';
+    array_name = 'LeftS1';
     spike_list = [array_name,'_spikes'];
     tgt_dir = [0,90,180,270];%unique([td_all.tgtDir]);
     tgt_dir = tgt_dir(~isnan(tgt_dir));
@@ -137,7 +137,7 @@
 
 %% compute PD for all units
     params = [];
-    params.array = 'RightS1';
+    params.array = 'LeftS1';
     params.window = {'idx_movement_on',0;'idx_movement_on',20};
     params.covariate = 'target';
     clear tcs

@@ -2,42 +2,42 @@
 % from outputData files through StimRecProcessing scripts
 % also need inputData
 
-    waveSent = 2;
-    chanSent = [75,76];
-    chanRec = 70;
+    waveSent = 1;
+    chanSent = [6];
+    chanRec = 1;
     
     artifactData = outputData.artifactData;
     waveforms = outputData.waveforms;
 
-    artifact_idx = find(waveforms.waveSent == waveSent & checkChanListEquality(waveforms.chanSent, chanSent));
-
+%     artifact_idx = find(waveforms.waveSent == waveSent & checkChanListEquality(waveforms.chanSent, chanSent));
+    artifact_idx = find(ones(size(outputData.waveforms.chanSent))==1);
     % x_data is in ms and from stimulation offset
-    x_data = ((1:size(artifactData.artifact,3))-1-inputData.presample)/30 - ...
-        waveforms.parameters(waveSent).pWidth1/1000 - waveforms.parameters(waveSent).pWidth2/1000 - 53/1000;
+    x_data = ((1:size(artifactData.artifact,3))-1-inputData.presample)/30;% - ...
+%         waveforms.parameters(waveSent).pWidth1/1000 - waveforms.parameters(waveSent).pWidth2/1000 - 53/1000;
 
- %% plot artifact and filtered artifact
-    num_plot = 20;
- 
+    % plot artifact and filtered artifact
+    num_plot = 10;
+    template = median(squeeze(artifactData.artifact(artifact_idx,chanRec,:)));
     % plot raw artifact
     figure()
-    subplot(2,1,1)
+    ax1=subplot(2,1,1);
     [~,idx_use] = datasample(artifact_idx,min(num_plot,numel(artifact_idx)),'Replace',false);
     plot(x_data,squeeze(artifactData.artifact(idx_use,chanRec,:))')
-    xlim([-0.3,3]);
+    xlim([-0.3,5]);
     formatForLee(gcf)
     ylabel('Voltage (\muV)');
     set(gca,'fontsize',14)
-    
+
     % plot artifact after acausal filtering
-    subplot(2,1,2)
-    plot(x_data,acausalFilter(squeeze(artifactData.artifact(idx_use,chanRec,:))'))
-    xlim([-0.3,3]);
-    ylim([-500,500])
+    ax2=subplot(2,1,2);
+    plot(x_data,acausalFilter(squeeze(artifactData.artifact(idx_use,chanRec,:))'-template'))
+    xlim([-0.3,5]);
+    ylim([-250,250])
     formatForLee(gcf)
     xlabel('Time after stimulation offset (ms)');
     ylabel('Voltage (\muV)');
     set(gca,'fontsize',14)
-    
+    linkaxes([ax1,ax2],'x');
     
     
 %% simulate neurons on top of the artifact (demonstration)

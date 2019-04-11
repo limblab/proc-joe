@@ -1,17 +1,17 @@
 %% script to process reaction time data 
 %% determine filename and input data
-    inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\Han\Han_20181207_distanceExperiment\';
+    inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\Duncan_leftS1\Duncan_20190314_rt\';
 %     inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\Duncan\Duncan_20181126_training\';
     
 %     inputData.folderpath = 'D:\Lab\Data\ReactionTime\Han_20180427_training\';
-    inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
-%     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\right S1 20180919\SN 6251-001804.cmp';
+%     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+    inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\right S1 20180919\SN 6251-001804.cmp';
     
     
     inputData.task='taskRT';
     inputData.ranBy='ranByJoseph'; 
     inputData.array1='arrayLeftS1'; 
-    inputData.monkey='monkeyHan';
+    inputData.monkey='monkeyDuncan';
     inputData.labnum = 6;
     
     pwd=cd;
@@ -21,7 +21,7 @@
 %% load in cds and extract data
     td_all = [];
     num_trials = 0;
-    for fileNumber = 1:numel(fileList)
+    for fileNumber = 1%:numel(fileList)
         cds = commonDataStructure();
         cds.file2cds([inputData.folderpath fileList(fileNumber).name],inputData.task,inputData.ranBy,...
             inputData.monkey,inputData.labnum,inputData.array1,inputData.mapFileName);
@@ -48,55 +48,58 @@
     end
 
     clear td_temp
-% sanitize td_all spike information since we are merging files, units go in and out
-    % get master list of units
-    master_list = [-1,-1];
-    for trial = 1:length(td_all)
-        for unit = 1:size(td_all(trial).LeftS1_unit_guide,1)
-            % check if unit is in master_list
-            master_idx = find(master_list(:,1)==td_all(trial).LeftS1_unit_guide(unit,1));
-            if(isempty(master_idx) || (~isempty(master_idx) && sum(master_list(master_idx,2) == td_all(trial).LeftS1_unit_guide(unit,2))==0))
-                master_list(end+1,:) = td_all(trial).LeftS1_unit_guide(unit,:);
+    if(numel(fileList) > 1)
+    % sanitize td_all spike information since we are merging files, units go in and out
+        % get master list of units
+        master_list = [-1,-1];
+        for trial = 1:length(td_all)
+            for unit = 1:size(td_all(trial).LeftS1_unit_guide,1)
+                % check if unit is in master_list
+                master_idx = find(master_list(:,1)==td_all(trial).LeftS1_unit_guide(unit,1));
+                if(isempty(master_idx) || (~isempty(master_idx) && sum(master_list(master_idx,2) == td_all(trial).LeftS1_unit_guide(unit,2))==0))
+                    master_list(end+1,:) = td_all(trial).LeftS1_unit_guide(unit,:);
+                end
             end
         end
-    end
-    master_list(1,:) = []; % remove dummy idx
-    % adjust spike data to match master list of units
-    for trial = 1:length(td_all)
-        temp_spikes = zeros(size(td_all(trial).LeftS1_spikes,1),size(master_list,1));
-        temp_ts = cell(size(master_list,1),1);
-        for unit = 1:size(td_all(trial).LeftS1_unit_guide,1)
-            master_idx = find(sum(master_list == td_all(trial).LeftS1_unit_guide(unit,:),2) == 2);
-            temp_spikes(:,master_idx) = td_all(trial).LeftS1_spikes(:,unit);
-%             temp_ts{master_idx} = td_all(trial).LeftS1_ts{unit};
+        master_list(1,:) = []; % remove dummy idx
+        % adjust spike data to match master list of units
+        for trial = 1:length(td_all)
+            temp_spikes = zeros(size(td_all(trial).LeftS1_spikes,1),size(master_list,1));
+            temp_ts = cell(size(master_list,1),1);
+            for unit = 1:size(td_all(trial).LeftS1_unit_guide,1)
+                master_idx = find(sum(master_list == td_all(trial).LeftS1_unit_guide(unit,:),2) == 2);
+                temp_spikes(:,master_idx) = td_all(trial).LeftS1_spikes(:,unit);
+    %             temp_ts{master_idx} = td_all(trial).LeftS1_ts{unit};
+            end
+            td_all(trial).LeftS1_unit_guide = master_list;
+            td_all(trial).LeftS1_spikes = temp_spikes;
+    %         td_all(trial).LeftS1_ts = temp_ts;
         end
-        td_all(trial).LeftS1_unit_guide = master_list;
-        td_all(trial).LeftS1_spikes = temp_spikes;
-%         td_all(trial).LeftS1_ts = temp_ts;
     end
     
-    
-    
+       
 %% separate out trials with results and go cue's
     [~, td_reward] = getTDidx(td_all, 'result', 'r');
     td_reward = td_reward(~isnan([td_reward.idx_goCueTime]));
     
-% get movement onset
-    params.which_field = 'acc'; % peak acceleration
+    % get movement onset
     params.field_idx = 1;
     params.start_idx_offset = 10;
     params.be_aggressive = 1;
-    
+    params.which_field = 'acc';
+
     % Han's parameters
     params.threshold_acc = 35; % absolute threshold on acceleration, using this instead of threshold_mult
     params.min_s = 1;
     params.pre_move_thresh = 50;
 
-% %     Duncan's parameters
+%     Duncan's parameters
 %     params.threshold_acc = 35;
-%     params.pre_move_thresh = 150;
-%     params.min_s = 1;
-%     params.peak_idx_offset = [0,40];
+%     params.pre_move_thresh = 50;
+%     params.min_s = 100;
+%     params.peak_idx_offset = [0,70];
+%     params.max_rt_offset = 50;
+%     
     
     params.use_emg = 0;
     params.emg_idx = 13;
@@ -114,12 +117,12 @@
     
 %% plot a set of reaches aligned to go cue with reaction time markers
 
-    opts.MAX_PLOT = 30;
-    opts.WHICH_FIELD = 'acc';
-    opts.DIR = 0;
+    opts.MAX_PLOT = 5;
+    opts.WHICH_FIELD = 'vel';
+    opts.DIR = 90;
     
-    opts.BUMP_MAGS = [];
-    opts.STIM_CODES = [14];
+    opts.BUMP_MAGS = [3];
+    opts.STIM_CODES = [];
     opts.KEEP_ONLY_VISUAL_TRIALS = 0;
     opts.YLIM = [];
     opts.COLOR = 'k';%getColorFromList(1,1);
@@ -128,7 +131,6 @@
     plotReachesTD(td_reward,opts);
  
     
-    
 %% plot reaction times for each cue, psychometric curve
     opts = [];
     
@@ -136,24 +138,32 @@
  
     td_reward_rt = td_reward(~isnan([td_reward.idx_movement_on]));
     opts.FOLDER_PATH = inputData.folderpath;
-    opts.FIGURE_PREFIX = 'Han_20181207'; % no _ required
+    opts.FIGURE_PREFIX = 'Duncan_20190313'; % no _ required
     
-%     opts.BUMP_MAGS = [0:0.1:1.];
-%     opts.STIM_CODES = [-1,1:6];
+%     opts.BUMP_MAGS = [0.5:0.5:4.5];
+%     opts.STIM_CODES = [2,3,4,5,7,8,9];
 %     opts.STIM_LABEL = 'Amplitude (\muA)';
-%     opts.STIM_PARAMS = [10:10:50];
+%     opts.STIM_PARAMS = [5:5:35];    
 %     opts.STIM_X_LABEL = {'10','15','20','25','30','35'};
 %     opts.STIM_PARAMS = [5:5:35];
 %     opts.STIM_LABEL = 'Frequency (Hz)';
 %     opts.STIM_PARAMS = [50:50:500];
-%     opts.STIM_PARAMS = [25,50,75,100,125,150,200,250,300];
+%     opts.STIM_PARAMS = [75,100,125,150,200,250,300];
 %     opts.STIM_LABEL = 'Train length (ms)';
-    opts.STIM_PARAMS = [1:1:16];
-    opts.STIM_X_LABEL = {'1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16'};
-    opts.STIM_COLOR_IDX = [];
+%     opts.STIM_PARAMS = [1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8] + repmat([-0.1,0.1],1,8);
+%     opts.STIM_X_LABEL = {'1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16'};
+%     opts.STIM_COLOR_IDX = [0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7];
+%     opts.STIM_COLOR_ALPHA = repmat([1,0.7],1,8);
 
+    opts.STIM_PARAMS = [4,4,4,6,6,6,8,8,8,12,12,12,24,24,24] + repmat([-0.25,0,0.25],1,5);
+    opts.STIM_X_LABEL = {'1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16'};
+    opts.STIM_COLOR_IDX = [1,0,2,1,0,2,1,0,2,1,0,2,1,0,2,1,0,2];
+    
+%     opts.STIM_PARAMS = [1:1:16];
+%     opts.STIM_LABEL = 'Elec';
+%     opts.COLOR_LIST = 2;
 %     opts.STIM_LABEL = 'Bump Mag';
-    opts.FIT = 	0;
+    opts.FIT = 	1;
     opts.PLOT_BUMP = 0;
     opts.PLOT_STIM = 1;
     
@@ -169,8 +179,8 @@
 %     [~,max_stim_idx] = max([data.cueInfo.stimCode]);
 %     max_bump_idx = 16;
     max_stim_idx = 4;
-    rt_stim = data.cueInfo(max_stim_idx).rt;
-    rt_bump = data.cueInfo(max_bump_idx).rt;
+    rt_stim = data.cueInfo(1).rt;
+    rt_bump = data.cueInfo(13).rt;
     
     tail = 'left';
 %     if(mean(rt_stim) > mean(rt_bump))
@@ -179,10 +189,10 @@
 %         tail = 'left';
 %     end
     
-    [h,p,ci,stats] = ttest2(rt_stim,rt_bump,0.95,tail,'unequal');
+%     [h,p,ci,stats] = ttest2(rt_stim,rt_bump,0.95,tail,'unequal');
     
     
-% [p,h,stats] = ranksum(rt_stim,rt_bump,'method','approximate','tail','left')
+[p,h,stats] = ranksum(rt_stim,rt_bump,'method','approximate','tail',tail)
 
     
     

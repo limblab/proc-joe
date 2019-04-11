@@ -1,13 +1,12 @@
 % port data over to a new figure
-fig_keep = figure(2);
+fig_keep = figure(3);
 ax_keep = gca;
 hold on
 %
-fig_move = figure(1); % data from this figure will move to the other figure
+fig_move = figure(2); % data from this figure will move to the other figure
 
-color_move = getColorFromList(1,1); % color of data moved to other figure
-% color_move = 'k';
-offset = [1]; % shifts the x_data this much
+color_move = getColorFromList(1,2); % color of data moved to other figure
+offset = [0]; % shifts the x_data this much
 
 line_move = findobj(fig_move,'type','line');
 scatter_move = findobj(fig_move,'type','scatter');
@@ -29,15 +28,15 @@ for s = 1:numel(scatter_move)
     
 end
 
-for l = 1:numel(line_move)
-    if(strcmpi(line_move(l).LineStyle,'-'))
-        
-    else
-        new_handle = copyobj(line_move(l),findobj(fig_keep,'type','axes'));
-        new_handle.Color = color_move;
-        new_handle.XData = line_move(l).XData + offset;
-    end
-end
+% for l = 1:numel(line_move)
+%     if(strcmpi(line_move(l).LineStyle,'-'))
+%         
+%     else
+%         new_handle = copyobj(line_move(l),findobj(fig_keep,'type','axes'));
+%         new_handle.Color = color_move;
+%         new_handle.XData = line_move(l).XData + offset;
+%     end
+% end
 
 for e = 1:numel(errorbar_move)
     new_handle = copyobj(errorbar_move(e),findobj(fig_keep,'type','axes'));
@@ -48,21 +47,21 @@ end
 %%
 formatForLee(gcf)
 set(gca,'FontSize',16)
-xlabel('Amplitude on each electrode (\muA)')
+xlabel('Electrode set')
 ylabel('RT (s)')
-xlim([0,38])
-ylim([0.1,0.35])
+xlim([0.5,4.5])
+ylim([0.,0.35])
 %%
 
 ax = gca;
-ax.XAxis.MinorTickValues = [25:25:150,250];
-% ax.XAxis.TickLabels = };
+ax.XAxis.MinorTickValues = [0:50:500];
+
 
 
 
 %% recolor a plot
-fig_idx = 2;
-color_move = getColorFromList(1,0);
+fig_idx = 3;
+color_move = getColorFromList(1,3);
 line_move = findobj(fig_idx,'type','line');
 scatter_move = findobj(fig_idx,'type','scatter');
 errorbar_move = findobj(fig_idx,'type','errorbar');
@@ -84,7 +83,7 @@ for l = 1:numel(line_move)
     else
         new_handle.Color = color_move;
         new_handle.XData = line_move(l).XData + offset;
-        new_handle.MarkerSize = 24;
+%         new_handle.MarkerSize = 24;
     end
 end
 
@@ -93,4 +92,5 @@ for e = 1:numel(errorbar_move)
     new_handle.Color = color_move;
     new_handle.XData = errorbar_move(e).XData + offset;
 end
+
 

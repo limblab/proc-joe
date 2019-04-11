@@ -8,7 +8,7 @@
 </settings>
 <grid distance="5" unitdist="mil" unit="mil" style="lines" multiple="1" display="yes" altdistance="5" altunitdist="mil" altunit="mil"/>
 <layers>
-<layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
+<layer number="1" name="Top" color="4" fill="1" visible="no" active="yes"/>
 <layer number="16" name="Bottom" color="1" fill="1" visible="yes" active="yes"/>
 <layer number="17" name="Pads" color="2" fill="1" visible="yes" active="yes"/>
 <layer number="18" name="Vias" color="2" fill="1" visible="yes" active="yes"/>
@@ -1388,13 +1388,14 @@ Please make sure your boards conform to these design rules.</description>
 <signal name="N$99">
 <contactref element="DUKE-STIM" pad="2"/>
 <contactref element="U$34" pad="P$5"/>
-<wire x1="3.644" y1="14.859" x2="3.517" y2="16.129" width="0.2032" layer="16"/>
-<wire x1="3.771" y1="2.54" x2="6.311" y2="2.54" width="0.2032" layer="16"/>
-<wire x1="3.644" y1="14.859" x2="3.771" y2="2.54" width="0.2032" layer="16"/>
+<wire x1="6.311" y1="2.54" x2="3.771" y2="2.54" width="0.2032" layer="16"/>
 <contactref element="U$35" pad="P$5"/>
 <contactref element="U$36" pad="P$5"/>
-<wire x1="3.517" y1="16.129" x2="2.247" y2="16.129" width="0.2032" layer="16"/>
+<wire x1="3.454015625" y1="16.129" x2="2.247" y2="16.129" width="0.2032" layer="16"/>
+<wire x1="3.454015625" y1="16.129" x2="3.517" y2="16.129" width="0.2032" layer="16"/>
 <wire x1="2.247" y1="16.129" x2="1.104" y2="16.129" width="0.2032" layer="16"/>
+<wire x1="3.771" y1="2.54" x2="3.771" y2="15.812015625" width="0.1524" layer="16"/>
+<wire x1="3.771" y1="15.812015625" x2="3.454015625" y2="16.129" width="0.1524" layer="16"/>
 </signal>
 <signal name="N$98">
 <contactref element="U$34" pad="P$1"/>

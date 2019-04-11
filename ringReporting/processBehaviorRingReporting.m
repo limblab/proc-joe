@@ -244,7 +244,7 @@ function [figureHandle] = plotReachDistribution(cds,tgtAngleWindow,removeBumpOff
     
     reachAngles = zeros(numel(cds.trials.number),1);
     reachError = zeros(numel(cds.trials.number),1);
-    bumpAngles = zeros(numel(cds.trials.number),1);
+    tgtAngles = zeros(numel(cds.trials.number),1);
     bumpMag = zeros(numel(cds.trials.number),1);
     sizeReachAngle = 0;
     angleOffsets = [-360,0,360];
@@ -274,7 +274,7 @@ function [figureHandle] = plotReachDistribution(cds,tgtAngleWindow,removeBumpOff
             reachAngles(sizeReachAngle+1,1) = 180/pi*atan2(yData(outerCircleIdx-1),xData(outerCircleIdx-1));
             [~,offsetIdx] = min(abs(cds.trials.tgtDir(tr) - (reachAngles(sizeReachAngle+1,1)+angleOffsets)));
             reachError(sizeReachAngle+1,1) = cds.trials.tgtDir(tr) - (reachAngles(sizeReachAngle+1,1)+angleOffsets(offsetIdx));
-            bumpAngles(sizeReachAngle+1,1) = cds.trials.bumpDir(tr);
+            tgtAngles(sizeReachAngle+1,1) = cds.trials.tgtDir(tr);
 
             bumpMag(sizeReachAngle+1,1) = cds.trials.bumpMagnitude(tr);
             sizeReachAngle = sizeReachAngle + 1;
@@ -283,14 +283,14 @@ function [figureHandle] = plotReachDistribution(cds,tgtAngleWindow,removeBumpOff
 
     reachAngles = reachAngles(1:sizeReachAngle,1);
     reachError = reachError(1:sizeReachAngle);
-    bumpAngles = bumpAngles(1:sizeReachAngle);
+    tgtAngles = tgtAngles(1:sizeReachAngle);
     bumpMag = bumpMag(1:sizeReachAngle);
     
-    if(opts.BUMP_NONLINEARITY)
-        bumpAngles = bumpAngles + 25*cos(bumpAngles*pi/180*2);
-        bumpAngles(bumpAngles > 180) = bumpAngles(bumpAngles>180) - 360;
-        bumpAngles(bumpAngles < -180) = bumpAngles(bumpAngles<-180) + 360;
-    end
+%     if(opts.BUMP_NONLINEARITY)
+%         bumpAngles = bumpAngles + 25*cos(bumpAngles*pi/180*2);
+%         bumpAngles(bumpAngles > 180) = bumpAngles(bumpAngles>180) - 360;
+%         bumpAngles(bumpAngles < -180) = bumpAngles(bumpAngles<-180) + 360;
+%     end
     
     if(opts.PLOT_ALL_BUMP_MAGS)
         for bm = 1:numel(opts.BUMP_MAGS)
@@ -322,17 +322,17 @@ function [figureHandle] = plotReachDistribution(cds,tgtAngleWindow,removeBumpOff
     figure();
     if(opts.PLOT_ALL_BUMP_MAGS)
         for bm = 1:numel(opts.BUMP_MAGS)
-            plot(bumpAngles(abs(bumpAngles) < 180 & abs(reachAngles) < 180 & isEqual(bumpMag, opts.BUMP_MAGS(bm))),...
-                reachAngles(abs(bumpAngles) < 180 & abs(reachAngles) < 180 & isEqual(bumpMag, opts.BUMP_MAGS(bm))),...
+            plot(tgtAngles(abs(tgtAngles) < 180 & abs(reachAngles) < 180 & isEqual(bumpMag, opts.BUMP_MAGS(bm))),...
+                reachAngles(abs(tgtAngles) < 180 & abs(reachAngles) < 180 & isEqual(bumpMag, opts.BUMP_MAGS(bm))),...
                 '.','markersize',10,'color',opts.COLORS(bm,:));
             hold on
         end
     else
-        plot(bumpAngles(abs(bumpAngles) < 180 & abs(reachAngles) < 180),...
-            reachAngles(abs(bumpAngles) < 180 & abs(reachAngles) < 180),...
+        plot(tgtAngles(abs(tgtAngles) < 180 & abs(reachAngles) < 180),...
+            reachAngles(abs(tgtAngles) < 180 & abs(reachAngles) < 180),...
             '.','markersize',10);
     end
-    xlabel('Bump direction (deg)')
+    xlabel('Tgt direction (deg)')
     ylabel('Reach direction (deg)')
     hold on
     xDeg = -180:1:180;
