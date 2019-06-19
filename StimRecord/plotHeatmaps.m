@@ -235,6 +235,9 @@ function [heatmap_data] = getHeatmapDataAllNeurons(arrayData,opts)
             heatmap_data{heatmap_idx}.chan = chan;
             heatmap_data{heatmap_idx}.wave = wave;
             heatmap_data{heatmap_idx}.main_chan = arrayData{1}.CHAN_LIST(chan);
+            if(iscell(heatmap_data{heatmap_idx}.main_chan))
+                heatmap_data{heatmap_idx}.main_chan = heatmap_data{heatmap_idx}.main_chan{1};
+            end
             heatmap_idx = heatmap_idx + 1;
         end
     end
@@ -291,7 +294,8 @@ function [heatmap_data] = getHeatmapDataAllStimChans(arrayData,map_data,opts)
         heatmap_data{arrIdx}.dataRatio = dataRatio;
         heatmap_data{arrIdx}.chan = 1:numel(arrayData{arrIdx}.CHAN_LIST);
         heatmap_data{arrIdx}.wave = ones(numel(arrayData{arrIdx}.CHAN_LIST),1);
-        heatmap_data{arrIdx}.main_chan = arrayData{arrIdx}.CHAN_REC;
+        heatmap_data{arrIdx}.main_chan = arrayData{arrIdx}.CHAN_REC
+        
     end
 
 end

@@ -33,9 +33,9 @@ function trial_data = getMoveOnset(trial_data,params)
 which_method  =  'peak';
 min_s        =  0.3;
 s_thresh      =  7;
-peak_idx_offset = [0,100];
+peak_idx_offset = [0,1000];
 start_idx_offset = 0;
-max_rt_offset = 40;
+max_rt_offset = 400;
 which_field = 'speed';
 field_idx = 1;
 threshold_mult = 0.5;
@@ -63,7 +63,7 @@ if(be_aggressive) % find a threshold based on all trials
     s_all = [];
     if(threshold_acc <= 0)
         for trial = 1:length(trial_data)
-            if(isfield(td(trial),'tgtDir'))
+            if(isfield(td(trial),'tgtDir') && strcmpi(which_field,'speed')~=1)
                 % project (which_field) onto the target axis
                 s_all = [s_all;sum(td(trial).(which_field)(td(trial).idx_tgtOnTime+35:td(trial).(start_idx),:)*[cos(td(trial).tgtDir*pi/180);sin(td(trial).tgtDir*pi/180)],2)];
             else
@@ -87,7 +87,7 @@ if(be_aggressive) % find a threshold based on all trials
 end
 
 for trial = 1:length(trial_data)
-    if(isfield(td(trial),'tgtDir'))
+    if(isfield(td(trial),'tgtDir') && strcmpi(which_field,'speed')~=1)
 %         project (which_field) onto the target axis
         s = sum(td(trial).(which_field)*[cos(td(trial).tgtDir/180*pi);sin(td(trial).tgtDir/180*pi)],2);
     else
@@ -114,7 +114,8 @@ for trial = 1:length(trial_data)
     if ~flag_move && strcmpi(which_method,'peak')
         ds = [0; diff(s)];
         peaks = [ds(1:end-1)>0 & ds(2:end)<0; 0];
-        mvt_peaks = find(peaks & (1:length(peaks))' > td(trial).(start_idx)+peak_idx_offset(1) & (1:length(peaks))' < td(trial).(start_idx)+peak_idx_offset(2) & s > min_s & move_inds);
+        mvt_peaks = find(peaks & (1:length(peaks))' > td(trial).(start_idx)+peak_idx_offset(1) & ...
+            (1:length(peaks))' < td(trial).(start_idx)+peak_idx_offset(2) & s > min_s & move_inds);
 
         if ~isempty(mvt_peaks)
             [~,mvt_peak] = max(s(mvt_peaks));

@@ -13,9 +13,11 @@ function [ figHandle ] = plotPSTHLIB(xData,yData,optsPlotInput,optsSaveInput)
     optsSave = configureOptionsSave(optsSaveInput);
     
     %% check for size
-    if(size(xData,2) ~= optsPlot.NUM_PLOTS || size(yData,2) ~= optsPlot.NUM_PLOTS || max(size(xData)) ~= max(size(yData)))
+    if(~isempty(optsPlot.NUM_PLOTS) && (size(xData,2) ~= optsPlot.NUM_PLOTS || size(yData,2) ~= optsPlot.NUM_PLOTS || max(size(xData)) ~= max(size(yData))))
         warning('Aborting due to incorrectly sized inputs');
         return;
+    elseif(isempty(optsPlot.NUM_PLOTS))
+        optsPlot.NUM_PLOTS = size(xData,2);
     end
 
 

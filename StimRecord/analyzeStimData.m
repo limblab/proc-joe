@@ -1,61 +1,61 @@
 %% set file names 
 
-inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\StimRecData\Duncan\MultiElec_LeftS1\Duncan_20190402_5elecs\';
-% inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
-% inputData.mapFileName = 'mapFileR:\limblab-archive\Retired Animal Logs\Monkeys\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
-inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
+    inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\Han_recordingDuringStim\Han_20190611_rt_record\';
+    inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+    % inputData.mapFileName = 'mapFileR:\limblab-archive\Retired Animal Logs\Monkeys\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
+%     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
 
 
-folderpath = inputData.folderpath; % rest of code uses folderpath currently...may have switched this, not 100% certain
+    folderpath = inputData.folderpath; % rest of code uses folderpath currently...may have switched this, not 100% certain
 
-inputData.task='taskCObump';
-inputData.ranBy='ranByJoseph'; 
-inputData.array1='arrayLeftS1'; 
-inputData.monkey='monkeyDuncan';
-inputData.labnum = 6;
+    inputData.task='taskRT';
+    inputData.ranBy='ranByJoseph'; 
+    inputData.array1='arrayLeftS1'; 
+    inputData.monkey='monkeyHan';
+    inputData.labnum = 6;
 
-pwd=cd;
-cd(inputData.folderpath)
-fileList = dirSorted('*spikesExtracted.nev*');
-stimInfoFileList = dirSorted('*stimInfo*');
+    pwd=cd;
+    cd(inputData.folderpath)
+    fileList = dirSorted('*spikesExtracted.nev*');
+    stimInfoFileList = dirSorted('*stimInfo*');
 
 
 %% extract relevant data for all units -- highly recommend saving arrayData after this step
-tic
+    tic
 
-optsExtract.STIMULI_RESPONSE = 'all';
-optsExtract.STIMULATIONS_PER_TRAIN = 1;
-optsExtract.STIMULATION_BATCH_SIZE = 1000;
+    optsExtract.STIMULI_RESPONSE = 'all';
+    optsExtract.STIMULATIONS_PER_TRAIN = 1;
+    optsExtract.STIMULATION_BATCH_SIZE = 1000;
 
-optsExtract.USE_STIM_CODE = 0;
-% optsExtract.STIM_ELECTRODE = 20;
-optsExtract.CHAN_LIST = [];
+    optsExtract.USE_STIM_CODE = 1;
+    optsExtract.STIM_ELECTRODE = {23};
+    optsExtract.CHAN_LIST = [];
 
-optsExtract.PRE_TIME = 20/1000; % made negative in the function
-optsExtract.POST_TIME = 80/1000;
+    optsExtract.PRE_TIME = 100/1000; % made negative in the function
+    optsExtract.POST_TIME = 500/1000;
 
-optsExtract.BIN_SIZE = 0.2/1000;
-optsExtract.TIME_AFTER_STIMULATION_WAVEFORMS = 10/1000;
-optsExtract.USE_ANALOG_FOR_STIM_TIMES = 1; % this uses the analog sync line to get stim times, not sure why you would want to do anything else
-optsExtract.GET_KIN = 0;
+    optsExtract.BIN_SIZE = 5/1000;
+    optsExtract.TIME_AFTER_STIMULATION_WAVEFORMS = 10/1000;
+    optsExtract.USE_ANALOG_FOR_STIM_TIMES = 1; % this uses the analog sync line to get stim times, not sure why you would want to do anything else
+    optsExtract.GET_KIN = 0;
 
-arrayData = extractDataAroundStimulations(inputData,fileList,stimInfoFileList,optsExtract);
+    arrayData = extractDataAroundStimulations(inputData,fileList,stimInfoFileList,optsExtract);
 
-toc
+    toc
 %% pick a unit (index in array data)
 % plot raster, and PSTH for the given unit above
-arrIdx = 1;
 % for arrIdx = 1:numel(arrayData)
+arrIdx = 18;
     % plot raster, and PSTH for the given unit above
 
 %     optsPlotFunc.BIN_SIZE = optsExtract.BIN_SIZE;
     optsPlotFunc.BIN_SIZE = mode(diff(arrayData{1}.bE{1,1}));
     optsPlotFunc.FIGURE_SAVE = 0;
     optsPlotFunc.FIGURE_DIR = inputData.folderpath;
-    optsPlotFunc.FIGURE_PREFIX = 'Duncan_20181211';
+    optsPlotFunc.FIGURE_PREFIX = 'Han_20190502';
 
-    optsPlotFunc.PRE_TIME = 2/1000;
-    optsPlotFunc.POST_TIME = 8/1000;
+    optsPlotFunc.PRE_TIME = 20/1000;
+    optsPlotFunc.POST_TIME = 300/1000;
     optsPlotFunc.SORT_DATA = 'postStimuliTime';
 
     optsPlotFunc.PLOT_AFTER_STIMULATION_END = 0;
@@ -66,7 +66,7 @@ arrIdx = 1;
     optsPlotFunc.PLOT_ALL_ONE_FIGURE = 0;
     optsPlotFunc.PLOT_LINE = 1;
     optsPlotFunc.PLOT_TITLE = 1;    
-    optsPlotFunc.PLOT_ALL_WAVES_ONE_FIGURE = 1;
+    optsPlotFunc.PLOT_ALL_WAVES_ONE_FIGURE = 0;
 %     
     PSTHPlots = plotPSTHStim(arrayData{arrIdx},arrayData{arrIdx}.NN,optsPlotFunc);
 
@@ -102,7 +102,7 @@ ArrayPlots = plotArrayMap(arrayData{arrIdx},inputData.mapFileName(8:end),optsGri
 
 %% heatmap across whole array
 
-opts.STIM_ELECTRODE_PLOT = [1:numel(unique(arrayData{1}.CHAN_SENT))];
+opts.STIM_ELECTRODE_PLOT = [1:numel(uniquecell(arrayData{1}.CHAN_SENT))];
 % opts.STIM_ELECTRODE_PLOT = 1;
 % opts.WAVEFORM_TYPES_PLOT = unique(arrayData{1}.WAVEFORM_SENT);
 opts.WAVEFORM_TYPES_PLOT = [1:size(arrayData{1}.bE,2)];
@@ -118,14 +118,14 @@ opts.AUTO_WINDOW = 0; %
 opts.INHIBITORY = 0;
 opts.EXCITATORY = 0;
 
-opts.MAX_RATIO = 0.4;
+opts.MAX_RATIO = 1;
 opts.MIN_RATIO = -1;
 opts.LOG_SCALE = 1;
 opts.LOG_PARAM = 9;
 
 opts.RELATIVE_INHIBITION = 0;
 
-opts.FIGURE_SAVE = 1;
+opts.FIGURE_SAVE = 0;
 opts.FIGURE_DIR = inputData.folderpath;
 opts.FIGURE_PREFIX = 'Duncan_20190213';
     [heatmaps, heatmap_data] = plotHeatmaps(arrayData,inputData.mapFileName(8:end),opts);

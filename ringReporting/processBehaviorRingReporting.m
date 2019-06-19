@@ -286,12 +286,6 @@ function [figureHandle] = plotReachDistribution(cds,tgtAngleWindow,removeBumpOff
     tgtAngles = tgtAngles(1:sizeReachAngle);
     bumpMag = bumpMag(1:sizeReachAngle);
     
-%     if(opts.BUMP_NONLINEARITY)
-%         bumpAngles = bumpAngles + 25*cos(bumpAngles*pi/180*2);
-%         bumpAngles(bumpAngles > 180) = bumpAngles(bumpAngles>180) - 360;
-%         bumpAngles(bumpAngles < -180) = bumpAngles(bumpAngles<-180) + 360;
-%     end
-    
     if(opts.PLOT_ALL_BUMP_MAGS)
         for bm = 1:numel(opts.BUMP_MAGS)
             [bC,bE] = histcounts(reachError(isEqual(bumpMag,opts.BUMP_MAGS(bm))),'BinWidth',opts.DISTRIBUTION_BIN_SIZE);

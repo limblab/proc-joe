@@ -78,11 +78,14 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
     end
         
     %% remove outliers
-        % anything above 1.5 Inter quartile range goes bye bye
+        % remove top and bottom 5% (Godlove 2014 did this)
     for c = 1:numel(cueInfo)
-        Q1 = quantile(cueInfo(c).rt,0.25);
-        Q3 = quantile(cueInfo(c).rt,0.75);
-        outlier_mask = cueInfo(c).rt > Q3+1.5*(Q3-Q1);
+%         Q1 = quantile(cueInfo(c).rt,0.05);
+%         Q3 = quantile(cueInfo(c).rt,0.95);
+        mean_rt = mean(cueInfo(c).rt);
+        std_rt = std(cueInfo(c).rt);
+        
+        outlier_mask = cueInfo(c).rt > mean_rt+2*std_rt | cueInfo(c).rt < mean_rt-2*std_rt;
 
 %         cueInfo(c).td_idx_reward(outlier_mask) = [];
 %         cueInfo(c).td_idx_all(outlier_mask) = [];

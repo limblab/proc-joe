@@ -67,7 +67,8 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
             stimInfo.stimOn = stimInfo.stimOn(stim_info_mask==1);
             stimInfo.stimOff = stimInfo.stimOff(stim_info_mask==1);
             stimInfo.chanSent = stimInfo.chanSent(stim_info_mask==1);
-            stimInfo.chanSent(:) = opts.STIM_ELECTRODE;
+            stimInfo.chanSent(:) = opts.STIM_ELECTRODE{:};
+            stimInfo.chanSent = mat2cell(stimInfo.chanSent(:),ones(size(stimInfo.chanSent,1),1),ones(size(stimInfo.chanSent,2),1));
             stimInfo.waveSent = stimInfo.waveSent(stim_info_mask==1);
             
             NUM_WAVEFORM_TYPES = 15;
@@ -233,11 +234,11 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
                     binEdges{chan,wave} = binEdges{chan,wave}*1000;
                     % compute a variance for the data from preTime to -2/1000 and for
                     % the data from 1.5/1000 to 5/1000
-                    firingRateStimuli = zeros(sum(stimInfo.waveSent == wave & checkChanListEquality(stimInfo.chanSent(1:numel(stimsPerTrainMask)),CHAN_LIST{chan})),2);
-                    for i = 1:sum(stimInfo.waveSent == wave & checkChanListEquality(stimInfo.chanSent(1:numel(stimsPerTrainMask)),CHAN_LIST{chan}))
-                        firingRateStimuli(i,1) = numel(find(stimuliData{chan,wave} == i & spikeTrialTimes{chan,wave} > -opts.PRE_TIME & spikeTrialTimes{chan,wave} < 0))/(opts.PRE_TIME);
-                        firingRateStimuli(i,2) = numel(find(stimuliData{chan,wave} == i & spikeTrialTimes{chan,wave} < 5/1000 & spikeTrialTimes{chan,wave} > 0.5/1000))/(4.5/1000);
-                    end
+%                     firingRateStimuli = zeros(sum(stimInfo.waveSent == wave & checkChanListEquality(stimInfo.chanSent(1:numel(stimsPerTrainMask)),CHAN_LIST{chan})),2);
+%                     for i = 1:sum(stimInfo.waveSent == wave & checkChanListEquality(stimInfo.chanSent(1:numel(stimsPerTrainMask)),CHAN_LIST{chan}))
+%                         firingRateStimuli(i,1) = numel(find(stimuliData{chan,wave} == i & spikeTrialTimes{chan,wave} > -opts.PRE_TIME & spikeTrialTimes{chan,wave} < 0))/(opts.PRE_TIME);
+%                         firingRateStimuli(i,2) = numel(find(stimuliData{chan,wave} == i & spikeTrialTimes{chan,wave} < 5/1000 & spikeTrialTimes{chan,wave} > 0.5/1000))/(4.5/1000);
+%                     end
 
         %             binCountsVar{chan,wave} = [mean(firingRateStimuli(:,1)),mean(firingRateStimuli(:,2));...
         %                 var(firingRateStimuli(:,1)),var(firingRateStimuli(:,2))];

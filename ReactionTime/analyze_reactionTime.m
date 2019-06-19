@@ -1,6 +1,6 @@
 %% script to process reaction time data 
 %% determine filename and input data
-    inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\Duncan_leftS1\Duncan_20190314_rt\';
+    inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\Duncan_20190618_rt\';
 %     inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\Duncan\Duncan_20181126_training\';
     
 %     inputData.folderpath = 'D:\Lab\Data\ReactionTime\Han_20180427_training\';
@@ -18,10 +18,10 @@
     cd(inputData.folderpath)
     fileList = dir('*.nev*');
     cd(pwd)
-%% load in cds and extract data
+% load in cds and extract data
     td_all = [];
     num_trials = 0;
-    for fileNumber = 1%:numel(fileList)
+    for fileNumber = 4%:numel(fileList)
         cds = commonDataStructure();
         cds.file2cds([inputData.folderpath fileList(fileNumber).name],inputData.task,inputData.ranBy,...
             inputData.monkey,inputData.labnum,inputData.array1,inputData.mapFileName);
@@ -84,7 +84,7 @@
     
     % get movement onset
     params.field_idx = 1;
-    params.start_idx_offset = 10;
+    params.start_idx_offset = 100;
     params.be_aggressive = 1;
     params.which_field = 'acc';
 
@@ -117,11 +117,11 @@
     
 %% plot a set of reaches aligned to go cue with reaction time markers
 
-    opts.MAX_PLOT = 5;
-    opts.WHICH_FIELD = 'vel';
+    opts.MAX_PLOT = 10;
+    opts.WHICH_FIELD = 'pos';
     opts.DIR = 90;
     
-    opts.BUMP_MAGS = [3];
+    opts.BUMP_MAGS = [];
     opts.STIM_CODES = [];
     opts.KEEP_ONLY_VISUAL_TRIALS = 0;
     opts.YLIM = [];
@@ -138,32 +138,32 @@
  
     td_reward_rt = td_reward(~isnan([td_reward.idx_movement_on]));
     opts.FOLDER_PATH = inputData.folderpath;
-    opts.FIGURE_PREFIX = 'Duncan_20190313'; % no _ required
+    opts.FIGURE_PREFIX = 'Han_20181112'; % no _ required
     
 %     opts.BUMP_MAGS = [0.5:0.5:4.5];
 %     opts.STIM_CODES = [2,3,4,5,7,8,9];
-%     opts.STIM_LABEL = 'Amplitude (\muA)';
-%     opts.STIM_PARAMS = [5:5:35];    
+    opts.STIM_LABEL = 'Amplitude (\muA)';
+    opts.STIM_PARAMS = [10:10:80];    
 %     opts.STIM_X_LABEL = {'10','15','20','25','30','35'};
 %     opts.STIM_PARAMS = [5:5:35];
 %     opts.STIM_LABEL = 'Frequency (Hz)';
 %     opts.STIM_PARAMS = [50:50:500];
-%     opts.STIM_PARAMS = [75,100,125,150,200,250,300];
+%     opts.STIM_PARAMS = [25,50,75,100,125,150,200,250,300];
 %     opts.STIM_LABEL = 'Train length (ms)';
 %     opts.STIM_PARAMS = [1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8] + repmat([-0.1,0.1],1,8);
 %     opts.STIM_X_LABEL = {'1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16'};
 %     opts.STIM_COLOR_IDX = [0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7];
 %     opts.STIM_COLOR_ALPHA = repmat([1,0.7],1,8);
 
-    opts.STIM_PARAMS = [4,4,4,6,6,6,8,8,8,12,12,12,24,24,24] + repmat([-0.25,0,0.25],1,5);
-    opts.STIM_X_LABEL = {'1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16'};
-    opts.STIM_COLOR_IDX = [1,0,2,1,0,2,1,0,2,1,0,2,1,0,2,1,0,2];
+%     opts.STIM_PARAMS = [4,4,4,6,6,6,8,8,8,12,12,12,24,24,24] + repmat([-0.25,0,0.25],1,5);
+%     opts.STIM_X_LABEL = {'1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16'};
+%     opts.STIM_COLOR_IDX = [1,0,2,1,0,2,1,0,2,1,0,2,1,0,2,1,0,2];
     
 %     opts.STIM_PARAMS = [1:1:16];
 %     opts.STIM_LABEL = 'Elec';
 %     opts.COLOR_LIST = 2;
 %     opts.STIM_LABEL = 'Bump Mag';
-    opts.FIT = 	1;
+    opts.FIT = 	0;
     opts.PLOT_BUMP = 0;
     opts.PLOT_STIM = 1;
     

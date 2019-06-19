@@ -5,7 +5,7 @@ function [ out ] = isEqual( data1, data2 )
         if(mean(data1,'omitnan') == 0)
             off=0.001;
         else
-            off = mean(data1(~isnan(data1))).*0.001;
+            off = abs(mean(data1(~isnan(data1))).*0.001);
         end
         out = data1 > data2-off & data1 < data2+off;
     end

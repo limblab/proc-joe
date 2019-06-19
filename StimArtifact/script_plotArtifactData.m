@@ -9,14 +9,14 @@
     artifactData = outputData.artifactData;
     waveforms = outputData.waveforms;
 
-%     artifact_idx = find(waveforms.waveSent == waveSent & checkChanListEquality(waveforms.chanSent, chanSent));
-    artifact_idx = find(ones(size(outputData.waveforms.chanSent))==1);
+    artifact_idx = find(waveforms.waveSent == waveSent);
+%     artifact_idx = find(ones(size(outputData.waveforms.chanSent))==1);
     % x_data is in ms and from stimulation offset
     x_data = ((1:size(artifactData.artifact,3))-1-inputData.presample)/30;% - ...
 %         waveforms.parameters(waveSent).pWidth1/1000 - waveforms.parameters(waveSent).pWidth2/1000 - 53/1000;
 
     % plot artifact and filtered artifact
-    num_plot = 10;
+    num_plot = 50;
     template = median(squeeze(artifactData.artifact(artifact_idx,chanRec,:)));
     % plot raw artifact
     figure()

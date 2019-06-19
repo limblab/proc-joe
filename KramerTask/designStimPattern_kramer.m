@@ -2,16 +2,16 @@
 
 
 %% determine filename and input data
-    input_data.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\CObump\Duncan_20190215_LeftS1\';
+    input_data.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\CObump\Han_20190417_CObump\';
 %     inputData.folderpath = 'D:\Lab\Data\ReactionTime\Han_20180427_training\';
-%     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+    input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 %     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\RetiredMonkeys\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
-    input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
+%     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
 
     input_data.task='taskCObump';
     input_data.ranBy='ranByJoseph'; 
     input_data.array1='arrayLeftS1'; 
-    input_data.monkey='monkeyDuncan';
+    input_data.monkey='monkeyHan';
     input_data.labnum = 6;
     
     pwd=cd;
@@ -25,7 +25,7 @@
         input_data.monkey,input_data.labnum,input_data.array1,input_data.mapFileName,'recoverPreSync');
     cd(pwd);
     
-% convert into td
+%% convert into td
     params.event_list = {'goCueTime';'tgtDir';'bumpDir';'bumpTime'};
     params.trial_results = {'R'};
     params.extra_time = [1,2];
@@ -56,6 +56,7 @@
     mean_fr_bump = [];
     mean_fr_baseline = [];
     mean_fr_move = [];
+    std_fr_baseline = [];
     chan_num = [];
     array_name = 'LeftS1';
     for unit = 1:size(td_all(1).([array_name,'_unit_guide']),1)
@@ -66,7 +67,7 @@
             fr_data_move = [];
             td_temp = td_all(trial_mask);
             for t = 1:numel(td_temp)
-                window_bump = td_temp(t).idx_bumpTime + [1,10];
+                window_bump = td_temp(t).idx_bumpTime + [1,15];
                 window_baseline = td_temp(t).idx_bumpTime - [14,2];
                 window_move = td_temp(t).idx_movement_on + [0,12];
                 
@@ -102,8 +103,8 @@ colors_1 = [(0:numColors-1)'/numColors,(0:numColors-1)'/numColors,(0:numColors-1
 colors_2 = [1-(0:numColors-1)'/numColors,1-(0:numColors-1)'/numColors,1-(0:numColors-1)'/numColors].*color_2;
 colors = [colors_2;colors_1];
 
-for bd = 1:2:size(mean_fr_bump,2)
-    fr_z_score = (mean_fr_bump(:,bd) - mean_fr_baseline(:,bd))./std_fr_baseline(:,bd);
+for bd = 1:size(mean_fr_bump,2)
+    fr_z_score = (mean_fr_bump(:,bd) - mean(mean_fr_bump,2))./std_fr_baseline(:,bd);
     chan_num_z_score = chan_num;
 
     % remove inf entries

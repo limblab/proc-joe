@@ -1,9 +1,16 @@
+bump_data = [];
+vis_data = [];
 %% set up code:chan mapping
 filename = 'Duncan_20190311';
 
 mapping = [75, 24, 95, 39, 13, 9, 66, 20, 57, 10, 12]';
 
+use_bump = 0;
+use_vis = 0;
+
 mapping = [(0:1:(numel(mapping)-1))', mapping];
+monk_bump_mag = 3;
+
 %% make struct with mean_rt, std_rt and chan num
     curr_file_data = [];
     curr_file_data.chan = [];
@@ -12,7 +19,8 @@ mapping = [(0:1:(numel(mapping)-1))', mapping];
     curr_file_data.filename = {};
     curr_file_data.num_trials = [];
     curr_file_data.rt_all = {};
-    
+    curr_file_data.bump_all = {};
+    curr_file_data.vis_all = {};
     for i = 1:size(mapping,1)
         % find stim code and bump mag == 0
         cue_idx = find([data.cueInfo.bumpMag] == 0 & [data.cueInfo.stimCode] == mapping(i,1));
@@ -23,16 +31,38 @@ mapping = [(0:1:(numel(mapping)-1))', mapping];
             curr_file_data.num_trials(end+1) = numel(data.cueInfo(cue_idx).rt);
             curr_file_data.filename{end+1} = filename;
             curr_file_data.rt_all{end+1} =  data.cueInfo(cue_idx).rt;
+            
         end
+        % find bump mag == 1 for Han and == 3 for duncan, no stim
+        bump_idx = find([data.cueInfo.bumpMag] == monk_bump_mag & [data.cueInfo.stimCode] == -1);
+        if(~isempty(cue_idx) && ~isempty(bump_idx) && use_bump)
+            bump_data = data.cueInfo(bump_idx).rt;
+            bump_data(bump_data > 0.24) = [];
+            curr_file_data.bump_all{end+1} = bump_data;
+        elseif(~isempty(cue_idx))
+            curr_file_data.bump_all{end+1} = bump_data;
+        end
+        
+        % find bump mag == 0, no stim
+        vis_idx = find([data.cueInfo.bumpMag] == 0 & [data.cueInfo.stimCode] == -1);
+        if(~isempty(cue_idx) && ~isempty(vis_idx) && use_vis)
+            vis_data = data.cueInfo(vis_idx).rt;
+            curr_file_data.vis_all{end+1} = vis_data;
+        elseif(~isempty(cue_idx))
+            curr_file_data.vis_all{end+1} = vis_data;
+        end
+        
     end
   
-%% load in struct with all of those, and combine
+% load in struct with all of those, and combine
     all_files_data.chan = [all_files_data.chan, curr_file_data.chan];
     all_files_data.mean_rt = [all_files_data.mean_rt, curr_file_data.mean_rt];
     all_files_data.std_rt = [all_files_data.std_rt, curr_file_data.std_rt];
     all_files_data.filename = [all_files_data.filename,curr_file_data.filename];
     all_files_data.num_trials = [all_files_data.num_trials,curr_file_data.num_trials];
     all_files_data.rt_all = [all_files_data.rt_all,curr_file_data.rt_all];
+    all_files_data.bump_all = [all_files_data.bump_all,curr_file_data.bump_all];
+    all_files_data.vis_all = [all_files_data.vis_all,curr_file_data.vis_all];
     all_files_data
     
     
