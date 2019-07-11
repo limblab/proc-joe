@@ -47,7 +47,6 @@
     input_data.num_bootstrap = 10;
         
     psych_data = getPsychometricCurveData(td_all,input_data);
-    psych_data = bootstrapPsychData(psych_data,input_data);
     
 %% plot psych data
     

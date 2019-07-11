@@ -80,8 +80,8 @@ function [output_data] = getPsychDataWrapper(td,input_data)
                         temp_data.bump_total = [temp_data.bump_total,0];
                     else
                         temp_data.bump_dirs = [temp_data.bump_dirs(1:insert_idx-1),b,temp_data.bump_dirs(insert_idx:end)];
-                        temp_data.bump_correct = [temp_data.bump_correct(1:insert_idx-1),b,temp_data.bump_correct(insert_idx:end)];
-                        temp_data.bump_total = [temp_data.bump_total(1:insert_idx-1),b,temp_data.bump_total(insert_idx:end)];
+                        temp_data.bump_correct = [temp_data.bump_correct(1:insert_idx-1),0,temp_data.bump_correct(insert_idx:end)];
+                        temp_data.bump_total = [temp_data.bump_total(1:insert_idx-1),0,temp_data.bump_total(insert_idx:end)];
                     end
                 end
             end
