@@ -12,8 +12,8 @@ function [behaviorData,figureHandles] = processBehaviorRingReporting(cds,opts)
     end
     
     for bm = 1:numel(opts.BUMP_MAGS)
-        behaviorData.percentCorrect(bm) = sum(cds.trials.result == 'R' & cds.trials.hideCursorDuringBump == 1 & cds.trials.showOuterTarget == 0 & ~isnan(cds.trials.bumpMagnitude) & cds.trials.bumpMagnitude == opts.BUMP_MAGS(bm))/...
-            sum((cds.trials.result == 'R' | cds.trials.result == 'F') & cds.trials.hideCursorDuringBump == 1 & cds.trials.showOuterTarget == 0 & ~isnan(cds.trials.bumpMagnitude) & cds.trials.bumpMagnitude == opts.BUMP_MAGS(bm));
+        behaviorData.percentCorrect(bm) = sum(cds.trials.result == 'R' & cds.trials.hideCursorDuringBump == 1 & cds.trials.showOuterTarget == 0 & ~isnan(cds.trials.bumpMagnitude) & isEqual(cds.trials.bumpMagnitude, opts.BUMP_MAGS(bm)))/...
+            sum((cds.trials.result == 'R' | cds.trials.result == 'F') & cds.trials.hideCursorDuringBump == 1 & cds.trials.showOuterTarget == 0 & ~isnan(cds.trials.bumpMagnitude) & isEqual(cds.trials.bumpMagnitude, opts.BUMP_MAGS(bm)));
     end
     
     behaviorData.percentCorrect_all = sum(cds.trials.result == 'R' & cds.trials.hideCursorDuringBump == 1 & cds.trials.showOuterTarget == 0 & ~isnan(cds.trials.bumpMagnitude))/...
@@ -34,9 +34,9 @@ function [behaviorData,figureHandles] = processBehaviorRingReporting(cds,opts)
     behaviorData.bin_percentCorrect = zeros(1,opts.NUM_BINS_DIR);
     for bm = 1:numel(opts.BUMP_MAGS)
         for b = 1:opts.NUM_BINS_DIR
-            behaviorData.bin_percentCorrect(bm,b) = sum(cds.trials.result == 'R' & cds.trials.hideCursorDuringBump == 1 & cds.trials.showOuterTarget == 0 & cds.trials.bumpMagnitude == opts.BUMP_MAGS(bm) &...
+            behaviorData.bin_percentCorrect(bm,b) = sum(cds.trials.result == 'R' & cds.trials.hideCursorDuringBump == 1 & cds.trials.showOuterTarget == 0 & isEqual(cds.trials.bumpMagnitude, opts.BUMP_MAGS(bm)) &...
                 cds.trials.tgtDir >= behaviorData.bin_edges(b) & cds.trials.tgtDir < behaviorData.bin_edges(b+1))/...
-                sum((cds.trials.result == 'R' | cds.trials.result == 'F') & cds.trials.hideCursorDuringBump == 1 & cds.trials.showOuterTarget == 0 & cds.trials.bumpMagnitude == opts.BUMP_MAGS(bm) &...
+                sum((cds.trials.result == 'R' | cds.trials.result == 'F') & cds.trials.hideCursorDuringBump == 1 & cds.trials.showOuterTarget == 0 & isEqual(cds.trials.bumpMagnitude, opts.BUMP_MAGS(bm)) &...
                 cds.trials.tgtDir >= behaviorData.bin_edges(b) & cds.trials.tgtDir < behaviorData.bin_edges(b+1));
         end
     end
@@ -244,7 +244,7 @@ function [figureHandle] = plotReachDistribution(cds,tgtAngleWindow,removeBumpOff
     
     reachAngles = zeros(numel(cds.trials.number),1);
     reachError = zeros(numel(cds.trials.number),1);
-    bumpAngles = zeros(numel(cds.trials.number),1);
+    tgtAngles = zeros(numel(cds.trials.number),1);
     bumpMag = zeros(numel(cds.trials.number),1);
     sizeReachAngle = 0;
     angleOffsets = [-360,0,360];
@@ -266,7 +266,7 @@ function [figureHandle] = plotReachDistribution(cds,tgtAngleWindow,removeBumpOff
             if(ismember('otHoldTime',cds.trials.Properties.VariableNames)) % 
                 outerCircleIdx = find(tData > cds.trials.otHoldTime(tr),1,'first');
             else
-                outerCircleIdx = find(sqrt((xData.^2 + yData.^2)) > opts.CIRCLE_RADIUS - 0.5*opts.CIRCLE_DEPTH,1,'first');
+                outerCircleIdx = find(sqrt((xData.^2 + yData.^2)) > cds.trials.targetRadius(tr) - 0.5*cds.trials.targetRadius(tr),1,'first');
                 if(isempty(outerCircleIdx)) 
                     outerCircleIdx = numel(xData);
                 end
@@ -274,7 +274,8 @@ function [figureHandle] = plotReachDistribution(cds,tgtAngleWindow,removeBumpOff
             reachAngles(sizeReachAngle+1,1) = 180/pi*atan2(yData(outerCircleIdx-1),xData(outerCircleIdx-1));
             [~,offsetIdx] = min(abs(cds.trials.tgtDir(tr) - (reachAngles(sizeReachAngle+1,1)+angleOffsets)));
             reachError(sizeReachAngle+1,1) = cds.trials.tgtDir(tr) - (reachAngles(sizeReachAngle+1,1)+angleOffsets(offsetIdx));
-            bumpAngles(sizeReachAngle+1,1) = cds.trials.bumpDir(tr);
+            tgtAngles(sizeReachAngle+1,1) = cds.trials.tgtDir(tr);
+
             bumpMag(sizeReachAngle+1,1) = cds.trials.bumpMagnitude(tr);
             sizeReachAngle = sizeReachAngle + 1;
         end
@@ -282,13 +283,13 @@ function [figureHandle] = plotReachDistribution(cds,tgtAngleWindow,removeBumpOff
 
     reachAngles = reachAngles(1:sizeReachAngle,1);
     reachError = reachError(1:sizeReachAngle);
-    bumpAngles = bumpAngles(1:sizeReachAngle);
+    tgtAngles = tgtAngles(1:sizeReachAngle);
     bumpMag = bumpMag(1:sizeReachAngle);
     
     if(opts.PLOT_ALL_BUMP_MAGS)
         for bm = 1:numel(opts.BUMP_MAGS)
-            [bC,bE] = histcounts(reachError(bumpMag == opts.BUMP_MAGS(bm)),'BinWidth',opts.DISTRIBUTION_BIN_SIZE);
-            bC = bC/sum(bumpMag == opts.BUMP_MAGS(bm));
+            [bC,bE] = histcounts(reachError(isEqual(bumpMag,opts.BUMP_MAGS(bm))),'BinWidth',opts.DISTRIBUTION_BIN_SIZE);
+            bC = bC/sum(isEqual(bumpMag, opts.BUMP_MAGS(bm)));
             plot(bE(1:end-1) + (bE(2)-bE(1))/2,bC,'linewidth',opts.LINE_WIDTH,'color',opts.COLORS(bm,:));
             hold on
         end
@@ -315,17 +316,17 @@ function [figureHandle] = plotReachDistribution(cds,tgtAngleWindow,removeBumpOff
     figure();
     if(opts.PLOT_ALL_BUMP_MAGS)
         for bm = 1:numel(opts.BUMP_MAGS)
-            plot(bumpAngles(abs(bumpAngles) < 180 & abs(reachAngles) < 180 & bumpMag == opts.BUMP_MAGS(bm)),...
-                reachAngles(abs(bumpAngles) < 180 & abs(reachAngles) < 180 & bumpMag == opts.BUMP_MAGS(bm)),...
+            plot(tgtAngles(abs(tgtAngles) < 180 & abs(reachAngles) < 180 & isEqual(bumpMag, opts.BUMP_MAGS(bm))),...
+                reachAngles(abs(tgtAngles) < 180 & abs(reachAngles) < 180 & isEqual(bumpMag, opts.BUMP_MAGS(bm))),...
                 '.','markersize',10,'color',opts.COLORS(bm,:));
             hold on
         end
     else
-        plot(bumpAngles(abs(bumpAngles) < 180 & abs(reachAngles) < 180),...
-            reachAngles(abs(bumpAngles) < 180 & abs(reachAngles) < 180),...
+        plot(tgtAngles(abs(tgtAngles) < 180 & abs(reachAngles) < 180),...
+            reachAngles(abs(tgtAngles) < 180 & abs(reachAngles) < 180),...
             '.','markersize',10);
     end
-    xlabel('Bump direction (deg)')
+    xlabel('Tgt direction (deg)')
     ylabel('Reach direction (deg)')
     hold on
     xDeg = -180:1:180;
@@ -379,8 +380,8 @@ function [opts] = configureOpts(optsInput)
     opts.FIGURE_PREFIX = '';
     opts.FIGURE_DIR = '';
     
-    opts.COLORS = [228,26,28;55,126,184;77,175,74;152,78,163;255,127,0;255,255,51;166,86,40;247,129,191;153,153,153]/255;
-    
+    opts.COLORS = [55,126,184;228,26,28;77,175,74;152,78,163;255,127,0;255,255,51;166,86,40;247,129,191;153,153,153]/255;
+    opts.BUMP_NONLINEARITY = 0;
     %% check if in opts and optsInput, overwrite if so
     try
         inputFieldnames = fieldnames(optsInput);

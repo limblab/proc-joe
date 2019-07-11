@@ -77,7 +77,7 @@
 <text x="30.949" y="9.144" size="1.016" layer="22" rot="MR0">20</text>
 <text x="42.379" y="13.081" size="1.016" layer="22" rot="MR0">29</text>
 <text x="43.649" y="9.271" size="1.016" layer="22" rot="MR0">30</text>
-<text x="4.66" y="16.637" size="0.6096" layer="21" rot="R90">GND</text>
+<text x="4.66" y="16.51" size="0.6096" layer="21" rot="R90">GND</text>
 <text x="4.152" y="20.828" size="0.6096" layer="21" rot="R270">REF</text>
 <text x="2.882" y="22.479" size="0.6096" layer="21" rot="R180">REC</text>
 <text x="3.136" y="15.494" size="0.6096" layer="21" rot="R180">STIM</text>
@@ -86,7 +86,7 @@
 <text x="9.74" y="31.496" size="0.8128" layer="21" rot="R270">GND</text>
 <text x="1.485" y="22.479" size="0.6096" layer="22" rot="MR180">REC</text>
 <text x="4.66" y="20.828" size="0.6096" layer="22" rot="MR270">REF</text>
-<text x="4.025" y="16.637" size="0.6096" layer="22" rot="MR90">GND</text>
+<text x="4.025" y="16.51" size="0.6096" layer="22" rot="MR90">GND</text>
 <text x="1.104" y="15.494" size="0.6096" layer="22" rot="MR180">STIM</text>
 <text x="5.842" y="23.114" size="0.8128" layer="21">1</text>
 <text x="10.922" y="23.114" size="0.8128" layer="21">5</text>

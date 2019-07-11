@@ -16,6 +16,10 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
         cd(inputData.folderpath)
         cds = commonDataStructure();
         load(stimInfoFileList(fileNumber).name);
+        if(~iscell(stimInfo.chanSent))
+            stimInfo.chanSent = mat2cell(stimInfo.chanSent',ones(numel(stimInfo.chanSent),1));
+            warning('made chan sent a cell array');
+        end
         cd(inputData.folderpath)
         cds.file2cds([inputData.folderpath fileList(fileNumber).name],inputData.task,inputData.ranBy,...
             inputData.monkey,inputData.labnum,inputData.array1,inputData.mapFileName); % DO NOT USE RECOVER PRE SYNC, currently this shifts the units and the analog signal differently
@@ -63,7 +67,8 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
             stimInfo.stimOn = stimInfo.stimOn(stim_info_mask==1);
             stimInfo.stimOff = stimInfo.stimOff(stim_info_mask==1);
             stimInfo.chanSent = stimInfo.chanSent(stim_info_mask==1);
-            stimInfo.chanSent(:) = opts.STIM_ELECTRODE;
+            stimInfo.chanSent(:) = opts.STIM_ELECTRODE{:};
+            stimInfo.chanSent = mat2cell(stimInfo.chanSent(:),ones(size(stimInfo.chanSent,1),1),ones(size(stimInfo.chanSent,2),1));
             stimInfo.waveSent = stimInfo.waveSent(stim_info_mask==1);
             
             NUM_WAVEFORM_TYPES = 15;
@@ -82,14 +87,19 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
                 NUM_CHANS = numel(opts.CHAN_LIST);
                 CHAN_LIST = opts.CHAN_LIST;
             elseif(any(isfield(stimInfo,'chanSent')))
-                NUM_CHANS = numel(unique(stimInfo.chanSent));
-                CHAN_LIST = unique(stimInfo.chanSent);
+                if(iscell(stimInfo.chanSent))
+                    NUM_CHANS = numel(uniquecell(stimInfo.chanSent));
+                    CHAN_LIST = uniquecell(stimInfo.chanSent);
+                else
+                    NUM_CHANS = numel(unique(stimInfo.chanSent));
+                    CHAN_LIST = unique(stimInfo.chanSent);
+                end
             else
                 CHAN_LIST = opts.STIM_ELECTRODE;
                 NUM_CHANS = 1;
             end
             
-            if(stimInfo.chanSent(1) == -1) % try to get chan stim from filename
+            if(iscell(stimInfo.chanSent) && sum(stimInfo.chanSent{1} == -1) == 1) % try to get chan stim from filename, % handles multiple channels
                 fname = fileList(fileNumber).name;
                 underscoreIdx = strfind(fname,'_');
                 if(~isempty(strfind(fname,'chanStim')))
@@ -102,7 +112,9 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
                 end
                 
                 if(~isempty(chanStim))
-                    stimInfo.chanSent(:) = chanStim;
+                    for chanSentIdx = 1:numel(stimInfo.chanSent)
+                        stimInfo.chanSent{chanSentIdx} = chanStim;
+                    end
                 end
                 
             end
@@ -163,7 +175,9 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
                     % find artifacts from channel and wave combination
                     stimsPerTrainMask = zeros(min(numel(stimInfo.stimOn),numel(stimInfo.waveSent)),1);
                     stimsPerTrainMask(1:opts.STIMULATIONS_PER_TRAIN:end) = 1;
-                    stimIdx = find(stimsPerTrainMask == 1 & stimInfo.waveSent(1:numel(stimsPerTrainMask)) == wave & stimInfo.chanSent(1:numel(stimsPerTrainMask)) == CHAN_LIST(chan));
+%                     stimIdx = find(stimsPerTrainMask == 1 & stimInfo.waveSent(1:numel(stimsPerTrainMask)) == wave & stimInfo.chanSent{1:numel(stimsPerTrainMask)}]' == CHAN_LIST(chan));
+                    stimIdx = find(stimsPerTrainMask == 1 & stimInfo.waveSent(1:numel(stimsPerTrainMask)) == wave & ...
+                        checkChanListEquality(stimInfo.chanSent(1:numel(stimsPerTrainMask)),CHAN_LIST{chan}));
 
                     numStims(chan,wave) = numel(stimIdx);
                     % process stims in batches to improve speed but control memory
@@ -220,11 +234,11 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
                     binEdges{chan,wave} = binEdges{chan,wave}*1000;
                     % compute a variance for the data from preTime to -2/1000 and for
                     % the data from 1.5/1000 to 5/1000
-                    firingRateStimuli = zeros(sum(stimInfo.waveSent == wave & stimInfo.chanSent == CHAN_LIST(chan)),2);
-                    for i = 1:sum(stimInfo.waveSent == wave & stimInfo.chanSent == CHAN_LIST(chan))
-                        firingRateStimuli(i,1) = numel(find(stimuliData{chan,wave} == i & spikeTrialTimes{chan,wave} > -opts.PRE_TIME & spikeTrialTimes{chan,wave} < 0))/(opts.PRE_TIME);
-                        firingRateStimuli(i,2) = numel(find(stimuliData{chan,wave} == i & spikeTrialTimes{chan,wave} < 5/1000 & spikeTrialTimes{chan,wave} > 0.5/1000))/(4.5/1000);
-                    end
+%                     firingRateStimuli = zeros(sum(stimInfo.waveSent == wave & checkChanListEquality(stimInfo.chanSent(1:numel(stimsPerTrainMask)),CHAN_LIST{chan})),2);
+%                     for i = 1:sum(stimInfo.waveSent == wave & checkChanListEquality(stimInfo.chanSent(1:numel(stimsPerTrainMask)),CHAN_LIST{chan}))
+%                         firingRateStimuli(i,1) = numel(find(stimuliData{chan,wave} == i & spikeTrialTimes{chan,wave} > -opts.PRE_TIME & spikeTrialTimes{chan,wave} < 0))/(opts.PRE_TIME);
+%                         firingRateStimuli(i,2) = numel(find(stimuliData{chan,wave} == i & spikeTrialTimes{chan,wave} < 5/1000 & spikeTrialTimes{chan,wave} > 0.5/1000))/(4.5/1000);
+%                     end
 
         %             binCountsVar{chan,wave} = [mean(firingRateStimuli(:,1)),mean(firingRateStimuli(:,2));...
         %                 var(firingRateStimuli(:,1)),var(firingRateStimuli(:,2))];
@@ -236,7 +250,8 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
                 kin_dt = mode(diff(cds.kin.t));
                 for chan = 1:NUM_CHANS
                     for wave = 1:NUM_WAVEFORM_TYPES
-                        stimIdx = find(stimInfo.waveSent(1:opts.STIMULATIONS_PER_TRAIN:end) == wave & stimInfo.chanSent(1:opts.STIMULATIONS_PER_TRAIN:end) == CHAN_LIST(chan));
+                        stimIdx = find(stimInfo.waveSent(1:opts.STIMULATIONS_PER_TRAIN:end) == wave & ...
+                            checkChanListEquality(stimInfo.chanSent(1:numel(stimsPerTrainMask)),CHAN_LIST{chan}));
                         kinData{chan,wave}.x = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
                         kinData{chan,wave}.y = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
                         kinData{chan,wave}.vx = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
@@ -318,18 +333,20 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
                 end
             end
         end
-        arrayData{arrayDataIdx}.spikeTrialTimes = arrayData{arrayDataIdx}.spikeTrialTimes(arrayData_mask==1);
-        arrayData{arrayDataIdx}.stimData = arrayData{arrayDataIdx}.stimData(arrayData_mask==1);
-        arrayData{arrayDataIdx}.bC = arrayData{arrayDataIdx}.bC(arrayData_mask==1);
-        arrayData{arrayDataIdx}.bE = arrayData{arrayDataIdx}.bE(arrayData_mask==1);
-        arrayData{arrayDataIdx}.kin = arrayData{arrayDataIdx}.kin(arrayData_mask==1);
-        arrayData{arrayDataIdx}.numStims = arrayData{arrayDataIdx}.numStims(arrayData_mask == 1);
-        temp = repmat(arrayData{arrayDataIdx}.CHAN_LIST,1,NUM_WAVEFORM_TYPES)
-        arrayData{arrayDataIdx}.STIM_PARAM_LIST(:,1) = temp(arrayData_mask == 1);
-        if(~isempty(amplitude_master_list))
-            temp = repmat(amplitude_master_list,NUM_CHANS,1);
-            arrayData{arrayDataIdx}.STIM_PARAM_LIST(:,2) = temp(arrayData_mask == 1);
-            arrayData{arrayDataIdx}.CHAN_LIST = arrayData{arrayDataIdx}.CHAN_LIST(find(sum(arrayData_mask,2) > 0));
+        if(~sum(sum(arrayData_mask)) == numel(arrayData_mask)) % prune
+            arrayData{arrayDataIdx}.spikeTrialTimes = arrayData{arrayDataIdx}.spikeTrialTimes(arrayData_mask==1);
+            arrayData{arrayDataIdx}.stimData = arrayData{arrayDataIdx}.stimData(arrayData_mask==1);
+            arrayData{arrayDataIdx}.bC = arrayData{arrayDataIdx}.bC(arrayData_mask==1);
+            arrayData{arrayDataIdx}.bE = arrayData{arrayDataIdx}.bE(arrayData_mask==1);
+            arrayData{arrayDataIdx}.kin = arrayData{arrayDataIdx}.kin(arrayData_mask==1);
+            arrayData{arrayDataIdx}.numStims = arrayData{arrayDataIdx}.numStims(arrayData_mask == 1);
+            temp = repmat(arrayData{arrayDataIdx}.CHAN_LIST,1,NUM_WAVEFORM_TYPES)
+            arrayData{arrayDataIdx}.STIM_PARAM_LIST(:,1) = temp(arrayData_mask == 1);
+            if(~isempty(amplitude_master_list))
+                temp = repmat(amplitude_master_list,NUM_CHANS,1);
+                arrayData{arrayDataIdx}.STIM_PARAM_LIST(:,2) = temp(arrayData_mask == 1);
+                arrayData{arrayDataIdx}.CHAN_LIST = arrayData{arrayDataIdx}.CHAN_LIST(find(sum(arrayData_mask,2) > 0));
+            end
         end
     end
     

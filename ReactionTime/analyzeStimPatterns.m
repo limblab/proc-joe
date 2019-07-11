@@ -85,7 +85,7 @@ for i = 1:numel(wave_mappings)
     
     f=gcf;
     set(gca,'visible','off')
-    f.Name = ['Han_20180802_rt_heatmap_',num2str(i)];
+    f.Name = ['Han_20181030_rt_heatmap_',num2str(i)];
 %     saveFiguresLIB(f,inputData.folderpath,f.Name);
 end
 

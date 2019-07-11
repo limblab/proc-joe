@@ -18,7 +18,7 @@ function [output_data,plots] = plotElectrodeDistanceRT(input_data,opts)
     [align_data,lag] = xcorr(stim_code_matlab,stim_code_td(:,1));
         
     [~,lag_idx] = max(align_data);
-    stim_code_matlab_aligned = stim_code_matlab(lag(lag_idx):end);
+    stim_code_matlab_aligned = stim_code_matlab(max(1,lag(lag_idx)):end);
     EL_all = input_data.EL_all(lag(lag_idx)+1:end);
     
 %% go through each stim_code_td and find corresponding list of electrodes
@@ -56,7 +56,7 @@ function [output_data,plots] = plotElectrodeDistanceRT(input_data,opts)
             % compute distance and store
             output_data.mean_elec_dist(end+1,1) = 0;
             for e = 1:numel(elec_list)
-                output_data.mean_elec_dist(end,1) = output_data.mean_elec_dist(end,1) + mean(sqrt((x_pos-x_pos(e)).^2 + (y_pos-y_pos(e)).^2));
+                output_data.mean_elec_dist(end,1) = output_data.mean_elec_dist(end,1) + sum((sqrt((x_pos-x_pos(e)).^2 + (y_pos-y_pos(e)).^2))/(numel(x_pos)-1));
             end
             output_data.mean_elec_dist(end,1) = output_data.mean_elec_dist(end,1)/numel(elec_list);
             
@@ -66,7 +66,7 @@ function [output_data,plots] = plotElectrodeDistanceRT(input_data,opts)
                 output_data.rt(end+1,1) = input_data.data.cueInfo(stim_code_td(s,1)+1).rt(cueInfo_idx);
             else
                 output_data.rt(end+1,1) = -1000;
-                warning('wtf');
+                warning(['wtf',num2str(s)]);
             end
             
             output_data.stim_code(end+1,1) = stim_code_td(s,1);
