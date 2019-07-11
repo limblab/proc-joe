@@ -52,20 +52,48 @@ function [output_data] = getPsychDataWrapper(td,input_data)
     output_data.psych_curve_data = temp_data.psych_curve_data;
     output_data.psych_fit = temp_data.psych_fit;
     
-    %% do bootstrapping to get conf bounds on the fit parameters
+    %% do bootstrapping to get conf bounds on the fit parameters and the git data
     fit_params = zeros(input_data.num_bootstrap, 4);
+    bump_correct = zeros(input_data.num_bootstrap, numel(output_data.bump_correct));
+    bump_total = zeros(input_data.num_bootstrap, numel(output_data.bump_total));
     for boot_num = 1:input_data.num_bootstrap
         boot_trial_mask = ceil(rand(numel(td_cond),1)*numel(td_cond));
         td_boot = td_cond(boot_trial_mask);
         temp_data = getPsychData(td_boot,input_data);
         
-        fit_params(boot_num,:) = [temp_data.psych_fit.fitObj.a, temp_data.psych_fit.fitObj.b, ...
-            temp_data.psych_fit.fitObj.c, temp_data.psych_fit.fitObj.d];
+        if(~isempty(temp_data.psych_fit))
+            fit_params(boot_num,:) = [temp_data.psych_fit.fitObj.a, temp_data.psych_fit.fitObj.b, ...
+                temp_data.psych_fit.fitObj.c, temp_data.psych_fit.fitObj.d];
+                
+            % need to make sure bump dirs line up with original file
+            bump_diff = setdiff(output_data.bump_dirs,temp_data.bump_dirs);
+            if(~isempty(bump_diff))
+                for b = bump_diff
+                    insert_idx = find(output_data.bump_dirs == b);
+                    if(insert_idx == 1)
+                        temp_data.bump_dirs = [b,temp_data.bump_dirs];
+                        temp_data.bump_correct = [0,temp_data.bump_correct];
+                         temp_data.bump_total = [0,temp_data.bump_total];
+                    elseif(insert_idx > numel(temp_data.bump_dirs))
+                        temp_data.bump_dirs = [temp_data.bump_dirs,b];
+                        temp_data.bump_correct = [temp_data.bump_correct,0];
+                        temp_data.bump_total = [temp_data.bump_total,0];
+                    else
+                        temp_data.bump_dirs = [temp_data.bump_dirs(1:insert_idx-1),b,temp_data.bump_dirs(insert_idx:end)];
+                        temp_data.bump_correct = [temp_data.bump_correct(1:insert_idx-1),b,temp_data.bump_correct(insert_idx:end)];
+                        temp_data.bump_total = [temp_data.bump_total(1:insert_idx-1),b,temp_data.bump_total(insert_idx:end)];
+                    end
+                end
+            end
+            bump_correct(boot_num,:) = temp_data.bump_correct;
+            bump_total(boot_num,:) = temp_data.bump_total;
+        end
     end
     
     %% format output_data with bootstrapping results
     output_data.bootstrap_fit_params = fit_params;
-    
+    output_data.bootstrap_bump_correct = bump_correct;
+    output_data.bootstrap_bump_total = bump_total;
 end
 
 
