@@ -50,7 +50,7 @@
     input_data.max_trial_time = 50000;
     input_data.min_trial_time = 0;
     
-    input_data.num_bootstrap = 0;
+    input_data.num_bootstrap = 10;
         
     psych_data = getPsychometricCurveData(td_all,input_data);
     
