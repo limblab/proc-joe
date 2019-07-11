@@ -19,12 +19,14 @@ function [ f ] = plotPsychometricCurve( psych_data,input_data )
         ax.XTick = 0:45:180;
         ax.XAxis.MinorTickValues = [0:15:180];
 
-        x_fit = [0:180];
-        y_fit = feval(psych_data(i).psych_fit.fitObj,x_fit);
-%         y_fit_conf = predint(psych_data(i).psych_fit.fitObj,x_fit,0.95,'functional','off');
-        
-        hold on
-        plot(x_fit,y_fit,'color',input_data.colors{i},'linewidth',1.5)
+        if(~isempty(psych_data(i).psych_fit))
+            x_fit = [0:180];
+            y_fit = feval(psych_data(i).psych_fit.fitObj,x_fit);
+    %         y_fit_conf = predint(psych_data(i).psych_fit.fitObj,x_fit,0.95,'functional','off');
+
+            hold on
+            plot(x_fit,y_fit,'color',input_data.colors{i},'linewidth',1.5)
+        end
 %         plot(x_fit,y_fit_conf,'color',input_data.colors{i},'linewidth',1.5,'linestyle','--');
         
 %         if(isfield(psych_data(i),'bootstrap_fit_params')) % deal with the bootstrapped data

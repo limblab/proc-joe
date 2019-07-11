@@ -1,23 +1,32 @@
 function [ psych_data ] = getPsychometricCurveData( td,input_data )
 
-%% handle the bumps
-    input_data.isBump = 1; 
-    input_data.stim_code = 0;
-    psych_data = getPsychDataWrapper(td,input_data);
-
-    psych_data.input_data = input_data;
+%% seperate td based on target axis
+    axis_angles = unique([td.tgtDir]);
+    axis_angles = axis_angles(~isnan(axis_angles));
     
-%% handle the stims
-    stim_codes = unique([td.stimCode]);
-    stim_codes = stim_codes(~isnan(stim_codes));
-    for s = 1:numel(stim_codes)
-        input_data.isBump = 0;
-        input_data.stim_code = stim_codes(s);
-        temp_psych_data = getPsychDataWrapper(td,input_data);
-        temp_psych_data.input_data = input_data;
-        
-        psych_data(end+1) = temp_psych_data;
-        
+    for axis_num = 1:numel(axis_angles)
+        td_mask = [td.tgtDir] == axis_angles(axis_num);
+        td_use = td(td_mask==1);
+        % handle the bumps
+        input_data.isBump = 1; 
+        input_data.stim_code = 0;
+        input_data.axis_angle = axis_angles(axis_num);
+        psych_data{axis_num} = getPsychDataWrapper(td_use,input_data);
+
+        psych_data{axis_num}.input_data = input_data;
+    
+        % handle the stims
+        stim_codes = unique([td_use.stimCode]);
+        stim_codes = stim_codes(~isnan(stim_codes));
+        for s = 1:numel(stim_codes)
+            input_data.isBump = 0;
+            input_data.stim_code = stim_codes(s);
+            temp_psych_data = getPsychDataWrapper(td_use,input_data);
+            temp_psych_data.input_data = input_data;
+
+            psych_data{axis_num}(end+1) = temp_psych_data;
+
+        end
     end
 
 end
@@ -25,18 +34,18 @@ end
 function [output_data] = getPsychDataWrapper(td,input_data)
 
     if(input_data.isBump)
-        trial_mask = [td.isStimTrial] == 0 & [td.bumpMagnitude] > 0.6;
+        trial_mask = [td.isStimTrial] == 0 & [td.bumpMagnitude] > 0.1;
     else
-        trial_mask = [td.isStimTrial] == 1 & [td.stimCode] == input_data.stim_code & [td.bumpMagnitude] > 0.6;
+        trial_mask = [td.isStimTrial] == 1 & [td.stimCode] == input_data.stim_code & [td.bumpMagnitude] > 0.1;
     end
     
     td_cond = td(trial_mask);
-    
+    td_all_trials = [td(trial_mask).trial_id];
     [temp_data] = getPsychData(td_cond, input_data);
     
 
     %% format output_data
-    output_data.trial_mask = trial_mask;
+    output_data.trial_ids = td_all_trials;
     output_data.bump_dirs = temp_data.bump_dirs;
     output_data.bump_correct = temp_data.bump_correct;
     output_data.bump_total = temp_data.bump_total;
@@ -98,8 +107,10 @@ function [output_data] = getPsychData(td_cond, input_data)
     ft = fittype('a+b*(erf(c*(x-d)))','options',fit_opts);
     
     psych_fit = [];
-    [psych_fit.fitObj,psych_fit.gof] = fit(bump_dirs', psych_curve_data', ft);
-    
+    try
+        [psych_fit.fitObj,psych_fit.gof] = fit(bump_dirs', psych_curve_data', ft);
+    catch
+    end
     
     % format output_data
     output_data.bump_dirs = bump_dirs;
