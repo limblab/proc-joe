@@ -1,7 +1,7 @@
 %% script to process reaction time data 
 %% determine filename and input data
+    inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\Han_20180826_FCreactTime';
 
-    inputData.folderpath = 'C:\Users\jts3256\Desktop\Han_20180827_RT\';
 %     inputData.folderpath = 'D:\Lab\Data\ReactionTime\Han_20180427_training\';
     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 
@@ -78,8 +78,8 @@
 % get movement onset
     params.which_field = 'acc'; % peak acceleration
     params.field_idx = 1;
-    params.start_idx_offset = 12;
-    params.max_rt_offset = 35;
+    params.start_idx_offset = 10;
+    params.max_rt_offset = 40;
 %     params.threshold_mult = 0.4; % chosen so that bumps match with tactile reported in (Godlove, 2014). Probably shouldn't change
     params.be_aggressive = 1;
     params.threshold_mult = 2.5;
@@ -116,21 +116,23 @@
     td_reward_rt = td_reward(~isnan([td_reward.idx_movement_on]));
     opts.FOLDER_PATH = inputData.folderpath;
     opts.FIGURE_PREFIX = 'Han_20180809'; % no _ required
+    
     opts.BUMP_MAGS = [];
     opts.STIM_CODES = [];
 %     opts.STIM_PARAMS = [10,20,30,40,50,60,70,80,90,100];
 %     opts.STIM_LABEL = 'Amplitude (\muA)';
 %     opts.STIM_PARAMS = [50,100,150,200,250,300,350,400,450,500];
 %     opts.STIM_LABEL = 'Frequency (Hz)';
-%     opts.STIM_PARAMS = [25,50,75,100,125,150,175,200,250,300];
+%     opts.STIM_PARAMS = [25,50,75,100,125,150,200,250,300];
 %     opts.STIM_LABEL = 'Train length (ms)';
-
     opts.STIM_PARAMS = [1,2,3,4,5,6,7,8,9,10,11,12];
     opts.STIM_X_LABEL = {'1','2','3','4','5','6','7','8','9','10','11','12'};
+
 %     opts.STIM_LABEL = 'Bump Mag';
     opts.FIT = 0;
     opts.PLOT_BUMP = 0;
     opts.PLOT_STIM = 1;
+    
     opts.LINE_WIDTH = 2;
     [data,plots] = plotReactionTimeDataTD(td_reward_rt,td_all_rt,opts);
 

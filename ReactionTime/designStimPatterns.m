@@ -2,7 +2,7 @@
 
 
 %% determine filename and input data
-    input_data.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\Psychophysics\Han_20180801_COBump\';
+    input_data.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\CObump\';
 %     inputData.folderpath = 'D:\Lab\Data\ReactionTime\Han_20180427_training\';
     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 
@@ -14,7 +14,7 @@
     
     pwd=cd;
     cd(input_data.folderpath)
-    fileList = dir('*s.nev*');
+    fileList = dir('*.nev*');
     cd(pwd)
     
 %% load cds, convert to td, compute PDs for all units, determine if units are well tuned
@@ -23,22 +23,23 @@
         input_data.monkey,input_data.labnum,input_data.array1,input_data.mapFileName,'recoverPreSync');
     cd(pwd);
     
-% convert into td
-    params.event_list = {'goCueTime';'tgtDir'};
+%% convert into td
+    params.event_list = {'goCueTime';'tgtDir';'bumpTime';'bumpDir'};
     params.trial_results = {'R'};
     params.extra_time = [1,2];
     params.include_ts = 0;
-    params.exclude_units = [1,255];
+    params.exclude_units = [1:255];
     td_all = parseFileByTrial(cds,params);
     td_all = removeBadTrials(td_all);
     td_all = getMoveOnsetAndPeak(td_all);
     td_all = removeBadTrials(td_all);
     [td_all] = removeBadNeurons(td_all,params);
     
-% compute PD for all units
+%% compute PD for all units
     params = [];
     params.array = 'LeftS1';
-    params.window = {'idx_movement_on',0;'idx_movement_on',12};
+    params.window = {'idx_bumpTime',0;'idx_bumpTime',12};
+    params.covariate = 'bumpDir';
     clear tcs
     [tcs,confBounds,fr,covar] = getNeuronTuning(td_all,'regress',params);
     % tcs = mean, modulation depth, pd (b0 + b1*cos(x-b2))

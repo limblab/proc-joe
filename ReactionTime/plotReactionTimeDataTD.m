@@ -338,7 +338,7 @@ function [fig,fit_out] = plotRTvsCue(plot_data,figure_name,bump_flag,opts)
     ax1 = gca;
     ax1.XLim(1) = 0;
     ax1.YLim(1) = 0;
-    if(isfield(plot_data,'bump_data') && ~bump_flag)
+    if(isfield(plot_data,'bump_data') && plot_data.bump_data.mean < 100 && ~bump_flag)
         fill([ax1.XLim,flip(ax1.XLim)],plot_data.bump_data.mean(1)+plot_data.bump_data.std_err*[-1,-1,1,1],opts.COLOR,'linestyle','none');
         alpha(opts.ALPHA);
         plot(ax1.XLim,plot_data.bump_data.mean+[0,0],'-','linewidth',1,'color',opts.COLOR)

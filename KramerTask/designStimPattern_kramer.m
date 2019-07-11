@@ -55,14 +55,14 @@
     mean_fr_bump = [];
     mean_fr_baseline = [];
     chan_num = [];
-    for unit = 1:size(td_all(1).LeftS1_unit_guide,1)
+    for unit = 1:10%size(td_all(1).LeftS1_unit_guide,1)
         for bd = 1:numel(bump_dir)
             trial_mask = [td_all.bumpDir] == bump_dir(bd);
             fr_data_bump = [];
             fr_data_baseline = [];
             td_temp = td_all(trial_mask);
             for t = 1:numel(td_temp)
-                window_bump = td_temp(t).idx_bumpTime + 2 + [0,12];
+                window_bump = td_temp(t).idx_bumpTime + [0,12];
                 window_baseline = td_temp(t).idx_bumpTime - [14,2];
 %                 window_baseline = [td_all(t).idx_startTime, td_all(t).idx_bumpTime-2];
                 fr_data_bump(t) = sum(td_temp(t).LeftS1_spikes(window_bump(1):window_bump(2),unit))/(diff(window_bump)*td_temp(t).bin_size);
@@ -73,8 +73,8 @@
         end
         chan_num(unit,1) = td_all(1).LeftS1_unit_guide(unit,1);
 
-%         figure()
-%         plot(bump_dir,mean_fr_bump(unit,:) - mean(mean_fr_baseline(unit,:),2),'.','markersize',14)
+        figure()
+        plot(bump_dir,mean_fr_bump(unit,:) - mean(mean_fr_baseline(unit,:),2),'.','markersize',14)
     end
 
 mean_fr = mean_fr_bump - mean(mean_fr_bump,2);
