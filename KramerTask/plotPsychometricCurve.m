@@ -12,6 +12,7 @@ function [ f ] = plotPsychometricCurve( psych_data_all,input_data )
         psych_data_boot = psych_data_all(2:end,input_data.axis);
     end
     
+    %% plot psychometric curve
     f=figure();
     hold on
     for i = input_data.psych_data_idx_list
@@ -60,6 +61,24 @@ function [ f ] = plotPsychometricCurve( psych_data_all,input_data )
         
     end
   
-
+    
+    %% plot PSE's (boxplot)
+    if(~isempty(psych_data_boot))
+        figure();
+        pse_list = [];
+        group_list = [];
+        for i = input_data.psych_data_idx_list
+            for boot = 1:size(psych_data_boot,1)
+                pse_list(end+1) = psych_data_boot{boot}(i).psych_fit.point_of_subjective_equality;
+                group_list(end+1) = i;
+            end
+        end
+        
+        boxplot(pse_list,group_list);
+        
+    end
+    
+    
+    
 end
 
