@@ -6,10 +6,10 @@ function [ f ] = plotPsychometricCurve( psych_data_all,input_data )
     end
     
     % seperate bootstrap data from actual data
-    psych_data = psych_data_all{1,:};
+    psych_data = psych_data_all{1,input_data.axis};
     psych_data_boot = [];
-    if(size(psych_data,1) > 1)
-        psych_data_boot = psych_data_all(2:end,:);
+    if(size(psych_data_all,1) > 1)
+        psych_data_boot = psych_data_all(2:end,input_data.axis);
     end
     
     f=figure();
@@ -38,8 +38,24 @@ function [ f ] = plotPsychometricCurve( psych_data_all,input_data )
 
         % if bootstrap data exists, add conf bounds
         if(~isempty(psych_data_boot))
+            x_fit = [0:180];
+            y_fit = zeros(numel(psych_data_boot),numel(x_fit));
+            for boot = 1:numel(psych_data_boot)
+                y_fit(boot,:) = feval(psych_data_boot{boot}(i).psych_fit.fitObj,x_fit)';
+            end
             
+            y_fit_sort = sort(y_fit,1);
             
+            idx_use_upper = ceil(0.95*size(y_fit,1));
+            idx_use_lower = floor(0.05*size(y_fit,1));
+            
+            y_fit_upper = y_fit_sort(idx_use_upper,:);
+            y_fit_lower = y_fit_sort(idx_use_lower,:);
+            
+            hold on
+            plot(x_fit,y_fit_lower,'color',input_data.colors{i},'linewidth',1.5,'linestyle','--')
+            plot(x_fit,y_fit_upper,'color',input_data.colors{i},'linewidth',1.5,'linestyle','--')
+
         end
         
     end
