@@ -37,7 +37,7 @@ function [ f ] = plotPsychometricCurve( psych_data_all,input_data )
         end
 
         % if bootstrap data exists, add conf bounds
-        if(~isempty(psych_data_boot))
+        if(~isempty(psych_data_boot) && input_data.plot_bootstrap)
             x_fit = [0:180];
             y_fit = zeros(numel(psych_data_boot),numel(x_fit));
             for boot = 1:numel(psych_data_boot)

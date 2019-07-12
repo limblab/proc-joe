@@ -59,6 +59,7 @@
     
     input_data.colors = {'k','r','b',[0,0.5,0],'m','g'};
     input_data.psych_data_idx_list = [1,2];
+    input_data.plot_bootstrap = 1;
     for i = 1:size(psych_data,2)
         input_data.axis = i;
         plotPsychometricCurve(psych_data,input_data);
@@ -71,6 +72,11 @@
     %     l=legend('bump','0-deg','180-deg');
     %     set(l,'box','off');
     end
+
+%% get point of subjective equality (and shift) due to stim and bump
+    
+    
+
 
     
 %% choice direction stuff
