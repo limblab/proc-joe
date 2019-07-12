@@ -1,5 +1,5 @@
 %% determine filename and input data
-    input_data.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\KramerTask\Han\Han_20190711_BD_stimchan21\';
+    input_data.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\KramerTask\Han\Han_20190712_BD_stimchan63\';
     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 %     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\right S1 20180919\SN 6251-001804.cmp';
 

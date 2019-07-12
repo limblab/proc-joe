@@ -121,7 +121,7 @@
     opts.WHICH_FIELD = 'pos';
     opts.DIR = 90;
     
-    opts.BUMP_MAGS = [];
+    opts.BUMP_MAGS = [0.3];
     opts.STIM_CODES = [];
     opts.KEEP_ONLY_VISUAL_TRIALS = 0;
     opts.YLIM = [];
