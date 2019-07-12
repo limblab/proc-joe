@@ -113,14 +113,23 @@ function [output_data] = getPsychData(td_cond, input_data)
     
     
     % fit psychometric curve
-    fit_opts = fitoptions('Method','NonlinearLeastSquares', 'Startpoint', [.5 -0.5 .1 100],...
+%     fit_opts = fitoptions('Method','NonlinearLeastSquares', 'Startpoint', [.5 -0.5 .1 90],...
+%         'MaxFunEvals',10000,'MaxIter',1000,'TolFun',10E-8,'TolX',10E-8,...
+%         'Weights',bump_total/sum(bump_total));
+%     ft = fittype('a+b*(erf(c*(x-d)))','options',fit_opts);
+    
+
+    fit_opts = fitoptions('Method','NonlinearLeastSquares','Startpoint',[1,0,0,90],...
         'MaxFunEvals',10000,'MaxIter',1000,'TolFun',10E-8,'TolX',10E-8,...
         'Weights',bump_total/sum(bump_total));
-    ft = fittype('a+b*(erf(c*(x-d)))','options',fit_opts);
-    
+    ft = fittype('a+b/(1+exp(-c*(x-d)))','options',fit_opts);
+    % a = min, a+b = max, c = steepness, d = center
+
     psych_fit = [];
     try
         [psych_fit.fitObj,psych_fit.gof] = fit(bump_dirs', psych_curve_data', ft);
+        psych_fit.point_of_subjective_equality = ...
+            psych_fit.fitObj.d - log(psych_fit.fitObj.b/(0.5-psych_fit.fitObj.a) - 1)/psych_fit.fitObj.c;
     catch
     end
     

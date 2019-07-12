@@ -72,6 +72,10 @@
     %     set(l,'box','off');
     end
 
+%% plot distribution of PSE's (bootstrapped) for all stim and bump conditions
+    
+    
+
     
 %% choice direction stuff
 %% start with simple neurometric curves -- plot firing rate as function of bump direction
