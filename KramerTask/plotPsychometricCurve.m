@@ -1,12 +1,20 @@
-function [ f ] = plotPsychometricCurve( psych_data,input_data )
+function [ f ] = plotPsychometricCurve( psych_data_all,input_data )
 
-    if(numel(input_data.colors) < numel(psych_data))
+    % check for enough colors
+    if(numel(input_data.colors) < max(input_data.psych_data_idx_list))
         error('not enough colors')
+    end
+    
+    % seperate bootstrap data from actual data
+    psych_data = psych_data_all{1,:};
+    psych_data_boot = [];
+    if(size(psych_data,1) > 1)
+        psych_data_boot = psych_data_all(2:end,:);
     end
     
     f=figure();
     hold on
-    for i = 1:numel(psych_data)
+    for i = input_data.psych_data_idx_list
         % make psychometric curve
         plot(psych_data(i).bump_dirs,psych_data(i).psych_curve_data,'.','color',input_data.colors{i},'markersize',14)
         xlabel('Bump Direction')
@@ -27,20 +35,13 @@ function [ f ] = plotPsychometricCurve( psych_data,input_data )
             hold on
             plot(x_fit,y_fit,'color',input_data.colors{i},'linewidth',1.5)
         end
-%         plot(x_fit,y_fit_conf,'color',input_data.colors{i},'linewidth',1.5,'linestyle','--');
+
+        % if bootstrap data exists, add conf bounds
+        if(~isempty(psych_data_boot))
+            
+            
+        end
         
-%         if(isfield(psych_data(i),'bootstrap_fit_params')) % deal with the bootstrapped data
-%             % find 2.5 percentile, 97.5 percentile parameters
-%             [sort_param_list] = sort(psych_data(i).bootstrap_fit_params);
-%             conf_idx = ceil(size(psych_data(i).bootstrap_fit_params,1)*[0.025,0.975]);
-%             conf_params = psych_data(i).bootstrap_fit_params(conf_idx,:);
-%             
-%             x_fit = [0:180];
-%             y_fit = conf_params(:,1) + conf_params(:,2).*(erf(conf_params(:,3).*(x_fit-conf_params(:,4))));
-%             
-%             plot(x_fit,y_fit,'color',input_data.colors{i},'linewidth',1.5,'linestyle','--')
-%             
-%         end
     end
   
 
