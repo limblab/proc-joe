@@ -5,6 +5,8 @@ function [ f ] = plotPsychometricCurve( psych_data_all,input_data )
         error('not enough colors')
     end
     
+
+    
     % seperate bootstrap data from actual data
     psych_data = psych_data_all{1,input_data.axis};
     psych_data_boot = [];
@@ -12,8 +14,13 @@ function [ f ] = plotPsychometricCurve( psych_data_all,input_data )
         psych_data_boot = psych_data_all(2:end,input_data.axis);
     end
     
+    if(isempty(input_data.psych_data_idx_list))
+        input_data.psych_data_idx_list = 1:1:numel(psych_data);
+    end
+    
     %% plot psychometric curve
     f=figure();
+    f.Name = [input_data.monkey,'_',input_data.date,'_axisIdx',num2str(input_data.axis),'_psychometricCurve'];
     hold on
     for i = input_data.psych_data_idx_list
         % make psychometric curve
@@ -62,19 +69,26 @@ function [ f ] = plotPsychometricCurve( psych_data_all,input_data )
     end
   
     
-    %% plot PSE's (boxplot)
+    %% plot PSE's (boxplot), and slope at PSE
     if(~isempty(psych_data_boot))
-        figure();
+        f=figure();
+        f.Name = [input_data.monkey,'_',input_data.date,'_axisIdx',num2str(input_data.axis),'_pseDistribution'];
+        subplot(1,2,1)
         pse_list = [];
         group_list = [];
+        slope_list = [];
         for i = input_data.psych_data_idx_list
             for boot = 1:size(psych_data_boot,1)
-                pse_list(end+1) = psych_data_boot{boot}(i).psych_fit.point_of_subjective_equality;
+                pse_list(end+1) = real(psych_data_boot{boot}(i).psych_fit.point_of_subjective_equality);
                 group_list(end+1) = i;
+                slope_list(end+1) = (feval(psych_data_boot{boot}(i).psych_fit.fitObj,pse_list(end)+10)-feval(psych_data_boot{boot}(i).psych_fit.fitObj,pse_list(end)-10))/20;
             end
         end
         
         boxplot(pse_list,group_list);
+        
+        subplot(1,2,2)
+        boxplot(slope_list,group_list);
         
     end
     
