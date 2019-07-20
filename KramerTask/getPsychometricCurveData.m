@@ -47,9 +47,11 @@ end
 function [output_data] = getPsychDataWrapper(td,input_data)
 
     if(input_data.isBump)
-        trial_mask = [td.isStimTrial] == 0 & [td.bumpMagnitude] > 0.1;
+        trial_mask = [td.isStimTrial] == 0 & [td.bumpMagnitude] > 0.1 & ...
+            ([td.idx_endTime] - [td.idx_goCueTime]).*[td.bin_size] < input_data.max_trial_time;
     else
-        trial_mask = [td.isStimTrial] == 1 & [td.stimCode] == input_data.stim_code & [td.bumpMagnitude] > 0.1;
+        trial_mask = [td.isStimTrial] == 1 & [td.stimCode] == input_data.stim_code & [td.bumpMagnitude] > 0.1 & ...
+            ([td.idx_endTime] - [td.idx_goCueTime]).*[td.bin_size] < input_data.max_trial_time; % remove catch trials
     end
     
     td_cond = td(trial_mask);
@@ -92,16 +94,14 @@ function [output_data] = getPsychData(td_cond, input_data)
             bump_dir_list(t) = td_cond(t).bumpDir;
         end
         
-        if(td_cond(t).idx_endTime - td_cond(t).idx_goCueTime < input_data.max_trial_time && ...
-                td_cond(t).idx_endTime - td_cond(t).idx_goCueTime > input_data.min_trial_time)
-            if(td_cond(t).result == 'R')
-                bump_correct(bump_idx) = bump_correct(bump_idx) + 1;
-                is_rewarded_list(t) = 1;
-            else
-                is_rewarded_list(t) = 0;
-            end
-            bump_total(bump_idx) = bump_total(bump_idx) + 1;
+        
+        if(td_cond(t).result == 'R')
+            bump_correct(bump_idx) = bump_correct(bump_idx) + 1;
+            is_rewarded_list(t) = 1;
+        else
+            is_rewarded_list(t) = 0;
         end
+        bump_total(bump_idx) = bump_total(bump_idx) + 1;
         
         
     end

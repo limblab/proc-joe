@@ -1,7 +1,7 @@
 %% determine filename and input data
-    input_data.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\KramerTask\Duncan\Duncan_20190712_BD_stimchan17or79\';
-%     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
-    input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\right S1 20180919\SN 6251-001804.cmp';
+    input_data.folderpath = 'C:\Users\jts3256\Desktop\Han_BD_data\Han_20190719-20_BD_stimchan44_2amps\';
+    input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+%     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\right S1 20180919\SN 6251-001804.cmp';
 
 
     input_data.task='taskBD';
@@ -48,8 +48,7 @@
 % rewards and trials to get a percent correct. Then, do 1-that percent for
 % any bump dir > 90 as rewards here represent the opposite target
 
-    input_data.max_trial_time = 50000;
-    input_data.min_trial_time = 0;
+    input_data.max_trial_time = 2;
             
     input_data.num_bootstrap = 0;
     
@@ -57,11 +56,11 @@
     
 %% plot psych data
     
-    input_data.colors = {'k','r','b',[0,0.5,0],'m','g'};
+    input_data.colors = {'k','r','b',[0,0.5,0],'m','g',[0.5,0.5,0.5]};
     input_data.psych_data_idx_list = [];
     input_data.plot_bootstrap = 0;
     
-    input_data.date = '20190713-14';
+    input_data.date = '20190715-17';
     
     for i = 1:size(psych_data,2)
         input_data.axis = i;
