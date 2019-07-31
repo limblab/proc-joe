@@ -1,6 +1,7 @@
 %% rebin
 
-    optsExtract.BIN_SIZE = 1/1000; % s
+    optsExtract.BIN_SIZE = 0.5/1000; % s
+    
     bin_edges = 1000*(-optsExtract.PRE_TIME:optsExtract.BIN_SIZE:optsExtract.POST_TIME);
     for u = 1:numel(arrayData)
         for cond = 1:numel(arrayData{u}.bC)

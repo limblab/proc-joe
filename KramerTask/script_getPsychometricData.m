@@ -76,30 +76,33 @@
     %     set(l,'box','off');
     end
 
+%% downsample TD
+    td_all_use = binTD(td_all,50);
+
     
 %% choice direction stuff
 %% start with simple neurometric curves -- plot firing rate as function of bump direction for each axis
     input_data.make_plot = 0;
-    input_data.window = [0,0.2]; % s
-    neurometric_data = makeNeurometricCurves(td_all,psych_data,input_data);
+    input_data.window = [0,0.4]; % s
+    neurometric_data = makeNeurometricCurves(td_all_use,psych_data,input_data);
     
 %% perform analysis done by (Ingaki, 2019) -- coding direction
 % find n-dimensional vector (n = num neurons) where each entry is the
 % average difference between spikes during correct left and right trials
 
     input_data.sample_rate = 0.5;
+    input_data.bump_range = 90 + 50*[-1,1];
     for axis = 1:numel(neurometric_data)
         cd_data{axis} = getCodingDirection(neurometric_data{axis},input_data);
     end
     
-    %% predict decision
-    pred = mean(neurometric_data{1}.spike_data(:,:,:),3)*cd_data{1}.mean_cd;
-    pred(pred < 0) = 0;
-    pred(pred > 0) = 1;
-    
-    sum(pred(cd_data{1}.training_trial_mask==1) == neurometric_data{1}.reached_0_deg(cd_data{1}.training_trial_mask==1))/...
-        numel(pred(cd_data{1}.training_trial_mask==1))
+%% predict decision and visualize projection onto cd over time
+    input_data.bump_range = 90 + 90*[-1,1];
 
+    for axis = 1:numel(neurometric_data)
+        cd_pred_data{axis} = getCodingDirectionPredictions(neurometric_data{axis},cd_data{axis},input_data);
+    end
+    
 
 
 

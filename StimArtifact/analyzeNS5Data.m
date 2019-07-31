@@ -1,6 +1,6 @@
 %% load in a ns5
 
-    folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\StimArtifactData\Han_20190418_dukeBoardNew\';
+    folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\StimArtifactData\ArtificialMonkey_20190729\';
     analog_pin_idx = 97;
     sync_idx = 98;
     artifact_data = {};
@@ -14,11 +14,11 @@
     cd(folderpath);
     file_list = dir('*.ns5');
     
-    for file_num = 1:numel(file_list)
+    for file_num = 4%numel(file_list)
         NS5 = openNSx([folderpath,file_list(file_num).name],'uV');
     
-        artifact_data{file_num} = NS5.Data(analog_pin_idx,:);
-        sync_line_data{file_num} = NS5.Data(sync_idx,:);
+%         artifact_data{file_num} = NS5.Data(analog_pin_idx,:);
+%         sync_line_data{file_num} = NS5.Data(sync_idx,:);
     end
     
     %% pick a file (idx) and plot anodic and cathodic data

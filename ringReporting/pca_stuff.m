@@ -1,6 +1,6 @@
 %% subset td_all
 
-    td_bump = trimTD(td_all,{'idx_bumpTime',0},{'idx_bumpTime',150});
+    td_bump = trimTD(td_all,{'idx_bumpTime',0},{'idx_bumpTime',300});
 
 
 % get PDs

@@ -1,30 +1,30 @@
 %% set file names 
 
-    input_data.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\StimRecData\Han\Han_20190401_dblPulse_trains\chan60stim\';
+    input_data.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\StimRecData\Han\Han_20190730_trains_differentIPIs\';
     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
     % input_data.mapFileName = 'mapFileR:\limblab-archive\Retired Animal Logs\Monkeys\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
 %     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
 
 
-    input_data.IPI = [-1,5,10,20,50,200,10,20]; % Hz, -1 means single pulse
-    input_data.num_pulses = [1,41,21,11,5,2,2,2];
+    input_data.IPI = [500,2000,20000]; % time between trains
 %     input_data.IPI = [-1,10,20,50];
 %     input_data.num_pulses = [1,21,11,5];
     
     input_data.train_length = 0.2; % s
     input_data.num_conditions = numel(input_data.IPI);
 
-    input_data.nom_freq = 2;
-    input_data.window = [-50,450]; % 20ms before and 400ms after 1st pulse
+    input_data.train_freq = 200; %Hz
+    input_data.window = [-400,800]; % 20ms before and 400ms after 1st pulse
+    
     input_data.bin_size = 2; % in ms
-    input_data.chan_rec = 60;
+    input_data.chan_rec = 21;
 
     folderpath = input_data.folderpath; % rest of code uses folderpath currently...may have switched this, not 100% certain
 
-    input_data.task='taskCObump';
+    input_data.task='taskBD';
     input_data.ranBy='ranByJoseph'; 
     input_data.array1='arrayLeftS1'; 
-    input_data.monkey='monkeyDuncan';
+    input_data.monkey='monkeyHan';
     input_data.labnum = 6;
 
     pwd=cd;
@@ -65,29 +65,25 @@
         t = (0:1:stimInfo.stimOn(end))/30000;
         stimInfo.stimOn = t(stimInfo.stimOn);
 
-        is_1st_pulse_mask = ones(numel(stimInfo.stimOn),1);
-        for st = 1:numel(stimInfo.stimOn)
-            if(is_1st_pulse_mask(st) == 1) % look for condition based on IPI to next stimulation
-                if(st == numel(stimInfo.stimOn)) % last stim was a single pulse
-                    condition = find(input_data.IPI < 0);
-                else
-                    IPI = (stimInfo.stimOn(st+1) - stimInfo.stimOn(st))*1000; % in ms
-                    num_pulses = sum(stimInfo.stimOn(st:end) < stimInfo.stimOn(st)+1/input_data.nom_freq-0.01);
-                    condition_list = find(input_data.num_pulses == num_pulses);
-                    [min_diff,condition_idx] = min(abs(IPI - input_data.IPI(condition_list)));
-                    condition = condition_list(condition_idx);
-                    if(min_diff > 50)
-                        condition = find(input_data.IPI < 0);
-                    end
-                    if(input_data.IPI(condition) > 0) % double pulse case
-                        is_1st_pulse_mask(st+1:st+input_data.num_pulses(condition)-1) = 0;
-                    end
-                end
+        is_1st_pulse_mask = zeros(numel(stimInfo.stimOn),1); 
+        is_1st_pulse_mask(1) = 1;
+        new_train = 0;
+        for st = 2:numel(stimInfo.stimOn)
+            IPI = (stimInfo.stimOn(st) - stimInfo.stimOn(st-1))*1000; % in ms
+            if(IPI > 1000/input_data.train_freq + 10) % add 10 ms to be sure
+                % we found a transition between trains, 
+                is_1st_pulse_mask(st) = 1;
+            end
+            
+            [min_diff,condition] = min(abs(IPI - input_data.IPI));
 
-                % we know which condition and have dealt with the double pulse
-                % stuff, so now all we need to do is extract relevant spikes based
-                % on input_data.window and store them into array_data
 
+            % we know which condition and have dealt with the double pulse
+            % stuff, so now all we need to do is extract relevant spikes based
+            % on input_data.window and store them into array_data
+            
+            % only take spike data if we are at the start of a train
+            if(is_1st_pulse_mask(st) == 1)
                 for u = 1:numel(unit_idx)
                     spike_mask = cds.units(unit_idx(u)).spikes.ts > stimInfo.stimOn(st) + input_data.window(1)/1000 & cds.units(unit_idx(u)).spikes.ts < stimInfo.stimOn(st) + input_data.window(2)/1000;
                     spike_ts = cds.units(unit_idx(u)).spikes.ts(spike_mask == 1) - stimInfo.stimOn(st);
@@ -111,7 +107,7 @@
     end
 
 %% rebin and downsample number of stimulations (if desired)
-    input_data.bin_size = 2.5; % ms
+    input_data.bin_size = 5; % ms
     bin_edges = input_data.window(1):input_data.bin_size:input_data.window(2);
     for u = 1:numel(array_data)
         for cond = 1:numel(array_data{u}.binCounts)
@@ -129,7 +125,7 @@
         for cond = 1:numel(array_data{u}.binCounts)
             f_list{cond} = figure();
             f_list{cond}.Name = ['Han_20190401_chan',num2str(input_data.chan_rec),'rec_IPI',num2str(input_data.IPI(cond)),...
-                '_numPulses',num2str(input_data.num_pulses(cond)),'_unitID',num2str(u)];
+                '_unitID',num2str(u)];
             if(exist('downsample_stims') && downsample_stims == 1) % use num_stims_use 
                 plot(array_data{u}.binEdges{cond}(1:end-1)+mean(diff(array_data{u}.binEdges{cond}))/2,...
                     array_data{u}.binCounts{cond}/(input_data.bin_size/1000)/min(num_stims_use,array_data{u}.num_stims(cond)))
