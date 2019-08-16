@@ -2,10 +2,10 @@
 
 
 
-    input_data.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\StimRecData\Han\Han_20190730_trains_differentIPIs\';
-    input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+    input_data.folderpath = 'C:\Users\jts3256\Desktop\Han_stim_data\Han_20190808_trains_differentIPIs_ampv2\';
+%     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
     % input_data.mapFileName = 'mapFileR:\limblab-archive\Retired Animal Logs\Monkeys\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
-%     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
+    input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
 
 
     input_data.IPI = [500,2000,20000]; % time between trains
@@ -15,15 +15,15 @@
     input_data.train_length = 0.2; % s
     input_data.num_conditions = numel(input_data.IPI);
 
-    input_data.train_freq = 200; %Hz
+    input_data.train_freq = 100; %Hz
     input_data.window = [-400,800]; % 20ms before and 400ms after 1st pulse
     
     input_data.bin_size = 2; % in ms
-    input_data.chan_rec = 21;
+    input_data.chan_rec = 96;
 
     folderpath = input_data.folderpath; % rest of code uses folderpath currently...may have switched this, not 100% certain
 
-    input_data.task='taskBD';
+    input_data.task='taskCObump';
     input_data.ranBy='ranByJoseph'; 
     input_data.array1='arrayLeftS1'; 
     input_data.monkey='monkeyHan';

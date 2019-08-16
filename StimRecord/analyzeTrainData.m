@@ -1,6 +1,6 @@
 %% set file names 
 
-    input_data.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\StimRecData\Han\Han_20190401_dblPulse_trains\chan60stim\';
+    input_data.folderpath = 'C:\Users\jts3256\Desktop\Duncan_stim_data\Duncan_20190327_trains\';
     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
     % input_data.mapFileName = 'mapFileR:\limblab-archive\Retired Animal Logs\Monkeys\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
 %     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
@@ -17,7 +17,7 @@
     input_data.nom_freq = 2;
     input_data.window = [-250,500]; % 20ms before and 400ms after 1st pulse
     input_data.bin_size = 2; % in ms
-    input_data.chan_rec = 60;
+    input_data.chan_rec = 1;
 
     folderpath = input_data.folderpath; % rest of code uses folderpath currently...may have switched this, not 100% certain
 
