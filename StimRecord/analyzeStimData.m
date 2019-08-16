@@ -1,9 +1,9 @@
 %% set file names 
 
-    inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\StimRecData\Duncan\MultiElec_LeftS1\Duncan_20190401_2elecs\';
-%     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+    inputData.folderpath = 'C:\Users\jts3256\Desktop\Han_20190816_stimrec\chan21\';
+    inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
     % inputData.mapFileName = 'mapFileR:\limblab-archive\Retired Animal Logs\Monkeys\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
-    inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
+%     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
 
 
     folderpath = inputData.folderpath; % rest of code uses folderpath currently...may have switched this, not 100% certain
@@ -11,7 +11,7 @@
     inputData.task='taskCObump';
     inputData.ranBy='ranByJoseph'; 
     inputData.array1='arrayLeftS1'; 
-    inputData.monkey='monkeyDuncan';
+    inputData.monkey='monkeyHan';
     inputData.labnum = 6;
 
     pwd=cd;
@@ -31,8 +31,8 @@
     optsExtract.STIM_ELECTRODE = {};
     optsExtract.CHAN_LIST = [];
 
-    optsExtract.PRE_TIME = 20/1000; % made negative in the function
-    optsExtract.POST_TIME = 90/1000;
+    optsExtract.PRE_TIME = 50/1000; % made negative in the function
+    optsExtract.POST_TIME = 450/1000;
 
     optsExtract.BIN_SIZE = 0.2/1000;
     optsExtract.TIME_AFTER_STIMULATION_WAVEFORMS = 10/1000;
