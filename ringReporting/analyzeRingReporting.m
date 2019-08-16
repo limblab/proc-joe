@@ -1,10 +1,10 @@
 %% set file name and load file into cds
 
-    input_data.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\RingReporting\Han\Han_20190617_RR_singleElecs\';
+    input_data.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\RingReporting\Han\Han_20190626_stimPDs\';
 %     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 
-    input_data.date = '20190617';
+    input_data.date = '20190626';
     input_data.array = 'arrayLeftS1';
     input_data.monkey = 'monkeyHan';
     input_data.ranBy = 'ranByJoe';
@@ -46,16 +46,16 @@
 %% get bump trials, plot tgt_dir vs reach_dir. 
 % plot percentage correct in bins around a polar plot
 
-    td_bump = td_all(~isnan([td_all.bumpDir]) & ~[td_all.catchTrial]);
+    td_bump = td_all(~isnan([td_all.bumpDir]) & ~[td_all.catchTrial] & isnan([td_all.stimCode]));
     
     % get pos at idx_endTime
-    reach_angles = zeros(numel(td_bump),1);
-    tgt_angles = zeros(numel(td_bump),1);
+    reach_angles_bump = zeros(numel(td_bump),1);
+    tgt_angles_bump = zeros(numel(td_bump),1);
     is_rewarded = zeros(numel(td_bump),1);
     for t = 1:numel(td_bump)
-        tgt_angles(t) = td_bump(t).target_direction;
+        tgt_angles_bump(t) = td_bump(t).target_direction;
         
-        reach_angles(t) = getReachAngle(td_bump,t,[input_data.center_x,input_data.center_y]);
+        reach_angles_bump(t) = getReachAngle(td_bump,t,[input_data.center_x,input_data.center_y]);
         is_rewarded(t) = td_bump(t).result == 'R';
 %         is_rewarded(t) = abs(reach_angles(t) - tgt_angles(t))*180/pi < input_data.tgt_width/2;
     end
@@ -72,7 +72,7 @@
         plot([-180,180],[-180,180]-360+input_data.tgt_width/2,'r--','linewidth',2);
       
     % plot reach vs tgt
-    plot(tgt_angles*180/pi,reach_angles*180/pi,'.','markersize',16)
+    plot(tgt_angles_bump*180/pi,reach_angles_bump*180/pi,'.','markersize',16)
     % format
     xlim([-180,180]); ylim([-180,180]);
     formatForLee(gcf); set(gca,'fontsize',14)
@@ -82,7 +82,7 @@
     bin_edges = [-pi:2*pi/input_data.num_bins:pi];
     percent_correct = zeros(numel(bin_edges)-1,1);
     for i = 1:numel(bin_edges)-1
-        trial_mask = tgt_angles >= bin_edges(i) & tgt_angles < bin_edges(i+1);
+        trial_mask = tgt_angles_bump >= bin_edges(i) & tgt_angles_bump < bin_edges(i+1);
         percent_correct(i) = sum(is_rewarded(trial_mask))/sum(trial_mask);
     end
     
@@ -127,8 +127,11 @@
         if(exist('pattern_data') && stim_code(t) <= numel(pattern_data.pred_dirs))
             pred_angles(t) = pattern_data.pred_dirs(stim_code(t)); % in degrees
             is_biomimetic(t) = pattern_data.is_biomimetic(stim_code(t));
+        elseif(td_stim(t).bumpMagnitude > 0 && stim_code(t) == 2)
+            pred_angles(t) = td_stim(t).tgtDir;
+            is_biomimetic(t) = 0;
         else
-            pred_angles(t) = 0;
+            pred_angles(t) = nan;
             is_biomimetic(t) = -1;
         end
         reach_angles(t) = getReachAngle(td_stim,t,[input_data.center_x,input_data.center_y])*180/pi; % output is in radians.
@@ -146,11 +149,16 @@
     plot([-180,180],[-180,180]-input_data.tgt_width/2*180/180,'r--','linewidth',2);
         plot([-180,180],[-180,180]-360+input_data.tgt_width/2,'r--','linewidth',2);
       
+        
+    % plot bump data 
+        plot(tgt_angles_bump*180/pi,reach_angles_bump*180/pi,'.','markersize',12)
     % plot reach vs tgt for bio patterns as dots
-    plot(pred_angles(is_biomimetic==1),reach_angles(is_biomimetic==1),'.','color',[0,0,0.8],'markersize',16)
+    plot(pred_angles(is_biomimetic==1),reach_angles(is_biomimetic==1),'.','color',[0,0,0.8],'markersize',20,'linewidth',2)
     % plot reach vs tgt for nonbio patterns as x's
-    plot(pred_angles(~is_biomimetic),reach_angles(~is_biomimetic),'x','color',[0,0.5,0],'markersize',16)
+    plot(pred_angles(~is_biomimetic),reach_angles(~is_biomimetic),'x','color',[0,0.5,0],'markersize',20,'linewidth',2)
     
+
+
     % format
     xlim([-180,180]); ylim([-180,180]);
     formatForLee(gcf); set(gca,'fontsize',14)
@@ -158,25 +166,25 @@
     
     % for each stim code (pattern,elec,etc.), plot a histogram with end
     % point reaches
-    for i = 1:numel(unique(stim_code))
-        f=figure();
-        f.Name = [input_data.monkey(7:end),'_',input_data.date,...
-            '_stimReaches_patternNum',num2str(i),'_isbio',num2str(is_biomimetic(find(stim_code==i,1,'first')))];
-        
-        bin_edges = [-180:360/input_data.num_bins:180];
-        num_reaches = histcounts(reach_angles(stim_code==i),bin_edges);
-        histogram('BinEdges',bin_edges,'BinCounts',num_reaches)
-        
-        if(exist('pattern_data'))
-            hold on
-            plot(pattern_data.pred_dirs(i)+[0,0],[0,max(num_reaches)],'r-','linewidth',2)
-        end
-
-        xlabel('Angle')
-        ylabel('Number of reaches');
-        formatForLee(gcf)
-        set(gca,'fontsize',14)
-    end
+%     for i = 1:numel(unique(stim_code))
+%         f=figure();
+%         f.Name = [input_data.monkey(7:end),'_',input_data.date,...
+%             '_stimReaches_patternNum',num2str(i),'_isbio',num2str(is_biomimetic(find(stim_code==i,1,'first')))];
+%         
+%         bin_edges = [-180:360/input_data.num_bins:180];
+%         num_reaches = histcounts(reach_angles(stim_code==i),bin_edges);
+%         histogram('BinEdges',bin_edges,'BinCounts',num_reaches)
+%         
+%         if(exist('pattern_data'))
+%             hold on
+%             plot(pattern_data.pred_dirs(i)+[0,0],[0,max(num_reaches)],'r-','linewidth',2)
+%         end
+% 
+%         xlabel('Angle')
+%         ylabel('Number of reaches');
+%         formatForLee(gcf)
+%         set(gca,'fontsize',14)
+%     end
     
 %% time to target for bumps, stim and catch trials
     spread = 0.25;

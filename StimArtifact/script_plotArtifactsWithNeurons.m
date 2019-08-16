@@ -1,5 +1,5 @@
 %% load in artifact data and cds to get spike times
-    inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\StimRecData\Han\Multielec\Han_20190222_5elecs\';
+    inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\StimRecData\Han\Multielec\Han_20190406_2elecs\';
     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 %     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
 
@@ -31,10 +31,10 @@
 
 %% make plot with artifacts with neurons and artifacts without neurons
 
-    chan_rec = 8;
+    chan_rec = 44;
     unit_idx = find([cds.units.chan] == chan_rec & [cds.units.ID] == 1);
     chan_rec = cds.units(unit_idx).chan;
-    wave_idx = 1;
+    wave_idx = 2;
     
     window = [0,0.005]; % s
     
@@ -55,10 +55,10 @@
     
     artifact_no_spike_idx = setdiff(1:numel(artifactData.t),artifact_spike_idx);
     
-    %%
+    %
     num_plot = 20;
     plot_filtered = 1;
-    y_limits = 150*[-1,1];
+    y_limits = 250*[-1,1];
     x_data = ((1:size(artifactData.artifact,3))-1-inputData.presample)/30;% - ...
 
     % plot artifact with spikes afterwards
