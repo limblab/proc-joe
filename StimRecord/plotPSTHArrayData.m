@@ -29,6 +29,7 @@ function [output_data] = plotPSTHArrayData(array_data,input_data)
         
         for cond = 1:numel(array_data{u}.binCounts)
             f_list{cond}.Children.YLim(end) = max_y_lim;
+            f_list{cond}.Children.XLim = input_data.window;
         end
     end
 
