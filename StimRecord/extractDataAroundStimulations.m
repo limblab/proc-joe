@@ -158,7 +158,8 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
             binEdges = cell(NUM_CHANS,NUM_WAVEFORM_TYPES);
             binCounts = cell(NUM_CHANS,NUM_WAVEFORM_TYPES);
             kinData = cell(NUM_CHANS,NUM_WAVEFORM_TYPES);
-
+            forceData = cell(NUM_CHANS,NUM_WAVEFORM_TYPES);
+            
             for c = 1:NUM_CHANS
                 for i = 1:NUM_WAVEFORM_TYPES
                     spikeTrialTimes{c,i} = zeros(1,opts.INITIAL_ARRAY_SIZE);
@@ -275,6 +276,35 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
             end
 
             
+            %% grab force data for each stimulation
+            if(opts.GET_FORCE && isfield(cds,'force') && ~isempty(cds.force))
+                force_dt = mode(diff(cds.force.t));
+                for chan = 1:NUM_CHANS
+                    for wave = 1:NUM_WAVEFORM_TYPES
+                        stimIdx = find(stimInfo.waveSent(1:opts.STIMULATIONS_PER_TRAIN:end) == wave & ...
+                            checkChanListEquality(stimInfo.chanSent(1:numel(stimsPerTrainMask)),CHAN_LIST{chan}));
+                        forceData{chan,wave}.x = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/force_dt,1));
+                        forceData{chan,wave}.y = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/force_dt,1));
+                        forceData{chan,wave}.vx = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/force_dt,1));
+                        forceData{chan,wave}.vy = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/force_dt,1));
+                        forceData{chan,wave}.ax = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/force_dt,1));
+                        forceData{chan,wave}.ay = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/force_dt,1));
+
+                        for st = 1:numel(stimIdx)
+                            forceIdx = find(stimInfo.stimOn(stimIdx(st)) <= cds.force.t,1,'first');
+                            if(~isempty(forceIdx))
+                                forceData{chan,wave}.x(st,:) = cds.kin.x(round(kinIdx-opts.PRE_TIME/force_dt,1):round(kinIdx+opts.POST_TIME/force_dt-1,1));
+                                forceData{chan,wave}.y(st,:) = cds.kin.y(round(kinIdx-opts.PRE_TIME/force_dt,1):round(kinIdx+opts.POST_TIME/force_dt-1,1));
+                                forceData{chan,wave}.vx(st,:) = cds.kin.vx(round(kinIdx-opts.PRE_TIME/force_dt,1):round(kinIdx+opts.POST_TIME/force_dt-1,1));
+                                forceData{chan,wave}.vy(st,:) = cds.kin.vy(round(kinIdx-opts.PRE_TIME/force_dt,1):round(kinIdx+opts.POST_TIME/force_dt-1,1));
+                                forceData{chan,wave}.ax(st,:) = cds.kin.ax(round(kinIdx-opts.PRE_TIME/force_dt,1):round(kinIdx+opts.POST_TIME/force_dt-1,1));
+                                forceData{chan,wave}.ay(st,:) = cds.kin.ay(round(kinIdx-opts.PRE_TIME/force_dt,1):round(kinIdx+opts.POST_TIME/force_dt-1,1));
+                            end
+                        end
+                    end
+                end
+            end
+            
             if(size(arrayData,2) < arrayDataIdx) % append data
                 %% store unit data
                 arrayData{arrayDataIdx}.spikeTrialTimes = spikeTrialTimes;
@@ -284,7 +314,7 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
                 arrayData{arrayDataIdx}.bE = binEdges;
 
                 arrayData{arrayDataIdx}.kin = kinData;
-
+                arrayData{arrayDataIdx}.force = forceData;
                 %% save useful stimulation related information
                 arrayData{arrayDataIdx}.CHAN_LIST = CHAN_LIST;
                 arrayData{arrayDataIdx}.STIM_PARAMETERS = stimInfo.parameters;
@@ -311,7 +341,7 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
                         arrayData{arrayDataIdx}.bC{chan,wave} = arrayData{arrayDataIdx}.bC{chan,wave}+binCounts{chan,wave};
 
                         arrayData{arrayDataIdx}.kin{chan,wave} = [arrayData{arrayDataIdx}.kin{chan,wave};kinData{chan,wave}];
-                        
+                        arrayData{arrayDataIdx}.force{chan,wave} = [arrayData{arrayDataIdx}.force{chan,wave};forceData{chan,wave}];
                     end
                 end
                 %% append useful stim related info
@@ -339,6 +369,8 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
             arrayData{arrayDataIdx}.bC = arrayData{arrayDataIdx}.bC(arrayData_mask==1);
             arrayData{arrayDataIdx}.bE = arrayData{arrayDataIdx}.bE(arrayData_mask==1);
             arrayData{arrayDataIdx}.kin = arrayData{arrayDataIdx}.kin(arrayData_mask==1);
+            arrayData{arrayDataIdx}.force = arrayData{arrayDataIdx}.force(arrayData_mask == 1);
+            
             arrayData{arrayDataIdx}.numStims = arrayData{arrayDataIdx}.numStims(arrayData_mask == 1);
             temp = repmat(arrayData{arrayDataIdx}.CHAN_LIST,1,NUM_WAVEFORM_TYPES)
             arrayData{arrayDataIdx}.STIM_PARAM_LIST(:,1) = temp(arrayData_mask == 1);
@@ -387,6 +419,7 @@ function [opts] = configureOpts(optsInput)
     opts.NEURON_NUMBER_ALL = [];
     
     opts.GET_KIN = 0;
+    opts.GET_FORCE = 0;
     opts.USE_ANALOG_FOR_STIM_TIMES = 1;
     opts.ANALOG_SYNC_LINE = 'ainp16';
     opts.USE_STIM_CODE = 0;
