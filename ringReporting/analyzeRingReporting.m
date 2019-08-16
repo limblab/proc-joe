@@ -1,12 +1,12 @@
 %% set file name and load file into cds
 
-    input_data.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\RingReporting\Han\Han_20190626_stimPDs\';
-%     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
-    input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+    input_data.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\RingReporting\Duncan\Duncan_20190809_diffAmps\';
+    input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
+%     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 
-    input_data.date = '20190626';
+    input_data.date = '20190809';
     input_data.array = 'arrayLeftS1';
-    input_data.monkey = 'monkeyHan';
+    input_data.monkey = 'monkeyDuncan';
     input_data.ranBy = 'ranByJoe';
     input_data.lab = 6;
     input_data.task = 'taskRR';
@@ -166,25 +166,25 @@
     
     % for each stim code (pattern,elec,etc.), plot a histogram with end
     % point reaches
-%     for i = 1:numel(unique(stim_code))
-%         f=figure();
-%         f.Name = [input_data.monkey(7:end),'_',input_data.date,...
-%             '_stimReaches_patternNum',num2str(i),'_isbio',num2str(is_biomimetic(find(stim_code==i,1,'first')))];
-%         
-%         bin_edges = [-180:360/input_data.num_bins:180];
-%         num_reaches = histcounts(reach_angles(stim_code==i),bin_edges);
-%         histogram('BinEdges',bin_edges,'BinCounts',num_reaches)
-%         
-%         if(exist('pattern_data'))
-%             hold on
-%             plot(pattern_data.pred_dirs(i)+[0,0],[0,max(num_reaches)],'r-','linewidth',2)
-%         end
-% 
-%         xlabel('Angle')
-%         ylabel('Number of reaches');
-%         formatForLee(gcf)
-%         set(gca,'fontsize',14)
-%     end
+    for i = 1:numel(unique(stim_code))
+        f=figure();
+        f.Name = [input_data.monkey(7:end),'_',input_data.date,...
+            '_stimReaches_patternNum',num2str(i),'_isbio',num2str(is_biomimetic(find(stim_code==i,1,'first')))];
+        
+        bin_edges = [-180:360/input_data.num_bins:180];
+        num_reaches = histcounts(reach_angles(stim_code==i),bin_edges);
+        histogram('BinEdges',bin_edges,'BinCounts',num_reaches)
+        
+        if(exist('pattern_data'))
+            hold on
+            plot(pattern_data.pred_dirs(i)+[0,0],[0,max(num_reaches)],'r-','linewidth',2)
+        end
+
+        xlabel('Angle')
+        ylabel('Number of reaches');
+        formatForLee(gcf)
+        set(gca,'fontsize',14)
+    end
     
 %% time to target for bumps, stim and catch trials
     spread = 0.25;
@@ -225,25 +225,29 @@
     
 %     
 %     
-%     %% plot reach kinematics,
-%     
-%     figure();
-%     for t = 21%numel(td_stim)
-%         plot(td_stim(t).pos(td_stim(t).idx_startTime:td_stim(t).idx_otHoldTime,1),...
-%             td_stim(t).pos(td_stim(t).idx_startTime:td_stim(t).idx_otHoldTime,2),'b','linewidth',2);
-%         hold on
-%         plot(td_stim(t).pos(td_stim(t).idx_stimTime,1),td_stim(t).pos(td_stim(t).idx_stimTime,2),'k.','markersize',20);
-%         plot(td_stim(t).pos(td_stim(t).idx_goCueTime,1),td_stim(t).pos(td_stim(t).idx_goCueTime,2),'r.','markersize',20);
-%     end
-%     
-%     %% plot velocity
-%     figure();
-%     for t = 3%numel(td_stim)
-%         plot(td_stim(t).vel(td_stim(t).idx_startTime:td_stim(t).idx_otHoldTime,2),'b');
-%         hold on
-%         plot(td_stim(t).idx_stimTime-td_stim(t).idx_startTime,td_stim(t).vel(td_stim(t).idx_stimTime,2),'k.','markersize',20);
-%         plot(td_stim(t).idx_goCueTime-td_stim(t).idx_startTime,td_stim(t).vel(td_stim(t).idx_goCueTime,2),'r.','markersize',20);
-%     end
+    %% plot reach kinematics,
+    num_plot = 10;
+    counter = 0;
+    figure();
+    for t = 1:numel(td_stim)
+        if(counter < num_plot && td_stim(t).stimCode == 1)
+            counter = counter + 1;
+            plot(td_stim(t).pos(td_stim(t).idx_stimTime-50:td_stim(t).idx_otHoldTime,1),...
+                td_stim(t).pos(td_stim(t).idx_stimTime-50:td_stim(t).idx_otHoldTime,2),'b','linewidth',2);
+            hold on
+            plot(td_stim(t).pos(td_stim(t).idx_stimTime,1),td_stim(t).pos(td_stim(t).idx_stimTime,2),'k.','markersize',20);
+            plot(td_stim(t).pos(td_stim(t).idx_goCueTime,1),td_stim(t).pos(td_stim(t).idx_goCueTime,2),'r.','markersize',20);
+        end
+    end
+    
+    %% plot velocity
+    figure();
+    for t = 3%numel(td_stim)
+        plot(td_stim(t).vel(td_stim(t).idx_startTime:td_stim(t).idx_otHoldTime,2),'b');
+        hold on
+        plot(td_stim(t).idx_stimTime-td_stim(t).idx_startTime,td_stim(t).vel(td_stim(t).idx_stimTime,2),'k.','markersize',20);
+        plot(td_stim(t).idx_goCueTime-td_stim(t).idx_startTime,td_stim(t).vel(td_stim(t).idx_goCueTime,2),'r.','markersize',20);
+    end
 %     
 % %%
 %     opts.FIGURE_SAVE = 0;
