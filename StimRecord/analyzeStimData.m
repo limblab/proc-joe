@@ -37,8 +37,9 @@
     optsExtract.BIN_SIZE = 0.2/1000;
     optsExtract.TIME_AFTER_STIMULATION_WAVEFORMS = 10/1000;
     optsExtract.USE_ANALOG_FOR_STIM_TIMES = 1; % this uses the analog sync line to get stim times, not sure why you would want to do anything else
-    optsExtract.GET_KIN = 0;
-
+    optsExtract.GET_KIN = 1;
+    optsExtract.GET_FORCE = 1;
+    
     arrayData = extractDataAroundStimulations(inputData,fileList,stimInfoFileList,optsExtract);
 
     toc
