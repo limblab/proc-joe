@@ -15,7 +15,7 @@
     input_data.num_conditions = numel(input_data.IPI);
 
     input_data.nom_freq = 2;
-    input_data.window = [-50,450]; % 20ms before and 400ms after 1st pulse
+    input_data.window = [-250,500]; % 20ms before and 400ms after 1st pulse
     input_data.bin_size = 2; % in ms
     input_data.chan_rec = 1;
 
@@ -24,7 +24,7 @@
     input_data.task='taskCObump';
     input_data.ranBy='ranByJoseph'; 
     input_data.array1='arrayLeftS1'; 
-    input_data.monkey='monkeyDuncan';
+    input_data.monkey='monkeyHan';
     input_data.labnum = 6;
 
     pwd=cd;
@@ -58,6 +58,8 @@
                 array_data{u}.num_stims = zeros(input_data.num_conditions,1);
                 array_data{u}.binCounts = cell(input_data.num_conditions,1);
                 array_data{u}.binEdges = cell(input_data.num_conditions,1);
+                array_data{u}.speed = cell(input_data.num_conditions,1);
+                array_data{u}.mean_speed = cell(input_data.num_conditions,1);
             end
         end
         
@@ -94,6 +96,9 @@
                     array_data{u}.spikeTrialTimes{condition} = [array_data{u}.spikeTrialTimes{condition}, spike_ts'];
                     array_data{u}.num_stims(condition) = array_data{u}.num_stims(condition) + 1;
                     array_data{u}.trial_num{condition} = [array_data{u}.trial_num{condition}, ones(1,numel(spike_ts))*array_data{u}.num_stims(condition)];
+                    
+                    vel_win = find(cds.kin.t > stimInfo.stimOn(st),1,'first') + [-100,400];
+                    array_data{u}.speed{condition}(end+1,:) = sqrt(cds.kin.vx(vel_win(1):vel_win(2)).^2 + cds.kin.vy(vel_win(1):vel_win(2)).^2);
                 end
             end
 
@@ -106,12 +111,16 @@
             for cond = 1:numel(array_data{u}.binCounts)
                 array_data{u}.binEdges{cond} = bin_edges;
                 array_data{u}.binCounts{cond} = histcounts(array_data{u}.spikeTrialTimes{cond}*1000,bin_edges);
+                array_data{u}.mean_speed{cond} = mean(array_data{u}.speed{cond},2);
             end
         end
     end
 
+    
+    
+    
 %% rebin and downsample number of stimulations (if desired)
-    input_data.bin_size = 2.5; % ms
+    input_data.bin_size = 5; % ms
     bin_edges = input_data.window(1):input_data.bin_size:input_data.window(2);
     for u = 1:numel(array_data)
         for cond = 1:numel(array_data{u}.binCounts)
@@ -122,36 +131,42 @@
     end
 
 %% plot PSTH for each condition
-    max_y_lim = 0;
-    for u = 1%:numel(unit_idx)
-        max_y_lim = 0;
-        f_list = {};
-        for cond = 1:numel(array_data{u}.binCounts)
-            f_list{cond} = figure();
-            f_list{cond}.Name = ['Han_20190401_chan',num2str(input_data.chan_rec),'rec_IPI',num2str(input_data.IPI(cond)),...
-                '_numPulses',num2str(input_data.num_pulses(cond)),'_unitID',num2str(u)];
-            if(exist('downsample_stims') && downsample_stims == 1) % use num_stims_use 
-                plot(array_data{u}.binEdges{cond}(1:end-1)+mean(diff(array_data{u}.binEdges{cond}))/2,...
-                    array_data{u}.binCounts{cond}/(input_data.bin_size/1000)/min(num_stims_use,array_data{u}.num_stims(cond)))
-            else % use num_stims from array_data
-                plot(array_data{u}.binEdges{cond}(1:end-1)+mean(diff(array_data{u}.binEdges{cond}))/2,...
-                    array_data{u}.binCounts{cond}/(input_data.bin_size/1000)/array_data{u}.num_stims(cond))
-            end
-            formatForLee(gcf)
-            xlabel('Time after 1st pulse (ms)');
-            ylabel('Firing rate (spks/s)')
-            set(gca,'fontsize',14);
-            max_y_lim = max(max_y_lim,f_list{cond}.Children.YLim(end));
-        end
-        
-        for cond = 1:numel(array_data{u}.binCounts)
-            f_list{cond}.Children.YLim(end) = max_y_lim;
-        end
-    end
+    input_data.unit_idx = unit_idx;
+    plotPSTHArrayData(array_data,input_data);
 
     
     
-%% bootstrap data w/ smaller number of stimulations
+%% plot PSTH for each condition for low and high speed cases
+    mean_speed_cutoff = [4,12]; % slow and fast cutoffs (below = slow, above = fast, middle = nothing);
+    array_data_slow = array_data;
+    array_data_fast = array_data;
+    for u = 1:numel(array_data)
+        for cond = 1:numel(array_data{u}.binCounts)
+            trial_speeds = array_data{u}.mean_speed{cond}(array_data{u}.trial_num{cond});
+            slow_mask = trial_speeds < mean_speed_cutoff(1) & trial_speeds > 0;
+            fast_mask = trial_speeds > mean_speed_cutoff(2);
+            
+            spike_trial_times = array_data{u}.spikeTrialTimes{cond}(slow_mask==1);
+            array_data_slow{u}.binEdges{cond} = bin_edges;
+            array_data_slow{u}.binCounts{cond} = histcounts(spike_trial_times*1000,bin_edges);
+            array_data_slow{u}.num_stims(cond) = sum(array_data{u}.mean_speed{cond} < mean_speed_cutoff(1));
+            
+            spike_trial_times = array_data{u}.spikeTrialTimes{cond}(slow_mask==0);
+            array_data_fast{u}.binEdges{cond} = bin_edges;
+            array_data_fast{u}.binCounts{cond} = histcounts(spike_trial_times*1000,bin_edges);
+            array_data_fast{u}.num_stims(cond) = sum(array_data{u}.mean_speed{cond} > mean_speed_cutoff(2));
+        end
+    end
+    input_data.unit_idx = unit_idx;
+    input_data.suffix = 'slow';
+    plotPSTHArrayData(array_data_slow,input_data);
+    input_data.suffix = 'fast';
+    plotPSTHArrayData(array_data_fast,input_data);
+    
+    
+    
+    
+%% resample data w/ smaller number of stimulations
 
     unit_idx = 1;
     num_boot = 1000;
