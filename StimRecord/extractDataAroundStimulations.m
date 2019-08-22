@@ -310,8 +310,8 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
                 arrayData{arrayDataIdx}.spikeTrialTimes = spikeTrialTimes;
                 arrayData{arrayDataIdx}.stimData = stimuliData;
                 arrayData{arrayDataIdx}.numStims = numStims;
-                arrayData{arrayDataIdx}.bC = binCounts;
-                arrayData{arrayDataIdx}.bE = binEdges;
+                arrayData{arrayDataIdx}.binCounts = binCounts;
+                arrayData{arrayDataIdx}.binEdges = binEdges;
 
                 arrayData{arrayDataIdx}.kin = kinData;
                 arrayData{arrayDataIdx}.force = forceData;
@@ -338,7 +338,7 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
                         arrayData{arrayDataIdx}.spikeTrialTimes{chan,wave} = [arrayData{arrayDataIdx}.spikeTrialTimes{chan,wave},spikeTrialTimes{chan,wave}];
                         arrayData{arrayDataIdx}.stimData{chan,wave} = [arrayData{arrayDataIdx}.stimData{chan,wave},stimuliData{chan,wave}+arrayData{arrayDataIdx}.numStims(chan,wave)];
                         arrayData{arrayDataIdx}.numStims(chan,wave) = arrayData{arrayDataIdx}.numStims(chan,wave)+numStims(chan,wave);
-                        arrayData{arrayDataIdx}.bC{chan,wave} = arrayData{arrayDataIdx}.bC{chan,wave}+binCounts{chan,wave};
+                        arrayData{arrayDataIdx}.binCounts{chan,wave} = arrayData{arrayDataIdx}.binCounts{chan,wave}+binCounts{chan,wave};
 
                         arrayData{arrayDataIdx}.kin{chan,wave} = [arrayData{arrayDataIdx}.kin{chan,wave};kinData{chan,wave}];
                         arrayData{arrayDataIdx}.force{chan,wave} = [arrayData{arrayDataIdx}.force{chan,wave};forceData{chan,wave}];
@@ -355,9 +355,9 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
 
     %% prune waveform/chan combos that have 0 stims
     for arrayDataIdx = 1:numel(arrayData)
-        arrayData_mask = ones(size(arrayData{arrayDataIdx}.bC));
-        for chan = 1:size(arrayData{arrayDataIdx}.bC,1)
-            for wave = 1:size(arrayData{arrayDataIdx}.bC,2)
+        arrayData_mask = ones(size(arrayData{arrayDataIdx}.binCounts));
+        for chan = 1:size(arrayData{arrayDataIdx}.binCounts,1)
+            for wave = 1:size(arrayData{arrayDataIdx}.binCounts,2)
                 if(arrayData{arrayDataIdx}.numStims(chan,wave) == 0)
                     arrayData_mask(chan,wave) = 0;
                 end
@@ -366,8 +366,8 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
         if(~sum(sum(arrayData_mask)) == numel(arrayData_mask)) % prune
             arrayData{arrayDataIdx}.spikeTrialTimes = arrayData{arrayDataIdx}.spikeTrialTimes(arrayData_mask==1);
             arrayData{arrayDataIdx}.stimData = arrayData{arrayDataIdx}.stimData(arrayData_mask==1);
-            arrayData{arrayDataIdx}.bC = arrayData{arrayDataIdx}.bC(arrayData_mask==1);
-            arrayData{arrayDataIdx}.bE = arrayData{arrayDataIdx}.bE(arrayData_mask==1);
+            arrayData{arrayDataIdx}.binCounts = arrayData{arrayDataIdx}.binCounts(arrayData_mask==1);
+            arrayData{arrayDataIdx}.binEdges = arrayData{arrayDataIdx}.binEdges(arrayData_mask==1);
             arrayData{arrayDataIdx}.kin = arrayData{arrayDataIdx}.kin(arrayData_mask==1);
             arrayData{arrayDataIdx}.force = arrayData{arrayDataIdx}.force(arrayData_mask == 1);
             
@@ -382,13 +382,13 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
         end
     end
     
-    %% adjust bC based on number of stims
+    %% adjust binCounts based on number of stims
     for arrayDataIdx = 1:numel(arrayData)
         arrayData{arrayDataIdx}.binMaxYLim = 0;
-        for chan = 1:size(arrayData{arrayDataIdx}.bC,1)
-            for wave = 1:size(arrayData{arrayDataIdx}.bC,2)
-                arrayData{arrayDataIdx}.bC{chan,wave} = arrayData{arrayDataIdx}.bC{chan,wave}/arrayData{arrayDataIdx}.numStims(chan,wave);
-                arrayData{arrayDataIdx}.binMaxYLim = max(arrayData{arrayDataIdx}.binMaxYLim,max(arrayData{arrayDataIdx}.bC{chan,wave}));
+        for chan = 1:size(arrayData{arrayDataIdx}.binCounts,1)
+            for wave = 1:size(arrayData{arrayDataIdx}.binCounts,2)
+                arrayData{arrayDataIdx}.binCounts{chan,wave} = arrayData{arrayDataIdx}.binCounts{chan,wave}/arrayData{arrayDataIdx}.numStims(chan,wave);
+                arrayData{arrayDataIdx}.binMaxYLim = max(arrayData{arrayDataIdx}.binMaxYLim,max(arrayData{arrayDataIdx}.binCounts{chan,wave}));
             end
         end
         arrayData{arrayDataIdx}.binMaxYLim = arrayData{arrayDataIdx}.binMaxYLim*1.1;

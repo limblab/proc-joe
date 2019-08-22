@@ -57,10 +57,10 @@ function [figureHandle] = plotPSTHStim(unitData,NEURON_NUMBER,optsPlot)
             else
                 optsPlot.NUM_PLOTS = 1;
 
-                bEtemp = unitData.bE{chan,wave};
+                bEtemp = unitData.binEdges{chan,wave};
                 xData = bEtemp(1:end-1)+(bEtemp(2)-bEtemp(1))/2;
                 xData = xData';
-                yData = unitData.bC{chan,wave};
+                yData = unitData.binCounts{chan,wave};
                 yData = yData';
             end
             

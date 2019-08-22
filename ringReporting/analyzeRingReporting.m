@@ -1,10 +1,10 @@
 %% set file name and load file into cds
 
-    input_data.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\RingReporting\Duncan\Duncan_20190809_diffAmps\';
+    input_data.folderpath = 'C:\Users\jts3256\Desktop\Duncan_stim_evoked_move\Duncan_20190814_RR_50uA_headstage1\';
     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
 %     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 
-    input_data.date = '20190809';
+    input_data.date = '20190814';
     input_data.array = 'arrayLeftS1';
     input_data.monkey = 'monkeyDuncan';
     input_data.ranBy = 'ranByJoe';
@@ -27,20 +27,48 @@
             input_data.lab,input_data.mapFileName,input_data.task,'recoverPreSync','ignoreJumps','ignoreFilecat');
         cd(pwd);
     
-        params.event_list = {'otHoldTime';'goCueTime';'tgtDir';'bumpDir';'bumpTime';'bumpMagnitude';'stimTime';'stimCode';'catchTrial';'showOuterTarget'};
-        params.trial_results = {'R','F'};
+        if(strcmpi(input_data.task,'RR'))
+            params.event_list = {'otHoldTime';'goCueTime';'tgtDir';'bumpDir';'bumpTime';'bumpMagnitude';'stimTime';'stimCode';'catchTrial';'showOuterTarget'};
+        else
+            params.event_list = {'goCueTime';'bumpDir';'bumpTime';'bumpMagnitude';'stimTime';'stimCode'};
+        end
+        params.trial_results = {'R','F','A','I'};
         params.extra_time = [1,2];
         params.include_ts = 0;
         params.exclude_units = [255];
         td_temp = parseFileByTrial(cds,params);
-        td_temp = td_temp(~isnan([td_temp.catchTrial]));
+%         td_temp = td_temp(~isnan([td_temp.catchTrial]));
         
         td_all = [td_all,td_temp];
     end
     
-    input_data.tgt_width = mode([cds.trials.tgtWidth]);
+%     input_data.tgt_width = mode([cds.trials.tgtWidth]);
     
- 
+%% use sync to get stim times:
+    aIdx = 3; syncName = 'ainp16';
+    stimOnIdx=find(diff(cds.analog{aIdx}.(syncName)-mean(cds.analog{aIdx}.(syncName))>3)>.5);
+    for j=1:numel(stimOnIdx)
+        if j<numel(stimOnIdx)
+            next=stimOnIdx(j+1);
+        else
+            next=numel(cds.analog{aIdx}.(syncName));
+        end
+    end
+
+    stimOnTimes = cds.analog{aIdx}.t(stimOnIdx);
+    timeDiffs = [];
+    td_all_adj = td_all;
+    for tr = 1:size(cds.trials,1)
+        stimOnIdx = find(stimOnTimes > cds.trials.stimTime(tr),1,'first');
+        timeDiff = stimOnTimes(stimOnIdx) - cds.trials.stimTime(tr);
+        
+        tdAllIdx = find([td_all_adj.trial_id] == cds.trials.number(tr));
+        if(~isempty(tdAllIdx) && ~isempty(stimOnIdx))
+            td_all_adj(tdAllIdx).idx_stimTime = td_all_adj(tdAllIdx).idx_stimTime + floor(timeDiff*1000);
+            timeDiffs(end+1,1) = floor(timeDiff*1000);
+        end
+    end
+    
 %% load in pattern file to set predicted direction and have relevant info
 
 %% get bump trials, plot tgt_dir vs reach_dir. 
@@ -230,7 +258,7 @@
     counter = 0;
     figure();
     for t = 1:numel(td_stim)
-        if(counter < num_plot && td_stim(t).stimCode == 1)
+        if(counter < num_plot && td_stim(t).stimCode == 0)
             counter = counter + 1;
             plot(td_stim(t).pos(td_stim(t).idx_stimTime-50:td_stim(t).idx_otHoldTime,1),...
                 td_stim(t).pos(td_stim(t).idx_stimTime-50:td_stim(t).idx_otHoldTime,2),'b','linewidth',2);
@@ -240,14 +268,83 @@
         end
     end
     
-    %% plot velocity
+%% plot velocity
+    td_stim = td_all(~isnan([td_all.stimCode]));
+
+    num_plot = 1000;
+    counter = 0;
     figure();
-    for t = 3%numel(td_stim)
-        plot(td_stim(t).vel(td_stim(t).idx_startTime:td_stim(t).idx_otHoldTime,2),'b');
-        hold on
-        plot(td_stim(t).idx_stimTime-td_stim(t).idx_startTime,td_stim(t).vel(td_stim(t).idx_stimTime,2),'k.','markersize',20);
-        plot(td_stim(t).idx_goCueTime-td_stim(t).idx_startTime,td_stim(t).vel(td_stim(t).idx_goCueTime,2),'r.','markersize',20);
+    peak_speeds = cell(numel(unique([td_stim.stimCode])),1);
+    latencies = cell(numel(unique([td_stim.stimCode])),1);
+    for t = 1:numel(td_stim)
+
+        [~,peak_speed_idx] = max(abs(td_stim(t).vel(td_stim(t).idx_stimTime+100:td_stim(t).idx_stimTime+300,2)));
+        peak_speed_idx = peak_speed_idx + 100;
+        peak_speeds{td_stim(t).stimCode+1}(end+1,1) = td_stim(t).vel(peak_speed_idx+td_stim(t).idx_stimTime-1,2) - td_stim(t).vel(td_stim(t).idx_stimTime,2);
+    
+        [~,peak_acc_idx] = max((td_stim(t).acc(td_stim(t).idx_stimTime+100:td_stim(t).idx_stimTime+300,2)));
+        peak_acc_idx = peak_acc_idx + 100;
+        peak_acc =  td_stim(t).acc(peak_acc_idx+td_stim(t).idx_stimTime-1,2);
+        
+        if(peak_speeds{td_stim(t).stimCode+1}(end) > 3)
+            threshold = abs(peak_acc*0.5);
+            peak_mask = 1:1:numel(td_stim(t).acc(td_stim(t).idx_stimTime:td_stim(t).idx_stimTime+300,2));
+            peak_mask = peak_mask < peak_speed_idx;
+            peak_mask = peak_mask';
+            above_threshold = find(td_stim(t).acc(td_stim(t).idx_stimTime:td_stim(t).idx_stimTime+300,2) > threshold & peak_mask);
+            if(isempty(above_threshold))
+                latency = nan;
+            else
+                latency = above_threshold(1);
+            end
+            latencies{td_stim(t).stimCode+1}(end+1,1) = latency;
+        else
+            latency = nan;
+            latencies{td_stim(t).stimCode+1}(end+1,1) = latency;
+        end
+        
+        if(counter < num_plot && td_stim(t).stimCode == 8)
+            plot(td_stim(t).acc(td_stim(t).idx_stimTime-20:td_stim(t).idx_stimTime+500,2),'b');
+            hold on
+            plot(td_stim(t).idx_stimTime-td_stim(t).idx_stimTime+20,td_stim(t).acc(td_stim(t).idx_stimTime,2),'k.','markersize',20);
+            if(~isnan(latency))
+                plot(latency+20,td_stim(t).acc(td_stim(t).idx_stimTime + latency,2),'r.','markersize',20);
+            end
+        end
     end
+%% plot latency and speed of movement during stimulation
+    figure();
+    subplot(1,2,1)
+    for i = 1:numel(peak_speeds)
+        plot(i,peak_speeds{i},'.','markersize',12,'color','k')
+        hold on
+    end
+    
+    xlim([0,11])
+    ylabel('y-vel (cm/s)')
+    formatForLee(gcf)
+    set(gca,'fontsize',16)
+    set(gca,'XTick',[1:numel(peak_speeds)])
+    set(gca,'XMinorTick','off')
+    
+    subplot(1,2,2)
+    for i = 1:numel(peak_speeds)
+        plot(i,latencies{i},'.','markersize',12,'color','k')
+        hold on
+    end
+    
+    xlim([0,11])
+    ylim([0,200])
+    ylabel('Latency (ms)')
+    xlabel('channel')
+    formatForLee(gcf)
+    set(gca,'fontsize',16)
+    set(gca,'XTick',[1:numel(peak_speeds)])
+    set(gca,'XMinorTick','off')
+    
+    
+    
+    
 %     
 % %%
 %     opts.FIGURE_SAVE = 0;
