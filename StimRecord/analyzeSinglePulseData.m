@@ -8,9 +8,9 @@
 %% load in arrayData
 
 %% rebin data if desired
-    inputData.bin_size = 5; % in ms
+    inputData.bin_size = 1; % in ms
     
-    arrayData = rebinArrayData(arrayData,inputData);
+    arrayData = rebinArrayData(arrayData,inputData.bin_size);
 
 %% plot rasters and psth for each condition and neuron
 
@@ -47,7 +47,7 @@
 % that for each neuron (on one plot probably)
 
     optsSpikesPlot.PRE_WINDOW = [-40,-5]/1000; % in s
-    optsSpikesPlot.POST_WINDOW = [1,8]/1000; % in s
+    optsSpikesPlot.POST_WINDOW = [1,10]/1000; % in s
     optsSpikesPlot.PW1 = 200;
     optsSpikesPlot.PW2 = 200;
     optsSpikesPlot.POL = 0; % 0 is cathodic first
@@ -73,10 +73,16 @@
 %% metric for inhibition
     optsInhibPlot = [];
     optsInhibPlot.PRE_WINDOW = [-100,-10];
-    optsInhibPlot.POST_WINDOW = [0,150];
-    optsInhibPlot.BIN_SIZE = 2;
-    optsInhibPlot.KERNEL_LENGTH = 15;
-    optsInhibPlot.BLANK_TIME = 10; % ms
+    optsInhibPlot.POST_WINDOW = [0,200];
+    optsInhibPlot.MAX_TIME_START = 40; % ms
+    optsInhibPlot.BIN_SIZE = 2.5;
+    optsInhibPlot.KERNEL_LENGTH = 10;
+    optsInhibPlot.BLANK_TIME = 2.5; % ms
+    
+    optsInhibPlot.PW1 = 200;
+    optsInhibPlot.PW2 = 200;
+    optsInhibPlot.POL = 0; % 0 is cathodic first
+    
     
     inhibStruct = {};
     for unit = 1:numel(arrayData)
@@ -86,24 +92,23 @@
             optsSpikesPlot.MAKE_FIGURE = 0;
         end
         [inhibStruct{unit},figure_handles] = plotInhibitionDuration(arrayData{unit},optsInhibPlot);
-%         hold on
-%         
-%         formatForLee(gcf)
-%         xlabel('Amplitude (\muA)');
-%         ylabel('Inhibition duration');
-%         set(gca,'fontsize',14)
+        hold on
+        
+        formatForLee(gcf)
+        xlabel('Amplitude (\muA)');
+        ylabel('Inhibition duration');
+        set(gca,'fontsize',14)
        
     end
     
     
 %% plot PSTH< filtered PSTH and threshold
-    idx = 9
+    idx = 9;
     figure();
     plot(inhibStruct{1}.PSTH(idx,:));
     hold on
     plot(inhibStruct{1}.filtered_PSTH(idx,:));
-    disp(inhibStruct{1}.threshold)
-    
+    inhibStruct{1}.threshold(idx)
     
     
     

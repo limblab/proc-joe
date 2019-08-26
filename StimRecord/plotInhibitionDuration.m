@@ -24,9 +24,10 @@ function [inhib_struct, figure_handles] = plotInhibitionDuration(array_data,inpu
     
     filtered_PSTH = [];
     PSTH = [];
-    spont_fr = [];
+    amp = [];
+    threshold = [];
     is_inhib = zeros(numel(array_data_rebin.binCounts),1);
-    inhib_dur = -1+zeros(numel(array_data_rebin.binCounts),1);
+    inhib_dur = nan(numel(array_data_rebin.binCounts),1);
     % for each condition:
     for cond = 1:numel(array_data_rebin.binCounts)
     % low pass filter PSTH with a gaussian kernal, length 50 bins (1 ms bin
@@ -45,34 +46,48 @@ function [inhib_struct, figure_handles] = plotInhibitionDuration(array_data,inpu
         filtered_PSTH(cond,:) = gaussianKernel(array_data_rebin.binCounts{cond},input_data.KERNEL_LENGTH);
         
         % compute spontaneous firing rate
-        spont_fr(cond) = mean(filtered_PSTH(cond,pre_window_idx(1):pre_window_idx(2)));
+        spont_fr = mean(filtered_PSTH(cond,pre_window_idx(1):pre_window_idx(2)));
         
-    end
-    % set threshold as 0.75 mean(fr_spontaneous)
-    threshold = 0.75*mean(spont_fr);
+        % set threshold as 0.75 mean(fr_spontaneous)
+        threshold(cond) = 0.75*spont_fr;
     
-    for cond = 1:numel(array_data_rebin.binCounts)
         % if firing rate undershoots thresh, define duration as the time
         % between this point and when the FR comes back above thresh. 
         post_window_idx = [find(array_data_rebin.binEdges{cond} > input_data.POST_WINDOW(1),1,'first'),...
             find(array_data_rebin.binEdges{cond} > input_data.POST_WINDOW(2),1,'first')];
-        under_thresh_idx = find(filtered_PSTH(cond,post_window_idx(1):post_window_idx(2)) < threshold);
+        under_thresh_idx = find(filtered_PSTH(cond,post_window_idx(1):post_window_idx(2)) < threshold(cond));
         
-        if(~isempty(under_thresh_idx))
+        if(~isempty(under_thresh_idx) && under_thresh_idx(1)+post_window_idx(1) < find(array_data_rebin.binEdges{cond} > input_data.MAX_TIME_START,1,'first'))
             is_inhib(cond) = 1;
             
             % find end of first chain
-            chain_idx = find(diff(under_thresh_idx) > 1);
+            chain_idx = find(diff(under_thresh_idx) > 1,1,'first');
             if(isempty(chain_idx))
-                inhib_dur(cond) = under_thresh_idx(end)*input_data.BIN_SIZE;
+                inhib_dur(cond) = (under_thresh_idx(end)-under_thresh_idx(1))*input_data.BIN_SIZE;
             else
-                inhib_dur(cond) = under_thresh_idx(chain_idx)*input_data.BIN_SIZE;
+                inhib_dur(cond) = (under_thresh_idx(chain_idx)-under_thresh_idx(1))*input_data.BIN_SIZE;
             end
         end
         
+        
     end
     
+    % check against parameters
+    keep_mask = zeros(size(inhib_dur)); % determines which conditions to keep
+    for cond = 1:numel(array_data.binCounts)
+        amp(cond) = array_data.STIM_PARAMETERS(cond).amp1;
+        
+        if(array_data.STIM_PARAMETERS(cond).polarity == input_data.POL && ...
+                array_data.STIM_PARAMETERS(cond).pWidth1 == input_data.PW1 && ...
+                array_data.STIM_PARAMETERS(cond).pWidth2 == input_data.PW2 && ...
+                is_inhib(cond)==1)
+            % then keep this condition
+            keep_mask(cond) = 1;
+        end
+
+    end
     
+    plot(amp(keep_mask==1),inhib_dur(keep_mask==1))
     
     inhib_struct.filtered_PSTH = filtered_PSTH;
     inhib_struct.is_inhib = is_inhib;
