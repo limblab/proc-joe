@@ -102,9 +102,9 @@ function [figureHandle] = plotPSTHStim(unitData,NEURON_NUMBER,optsPlot)
             optsSave.FIGURE_SAVE = opts.FIGURE_SAVE;
             optsSave.FIGURE_DIR = opts.FIGURE_DIR;
             
-            if(~opts.MAKE_SUBPLOTS && opts.FIGURE_SAVE && opts.PLOT_ALL_ONE_FIGURE)
+            if(~opts.MAKE_SUBPLOTS && opts.PLOT_ALL_ONE_FIGURE)
                 optsSave.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'nn',num2str(NEURON_NUMBER),'_chan',num2str(unitData.CHAN_REC),'_ALL_PSTH');
-            elseif(~opts.MAKE_SUBPLOTS && opts.FIGURE_SAVE)
+            elseif(~opts.MAKE_SUBPLOTS)
                 optsSave.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'nn',num2str(NEURON_NUMBER),'_chan',num2str(unitData.CHAN_REC),'_stimChan',num2str(unitData.CHAN_LIST{chan}),'_waveNum',num2str(wave),'_PSTH');
             end
             

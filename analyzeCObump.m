@@ -1,6 +1,6 @@
 %% set initial parameters
 
-    input_data.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\CObump\Han_20190722_CObump\';
+    input_data.folderpath = 'C:\Users\jts3256\Desktop\Han_stim_data\Han_20190821_stimrec\chan64\test\';
 %     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 %     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Pop_18E3\Array Map Files\6250-002085\SN 6250-002085.cmp';
@@ -20,7 +20,7 @@
     input_data.center_x = 3;
     input_data.num_bins = 8;
     
-%%
+%% make cds
     cd(input_data.folderpath)
 
     file_name = dir('*nev*');
@@ -41,6 +41,8 @@
     cds.file2cds(strcat(input_data.folderpath,file_name(1).name),input_data.array,input_data.monkey,input_data.ranBy,...
         input_data.lab,input_data.mapFile,input_data.task,'recoverPreSync','ignoreJumps','ignoreFilecat');
     
+    
+%% REMOVE ID FROM UNITS and make trial data
     removeIDFromUnits;
     
     td_all = parseFileByTrial(cds,params);
@@ -48,6 +50,8 @@
     td_all = removeBadTrials(td_all);
 %     td_all = getMoveOnset(td_all,move_onset_params);
 %     td_all = removeBadTrials(td_all);
+
+
     
 %% get PDs
     

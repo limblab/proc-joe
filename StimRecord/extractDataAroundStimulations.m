@@ -247,29 +247,48 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
             end
 
             %% grab kin data for each stimulation
-            if(opts.GET_KIN && isfield(cds,'kin') && ~isempty(cds.kin))
-                kin_dt = mode(diff(cds.kin.t));
-                for chan = 1:NUM_CHANS
-                    for wave = 1:NUM_WAVEFORM_TYPES
-                        stimIdx = find(stimInfo.waveSent(1:opts.STIMULATIONS_PER_TRAIN:end) == wave & ...
-                            checkChanListEquality(stimInfo.chanSent(1:numel(stimsPerTrainMask)),CHAN_LIST{chan}));
-                        kinData{chan,wave}.x = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
-                        kinData{chan,wave}.y = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
-                        kinData{chan,wave}.vx = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
-                        kinData{chan,wave}.vy = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
-                        kinData{chan,wave}.ax = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
-                        kinData{chan,wave}.ay = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
+            if(opts.GET_KIN)
+                % if cds has a kin entry, use it
+                if(isprop(cds,'kin') && ~isempty(cds.kin))
+                    kin_dt = mode(diff(cds.kin.t));
+                    for chan = 1:NUM_CHANS
+                        for wave = 1:NUM_WAVEFORM_TYPES
+                            stimIdx = find(stimInfo.waveSent(1:opts.STIMULATIONS_PER_TRAIN:end) == wave & ...
+                                checkChanListEquality(stimInfo.chanSent(1:numel(stimsPerTrainMask)),CHAN_LIST{chan}));
+                            kinData{chan,wave}.x = nan(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
+                            kinData{chan,wave}.y = nan(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
+                            kinData{chan,wave}.vx = nan(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
+                            kinData{chan,wave}.vy = nan(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
+                            kinData{chan,wave}.ax = nan(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
+                            kinData{chan,wave}.ay = nan(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
 
-                        for st = 1:numel(stimIdx)
-                            kinIdx = find(stimInfo.stimOn(stimIdx(st)) <= cds.kin.t,1,'first');
-                            if(~isempty(kinIdx))
-                                kinData{chan,wave}.x(st,:) = cds.kin.x(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
-                                kinData{chan,wave}.y(st,:) = cds.kin.y(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
-                                kinData{chan,wave}.vx(st,:) = cds.kin.vx(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
-                                kinData{chan,wave}.vy(st,:) = cds.kin.vy(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
-                                kinData{chan,wave}.ax(st,:) = cds.kin.ax(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
-                                kinData{chan,wave}.ay(st,:) = cds.kin.ay(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
+                            for st = 1:numel(stimIdx)
+                                kinIdx = find(stimInfo.stimOn(stimIdx(st)) <= cds.kin.t,1,'first');
+                                if(~isempty(kinIdx))
+                                    kinData{chan,wave}.x(st,:) = cds.kin.x(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
+                                    kinData{chan,wave}.y(st,:) = cds.kin.y(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
+                                    kinData{chan,wave}.vx(st,:) = cds.kin.vx(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
+                                    kinData{chan,wave}.vy(st,:) = cds.kin.vy(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
+                                    kinData{chan,wave}.ax(st,:) = cds.kin.ax(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
+                                    kinData{chan,wave}.ay(st,:) = cds.kin.ay(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
+                                end
                             end
+                        end
+                    end
+                    
+                else
+                    kin_dt = 0.001; % assume this and make nan entries to keep indexing correct
+                    for chan = 1:NUM_CHANS
+                        for wave = 1:NUM_WAVEFORM_TYPES   
+                            stimIdx = find(stimInfo.waveSent(1:opts.STIMULATIONS_PER_TRAIN:end) == wave & ...
+                                checkChanListEquality(stimInfo.chanSent(1:numel(stimsPerTrainMask)),CHAN_LIST{chan}));
+                            
+                            kinData{chan,wave}.x = nan(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
+                            kinData{chan,wave}.y = nan(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
+                            kinData{chan,wave}.vx = nan(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
+                            kinData{chan,wave}.vy = nan(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
+                            kinData{chan,wave}.ax = nan(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
+                            kinData{chan,wave}.ay = nan(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
                         end
                     end
                 end
@@ -277,7 +296,7 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
 
             
             %% grab force data for each stimulation
-            if(opts.GET_FORCE && isfield(cds,'force') && ~isempty(cds.force))
+            if(opts.GET_FORCE && isprop(cds,'force') && ~isempty(cds.force))
                 force_dt = mode(diff(cds.force.t));
                 for chan = 1:NUM_CHANS
                     for wave = 1:NUM_WAVEFORM_TYPES
@@ -340,7 +359,13 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
                         arrayData{arrayDataIdx}.numStims(chan,wave) = arrayData{arrayDataIdx}.numStims(chan,wave)+numStims(chan,wave);
                         arrayData{arrayDataIdx}.binCounts{chan,wave} = arrayData{arrayDataIdx}.binCounts{chan,wave}+binCounts{chan,wave};
 
-                        arrayData{arrayDataIdx}.kin{chan,wave} = [arrayData{arrayDataIdx}.kin{chan,wave};kinData{chan,wave}];
+                        arrayData{arrayDataIdx}.kin{chan,wave}.x = [arrayData{arrayDataIdx}.kin{chan,wave}.x;kinData{chan,wave}.x];
+                        arrayData{arrayDataIdx}.kin{chan,wave}.y = [arrayData{arrayDataIdx}.kin{chan,wave}.y;kinData{chan,wave}.y];
+                        arrayData{arrayDataIdx}.kin{chan,wave}.vx = [arrayData{arrayDataIdx}.kin{chan,wave}.vx;kinData{chan,wave}.vx];
+                        arrayData{arrayDataIdx}.kin{chan,wave}.vy = [arrayData{arrayDataIdx}.kin{chan,wave}.vy;kinData{chan,wave}.vy];
+                        arrayData{arrayDataIdx}.kin{chan,wave}.ax = [arrayData{arrayDataIdx}.kin{chan,wave}.ax;kinData{chan,wave}.ax];
+                        arrayData{arrayDataIdx}.kin{chan,wave}.ay = [arrayData{arrayDataIdx}.kin{chan,wave}.ay;kinData{chan,wave}.ay];
+                        
                         arrayData{arrayDataIdx}.force{chan,wave} = [arrayData{arrayDataIdx}.force{chan,wave};forceData{chan,wave}];
                     end
                 end

@@ -1,9 +1,9 @@
 %% set file names 
 
-    inputData.folderpath = 'C:\Users\jts3256\Desktop\Han_stim_data\Han_20190821_stimrec\chan39\';
-    inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+    inputData.folderpath = 'C:\Users\jts3256\Desktop\Duncan_stim_data\Duncan_20190824_stimrec\chan93\';
+%     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
     % inputData.mapFileName = 'mapFileR:\limblab-archive\Retired Animal Logs\Monkeys\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
-%     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
+    inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
 
 
     folderpath = inputData.folderpath; % rest of code uses folderpath currently...may have switched this, not 100% certain
@@ -11,7 +11,7 @@
     inputData.task='taskCObump';
     inputData.ranBy='ranByJoseph'; 
     inputData.array1='arrayLeftS1'; 
-    inputData.monkey='monkeyHan';
+    inputData.monkey='monkeyDuncan';
     inputData.labnum = 6;
 
     pwd=cd;
@@ -31,7 +31,7 @@
     optsExtract.STIM_ELECTRODE = {};
     optsExtract.CHAN_LIST = [];
 
-    optsExtract.PRE_TIME = 50/1000; % made negative in the function
+    optsExtract.PRE_TIME = 100/1000; % made negative in the function
     optsExtract.POST_TIME = 450/1000;
 
     optsExtract.BIN_SIZE = 5/1000;
@@ -52,13 +52,13 @@ arrIdx = 1;
     % plot raster, and PSTH for the given unit above
 
 %     optsPlotFunc.BIN_SIZE = optsExtract.BIN_SIZE;
-    optsPlotFunc.BIN_SIZE = mode(diff(arrayData{1}.bE{1,1}));
+    optsPlotFunc.BIN_SIZE = mode(diff(arrayData{1}.binEdges{1,1}));
     optsPlotFunc.FIGURE_SAVE = 0;
     optsPlotFunc.FIGURE_DIR = inputData.folderpath;
     optsPlotFunc.FIGURE_PREFIX = 'Han_20190502';
 
-    optsPlotFunc.PRE_TIME = 50/1000;
-    optsPlotFunc.POST_TIME = 200/1000;
+    optsPlotFunc.PRE_TIME = 5/1000;
+    optsPlotFunc.POST_TIME = 20/1000;
     optsPlotFunc.SORT_DATA = 'postStimuliTime';
 
     optsPlotFunc.PLOT_AFTER_STIMULATION_END = 0;

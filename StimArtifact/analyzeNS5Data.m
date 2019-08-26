@@ -1,7 +1,7 @@
 %% load in a ns5
 
 
-    folderpath = 'C:\Users\jts3256\Desktop\Han_stim_data\Han_20190821_dukeProjBox\chan39\';
+    folderpath = 'C:\Users\jts3256\Desktop\Han_stim_data\Han_20190816_dukeProjBox\chan56\';
         
     cd(folderpath);
     file_list = dir('*.ns5');
@@ -117,7 +117,8 @@
     
     
     for fieldname = {'cathodic','anodic'}
-        figure(); hold on;
+        f=figure(); hold on;
+        f.Name = ['AmplifierRecovery_',fieldname{1}];
         for f = 1:numel(peak_data)
             ratio = peak_data{f}.(fieldname{1}).peak;
             ratio(ratio > 0) = ratio(ratio > 0)./peak_data{f}.(fieldname{1}).max_peak;
@@ -126,6 +127,10 @@
             
             
             plot(peak_data{f}.(fieldname{1}).t_post_stim,ratio,'color',colors(f,:))
+            xlabel('Time after stimulation offset (ms)');
+            ylabel('Relative gain of amplifier');
+            formatForLee(gcf)
+            set(gca,'fontsize',14)
         end
         
     end

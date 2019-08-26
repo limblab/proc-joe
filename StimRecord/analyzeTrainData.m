@@ -36,7 +36,7 @@
 %% load in files, parse appropriately, then combine
     array_data = {};
     
-    for fileNumber = 1:numel(fileList)
+    for fileNumber = 1%:numel(fileList)
         disp(fileList(fileNumber).name)
         cd(input_data.folderpath)
         cds = commonDataStructure();
@@ -185,8 +185,7 @@
             keep_mask = trial_speeds > mean_speed_cutoff(1) & trial_speeds < mean_speed_cutoff(2);
             
             spike_trial_times = array_data{u}.spikeTrialTimes{cond}(keep_mask==1);
-            array_data_trim{u}.binEdges{cond} = bin_edges;
-            array_data_trim{u}.binCounts{cond} = histcounts(spike_trial_times*1000,bin_edges);
+            array_data_trim{u}.binCounts{cond} = histcounts(spike_trial_times*1000,array_data_trim{u}.binEdges{cond});
             array_data_trim{u}.num_stims(cond) = sum(array_data{u}.kin{cond}.mean_speed > mean_speed_cutoff(1) & array_data{u}.kin{cond}.mean_speed < mean_speed_cutoff(2));
 
         end

@@ -124,8 +124,8 @@ end
 
 function [opts] = configureOpts(optsInput)
 
-    opts.MAKE_DISTRIBUTION_PLOT = 1;
-    opts.MAKE_PDF_PLOT = 1;
+    opts.MAKE_DISTRIBUTION_PLOT = 0;
+    opts.MAKE_PDF_PLOT = 0;
     opts.PLOT_PERCENTAGE_STIMULATIONS = 1;
     opts.PLOT_PERCENTAGE_UNITS = 1;
     opts.WINDOW = [1,5]/1000;
