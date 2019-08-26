@@ -24,6 +24,7 @@ function [inhib_struct, figure_handles] = plotInhibitionDuration(array_data,inpu
     
     filtered_PSTH = [];
     PSTH = [];
+    spont_fr = [];
     is_inhib = zeros(numel(array_data_rebin.binCounts),1);
     inhib_dur = -1+zeros(numel(array_data_rebin.binCounts),1);
     % for each condition:
@@ -44,13 +45,13 @@ function [inhib_struct, figure_handles] = plotInhibitionDuration(array_data,inpu
         filtered_PSTH(cond,:) = gaussianKernel(array_data_rebin.binCounts{cond},input_data.KERNEL_LENGTH);
         
         % compute spontaneous firing rate
+        spont_fr(cond) = mean(filtered_PSTH(cond,pre_window_idx(1):pre_window_idx(2)));
         
-        
-        spont_fr = mean(filtered_PSTH(cond,pre_window_idx(1):pre_window_idx(2)));
-        
-        % set threshold as 0.75 f_spontaneous
-        threshold = 0.75*spont_fr;
-        
+    end
+    % set threshold as 0.75 mean(fr_spontaneous)
+    threshold = 0.75*mean(spont_fr);
+    
+    for cond = 1:numel(array_data_rebin.binCounts)
         % if firing rate undershoots thresh, define duration as the time
         % between this point and when the FR comes back above thresh. 
         post_window_idx = [find(array_data_rebin.binEdges{cond} > input_data.POST_WINDOW(1),1,'first'),...
@@ -77,7 +78,7 @@ function [inhib_struct, figure_handles] = plotInhibitionDuration(array_data,inpu
     inhib_struct.is_inhib = is_inhib;
     inhib_struct.inhib_dur = inhib_dur;
     inhib_struct.PSTH = PSTH;
-    
+    inhib_struct.threshold = threshold;
 
 end
 

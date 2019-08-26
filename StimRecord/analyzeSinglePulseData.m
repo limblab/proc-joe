@@ -72,7 +72,7 @@
     
 %% metric for inhibition
     optsInhibPlot = [];
-    optsInhibPlot.PRE_WINDOW = [-40,-10];
+    optsInhibPlot.PRE_WINDOW = [-100,-10];
     optsInhibPlot.POST_WINDOW = [0,150];
     optsInhibPlot.BIN_SIZE = 2;
     optsInhibPlot.KERNEL_LENGTH = 15;
@@ -96,7 +96,13 @@
     end
     
     
-    
+%% plot PSTH< filtered PSTH and threshold
+    idx = 9
+    figure();
+    plot(inhibStruct{1}.PSTH(idx,:));
+    hold on
+    plot(inhibStruct{1}.filtered_PSTH(idx,:));
+    disp(inhibStruct{1}.threshold)
     
     
     
