@@ -42,32 +42,50 @@ function [inhib_struct, figure_handles] = plotInhibitionDuration(array_data,inpu
         
         PSTH(cond,blank_idx(1):blank_idx(2)) = mean(PSTH(cond,pre_window_idx(1):pre_window_idx(2)));
         
-        % filter with gaussian kernel
-        filtered_PSTH(cond,:) = gaussianKernel(array_data_rebin.binCounts{cond},input_data.KERNEL_LENGTH);
+        % filter with gaussian kernel (for Butovas case)
+%         filtered_PSTH(cond,:) = gaussianKernel(array_data_rebin.binCounts{cond},input_data.KERNEL_LENGTH);
+        
+        % smooth with running average of N kernel_length bins
+        filtered_PSTH(cond,:) = movmean(PSTH(cond,:),[input_data.KERNEL_LENGTH,0]);
         
         % compute spontaneous firing rate
         spont_fr = mean(filtered_PSTH(cond,pre_window_idx(1):pre_window_idx(2)));
+        spont_std = std(filtered_PSTH(cond,pre_window_idx(1):pre_window_idx(2)));
         
         % set threshold as 0.75 mean(fr_spontaneous)
-        threshold(cond) = 0.75*spont_fr;
-    
+%         threshold(cond) = 0.75*spont_fr;
+        threshold(cond) = spont_fr - spont_std;
+        
         % if firing rate undershoots thresh, define duration as the time
         % between this point and when the FR comes back above thresh. 
         post_window_idx = [find(array_data_rebin.binEdges{cond} > input_data.POST_WINDOW(1),1,'first'),...
             find(array_data_rebin.binEdges{cond} > input_data.POST_WINDOW(2),1,'first')];
-        under_thresh_idx = find(filtered_PSTH(cond,post_window_idx(1):post_window_idx(2)) < threshold(cond));
+        under_thresh_idx = (filtered_PSTH(cond,post_window_idx(1):post_window_idx(2)) < threshold(cond));
         
-        if(~isempty(under_thresh_idx) && under_thresh_idx(1)+post_window_idx(1) < find(array_data_rebin.binEdges{cond} > input_data.MAX_TIME_START,1,'first'))
-            is_inhib(cond) = 1;
-            
-            % find end of first chain
-            chain_idx = find(diff(under_thresh_idx) > 1,1,'first');
-            if(isempty(chain_idx))
-                inhib_dur(cond) = (under_thresh_idx(end)-under_thresh_idx(1))*input_data.BIN_SIZE;
-            else
-                inhib_dur(cond) = (under_thresh_idx(chain_idx)-under_thresh_idx(1))*input_data.BIN_SIZE;
-            end
+        start_ones = strfind([under_thresh_idx,1],[0 1]);
+        start_ones(start_ones > input_data.MAX_TIME_START) = [];
+        end_ones = strfind([under_thresh_idx==1,0],[1 0]);
+        if(~isempty(end_ones) && ~isempty(start_ones) && end_ones(1) < start_ones(1))
+            end_ones(1) = [];
         end
+        num_consecutive_ones = end_ones(1:min(numel(end_ones),numel(start_ones))) - start_ones(1:min(numel(end_ones),numel(start_ones))) + 1;
+        
+        num_consecutive_ones = max(num_consecutive_ones);
+        if(~isempty(num_consecutive_ones) && num_consecutive_ones > 5)
+            is_inhib(cond) = 1;
+            inhib_dur(cond) = num_consecutive_ones*input_data.BIN_SIZE;
+        end
+%         if(~isempty(under_thresh_idx) && under_thresh_idx(1)+post_window_idx(1) < find(array_data_rebin.binEdges{cond} > input_data.MAX_TIME_START,1,'first'))
+%             is_inhib(cond) = 1;
+%             
+%             % find end of first chain
+%             chain_idx = find(diff(under_thresh_idx) > 1,1,'first');
+%             if(isempty(chain_idx))
+%                 inhib_dur(cond) = (under_thresh_idx(end)-under_thresh_idx(1))*input_data.BIN_SIZE;
+%             else
+%                 inhib_dur(cond) = (under_thresh_idx(chain_idx)-under_thresh_idx(1))*input_data.BIN_SIZE;
+%             end
+%         end
         
         
     end
@@ -87,14 +105,15 @@ function [inhib_struct, figure_handles] = plotInhibitionDuration(array_data,inpu
 
     end
     
-    plot(amp(keep_mask==1),inhib_dur(keep_mask==1))
+    plot(amp(keep_mask==1),inhib_dur(keep_mask==1),'marker','.','markersize',16)
     
     inhib_struct.filtered_PSTH = filtered_PSTH;
     inhib_struct.is_inhib = is_inhib;
     inhib_struct.inhib_dur = inhib_dur;
     inhib_struct.PSTH = PSTH;
     inhib_struct.threshold = threshold;
-
+    inhib_struct.amp = amp;
+    
 end
 
 

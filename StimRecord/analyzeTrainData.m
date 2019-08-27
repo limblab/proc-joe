@@ -158,7 +158,7 @@
     
     
 %% rebin 
-    input_data.bin_size = 5; % ms
+    input_data.bin_size = 2.5; % ms
     bin_edges = input_data.window(1):input_data.bin_size:input_data.window(2);
     for u = 1:numel(array_data)
         for cond = 1:numel(array_data{u}.binCounts)
@@ -175,26 +175,103 @@
     
     
 %% plot PSTH for each condition for low and high speed cases
-    mean_speed_cutoff = [0,5]; % plot speeds in range
-    input_data.suffix = 'speed3-12';
+    mean_speed_cutoff = [12,10000000]; % plot speeds in range
+    input_data.suffix = 'speed0-2';
     
     array_data_trim = array_data;
     for u = 1:numel(array_data)
         for cond = 1:numel(array_data{u}.binCounts)
-            trial_speeds = array_data{u}.kin{cond}.mean_speed(array_data{u}.trial_num{cond});
+            trial_speeds = array_data{u}.mean_speed{cond}(array_data{u}.trial_num{cond});
             keep_mask = trial_speeds > mean_speed_cutoff(1) & trial_speeds < mean_speed_cutoff(2);
+            trials_keep = unique(array_data{u}.trial_num{cond}(keep_mask));
+            
             
             spike_trial_times = array_data{u}.spikeTrialTimes{cond}(keep_mask==1);
             array_data_trim{u}.binCounts{cond} = histcounts(spike_trial_times*1000,array_data_trim{u}.binEdges{cond});
-            array_data_trim{u}.num_stims(cond) = sum(array_data{u}.kin{cond}.mean_speed > mean_speed_cutoff(1) & array_data{u}.kin{cond}.mean_speed < mean_speed_cutoff(2));
-
+            array_data_trim{u}.num_stims(cond) = sum(array_data{u}.mean_speed{cond} > mean_speed_cutoff(1) & array_data{u}.mean_speed{cond} < mean_speed_cutoff(2));
+            array_data_trim{u}.speed{cond} = array_data{u}.speed{cond}(trials_keep,:);
+            array_data_trim{u}.mean_speed{cond} = array_data{u}.mean_speed{cond}(trials_keep,:);
         end
     end
-    input_data.unit_idx = unit_idx;
+    input_data.unit_idx = 1;
     plotPSTHArrayData(array_data_trim,input_data);
 
     
+%% look at response to the train as a function of the baseline activity or speed
+    num_spikes_per_trial = cell(numel(array_data{1}.num_stims),1);
+    num_spikes_baseline = cell(numel(array_data{1}.num_stims),1);
+    mean_speed_per_trial = cell(numel(array_data{1}.num_stims),1);
+    spike_window = [0,200]/1000; % in s
+    baseline_window = [-250,-5]/1000; % in s
     
+    for cond = [2,3,4,5]%1:numel(array_data{1}.num_stims)
+        for tr = 1:array_data{1}.num_stims(cond)
+            % get spikes during the train
+            spike_mask = array_data{1}.spikeTrialTimes{cond} > spike_window(1) & array_data{1}.spikeTrialTimes{cond} < spike_window(2) & ...
+                array_data{1}.trial_num{cond} == tr;
+            num_spikes_per_trial{cond}(end+1,1) = sum(spike_mask);
+            mean_speed_per_trial{cond}(end+1,1) = array_data{1}.mean_speed{cond}(tr);
+            
+            % get baseline spike rate
+            spike_mask = array_data{1}.spikeTrialTimes{cond} > baseline_window(1) & array_data{1}.spikeTrialTimes{cond} < baseline_window(2) & ...
+                array_data{1}.trial_num{cond} == tr;
+            num_spikes_baseline{cond}(end+1,1) = sum(spike_mask);  
+            
+        end
+        figure();
+        plot(mean_speed_per_trial{cond},num_spikes_per_trial{cond},'.','markersize',12);
+        xlabel('speed (cm/s)');
+        ylabel('Num spikes evoked');
+        formatForLee(gcf);
+        set(gca,'fontsize',14)
+        
+        figure();
+        plot(num_spikes_baseline{cond},num_spikes_per_trial{cond},'.','markersize',12);
+        xlabel('Num spikes baseline');
+        ylabel('Num spikes evoked');
+        formatForLee(gcf);
+        set(gca,'fontsize',14)
+    end
+
+    
+    
+%% plot response to train against stimulation frequency
+    
+    post_window = [0,210]; % in ms
+    baseline_window = [-20,-2]; % in ms
+    
+
+    figure();
+    hold on
+    for u = 1:numel(array_data)        
+        freq_stim = [];
+        num_pulses = [];
+        baseline_firing_rate = [];
+        stim_firing_rate = [];
+        following_summary = [];
+        
+        
+        % convert window into indices
+        post_stim_idx = [find(array_data{u}.binEdges{1} >= post_window(1),1,'first'),...
+            find(array_data{u}.binEdges{1} >= post_window(2),1,'first')];
+        baseline_idx = [find(array_data{u}.binEdges{1} >= baseline_window(1),1,'first'),...
+            find(array_data{u}.binEdges{1} >=baseline_window(2),1,'first')];
+        
+        for cond = 1:numel(array_data{u}.binCounts)
+            freq_stim(cond) = 1000/input_data.IPI(cond);
+            num_pulses(cond) = input_data.num_pulses(cond);
+            baseline_firing_rate(cond) = sum(array_data{u}.binCounts{cond}(baseline_idx(1):baseline_idx(2)))/...
+                array_data{u}.num_stims(cond)/diff(baseline_window)*1000; % convert to Hz
+            stim_firing_rate(cond) = sum(array_data{u}.binCounts{cond}(post_stim_idx(1):post_stim_idx(2)))/...
+                array_data{u}.num_stims(cond)/diff(post_window)*1000; % convert to Hz
+            
+            following_summary(cond) = (stim_firing_rate(cond)-baseline_firing_rate(cond))/freq_stim(cond);
+        end
+        keep_mask = num_pulses > 3;
+        plot(freq_stim(keep_mask==1),following_summary(keep_mask==1))
+        
+    end
+    ylim([0,1]);
     
     
 %% resample data w/ smaller number of stimulations

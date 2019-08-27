@@ -15,7 +15,7 @@
 %% plot rasters and psth for each condition and neuron
 
 %     for arrIdx = 1:numel(arrayData)
-    arrIdx = 1;
+    arrIdx = 2;
         % plot raster, and PSTH for the given unit above
 
     %     optsPlotFunc.BIN_SIZE = optsExtract.BIN_SIZE;
@@ -75,9 +75,9 @@
     optsInhibPlot.PRE_WINDOW = [-100,-10];
     optsInhibPlot.POST_WINDOW = [0,200];
     optsInhibPlot.MAX_TIME_START = 40; % ms
-    optsInhibPlot.BIN_SIZE = 2.5;
-    optsInhibPlot.KERNEL_LENGTH = 10;
-    optsInhibPlot.BLANK_TIME = 2.5; % ms
+    optsInhibPlot.BIN_SIZE = 1;
+    optsInhibPlot.KERNEL_LENGTH = 5;
+    optsInhibPlot.BLANK_TIME = 5; % ms
     
     optsInhibPlot.PW1 = 200;
     optsInhibPlot.PW2 = 200;
@@ -85,6 +85,7 @@
     
     
     inhibStruct = {};
+    figure();
     for unit = 1:numel(arrayData)
         if(unit == 1)
             optsSpikesPlot.MAKE_FIGURE = 1;
@@ -93,23 +94,40 @@
         end
         [inhibStruct{unit},figure_handles] = plotInhibitionDuration(arrayData{unit},optsInhibPlot);
         hold on
-        
         formatForLee(gcf)
         xlabel('Amplitude (\muA)');
-        ylabel('Inhibition duration');
+        ylabel('Inhibition duration (ms)');
         set(gca,'fontsize',14)
        
     end
     
     
-%% plot PSTH< filtered PSTH and threshold
-    idx = 9;
-    figure();
-    plot(inhibStruct{1}.PSTH(idx,:));
-    hold on
-    plot(inhibStruct{1}.filtered_PSTH(idx,:));
-    inhibStruct{1}.threshold(idx)
+%% linear model predicting inhib duration based on amp and unit
+    amp = [];
+    unit = [];
+    inhib_dur = [];
+    for u = 1:numel(inhibStruct)
+        amp = [amp,inhibStruct{u}.amp];
+        inhib_dur = [inhib_dur,inhibStruct{u}.inhib_dur'];
+        unit = [unit,u*ones(size(inhibStruct{u}.inhib_dur))'];
+        
+    end
     
+    % remove nan's
+    keep_mask = ~isnan(amp) & ~isnan(inhib_dur) & ~isnan(unit);
+    amp = amp(keep_mask);
+    inhib_dur = inhib_dur(keep_mask);
+    unit = unit(keep_mask);
+    
+    tbl = table(amp',inhib_dur',unit','VariableNames',{'amp','inhib_dur','unit'});
+    mdl = fitlm(tbl,'inhib_dur~amp+unit')
+    
+    
+%%
+unit_idx = 2; cond = 2;
+    figure();
+    plot(inhibStruct{unit_idx}.filtered_PSTH(cond,:))
+    disp(inhibStruct{unit_idx}.threshold(cond))
     
     
     
