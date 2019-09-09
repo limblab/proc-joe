@@ -1,7 +1,7 @@
 %% load in artifact data and cds to get spike times
-    inputData.folderpath = 'C:\Users\jts3256\Desktop\Duncan_stim_data\Duncan_20190822_stimrec\chan43\';
-%     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
-    inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
+    inputData.folderpath = 'C:\Users\jts3256\Desktop\Han_stim_data\Han_20190821_stimrec\chan60\';
+    inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+%     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
 
 
     folderpath = inputData.folderpath; % rest of code uses folderpath currently...may have switched this, not 100% certain
@@ -9,7 +9,7 @@
     inputData.task='taskCObump';
     inputData.ranBy='ranByJoseph'; 
     inputData.array1='arrayLeftS1'; 
-    inputData.monkey='monkeyDuncan';
+    inputData.monkey='monkeyHan';
     inputData.labnum = 6;
 
     pwd=cd;
@@ -31,11 +31,11 @@
 
 %% make plot with artifacts with neurons and artifacts without neurons
 
-    chan_rec = 43;
+    chan_rec = 60;
     unit_idx = find([cds.units.chan] == chan_rec & [cds.units.ID] == 1);
-    wave_idx = 1;
+    wave_idx = 8;
     
-    window = [0,4]/1000; % s
+    window = [0,5]/1000; % s
     
     
     artifactData = outputData.artifactData;

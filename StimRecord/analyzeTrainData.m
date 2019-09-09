@@ -1,6 +1,6 @@
 %% set file names 
 
-    input_data.folderpath = 'C:\Users\jts3256\Desktop\Duncan_stim_data\Duncan_20190327_trains\';
+    input_data.folderpath = 'C:\Users\jts3256\Desktop\Duncan_stim_data\Duncan_20190823_stimrec\chan72\';
     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
     % input_data.mapFileName = 'mapFileR:\limblab-archive\Retired Animal Logs\Monkeys\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
 %     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
@@ -17,14 +17,14 @@
     input_data.nom_freq = 2;
     input_data.window = [-250,500]; % 20ms before and 400ms after 1st pulse
     input_data.bin_size = 2; % in ms
-    input_data.chan_rec = 1;
+    input_data.chan_rec = 72;
 
     folderpath = input_data.folderpath; % rest of code uses folderpath currently...may have switched this, not 100% certain
 
     input_data.task='taskCObump';
     input_data.ranBy='ranByJoseph'; 
     input_data.array1='arrayLeftS1'; 
-    input_data.monkey='monkeyHan';
+    input_data.monkey='monkeyan';
     input_data.labnum = 6;
 
     pwd=cd;
@@ -36,7 +36,7 @@
 %% load in files, parse appropriately, then combine
     array_data = {};
     
-    for fileNumber = 1%:numel(fileList)
+    for fileNumber = 1:numel(fileList)
         disp(fileList(fileNumber).name)
         cd(input_data.folderpath)
         cds = commonDataStructure();
@@ -110,6 +110,13 @@
                     if(isprop(cds,'kin') && ~isempty(cds.kin))
                         kin_win = [find(cds.kin.t > stimInfo.stimOn(st)+input_data.window(1)/1000,1,'first'),...
                             find(cds.kin.t > stimInfo.stimOn(st)+input_data.window(2)/1000,1,'first')];
+                        while(diff(kin_win) ~= diff(input_data.window))
+                            if(diff(kin_win) < diff(input_data.window))
+                                kin_win(end) = kin_win(end)+1;
+                            else
+                                kin_win(end) = kin_win(end)-1;
+                            end
+                        end
                         if(numel(kin_win) == 2)
                             array_data{u}.kin{condition}.x(end+1,:) = cds.kin.x(kin_win(1):kin_win(2));
                             array_data{u}.kin{condition}.y(end+1,:) = cds.kin.y(kin_win(1):kin_win(2));

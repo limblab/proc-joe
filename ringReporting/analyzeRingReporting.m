@@ -1,10 +1,10 @@
 %% set file name and load file into cds
 
-    input_data.folderpath = 'C:\Users\jts3256\Desktop\Duncan_stim_evoked_move\Duncan_20190814_RR_50uA_headstage1\';
+    input_data.folderpath = 'C:\Users\jts3256\Desktop\Duncan_stim_evoked_move\Duncan_20190809_RR_chan37_diffAmps\';
     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
 %     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 
-    input_data.date = '20190814';
+    input_data.date = '20190809';
     input_data.array = 'arrayLeftS1';
     input_data.monkey = 'monkeyDuncan';
     input_data.ranBy = 'ranByJoe';
@@ -253,45 +253,60 @@
     
 %     
 %     
-    %% plot reach kinematics,
-    num_plot = 10;
-    counter = 0;
-    figure();
-    for t = 1:numel(td_stim)
-        if(counter < num_plot && td_stim(t).stimCode == 0)
-            counter = counter + 1;
-            plot(td_stim(t).pos(td_stim(t).idx_stimTime-50:td_stim(t).idx_otHoldTime,1),...
-                td_stim(t).pos(td_stim(t).idx_stimTime-50:td_stim(t).idx_otHoldTime,2),'b','linewidth',2);
-            hold on
-            plot(td_stim(t).pos(td_stim(t).idx_stimTime,1),td_stim(t).pos(td_stim(t).idx_stimTime,2),'k.','markersize',20);
-            plot(td_stim(t).pos(td_stim(t).idx_goCueTime,1),td_stim(t).pos(td_stim(t).idx_goCueTime,2),'r.','markersize',20);
-        end
-    end
-    
-%% plot velocity
+    %% plot reach position,
     td_stim = td_all(~isnan([td_all.stimCode]));
 
-    num_plot = 1000;
-    counter = 0;
+    num_plot = 20;
+    
+    for stimCode = unique([td_stim.stimCode])
+        counter = 0;
+        f=figure();
+        f.Name = [fileList(1).name(1:end-4),'_code',num2str(stimCode),'_position'];
+        for t = 1:numel(td_stim)
+            if(counter < num_plot && td_stim(t).stimCode == stimCode)
+                counter = counter + 1;
+                plot(td_stim(t).pos(td_stim(t).idx_stimTime-50:td_stim(t).idx_stimTime+450,1)-3,...
+                    td_stim(t).pos(td_stim(t).idx_stimTime-50:td_stim(t).idx_stimTime+450,2) + 33,'b','linewidth',2);
+                hold on
+                plot(td_stim(t).pos(td_stim(t).idx_stimTime,1)-3,td_stim(t).pos(td_stim(t).idx_stimTime,2) + 33,'k.','markersize',20);
+                plot(td_stim(t).pos(td_stim(t).idx_stimTime+400,1)-3,td_stim(t).pos(td_stim(t).idx_stimTime+400,2) + 33,'r.','markersize',20);
+            end
+        end
+        xlabel('x-pos (cm)');
+        ylabel('y-pos (cm)');
+        formatForLee(f);
+        set(gca,'fontsize',14);
+        xlim([-2,2]);
+        ylim([-1,3]);
+    end
+    
+%% plot speed
+    td_stim = td_all(~isnan([td_all.stimCode]));
+
+    td_stim = getSpeed(td_stim);
+    
+    
+    num_plot = 10;
+    counter = zeros(numel(unique([td_stim.stimCode])),1);
     figure();
     peak_speeds = cell(numel(unique([td_stim.stimCode])),1);
     latencies = cell(numel(unique([td_stim.stimCode])),1);
     for t = 1:numel(td_stim)
 
-        [~,peak_speed_idx] = max(abs(td_stim(t).vel(td_stim(t).idx_stimTime+100:td_stim(t).idx_stimTime+300,2)));
-        peak_speed_idx = peak_speed_idx + 100;
+        [peak_speed,peak_speed_idx] = max((td_stim(t).vel(td_stim(t).idx_stimTime+150:td_stim(t).idx_stimTime+300,2)));
+        peak_speed_idx = peak_speed_idx + 150;
         peak_speeds{td_stim(t).stimCode+1}(end+1,1) = td_stim(t).vel(peak_speed_idx+td_stim(t).idx_stimTime-1,2) - td_stim(t).vel(td_stim(t).idx_stimTime,2);
     
-        [~,peak_acc_idx] = max((td_stim(t).acc(td_stim(t).idx_stimTime+100:td_stim(t).idx_stimTime+300,2)));
-        peak_acc_idx = peak_acc_idx + 100;
+        [~,peak_acc_idx] = max((td_stim(t).acc(td_stim(t).idx_stimTime+150:td_stim(t).idx_stimTime+300,2)));
+        peak_acc_idx = peak_acc_idx + 150;
         peak_acc =  td_stim(t).acc(peak_acc_idx+td_stim(t).idx_stimTime-1,2);
         
-        if(peak_speeds{td_stim(t).stimCode+1}(end) > 3)
-            threshold = abs(peak_acc*0.5);
+        if(peak_speed > 2.5)
+            threshold = abs(peak_acc*0.25);
             peak_mask = 1:1:numel(td_stim(t).acc(td_stim(t).idx_stimTime:td_stim(t).idx_stimTime+300,2));
-            peak_mask = peak_mask < peak_speed_idx;
+            peak_mask = peak_mask < peak_acc_idx-20;
             peak_mask = peak_mask';
-            above_threshold = find(td_stim(t).acc(td_stim(t).idx_stimTime:td_stim(t).idx_stimTime+300,2) > threshold & peak_mask);
+            above_threshold = find(td_stim(t).acc(td_stim(t).idx_stimTime:td_stim(t).idx_stimTime+300,2) < threshold & peak_mask,1,'last');
             if(isempty(above_threshold))
                 latency = nan;
             else
@@ -301,46 +316,63 @@
         else
             latency = nan;
             latencies{td_stim(t).stimCode+1}(end+1,1) = latency;
+            peak_speeds{td_stim(t).stimCode+1}(end) = nan;
         end
         
-        if(counter < num_plot && td_stim(t).stimCode == 8)
-            plot(td_stim(t).acc(td_stim(t).idx_stimTime-20:td_stim(t).idx_stimTime+500,2),'b');
+        if(counter(td_stim(t).stimCode+1) < num_plot)
+            figure(td_stim(t).stimCode+1);
+            plot(td_stim(t).speed(td_stim(t).idx_stimTime:td_stim(t).idx_stimTime+400,end),'b');
             hold on
-            plot(td_stim(t).idx_stimTime-td_stim(t).idx_stimTime+20,td_stim(t).acc(td_stim(t).idx_stimTime,2),'k.','markersize',20);
+            plot(td_stim(t).idx_stimTime-td_stim(t).idx_stimTime,td_stim(t).speed(td_stim(t).idx_stimTime,end),'k.','markersize',20);
             if(~isnan(latency))
-                plot(latency+20,td_stim(t).acc(td_stim(t).idx_stimTime + latency,2),'r.','markersize',20);
+%                 plot(latency,td_stim(t).vel(td_stim(t).idx_stimTime + latency,2),'r.','markersize',20);
             end
         end
     end
-%% plot latency and speed of movement during stimulation
-    figure();
-    subplot(1,2,1)
-    for i = 1:numel(peak_speeds)
-        plot(i,peak_speeds{i},'.','markersize',12,'color','k')
-        hold on
+    
+    for i = 1:numel(counter)
+        f = figure(i);
+        f.Name = [fileList(1).name(1:end-4),'_code',num2str(i-1),'_velocity'];
+        xlabel('Time after stim onset (ms)');
+        ylabel('y-vel (cm/s)');
+        formatForLee(gcf)
+        set(gca,'fontsize',14)
     end
     
-    xlim([0,11])
+%% plot latency and speed of movement during stimulation
+    f=figure();
+    f.Position = [961 463 880 420];
+    f.Name = [fileList(1).name(1:end-4),'_latencies'];
+    subplot(1,2,1)
+    for i = 1:numel(peak_speeds)
+        plot(i*10,peak_speeds{i},'.','markersize',12,'color',[0.5,0.5,0.5]);
+        hold on
+        plot(i*10,mean(peak_speeds{i},'omitnan'),'.','markersize',24,'color','k')
+    end
+    
+    xlim([0,110])
     ylabel('y-vel (cm/s)')
+    xlabel('Amp (\muA)');
     formatForLee(gcf)
     set(gca,'fontsize',16)
-    set(gca,'XTick',[1:numel(peak_speeds)])
-    set(gca,'XMinorTick','off')
+    set(gca,'XTick',[0:20:100]);%numel(peak_speeds)])
+    set(gca,'XMinorTick','on')
     
     subplot(1,2,2)
     for i = 1:numel(peak_speeds)
-        plot(i,latencies{i},'.','markersize',12,'color','k')
+        plot(i*10,latencies{i},'.','markersize',12,'color',[0.5,0.5,0.5]);
         hold on
+        plot(i*10,mean(latencies{i},'omitnan'),'.','markersize',24,'color','k')
     end
     
-    xlim([0,11])
-    ylim([0,200])
+    xlim([0,110])
     ylabel('Latency (ms)')
-    xlabel('channel')
+    xlabel('Amp (\muA)')
     formatForLee(gcf)
     set(gca,'fontsize',16)
-    set(gca,'XTick',[1:numel(peak_speeds)])
-    set(gca,'XMinorTick','off')
+    set(gca,'XTick',[0:20:100]);%[1:numel(peak_speeds)])
+    set(gca,'XMinorTick','on')
+    ax=gca; ax.YLim(1) = 0;
     
     
     
