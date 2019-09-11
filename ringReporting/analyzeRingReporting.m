@@ -1,10 +1,10 @@
 %% set file name and load file into cds
 
-    input_data.folderpath = 'C:\Users\jts3256\Desktop\Duncan_stim_evoked_move\Duncan_20190809_RR_chan37_diffAmps\';
+    input_data.folderpath = 'C:\Users\jts3256\Desktop\Duncan_curl_field\RR\';
     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
 %     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 
-    input_data.date = '20190809';
+    input_data.date = '20190910';
     input_data.array = 'arrayLeftS1';
     input_data.monkey = 'monkeyDuncan';
     input_data.ranBy = 'ranByJoe';
@@ -21,13 +21,13 @@
     input_data.num_bins = 8;
 %% convert file to cds and td
     td_all = [];
-    for f = 1:numel(fileList)
+    for f = 2%1:numel(fileList)
         cds = commonDataStructure();
         cds.file2cds(strcat(input_data.folderpath,fileList(f).name),input_data.array,input_data.monkey,input_data.ranBy,...
             input_data.lab,input_data.mapFileName,input_data.task,'recoverPreSync','ignoreJumps','ignoreFilecat');
         cd(pwd);
     
-        if(strcmpi(input_data.task,'RR'))
+        if(strcmpi(input_data.task,'taskRR'))
             params.event_list = {'otHoldTime';'goCueTime';'tgtDir';'bumpDir';'bumpTime';'bumpMagnitude';'stimTime';'stimCode';'catchTrial';'showOuterTarget'};
         else
             params.event_list = {'goCueTime';'bumpDir';'bumpTime';'bumpMagnitude';'stimTime';'stimCode'};
@@ -42,7 +42,7 @@
         td_all = [td_all,td_temp];
     end
     
-%     input_data.tgt_width = mode([cds.trials.tgtWidth]);
+    input_data.tgt_width = mode([cds.trials.tgtWidth]);
     
 %% use sync to get stim times:
     aIdx = 3; syncName = 'ainp16';
@@ -74,7 +74,7 @@
 %% get bump trials, plot tgt_dir vs reach_dir. 
 % plot percentage correct in bins around a polar plot
 
-    td_bump = td_all(~isnan([td_all.bumpDir]) & ~[td_all.catchTrial] & isnan([td_all.stimCode]));
+    td_bump = td_all(~isnan([td_all.bumpDir]));
     
     % get pos at idx_endTime
     reach_angles_bump = zeros(numel(td_bump),1);
