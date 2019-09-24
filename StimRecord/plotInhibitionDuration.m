@@ -35,43 +35,52 @@ function [inhib_struct, figure_handles] = plotInhibitionDuration(array_data,inpu
         PSTH(cond,:) = array_data_rebin.binCounts{cond};
         
         % blank period with mean from baseline
-        blank_idx = [find(array_data_rebin.binEdges{cond} >= 0,1,'first'),...
-            find(array_data_rebin.binEdges{cond} > input_data.BLANK_TIME,1,'first')];
+        blank_idx = [find(array_data_rebin.binEdges{cond} >= input_data.BLANK_TIME(1),1,'first'),...
+            find(array_data_rebin.binEdges{cond} > input_data.BLANK_TIME(2),1,'first')];
         pre_window_idx = [find(array_data_rebin.binEdges{cond} > input_data.PRE_WINDOW(1),1,'first'),...
             find(array_data_rebin.binEdges{cond} > input_data.PRE_WINDOW(2),1,'first')];
         
         PSTH(cond,blank_idx(1):blank_idx(2)) = mean(PSTH(cond,pre_window_idx(1):pre_window_idx(2)));
         
-        % filter with gaussian kernel (for Butovas case)
+%         % filter with gaussian kernel (for Butovas case)
 %         filtered_PSTH(cond,:) = gaussianKernel(array_data_rebin.binCounts{cond},input_data.KERNEL_LENGTH);
         
         % smooth with running average of N kernel_length bins
         filtered_PSTH(cond,:) = movmean(PSTH(cond,:),[input_data.KERNEL_LENGTH,0]);
         
-        % compute spontaneous firing rate
-        spont_fr = mean(filtered_PSTH(cond,pre_window_idx(1):pre_window_idx(2)));
-        spont_std = std(filtered_PSTH(cond,pre_window_idx(1):pre_window_idx(2)));
+%         % compute spontaneous firing rate
+%         spont_fr = mean(filtered_PSTH(cond,pre_window_idx(1):pre_window_idx(2)));
+%         spont_std = std(filtered_PSTH(cond,pre_window_idx(1):pre_window_idx(2)));
+%         
+%         % set threshold based on standard deviation
+%         threshold(cond) = spont_fr - spont_std;
+% %         threshold(cond) = spont_fr*0.75;
+
+    end
+    
+    for cond = 1:numel(array_data_rebin.binCounts)
+        spont_fr = mean(reshape(filtered_PSTH(cond,pre_window_idx(1):pre_window_idx(2)),numel(filtered_PSTH(cond,pre_window_idx(1):pre_window_idx(2))),1));
+        spont_std = std(reshape(filtered_PSTH(cond,pre_window_idx(1):pre_window_idx(2)),numel(filtered_PSTH(cond,pre_window_idx(1):pre_window_idx(2))),1));
         
-        % set threshold as 0.75 mean(fr_spontaneous)
-%         threshold(cond) = 0.75*spont_fr;
-        threshold(cond) = spont_fr - spont_std;
+        
+        threshold = zeros(numel(array_data_rebin.binCounts),1)+spont_fr - spont_std;
         
         % if firing rate undershoots thresh, define duration as the time
         % between this point and when the FR comes back above thresh. 
         post_window_idx = [find(array_data_rebin.binEdges{cond} > input_data.POST_WINDOW(1),1,'first'),...
             find(array_data_rebin.binEdges{cond} > input_data.POST_WINDOW(2),1,'first')];
-        under_thresh_idx = (filtered_PSTH(cond,post_window_idx(1):post_window_idx(2)) < threshold(cond));
+        under_one_mask = (filtered_PSTH(cond,post_window_idx(1):post_window_idx(2)) < threshold(cond));
         
-        start_ones = strfind([under_thresh_idx,1],[0 1]);
+        start_ones = strfind([under_one_mask,1],[0 1]);
         start_ones(start_ones > input_data.MAX_TIME_START) = [];
-        end_ones = strfind([under_thresh_idx==1,0],[1 0]);
+        end_ones = strfind([under_one_mask==1,0],[1 0]);
         if(~isempty(end_ones) && ~isempty(start_ones) && end_ones(1) < start_ones(1))
             end_ones(1) = [];
         end
         num_consecutive_ones = end_ones(1:min(numel(end_ones),numel(start_ones))) - start_ones(1:min(numel(end_ones),numel(start_ones))) + 1;
         
         num_consecutive_ones = max(num_consecutive_ones);
-        if(~isempty(num_consecutive_ones) && num_consecutive_ones > 5)
+        if(~isempty(num_consecutive_ones) && num_consecutive_ones >= input_data.NUM_CONSECUTIVE_BINS)
             is_inhib(cond) = 1;
             inhib_dur(cond) = num_consecutive_ones*input_data.BIN_SIZE;
         end
@@ -91,21 +100,24 @@ function [inhib_struct, figure_handles] = plotInhibitionDuration(array_data,inpu
     end
     
     % check against parameters
-    keep_mask = zeros(size(inhib_dur)); % determines which conditions to keep
-    for cond = 1:numel(array_data.binCounts)
-        amp(cond) = array_data.STIM_PARAMETERS(cond).amp1;
-        
-        if(array_data.STIM_PARAMETERS(cond).polarity == input_data.POL && ...
-                array_data.STIM_PARAMETERS(cond).pWidth1 == input_data.PW1 && ...
-                array_data.STIM_PARAMETERS(cond).pWidth2 == input_data.PW2 && ...
-                is_inhib(cond)==1)
-            % then keep this condition
-            keep_mask(cond) = 1;
-        end
+    if(isfield(array_data,'STIM_PARAMETERS'))
+        keep_mask = zeros(size(inhib_dur)); % determines which conditions to keep
+        for cond = 1:numel(array_data.binCounts)
+            amp(cond) = array_data.STIM_PARAMETERS(cond).amp1;
 
+            if(array_data.STIM_PARAMETERS(cond).polarity == input_data.POL && ...
+                    array_data.STIM_PARAMETERS(cond).pWidth1 == input_data.PW1 && ...
+                    array_data.STIM_PARAMETERS(cond).pWidth2 == input_data.PW2 && ...
+                    is_inhib(cond)==1)
+                % then keep this condition
+                keep_mask(cond) = 1;
+            end
+
+        end
+    else
+        keep_mask = []; amp = [];
     end
-    
-    plot(amp(keep_mask==1),inhib_dur(keep_mask==1),'marker','.','markersize',16)
+%     plot(amp(keep_mask==1),inhib_dur(keep_mask==1),'marker','.','markersize',16)
     
     inhib_struct.filtered_PSTH = filtered_PSTH;
     inhib_struct.is_inhib = is_inhib;
@@ -113,6 +125,7 @@ function [inhib_struct, figure_handles] = plotInhibitionDuration(array_data,inpu
     inhib_struct.PSTH = PSTH;
     inhib_struct.threshold = threshold;
     inhib_struct.amp = amp;
+    inhib_struct.keep_mask = keep_mask;
     
 end
 

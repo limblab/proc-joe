@@ -1,7 +1,8 @@
 %% load in a ns5
 
+    folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\StimArtifactData\20190923_gen2gen3_testing\';
+%     folderpath = 'C:\Users\jts3256\Desktop\Duncan_stim_data\getIPI\';
 
-    folderpath = 'C:\Users\jts3256\Desktop\Duncan_stim_data\getIPI\';
         
     cd(folderpath);
     file_list = dir('*.ns5');
@@ -19,10 +20,10 @@
     window_idx = window*30; % convert to data points
 
     
-    for file_num = 1:numel(file_list)
-
+    for file_num = 1%:numel(file_list)
+        disp(file_list(file_num).name);
         NS5 = openNSx([folderpath,file_list(file_num).name],'uV');
-    
+
         artifact_data{file_num} = NS5.Data(analog_pin_idx,:);
         sync_line_data{file_num} = NS5.Data(sync_idx,:);
 %         

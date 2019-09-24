@@ -250,9 +250,9 @@
     
     
     
-    
+
 %     
-%     
+
     %% plot reach position,
     td_stim = td_all(~isnan([td_all.stimCode]));
 
@@ -376,6 +376,47 @@
     
     
     
+%% look at force onset
+    params.event_list = {'bumpTime';'bumpDir';'otHoldTime'};
+    params.trial_results = {'R','F'};
+    td = parseFileByTrial(cds,params);
+    td = removeBadTrials(td);
+
+%%
+    offset = [0,100];
+    middle = [-3,33];
+    tgt_dir = []; bump_dir = [];
+    acc_dir = [];
+    reach_dir = []; dist_dir = [];
+    for t = 1:300
+        bump_dir(t) = td(t).bumpDir;
+        tgt_dir(t) = td(t).target_direction*180/pi;
+        pos_start = td(t).pos(td(t).idx_bumpTime+offset(1),:);
+        pos_end = td(t).pos(td(t).idx_bumpTime+offset(2),:);
+        acc_dir(t) = atan2(pos_end(2)-pos_start(2),pos_end(1)-pos_start(1))*180/pi;
+        reach_dir(t) = atan2(td(t).pos(td(t).idx_otHoldTime,2)+middle(2),td(t).pos(td(t).idx_otHoldTime,1)+middle(1))*180/pi;
+        dist_dir(t) = sqrt((td(t).pos(td(t).idx_otHoldTime,2)+middle(2)).^2 + (td(t).pos(td(t).idx_otHoldTime,1)+middle(1)).^2);
+    end
+   
+    remove_idx = abs(tgt_dir-acc_dir)*pi/180 > 1;
+    tgt_dir(remove_idx) = []; bump_dir(remove_idx) = [];
+    acc_dir(remove_idx) = [];
+    dist_dir(remove_idx) = [];
+    reach_dir(remove_idx) = [];
+%
+    figure
+    
+    plot(tgt_dir*pi/180,acc_dir*pi/180,'.','markersize',12)
+    hold on
+%     plot(acc_dir,reach_dir,'.','markersize',12)
+    plot([-2*pi,2*pi],[-2*pi,2*pi],'k--','linewidth',2)
+    hold off
+    formatForLee(gcf)
+%     ylabel('acc dir')
+%     xlabel('bump dir')
+    xlim([-pi,pi])
+    ylim([-pi,pi])
+    set(gca,'fontsize',14)
     
  
 %%     
@@ -432,57 +473,59 @@
 %     hold on
 %     plot(bump_pred,acc_test,'r','linewidth',2)
 
-% %% do PCA on spikes during perturbation to see if nicely laid out
-% 
-%     idx_start = {'idx_bumpTime',0};
-%     idx_end = {'idx_bumpTime',20};
-%     
-%     td_bump = trimTD(td_all,idx_start,idx_end);
-% 
-%     params_dim = [];
-%     params_dim.algorithm = 'ppca';
-%     params_dim.num_dims = 3;
-%     [td_bump,info_out] = dimReduce(td_bump,params_dim)
-%     
-% 
-%     %%
-%     figure();
-%     for tr = 1:numel(td_bump)
-%         
-%         if(~isnan(td_bump(tr).bumpDir))
-%             color_to_use = (td_bump(tr).bumpDir + 180)/720 + [0,0,0];
-%             plot(mean(td_bump(tr).LeftS1_ppca(:,2)),mean(td_bump(tr).LeftS1_ppca(:,3)),'.','color',color_to_use,'markersize',20)
-%             hold on
-%         end
-%         
-%     end
-%     
-%     
-%     
-%     
-% %%
-% 
-%     norm_dist_dir = dist_dir;
-% 
-%     figure();
-%     
-%     plot(tgt_dir*pi/180,norm_dist_dir,'.','markersize',12)
-%     hold on
-%     formatForLee(gcf)
-%     ylabel('Distance')
-%     xlabel('Bump direction')
-%     xlim([-pi,pi])
-%     set(gca,'fontsize',14)
-% %     f = gcf;
-% %     f.Name = 'Duncan_20180904_reachVsAcc_120ms';
-% %     saveFiguresLIB(f,folderpath,f.Name);
-% 
-% 
-% % fit the data with a function 
-%     [f_dist,gof] = fit(tgt_dir'*pi/180,norm_dist_dir','a*cos(b*x+c)+d');
-%     
-%     test = [-pi:0.01:pi];
-%    
-%     pred = feval(f_dist,test);
-%     hold on
-%     plot(test,pred,'r','linewidth',2)
+
+
+%% do PCA on spikes during perturbation to see if nicely laid out
+
+    idx_start = {'idx_bumpTime',0};
+    idx_end = {'idx_bumpTime',20};
+    
+    td_bump = trimTD(td_all,idx_start,idx_end);
+
+    params_dim = [];
+    params_dim.algorithm = 'ppca';
+    params_dim.num_dims = 3;
+    [td_bump,info_out] = dimReduce(td_bump,params_dim)
+    
+
+    %%
+    figure();
+    for tr = 1:numel(td_bump)
+        
+        if(~isnan(td_bump(tr).bumpDir))
+            color_to_use = (td_bump(tr).bumpDir + 180)/720 + [0,0,0];
+            plot(mean(td_bump(tr).LeftS1_ppca(:,2)),mean(td_bump(tr).LeftS1_ppca(:,3)),'.','color',color_to_use,'markersize',20)
+            hold on
+        end
+        
+    end
+    
+    
+    
+    
+%%
+
+    norm_dist_dir = dist_dir;
+
+    figure();
+    
+    plot(tgt_dir*pi/180,norm_dist_dir,'.','markersize',12)
+    hold on
+    formatForLee(gcf)
+    ylabel('Distance')
+    xlabel('Bump direction')
+    xlim([-pi,pi])
+    set(gca,'fontsize',14)
+%     f = gcf;
+%     f.Name = 'Duncan_20180904_reachVsAcc_120ms';
+%     saveFiguresLIB(f,folderpath,f.Name);
+
+
+% fit the data with a function 
+    [f_dist,gof] = fit(tgt_dir'*pi/180,norm_dist_dir','a*cos(b*x+c)+d');
+    
+    test = [-pi:0.01:pi];
+   
+    pred = feval(f_dist,test);
+    hold on
+    plot(test,pred,'r','linewidth',2)

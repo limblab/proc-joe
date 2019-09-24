@@ -7,6 +7,7 @@ function [figureHandle] = plotRasterStim(unitData,NEURON_NUMBER,optsPlot)
     NUM_CHANS = size(unitData.spikeTrialTimes,1);
     CHAN_LIST = unitData.CHAN_LIST;
     
+ 
 
     %% format data and call general plot function
     
@@ -14,7 +15,14 @@ function [figureHandle] = plotRasterStim(unitData,NEURON_NUMBER,optsPlot)
         for wave = 1:NUM_WAVEFORM_TYPES
             
             if(opts.PLOT_AFTER_STIMULATION_END)
-                xData = unitData.spikeTrialTimes{chan,wave}*1000 - opts.STIMULATION_LENGTH;
+                if(isempty(opts.STIMULATION_LENGTH))
+                    stim_length = (unitData.STIM_PARAMETERS(wave).pWidth1 + ... 
+                        unitData.STIM_PARAMETERS(wave).pWidth2 + unitData.STIM_PARAMETERS(wave).interphase)*(10^(-3));% in ms
+                    
+                else
+                    stim_length = opts.STIMULATION_LENGTH; % in ms
+                end
+                xData = unitData.spikeTrialTimes{chan,wave}*1000 - stim_length;
                 yData = unitData.stimData{chan,wave};
             else
                 xData = unitData.spikeTrialTimes{chan,wave}*1000;
@@ -40,9 +48,11 @@ function [figureHandle] = plotRasterStim(unitData,NEURON_NUMBER,optsPlot)
             optsPlot.X_LIMITS = [-opts.PRE_TIME*1000,opts.POST_TIME*1000];
             optsPlot.Y_LIMITS = [-3,unitData.numStims(chan,wave)+1];
             if(~opts.MAKE_SUBPLOTS || wave == NUM_WAVEFORM_TYPES)
-                optsPlot.X_LABEL = 'Time after stimulation onset (ms)';
-            elseif(opts.PLOT_AFTER_STIMULATION_END)
-                optsPlot.X_LABEL = 'Time after stimulation offset (ms)';
+                if(~opts.PLOT_AFTER_STIMULATION_END)
+                    optsPlot.X_LABEL = 'Time after stimulation onset (ms)';
+                else
+                    optsPlot.X_LABEL = 'Time after stimulation offset (ms)';
+                end
             else
                 optsPlot.X_LABEL = '';
             end
@@ -61,7 +71,7 @@ function [figureHandle] = plotRasterStim(unitData,NEURON_NUMBER,optsPlot)
                 end
             end
             optsPlot.Y_TICK = [0;max(unitData.numStims(chan,wave))];
-            optsPlot.Y_MINOR_TICK = 'off';
+            optsPlot.Y_MINOR_TICK = 'on';
             optsPlot.Y_TICK_LABEL = {num2str(1),num2str(unitData.numStims(chan,wave))};
             if(strcmpi(opts.SORT_DATA,'velocity'))
                 optsPlot.Y_TICK_LABEL = {'Low','High'};
@@ -70,8 +80,19 @@ function [figureHandle] = plotRasterStim(unitData,NEURON_NUMBER,optsPlot)
             optsSave.FIGURE_SAVE = opts.FIGURE_SAVE;
             optsSave.FIGURE_DIR = opts.FIGURE_DIR;
 %                 optsSave.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'nn',num2str(NEURON_NUMBER),'_chan',num2str(unitData.CHAN_REC),'_stimChan',num2str(CHAN_LIST(chan)),'_waveNum',num2str(wave),'_raster');
-                optsSave.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'nn',num2str(NEURON_NUMBER),'_chan',num2str(unitData.CHAN_REC),'_waveNum',num2str(wave),'_raster');
+            
+            if(isfield(unitData,'STIM_PARAMETERS'))
+                amp1 = unitData.STIM_PARAMETERS(wave).amp1;
+                amp2 = unitData.STIM_PARAMETERS(wave).amp2;
+                pw1 = unitData.STIM_PARAMETERS(wave).pWidth1;
+                pw2 = unitData.STIM_PARAMETERS(wave).pWidth2;
+                pol = unitData.STIM_PARAMETERS(wave).polarity;
 
+                optsSave.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'nn',num2str(NEURON_NUMBER),'_chan',num2str(unitData.CHAN_REC),'_waveNum',num2str(wave),...
+                    '_A1-',num2str(amp1),'_A2-',num2str(amp2),'_pw1-',num2str(pw1),'_pw2-',num2str(pw2),'_pol-',num2str(pol),'_raster');
+            else
+                optsSave.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'_chan',num2str(unitData.CHAN_LIST),'_nn',num2str(NEURON_NUMBER),'_wavenum',num2str(chan),'_raster');
+            end
             optsPlot.MARKER_STYLE = opts.MARKER_STYLE;
             optsPlot.MARKER_SIZE = opts.MARKER_SIZE;
             
@@ -106,7 +127,7 @@ function [opts] = configureOpts(optsInput)
     opts = [];
     opts.MARKER_SIZE = 4;
     opts.MARKER_STYLE  = '.';
-    opts.PLOT_TITLE = 1;
+    opts.PLOT_TITLE = 0;
     opts.TITLE_TO_PLOT = '';
     opts.MAKE_FIGURE = 1;
     opts.SORT_DATA = 0;
@@ -120,7 +141,7 @@ function [opts] = configureOpts(optsInput)
     opts.POST_TIME = 30/1000;
     
     opts.PLOT_AFTER_STIMULATION_END = 0;
-    opts.STIMULATION_LENGTH = 0;
+    opts.STIMULATION_LENGTH = [];
     %% check if in optsSave and optsSaveInput, overwrite if so
     try
         inputFieldnames = fieldnames(optsInput);
@@ -133,33 +154,3 @@ function [opts] = configureOpts(optsInput)
         % do nothing, [] was inputted which means use default setting
     end
 end
-
-
-% 
-% %% plot raw waveforms around the artifact
-%     if(plotSpikeWaveforms == 1)
-%         for chan = chansPlot
-%             for fig = waveformTypesPlot
-%                 plotWaveformsStim(cds,NEURON_NUMBER,chan,fig,'timeAfterStimRawNoStim',timeAfterStimRawNoStim,'timeAfterStimRawArtifact',timeAfterStimRawArtifact,...
-%                     'makeFigure',1,'plotTitle',plotTitle,'title',titleToPlot,'stimElectrode',stimElectrode,'saveFigures',saveFigures,...
-%                     'figDir',figDir,'figPrefix',figPrefix,'plotFiltered',plotWaveformFiltered,'maxWaveformsPlot',maxWavesPlot);
-%             end
-%         end
-%     end
-% 
-%     %% plot sample of artifacts with waveform and without waveform raw
-%     if(plotArtifacts)
-%         for pAF = plotArtifactFiltered
-%             if(pAF == 0 || pAF == 1)
-%                 for chan = chansPlot
-%                     for fig = waveformTypesPlot
-%                         plotArtifactsStim(cds,NEURON_NUMBER,chan,fig,'plotTitle',plotTitle,'title',titleToPlot,...
-%                             'maxArtifactsPerPlot',maxArtifactsPerPlot,'timeAfterStim',timeAfterStimRawArtifact,...
-%                             'rowSubplot',rowSubplotArtifact,'colSubplot',colSubplotArtifact,'plotFiltered',pAF,...
-%                             'saveFigures',saveFigures,'figDir',figDir,'figPrefix',figPrefix,'templateSubtract',0,...
-%                             'randomSample',0);
-%                     end
-%                 end
-%             end
-%         end
-%     end
