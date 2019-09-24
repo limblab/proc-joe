@@ -64,14 +64,14 @@ arrIdx = 1;
     optsPlotFunc.PLOT_AFTER_STIMULATION_END = 0;
     optsPlotFunc.STIMULATION_LENGTH = 0.1+0.5+0.53;
     
-    rasterPlots = plotRasterStim(arrayData{arrIdx},arrayData{arrIdx}.NN,optsPlotFunc);
+%     rasterPlots = plotRasterStim(arrayData{arrIdx},arrayData{arrIdx}.NN,optsPlotFunc);
 
     optsPlotFunc.PLOT_ALL_ONE_FIGURE = 0;
     optsPlotFunc.PLOT_LINE = 1;
     optsPlotFunc.PLOT_TITLE = 1;    
     optsPlotFunc.PLOT_ALL_WAVES_ONE_FIGURE = 0;
 %     
-%     PSTHPlots = plotPSTHStim(arrayData{arrIdx},arrayData{arrIdx}.NN,optsPlotFunc);
+    PSTHPlots = plotPSTHStim(arrayData{arrIdx},1,optsPlotFunc);
 
 % end
 

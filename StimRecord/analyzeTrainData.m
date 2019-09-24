@@ -168,10 +168,34 @@
         end
     end
 
-%% plot PSTH for each condition
-    input_data.unit_idx = unit_idx;
-    plotPSTHArrayData(array_data,input_data);
+    
+%% plot raster 
+    for arrIdx = 1:numel(array_data)   
 
+        optsPlotFunc.BIN_SIZE = mode(diff(array_data{arrIdx}.binEdges{1,1}));
+        optsPlotFunc.FIGURE_SAVE = 0;
+        optsPlotFunc.FIGURE_DIR = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\StimRecData\';
+        optsPlotFunc.FIGURE_PREFIX = [array_data{arrIdx}.monkey,'_DblPulseTrains_'];
+
+        optsPlotFunc.PRE_TIME = 75/1000;
+        optsPlotFunc.POST_TIME = 300/1000;
+        optsPlotFunc.SORT_DATA = '';
+
+        optsPlotFunc.STIMULATION_LENGTH = 0.453;
+
+        optsPlotFunc.MARKER_STYLE  = '.';
+
+        optsPlotFunc.PLOT_AFTER_STIMULATION_END = 1;
+
+        rasterPlots = plotRasterStim(array_data{arrIdx},arrIdx,optsPlotFunc);
+    end
+        
+%% plot PSTH for each condition
+    for unit_idx = 8%1:numel(array_data)
+        input_data.unit_idx = unit_idx;
+        input_data.chan_rec = array_data{unit_idx}.CHAN_LIST;
+        plotPSTHArrayData(array_data,input_data);
+    end
     
     
 %% plot PSTH for each condition for low and high speed cases
@@ -236,19 +260,27 @@
     
     
 %% plot response to train against stimulation frequency
+    markers = {'.','s'};
+    marker_size = [22,8];
     
-    post_window = [0,210]; % in ms
-    baseline_window = [-20,-2]; % in ms
+    post_window = [0,215]; % in ms
+    baseline_window = [-150,-5]; % in ms
     
-
+    input_data.IPI = [-1,5.6,10.8,20,50,200,10,20];
+    freq_stim = [1,180,90,50,20,5,100,50];
     figure();
     hold on
-    for u = 1:numel(array_data)        
-        freq_stim = [];
+    slopes = [];
+    norm_resp = zeros(numel(array_data),4);
+    monkey_idx = zeros(numel(array_data),1); % 1 = han, 0 = duncan
+    
+    num_plot = 15; plot_counter = 0;
+    
+    for u = 3:numel(array_data)        
         num_pulses = [];
         baseline_firing_rate = [];
         stim_firing_rate = [];
-        following_summary = [];
+        evoked_per_stim = [];
         
         
         % convert window into indices
@@ -258,21 +290,85 @@
             find(array_data{u}.binEdges{1} >=baseline_window(2),1,'first')];
         
         for cond = 1:numel(array_data{u}.binCounts)
-            freq_stim(cond) = 1000/input_data.IPI(cond);
+%             freq_stim(cond) = 1000/input_data.IPI(cond);
             num_pulses(cond) = input_data.num_pulses(cond);
-            baseline_firing_rate(cond) = sum(array_data{u}.binCounts{cond}(baseline_idx(1):baseline_idx(2)))/...
-                array_data{u}.num_stims(cond)/diff(baseline_window)*1000; % convert to Hz
-            stim_firing_rate(cond) = sum(array_data{u}.binCounts{cond}(post_stim_idx(1):post_stim_idx(2)))/...
-                array_data{u}.num_stims(cond)/diff(post_window)*1000; % convert to Hz
             
-            following_summary(cond) = (stim_firing_rate(cond)-baseline_firing_rate(cond))/freq_stim(cond);
+            if(num_pulses(cond) == 1) % fix single pulse condition
+                freq_stim(cond) = 1;
+            end
+            
+            baseline_firing_rate(cond) = sum(array_data{u}.binCounts{cond}(baseline_idx(1):baseline_idx(2)))/...
+                array_data{u}.num_stims(cond)/(diff(baseline_window)-num_pulses(cond))*1000; % convert to Hz
+            stim_firing_rate(cond) = sum(array_data{u}.binCounts{cond}(post_stim_idx(1):post_stim_idx(2)))/...
+                array_data{u}.num_stims(cond)/(diff(post_window)-num_pulses(cond))*1000; % convert to Hz, subtract 1 ms per artifact
+            stim_fit(cond,:) = [ones(diff(post_stim_idx)+1,1), array_data{u}.binEdges{cond}(post_stim_idx(1):post_stim_idx(2))']\...
+                array_data{u}.binCounts{cond}(post_stim_idx(1):post_stim_idx(2))';
+            
+            stim_slope(cond) = stim_fit(cond,2);
+            evoked_per_stim(cond) = (stim_firing_rate(cond)-baseline_firing_rate(cond))/num_pulses(cond);
         end
-        keep_mask = num_pulses > 3;
-        plot(freq_stim(keep_mask==1),following_summary(keep_mask==1))
+        keep_mask = (num_pulses > 3) & ~isnan(evoked_per_stim);
+        
+        % get 5 Hz, 100Hz, 200Hz response for future plot
+        norm_resp(u,:) = evoked_per_stim([find(freq_stim == 20 & num_pulses > 3,1,'first'),...
+            find(freq_stim == 50 & num_pulses > 3,1,'first'),...
+            find(freq_stim == 90 & num_pulses > 3,1,'first'),...
+            find(freq_stim == 180 & num_pulses > 3,1,'first')]);
+        monkey_idx(u) = strcmpi(array_data{u}.monkey,'Han'); % 1 = han, 0 = duncan
+        
+        if(sum(keep_mask) >= 4 && plot_counter < num_plot)
+            plot_counter = plot_counter + 1;
+            
+            % deal with freq_stim not being sorted
+            [freq_stim_plot,sort_idx] = sort(freq_stim(keep_mask == 1));
+            evoked_per_stim_plot = evoked_per_stim(keep_mask == 1); 
+            evoked_per_stim_plot = evoked_per_stim_plot(sort_idx);
+            stim_slope_plot = stim_slope(keep_mask == 1);
+            stim_slope_plot = stim_slope_plot(sort_idx);
+
+            % plot data
+            plot(freq_stim_plot,evoked_per_stim_plot,'marker',markers{monkey_idx(u) + 1},...
+                'linewidth',1.5,'markersize',marker_size(monkey_idx(u) + 1),'color',getColorFromList(2,plot_counter),'markerfacecolor',getColorFromList(2,plot_counter))
+            
+            xlabel('Stimulation frequency (Hz)')
+            ylabel('(F_e - F_b)/N')
+            formatForLee(gcf)
+            set(gca,'fontsize',14)
+        end
+        
+        % fit following summary and get slopes
+        slope_unit = [ones(sum(keep_mask),1),freq_stim(keep_mask == 1)']\evoked_per_stim(keep_mask == 1)';
+        slopes(u) = slope_unit(2);
+    end
+    
+    
+%% plot 20Hz resp vs. 100 and 200Hz   
+
+    f=figure();
+    f.Name = 'Duncan_Han_following_summary_trains';
+    plot([-2,8],[-2,8],'k--','linewidth',1.5)
+    hold on
+    for m = 1:2 % duncan, then han
+        keep_mask = monkey_idx == m-1; % matlab indexing causes issues...
+        
+        plot(norm_resp(keep_mask,1),norm_resp(keep_mask,2),'linestyle','none',...
+            'marker',markers{m},'color',getColorFromList(1,0),'markerfacecolor',getColorFromList(1,0),'markersize',marker_size(m));
+        
+        plot(norm_resp(keep_mask,1),norm_resp(keep_mask,3),'linestyle','none',...
+            'marker',markers{m},'color',getColorFromList(1,1),'markerfacecolor',getColorFromList(1,1),'markersize',marker_size(m));
+        
+        plot(norm_resp(keep_mask,1),norm_resp(keep_mask,4),'linestyle','none',...
+            'marker',markers{m},'color',getColorFromList(1,2),'markerfacecolor',getColorFromList(1,2),'markersize',marker_size(m));
         
     end
-    ylim([0,1]);
-    
+    xlabel('Response to 20Hz trains');
+    ylabel('Response to higher freq trains');
+    set(l,'box','off','fontsize',14,'location','northwest');
+    formatForLee(gcf);
+    set(gca,'fontsize',14);
+%     xlim([-0.5,2]); ylim([-0.5,2])
+%     ylim([0,1]);
+
     
 %% resample data w/ smaller number of stimulations
 

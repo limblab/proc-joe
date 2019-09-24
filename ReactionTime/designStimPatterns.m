@@ -2,10 +2,10 @@
 
 
 %% determine filename and input data
-    input_data.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\CObump\Duncan_20190215_LeftS1\';
+    input_data.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\CObump\Han_20190722_CObump\';
 %     inputData.folderpath = 'D:\Lab\Data\ReactionTime\Han_20180427_training\';
-%     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
-    input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\right S1 20180919\SN 6251-001804.cmp';
+    input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+%     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\right S1 20180919\SN 6251-001804.cmp';
     
     input_data.task='taskCObump';
     input_data.ranBy='ranByJoseph'; 
@@ -268,24 +268,19 @@
 %     end
     
     
-   
-    
-    
-    
-    
-    
     
     
 %% plot heatmap of each pattern
     map_data = loadMapFile(input_data.mapFileName(8:end));
-    color_list = [(1:1:64)'/64 zeros(64,1) zeros(64,1)];
+    color_list = getColorFromList(1,4);
     figure();
     plot([1,11,11,1,1],[1,1,11,11,1],'k','linewidth',1.5);
     hold on
     for c = 1:numel(chan_num)
         map_idx = find(map_data.chan == chan_num(c));
         pos = [map_data.row(map_idx),map_data.col(map_idx)];
-        color_idx = max(1,floor(biomimetic_freq_norm(c)*size(color_list,1)));
+%         color_idx = max(1,floor(biomimetic_freq_norm(c)*size(color_list,1)));
+        color_idx = 1;
         rectangle('Position',[pos(1),pos(2),1,1],'EdgeColor',color_list(color_idx,:),'FaceColor',color_list(color_idx,:));
     end
     
@@ -300,7 +295,8 @@
 %     end
 
 
-    
+    axis square
+    set(gca,'visible','off')
     
    
     
