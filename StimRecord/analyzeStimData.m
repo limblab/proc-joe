@@ -1,9 +1,9 @@
 %% set file names 
 
-    inputData.folderpath = 'C:\Users\jts3256\Desktop\Han_stim_data\Han_20190821_stimrec\chan60\';
-%     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+    inputData.folderpath = 'C:\Users\jts3256\Desktop\Han_stim_data\Han_20190920_stimrec\';
+    inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
     % inputData.mapFileName = 'mapFileR:\limblab-archive\Retired Animal Logs\Monkeys\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
-    inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
+%     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
 
 
     folderpath = inputData.folderpath; % rest of code uses folderpath currently...may have switched this, not 100% certain
@@ -11,7 +11,7 @@
     inputData.task='taskCObump';
     inputData.ranBy='ranByJoseph'; 
     inputData.array1='arrayLeftS1'; 
-    inputData.monkey='monkeyDuncan';
+    inputData.monkey='monkeyHan';
     inputData.labnum = 6;
 
     pwd=cd;
@@ -34,7 +34,7 @@
     optsExtract.PRE_TIME = 100/1000; % made negative in the function
     optsExtract.POST_TIME = 450/1000;
 
-    optsExtract.BIN_SIZE = 5/1000;
+    optsExtract.BIN_SIZE = 0.2/1000;
     optsExtract.TIME_AFTER_STIMULATION_WAVEFORMS = 10/1000;
     optsExtract.USE_ANALOG_FOR_STIM_TIMES = 1; % this uses the analog sync line to get stim times, not sure why you would want to do anything else
     optsExtract.GET_KIN = 1;

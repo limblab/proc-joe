@@ -44,7 +44,7 @@
     cd(pwd);
     
 %% pick a file (idx) and plot anodic and cathodic data
-    threshold = 0.2;
+    threshold = 0.3;
     peak_data = {};
     
     for file_num = 1:numel(file_list)
@@ -98,27 +98,37 @@
         peak_data{file_num}.pw2 = pulse_width_2(file_num);
         peak_data{file_num}.chan = stim_chan(file_num);
         
-        
                 %
-%         f=figure();
-%         f.Name = file_list(file_num).name(1:end-10);
-%         
+        f=figure();
+        f.Name = [file_list(file_num).name(1:end-10),'_raw'];
 %         subplot(2,1,1)
-%         plot(x_data,(plot_data(:,1:5)'),'linewidth',1.5);
-%         xlim([-4,12])
-%         ylim([-5000,5000])
-%         ylabel('Voltage (\muV)');
-%         formatForLee(gcf)
-%         xlabel('Time after stimulation offset (ms)');
-%         set(gca,'fontsize',14)
+        plot(x_data,(plot_data(:,1:2:6)'),'color',getColorFromList(1,0),'linewidth',1);
+        hold on 
+        plot(x_data,(plot_data(:,2:2:6)'),'color',getColorFromList(1,1),'linewidth',1);
+        xlim([-2,6])
+        ylim([-5100,5100])
+        ylabel('Voltage (\muV)');
+        formatForLee(gcf)
+        xlabel('Time after stimulation offset (ms)');
+        set(gca,'fontsize',14)
+        
+        saveFiguresLIB(f,folderpath,f.Name);
+        
+        f = figure();
 %         subplot(2,1,2)
-%         plot(x_data,(acausalFilter(plot_data(:,1:5))'));
-%         xlim([-4,12])
-%         ylim([-1000,1000])
-%         xlabel('Time after stimulation offset (ms)');
-%         formatForLee(gcf)
+        f.Name = [file_list(file_num).name(1:end-10),'_filtered'];
+        plot(x_data,(acausalFilter(plot_data(:,1:2:6))'),'color',getColorFromList(1,0),'linewidth',1);
+        hold on
+        plot(x_data,(acausalFilter(plot_data(:,2:2:6))'),'color',getColorFromList(1,1),'linewidth',1);
+        xlim([-2,6])
+        ylim([-1500,1500])
+        ylabel('Voltage (\muV)');
+        formatForLee(gcf)
+        xlabel('Time after stimulation offset (ms)');
+        set(gca,'fontsize',14)
         
-        
+        saveFiguresLIB(f,folderpath,f.Name);
+        close all;
     end
     
     
@@ -184,11 +194,15 @@
 %% get average response and std response over all channels tested
     channels = unique(stim_chan);
     amps = unique(amp_1);
-%     t_post_stim = [0.68,0.75,1.01,1.11,1.35,1.41,1.68,1.75,2.01,2.08,2.31,2.41,2.65,2.75,2.98,3.09,3.31,3.41,3.65,3.71,3.98]; % duncan
-    t_post_stim = [0.45,0.71,0.81,1.04,1.14,1.38,1.45,1.68,1.78,2.013,2.11,2.35,2.45,2.68,2.78,3.01,3.11,3.41,3.65,3.75,3.98]; % han
     
-    gain_ratio_cathodic = nan(numel(amps),numel(t_post_stim),numel(channels));
-    gain_ratio_anodic = nan(numel(amps),numel(t_post_stim),numel(channels));
+    gain_ratio_cathodic = cell(numel(amps),1);
+    t_post_stim_cathodic = cell(numel(amps),1);
+    chan_cathodic = cell(numel(amps),1);
+    
+    gain_ratio_anodic = cell(numel(amps),1);
+    t_post_stim_anodic = cell(numel(amps),1);
+    chan_anodic = cell(numel(amps),1);
+    
     max_time_difference = 0.1;
     
     % for each peak data
@@ -197,69 +211,113 @@
         amp_idx = find(amps == peak_data{p}.amp1);
         chan_idx = find(channels == peak_data{p}.chan);
         if(peak_data{p}.pw1 == 200 && peak_data{p}.pw2 == 200) % make sure this is a balanced phase case
-            for t = 1:numel(peak_data{p}.cathodic.t_post_stim)
-                % find time in t_post_stim closest to array
-                time_differences_cath = abs(peak_data{p}.cathodic.t_post_stim(t) - t_post_stim);
-                [~,min_idx_cath] = min(time_differences_cath);
-                if(time_differences_cath(min_idx_cath) < max_time_difference)
-                    if(peak_data{p}.cathodic.peak(t) < 0)
-                        gain_ratio_cathodic(amp_idx, min_idx_cath,chan_idx) = peak_data{p}.cathodic.peak(t)/peak_data{p}.cathodic.min_peak;
-                    else
-                        gain_ratio_cathodic(amp_idx, min_idx_cath,chan_idx) = peak_data{p}.cathodic.peak(t)/peak_data{p}.cathodic.max_peak;
-                    end
-                end 
-            end
+            % store time and gain_ratio for cathodic data
+            peak_vals = peak_data{p}.cathodic.peak';
+            peak_vals(peak_vals > 0) = peak_vals(peak_vals > 0)/peak_data{p}.cathodic.max_peak;
+            peak_vals(peak_vals < 0) = peak_vals(peak_vals < 0)/peak_data{p}.cathodic.min_peak;
             
-            for t = 1:numel(peak_data{p}.anodic.t_post_stim)
-                time_differences_anod = abs(peak_data{p}.anodic.t_post_stim(t) - t_post_stim);
-                [~,min_idx_anod] = min(time_differences_anod);
-                if(time_differences_anod(min_idx_anod) < max_time_difference)
-                    if(peak_data{p}.anodic.peak(t) < 0)
-                        gain_ratio_anodic(amp_idx,min_idx_anod,chan_idx) = peak_data{p}.anodic.peak(t)/peak_data{p}.anodic.min_peak;
-                    else
-                        gain_ratio_anodic(amp_idx,min_idx_anod,chan_idx) = peak_data{p}.anodic.peak(t)/peak_data{p}.anodic.max_peak;
-                    end
-                end
-            end
+            gain_ratio_cathodic{amp_idx} = [gain_ratio_cathodic{amp_idx};peak_vals];
+            t_post_stim_cathodic{amp_idx} = [t_post_stim_cathodic{amp_idx};peak_data{p}.cathodic.t_post_stim];
+            chan_cathodic{amp_idx} = [chan_cathodic{amp_idx};channels(chan_idx)+zeros(numel(peak_vals),1)];
+            
+            % store time and gain_ratio for anodic data
+            peak_vals = peak_data{p}.anodic.peak';
+            peak_vals(peak_vals > 0) = peak_vals(peak_vals > 0)/peak_data{p}.anodic.max_peak;
+            peak_vals(peak_vals < 0) = peak_vals(peak_vals < 0)/peak_data{p}.anodic.min_peak;
+            
+            gain_ratio_anodic{amp_idx} = [gain_ratio_anodic{amp_idx};peak_vals];
+            t_post_stim_anodic{amp_idx} = [t_post_stim_anodic{amp_idx};peak_data{p}.anodic.t_post_stim];
+            chan_anodic{amp_idx} = [chan_anodic{amp_idx};channels(chan_idx)+zeros(numel(peak_vals),1)];
+            
         end
 
 
     end
-        
-    average_gain_cathodic = mean(gain_ratio_cathodic,3,'omitnan');
-    average_gain_anodic = mean(gain_ratio_anodic,3,'omitnan');
-    
-    
-    std_gain_cathodic = std(gain_ratio_cathodic,0,3);
-    x_data = t_post_stim(1):0.001:t_post_stim(end);
 
-    fit_gain_cathodic = zeros(size(gain_ratio_cathodic,1),numel(x_data));
-    fit_gain_anodic = zeros(size(gain_ratio_anodic,1),numel(x_data));
-    for a = 1:size(average_gain_cathodic,1)
-        cath_fit = fit(t_post_stim',average_gain_cathodic(a,:)','smoothingspline');
-        anod_fit = fit(t_post_stim',average_gain_anodic(a,:)','smoothingspline');
-        fit_gain_cathodic(a,:) = feval(cath_fit,x_data);
-        fit_gain_anodic(a,:) = feval(anod_fit,x_data);
+    bin_centers = 0.75:0.3:4;
+    bin_width = mean(diff(bin_centers));
+    min_points = 0;
+    mean_gain_cathodic = nan(size(gain_ratio_cathodic,1),numel(bin_centers));
+    mean_gain_anodic = nan(size(gain_ratio_anodic,1),numel(bin_centers));
+    
+    for a = 1:numel(t_post_stim_cathodic)
+        for t = 1:numel(bin_centers)
+            cathodic_keep_mask = t_post_stim_cathodic{a} > bin_centers(t)-(bin_width/2) & ...
+                t_post_stim_cathodic{a} < bin_centers(t)+(bin_width/2);
+            if(sum(cathodic_keep_mask) > min_points)
+                mean_gain_cathodic(a,t) = mean(gain_ratio_cathodic{a}(cathodic_keep_mask),'omitnan');
+            end
+            anodic_keep_mask = t_post_stim_anodic{a} > bin_centers(t)-(bin_width/2) & ...
+                t_post_stim_anodic{a} < bin_centers(t)+(bin_width/2);
+            if(sum(anodic_keep_mask) > min_points)
+                mean_gain_anodic(a,t) = mean(gain_ratio_anodic{a}(anodic_keep_mask),'omitnan');
+            end
+            
+        end
     end
     
-    figure();
-%     plot(t_post_stim,average_gain_cathodic(10,:))
+%     figure();
+%     plot(t_post_stim_cathodic{13},gain_ratio_cathodic{13},'.','markersize',20)
 %     hold on
-%     plot(t_post_stim(1):0.01:t_post_stim(end),feval(cath_fit,t_post_stim(1):0.01:t_post_stim(end)))
+%     plot(bin_centers,mean_gain_cathodic(13,:))
+%     
+    
+    figure();
     ax = subplot(2,1,1);
-    imagesc(x_data,amps,fit_gain_cathodic, [0,1]);
+    imagesc(bin_centers,amps,mean_gain_cathodic, [0,1]);
     ax.YDir = 'normal';
     colormap(inferno);
     formatForLee(gcf);
     ylabel('Amplitude (\muA)');
     c= colorbar(); c.Label.String = 'Gain';
-%     figure();
     ax = subplot(2,1,2);
-    imagesc(x_data,amps,fit_gain_anodic, [0,1]);
+    imagesc(bin_centers,amps,mean_gain_anodic, [0,1]);
     ax.YDir = 'normal';
     colormap(inferno);
     formatForLee(gcf);
     xlabel('Time after stim offset (ms)')
     ylabel('Amplitude (\muA)');
     c= colorbar(); c.Label.String = 'Gain';
-%     plot(t_post_stim,average_gain_anodic)
+
+    
+    
+    
+%% plot time recovery is at a certain value per amplitude (roughly)
+    % interpolate mean_gain to upsample data
+    bin_centers_new = bin_centers(1):0.01:bin_centers(end);
+    mean_gain_cathodic_interp = interp1(bin_centers,mean_gain_cathodic',bin_centers_new)';
+    mean_gain_anodic_interp = interp1(bin_centers,mean_gain_anodic',bin_centers_new)';
+    
+    
+    gain_value = 0.9;
+    amps = unique(amp_1);
+    time_recovery = nan(numel(amps),2);
+    
+    for a = 1:numel(amps)
+        t = bin_centers_new(find(mean_gain_cathodic_interp(a,:) > gain_value,1,'first'));
+        if(~isempty(t))
+            time_recovery(a,1) = t;
+        end
+        
+        t = bin_centers_new(find(mean_gain_anodic_interp(a,:) > gain_value,1,'first'));
+        if(~isempty(t))
+            time_recovery(a,2) = t;
+        end
+        
+    end
+
+%     figure();
+%%
+    plot(amps,time_recovery(:,1),'b--','marker','.','markersize',20,'linewidth',1.5);
+    hold on
+    plot(amps,time_recovery(:,2),'r--','marker','.','markersize',20,'linewidth',1.5);
+    
+%     xlabel('Amplitude (\muA)');
+%     ylabel('Amplifier recovery time after stim offset');
+%     formatForLee(gcf);
+%     set(gca,'fontsize',14);
+%     l=legend('Cathodic','Anodic');
+%     set(l,'box','off','fontsize',12,'location','best')
+    
+    
+    

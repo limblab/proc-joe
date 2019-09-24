@@ -21,7 +21,7 @@
     input_data.num_bins = 8;
 %% convert file to cds and td
     td_all = [];
-    for f = 2%1:numel(fileList)
+    for f = 1%1:numel(fileList)
         cds = commonDataStructure();
         cds.file2cds(strcat(input_data.folderpath,fileList(f).name),input_data.array,input_data.monkey,input_data.ranBy,...
             input_data.lab,input_data.mapFileName,input_data.task,'recoverPreSync','ignoreJumps','ignoreFilecat');
@@ -32,7 +32,7 @@
         else
             params.event_list = {'goCueTime';'bumpDir';'bumpTime';'bumpMagnitude';'stimTime';'stimCode'};
         end
-        params.trial_results = {'R','F','A','I'};
+        params.trial_results = {'R','F'};
         params.extra_time = [1,2];
         params.include_ts = 0;
         params.exclude_units = [255];
@@ -74,7 +74,7 @@
 %% get bump trials, plot tgt_dir vs reach_dir. 
 % plot percentage correct in bins around a polar plot
 
-    td_bump = td_all(~isnan([td_all.bumpDir]));
+    td_bump = td_all(~isnan([td_all.bumpDir]) & ~[td_all.catchTrial] & isnan([td_all.stimCode]));
     
     % get pos at idx_endTime
     reach_angles_bump = zeros(numel(td_bump),1);
@@ -377,93 +377,61 @@
     
     
     
+ 
+%%     
+%% look at force onset
+    params.event_list = {'bumpTime';'bumpDir';'otHoldTime'};
+    params.trial_results = {'R','F'};
+    td = parseFileByTrial(cds,params);
+    td = removeBadTrials(td);
+
+%%
+    offset = [0,400];
+    middle = [-3,33];
+    tgt_dir = []; bump_dir = [];
+    acc_dir = [];
+    reach_dir = []; dist_dir = [];
+    for t = 1:numel(td)
+        bump_dir(t) = td(t).bumpDir;
+        tgt_dir(t) = td(t).target_direction*180/pi;
+        pos_start = td(t).pos(td(t).idx_bumpTime+offset(1),:);
+        pos_end = td(t).pos(td(t).idx_bumpTime+offset(2),:);
+        acc_dir(t) = atan2(pos_end(2)-pos_start(2),pos_end(1)-pos_start(1))*180/pi;
+        reach_dir(t) = atan2(td(t).pos(td(t).idx_otHoldTime,2)+middle(2),td(t).pos(td(t).idx_otHoldTime,1)+middle(1))*180/pi;
+        dist_dir(t) = sqrt((td(t).pos(td(t).idx_otHoldTime,2)+middle(2)).^2 + (td(t).pos(td(t).idx_otHoldTime,1)+middle(1)).^2);
+    end
+   
+    remove_idx = abs(tgt_dir-acc_dir)*pi/180 > 1;
+    tgt_dir(remove_idx) = []; bump_dir(remove_idx) = [];
+    acc_dir(remove_idx) = [];
+    dist_dir(remove_idx) = [];
+    reach_dir(remove_idx) = [];
+%
+    figure
+    
+    plot(tgt_dir*pi/180,acc_dir*pi/180,'.','markersize',12)
+    hold on
+%     plot(acc_dir,reach_dir,'.','markersize',12)
+    plot([-2*pi,2*pi],[-2*pi,2*pi],'k--','linewidth',2)
+    hold off
+    formatForLee(gcf)
+%     ylabel('acc dir')
+%     xlabel('bump dir')
+    xlim([-pi,pi])
+    ylim([-pi,pi])
+    set(gca,'fontsize',14)
+    
 %     
-% %%
-%     opts.FIGURE_SAVE = 0;
-%     opts.FIGURE_PREFIX = 'Duncan_20190410_RR_training';
-%     opts.FIGURE_DIR = folderpath;
+% fit the data with a function 
+%     acc_dir(bump_dir < -170 & acc_dir > 150) = acc_dir(bump_dir < -170 & acc_dir > 150) - 180;
 % 
-%     opts.NUM_BINS_DIR = 8;
-%     opts.MAKE_FIGURES = 1;
-%     opts.PLOT_POLAR = 1;
-%     opts.MAX_TRIALS_PLOT = 2000;
-%     opts.CIRCLE_RADIUS = 5.75;
-%     opts.CIRCLE_DEPTH = 2;
-% 
-%     opts.DISTRIBUTION_BIN_SIZE = 5;
-%     opts.BUMP_MAGS = [];
-%     opts.BUMP_NONLINEARITY = 0;
-% 
-%     behaviorData = processBehaviorRingReporting(cds,opts);
-% 
+%     [f,gof] = fit(acc_dir'*pi/180,bump_dir'*pi/180,'poly5');
 %     
-%     
-%     
-%     
-%     
-%     
-%     
-%     
-%     
-%     
-%     
-%     
-%     
-%     
-%     
-% %% look at force onset
-%     params.event_list = {'bumpTime';'bumpDir';'otHoldTime'};
-%     params.trial_results = {'R','F'};
-%     td = parseFileByTrial(cds,params);
-%     td = removeBadTrials(td);
-% 
-% %%
-%     offset = [0,100];
-%     middle = [-3,33];
-%     tgt_dir = []; bump_dir = [];
-%     acc_dir = [];
-%     reach_dir = []; dist_dir = [];
-%     for t = 1:300
-%         bump_dir(t) = td(t).bumpDir;
-%         tgt_dir(t) = td(t).target_direction*180/pi;
-%         pos_start = td(t).pos(td(t).idx_bumpTime+offset(1),:);
-%         pos_end = td(t).pos(td(t).idx_bumpTime+offset(2),:);
-%         acc_dir(t) = atan2(pos_end(2)-pos_start(2),pos_end(1)-pos_start(1))*180/pi;
-%         reach_dir(t) = atan2(td(t).pos(td(t).idx_otHoldTime,2)+middle(2),td(t).pos(td(t).idx_otHoldTime,1)+middle(1))*180/pi;
-%         dist_dir(t) = sqrt((td(t).pos(td(t).idx_otHoldTime,2)+middle(2)).^2 + (td(t).pos(td(t).idx_otHoldTime,1)+middle(1)).^2);
-%     end
-%    
-%     remove_idx = abs(tgt_dir-acc_dir)*pi/180 > 1;
-%     tgt_dir(remove_idx) = []; bump_dir(remove_idx) = [];
-%     acc_dir(remove_idx) = [];
-%     dist_dir(remove_idx) = [];
-%     reach_dir(remove_idx) = [];
-% %
-%     figure
-%     
-%     plot(tgt_dir*pi/180,acc_dir*pi/180,'.','markersize',12)
+%     acc_test = [-pi:0.01:pi];
+%     bump_pred = feval(f,acc_test);
 %     hold on
-% %     plot(acc_dir,reach_dir,'.','markersize',12)
-%     plot([-2*pi,2*pi],[-2*pi,2*pi],'k--','linewidth',2)
-%     hold off
-%     formatForLee(gcf)
-% %     ylabel('acc dir')
-% %     xlabel('bump dir')
-%     xlim([-pi,pi])
-%     ylim([-pi,pi])
-%     set(gca,'fontsize',14)
-%     
-% %     
-% % fit the data with a function 
-% %     acc_dir(bump_dir < -170 & acc_dir > 150) = acc_dir(bump_dir < -170 & acc_dir > 150) - 180;
-% % 
-% %     [f,gof] = fit(acc_dir'*pi/180,bump_dir'*pi/180,'poly5');
-% %     
-% %     acc_test = [-pi:0.01:pi];
-% %     bump_pred = feval(f,acc_test);
-% %     hold on
-% %     plot(bump_pred,acc_test,'r','linewidth',2)
-% 
+%     plot(bump_pred,acc_test,'r','linewidth',2)
+
 % %% do PCA on spikes during perturbation to see if nicely laid out
 % 
 %     idx_start = {'idx_bumpTime',0};

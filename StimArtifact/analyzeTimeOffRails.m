@@ -1,7 +1,7 @@
 %% load in a ns5
 
 
-    folderpath = 'C:\Users\jts3256\Desktop\Han_stim_data\Han_20190906_blackrockAmpRecovery\';
+    folderpath = 'C:\Users\jts3256\Desktop\Duncan_Han_blackrockAmpRecovery\';
         
     cd(folderpath);
     file_list = dir('*.ns5');
@@ -46,7 +46,7 @@
     
 %% pick a file (idx) and plot anodic and cathodic data
     time_off_rails_data = [];
-    max_amp = 8000;
+    max_amp = 200;
     for file_num = 1:numel(file_list)
         disp(file_list(file_num).name);
         
@@ -64,34 +64,48 @@
             plot_data(:,st) = artifact_data{file_num}((stim_on(st)+window_idx(1)):(stim_on(st)+window_idx(2)));
         end
         
-        cathodic_data = mean(plot_data(:,cathodic_idx)');
-        anodic_data = mean(plot_data(:,anodic_idx)');       
+        cathodic_data = acausalFilter(mean(plot_data(:,cathodic_idx)'));
+        anodic_data = acausalFilter(mean(plot_data(:,anodic_idx)'));       
 
         temp_cathodic = find(abs(cathodic_data(find(x_data >= 0,1,'first')+5:end)) > max_amp,1,'last');
         temp_anodic = find(abs(anodic_data(find(x_data >= 0,1,'first')+5:end)) > max_amp,1,'last');
         
         time_off_rails_data(file_num,:) = [temp_cathodic,temp_anodic] +5;
         
-                %
-%         f=figure();
-%         f.Name = file_list(file_num).name(1:end-10);
-% %         
-%         plot(x_data,acausalFilter(cathodic_data'),'r','linewidth',1.5);
-%         hold on
-%         plot(x_data,acausalFilter(anodic_data'),'b','linewidth',1.5);
-%         xlim([-4,10])
-%         ylim([-2000,2000])
-%         ylabel('Voltage (\muV)');
-%         formatForLee(gcf)
-%         xlabel('Time after stimulation offset (ms)');
-%         set(gca,'fontsize',14)
-%         hold on
-%         try
-%             plot(x_data(temp_cathodic+find(x_data >= 0,1,'first')+5)+[0,0],[-9000,9000],'r--');
+        
+        f=figure();
+        f.Name = [file_list(file_num).name(1:end-10),'_raw'];
+        
+        plot(x_data,(plot_data(:,1:2:6)'),'color',getColorFromList(1,0),'linewidth',1.5);
+        hold on 
+        plot(x_data,(plot_data(:,2:2:6)'),'color',getColorFromList(1,1),'linewidth',1.5);
+        xlim([-4,12])
+        ylim([-9000,9000])
+        ylabel('Voltage (\muV)');
+        formatForLee(gcf)
+        xlabel('Time after stimulation offset (ms)');
+        set(gca,'fontsize',14)
+
+%                 %
+%             f=figure();
+%             f.Name = file_list(file_num).name(1:end-10);
+%     %         
+%             plot(x_data,(cathodic_data'),'r','linewidth',1.5);
 %             hold on
-%             plot(x_data(temp_anodic+find(x_data >= 0,1,'first')+5)+[0,0],[-9000,9000],'b--');
-%         catch
-%         end
+%             plot(x_data,(anodic_data'),'b','linewidth',1.5);
+%             xlim([-4,10])
+%             ylim([-9000,9000])
+%             ylabel('Voltage (\muV)');
+%             formatForLee(gcf)
+%             xlabel('Time after stimulation offset (ms)');
+%             set(gca,'fontsize',14)
+%             hold on
+%             try
+%                 plot(x_data(temp_cathodic+find(x_data >= 0,1,'first')+5)+[0,0],[-9000,9000],'r--');
+%                 hold on
+%                 plot(x_data(temp_anodic+find(x_data >= 0,1,'first')+5)+[0,0],[-9000,9000],'b--');
+%             catch
+%             end
         
     end
     
@@ -126,7 +140,19 @@
     x_data = amps;
     
     figure();
-    plot(amps,mean_time_cathodic,'b','marker','.','markersize',20);
+    plot(amps,mean_time_cathodic,'b','marker','.','markersize',20,'linewidth',1.5);
     hold on
-    plot(amps,mean_time_anodic,'r','marker','.','markersize',20);
-%     plot(t_post_stim,average_gain_anodic)
+    plot(amps,mean_time_anodic,'r','marker','.','markersize',20,'linewidth',1.5);
+    
+    xlabel('Amplitude (\muA)');
+    ylabel('Mean time off rails post stim (ms)');
+    formatForLee(gcf);
+    set(gca,'fontsize',14);
+    l=legend('Cathodic','Anodic');
+    set(l,'box','off','fontsize',12,'location','best')
+    
+    
+    
+    
+    
+    
