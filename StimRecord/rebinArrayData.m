@@ -1,9 +1,7 @@
 function [arrayDataRebin] = rebinArrayData(arrayData,inputData)
 
     binSize = inputData.bin_size;
-
-    
-    
+  
     arrayDataRebin = arrayData;
     bin_edges = (arrayData{1}.binEdges{1}(1)):binSize:(arrayData{1}.binEdges{1}(end)); % in ms
     for u = 1:numel(arrayDataRebin)

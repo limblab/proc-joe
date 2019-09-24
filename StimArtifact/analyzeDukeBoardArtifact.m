@@ -1,13 +1,13 @@
 %% load in a ns5
 
-    folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\StimArtifactData\20190923_gen2gen3_testing\';
 
+    folderpath = 'C:\Users\jts3256\Desktop\Duncan_Han_dukeProjBox\';
         
     cd(folderpath);
     file_list = dir('*.ns5');
     
-    analog_pin_idx = 1;
-    sync_idx = 2;
+    analog_pin_idx = 97;
+    sync_idx = 98;
     artifact_data = {};
     sync_line_data = {};
     pwd = cd;
@@ -19,10 +19,10 @@
     window_idx = window*30; % convert to data points
 
     
-    for file_num = 1%:numel(file_list)
-        disp(file_list(file_num).name);
-        NS5 = openNSx([folderpath,file_list(file_num).name],'uV');
+    for file_num = 1:numel(file_list)
 
+        NS5 = openNSx([folderpath,file_list(file_num).name],'uV');
+    
         artifact_data{file_num} = NS5.Data(analog_pin_idx,:);
         sync_line_data{file_num} = NS5.Data(sync_idx,:);
         
@@ -44,7 +44,7 @@
     cd(pwd);
     
 %% pick a file (idx) and plot anodic and cathodic data
-    threshold = 0.1;
+    threshold = 0.2;
     peak_data = {};
     
     for file_num = 1:numel(file_list)
@@ -184,8 +184,7 @@
 %% get average response and std response over all channels tested
     channels = unique(stim_chan);
     amps = unique(amp_1);
-%     t_post_stim =
-%     [0.68,0.75,1.01,1.11,1.35,1.41,1.68,1.75,2.01,2.08,2.31,2.41,2.65,2.75,2.98,3.09,3.31,3.41,3.65,3.71,3.98]; % duncan
+%     t_post_stim = [0.68,0.75,1.01,1.11,1.35,1.41,1.68,1.75,2.01,2.08,2.31,2.41,2.65,2.75,2.98,3.09,3.31,3.41,3.65,3.71,3.98]; % duncan
     t_post_stim = [0.45,0.71,0.81,1.04,1.14,1.38,1.45,1.68,1.78,2.013,2.11,2.35,2.45,2.68,2.78,3.01,3.11,3.41,3.65,3.75,3.98]; % han
     
     gain_ratio_cathodic = nan(numel(amps),numel(t_post_stim),numel(channels));
@@ -227,7 +226,6 @@
 
     end
         
-        %%
     average_gain_cathodic = mean(gain_ratio_cathodic,3,'omitnan');
     average_gain_anodic = mean(gain_ratio_anodic,3,'omitnan');
     
@@ -239,7 +237,7 @@
     fit_gain_anodic = zeros(size(gain_ratio_anodic,1),numel(x_data));
     for a = 1:size(average_gain_cathodic,1)
         cath_fit = fit(t_post_stim',average_gain_cathodic(a,:)','smoothingspline');
-        anod_fit = fit(t_post_stim',average_gain_cathodic(a,:)','smoothingspline');
+        anod_fit = fit(t_post_stim',average_gain_anodic(a,:)','smoothingspline');
         fit_gain_cathodic(a,:) = feval(cath_fit,x_data);
         fit_gain_anodic(a,:) = feval(anod_fit,x_data);
     end
