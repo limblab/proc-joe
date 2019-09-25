@@ -254,7 +254,7 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
                     for chan = 1:NUM_CHANS
                         for wave = 1:NUM_WAVEFORM_TYPES
                             stimIdx = find(stimInfo.waveSent(1:opts.STIMULATIONS_PER_TRAIN:end) == wave & ...
-                                checkChanListEquality(stimInfo.chanSent(1:numel(stimsPerTrainMask)),CHAN_LIST{chan}));
+                                checkChanListEquality(stimInfo.chanSent(1:opts.STIMULATIONS_PER_TRAIN:numel(stimsPerTrainMask)),CHAN_LIST{chan}));
                             kinData{chan,wave}.x = nan(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
                             kinData{chan,wave}.y = nan(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
                             kinData{chan,wave}.vx = nan(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
@@ -281,7 +281,7 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
                     for chan = 1:NUM_CHANS
                         for wave = 1:NUM_WAVEFORM_TYPES   
                             stimIdx = find(stimInfo.waveSent(1:opts.STIMULATIONS_PER_TRAIN:end) == wave & ...
-                                checkChanListEquality(stimInfo.chanSent(1:numel(stimsPerTrainMask)),CHAN_LIST{chan}));
+                                checkChanListEquality(stimInfo.chanSent(1:opts.STIMULATIONS_PER_TRAIN:numel(stimsPerTrainMask)),CHAN_LIST{chan}));
                             
                             kinData{chan,wave}.x = nan(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
                             kinData{chan,wave}.y = nan(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));

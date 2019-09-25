@@ -1,6 +1,6 @@
 %% set file names 
 
-    input_data.folderpath = 'C:\Users\jts3256\Desktop\Duncan_stim_data\Duncan_20190823_stimrec\chan72\';
+    input_data.folderpath = 'R:\data\Han_13B1\Raw\stimrecord\DblPulse_trains\Han_20190304_trains\chan56stim\';
     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
     % input_data.mapFileName = 'mapFileR:\limblab-archive\Retired Animal Logs\Monkeys\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
 %     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
@@ -8,23 +8,22 @@
 
     input_data.IPI = [-1,5,10,20,50,200,10,20]; % Hz, -1 means single pulse
     input_data.num_pulses = [1,41,21,11,5,2,2,2];
-%     input_data.IPI = [-1,10,20,50];
-%     input_data.num_pulses = [1,21,11,5];
+
     
     input_data.train_length = 0.2; % s
     input_data.num_conditions = numel(input_data.IPI);
 
     input_data.nom_freq = 2;
-    input_data.window = [-250,500]; % 20ms before and 400ms after 1st pulse
+    input_data.window = [-250,500]; % ms before and ms after 1st pulse
     input_data.bin_size = 2; % in ms
-    input_data.chan_rec = 72;
+    input_data.chan_rec = 56;
 
     folderpath = input_data.folderpath; % rest of code uses folderpath currently...may have switched this, not 100% certain
 
     input_data.task='taskCObump';
     input_data.ranBy='ranByJoseph'; 
     input_data.array1='arrayLeftS1'; 
-    input_data.monkey='monkeyan';
+    input_data.monkey='monkeyHan';
     input_data.labnum = 6;
 
     pwd=cd;
