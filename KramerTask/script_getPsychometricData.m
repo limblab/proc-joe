@@ -1,13 +1,13 @@
 %% determine filename and input data
-    input_data.folderpath = 'C:\Users\jts3256\Desktop\Han_BD_data\Han_20190719-20_BD_stimchan44_2amps\';
-    input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
-%     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\right S1 20180919\SN 6251-001804.cmp';
+    input_data.folderpath = 'C:\Users\joh8881\Desktop\Duncan - Bump Direction Task\20190812_chan45and48\';
+%     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+    input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\right S1 20180919\SN 6251-001804.cmp';
 
 
     input_data.task='taskBD';
-    input_data.ranBy='ranByJoseph'; 
+    input_data.ranBy='ranByJoe'; 
     input_data.array1='arrayLeftS1'; 
-    input_data.monkey='monkeyHan';
+    input_data.monkey='monkeyDuncan';
     input_data.labnum = 6;
     
     pwd=cd;
@@ -48,7 +48,7 @@
 % rewards and trials to get a percent correct. Then, do 1-that percent for
 % any bump dir > 90 as rewards here represent the opposite target
 
-    input_data.max_trial_time = 2;
+    input_data.max_trial_time = 10;
             
     input_data.num_bootstrap = 0;
     
