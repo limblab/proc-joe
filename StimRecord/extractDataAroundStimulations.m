@@ -158,7 +158,8 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
             binEdges = cell(NUM_CHANS,NUM_WAVEFORM_TYPES);
             binCounts = cell(NUM_CHANS,NUM_WAVEFORM_TYPES);
             kinData = cell(NUM_CHANS,NUM_WAVEFORM_TYPES);
-
+            forceData = cell(NUM_CHANS,NUM_WAVEFORM_TYPES);
+            
             for c = 1:NUM_CHANS
                 for i = 1:NUM_WAVEFORM_TYPES
                     spikeTrialTimes{c,i} = zeros(1,opts.INITIAL_ARRAY_SIZE);
@@ -246,45 +247,93 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
             end
 
             %% grab kin data for each stimulation
-            if(opts.GET_KIN && isfield(cds,'kin') && ~isempty(cds.kin))
-                kin_dt = mode(diff(cds.kin.t));
-                for chan = 1:NUM_CHANS
-                    for wave = 1:NUM_WAVEFORM_TYPES
-                        stimIdx = find(stimInfo.waveSent(1:opts.STIMULATIONS_PER_TRAIN:end) == wave & ...
-                            checkChanListEquality(stimInfo.chanSent(1:numel(stimsPerTrainMask)),CHAN_LIST{chan}));
-                        kinData{chan,wave}.x = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
-                        kinData{chan,wave}.y = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
-                        kinData{chan,wave}.vx = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
-                        kinData{chan,wave}.vy = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
-                        kinData{chan,wave}.ax = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
-                        kinData{chan,wave}.ay = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
+            if(opts.GET_KIN)
+                % if cds has a kin entry, use it
+                if(isprop(cds,'kin') && ~isempty(cds.kin))
+                    kin_dt = mode(diff(cds.kin.t));
+                    for chan = 1:NUM_CHANS
+                        for wave = 1:NUM_WAVEFORM_TYPES
+                            stimIdx = find(stimInfo.waveSent(1:opts.STIMULATIONS_PER_TRAIN:end) == wave & ...
+                                checkChanListEquality(stimInfo.chanSent(1:opts.STIMULATIONS_PER_TRAIN:numel(stimsPerTrainMask)),CHAN_LIST{chan}));
+                            kinData{chan,wave}.x = nan(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
+                            kinData{chan,wave}.y = nan(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
+                            kinData{chan,wave}.vx = nan(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
+                            kinData{chan,wave}.vy = nan(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
+                            kinData{chan,wave}.ax = nan(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
+                            kinData{chan,wave}.ay = nan(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
 
-                        for st = 1:numel(stimIdx)
-                            kinIdx = find(stimInfo.stimOn(stimIdx(st)) <= cds.kin.t,1,'first');
-                            if(~isempty(kinIdx))
-                                kinData{chan,wave}.x(st,:) = cds.kin.x(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
-                                kinData{chan,wave}.y(st,:) = cds.kin.y(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
-                                kinData{chan,wave}.vx(st,:) = cds.kin.vx(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
-                                kinData{chan,wave}.vy(st,:) = cds.kin.vy(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
-                                kinData{chan,wave}.ax(st,:) = cds.kin.ax(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
-                                kinData{chan,wave}.ay(st,:) = cds.kin.ay(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
+                            for st = 1:numel(stimIdx)
+                                kinIdx = find(stimInfo.stimOn(stimIdx(st)) <= cds.kin.t,1,'first');
+                                if(~isempty(kinIdx))
+                                    kinData{chan,wave}.x(st,:) = cds.kin.x(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
+                                    kinData{chan,wave}.y(st,:) = cds.kin.y(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
+                                    kinData{chan,wave}.vx(st,:) = cds.kin.vx(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
+                                    kinData{chan,wave}.vy(st,:) = cds.kin.vy(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
+                                    kinData{chan,wave}.ax(st,:) = cds.kin.ax(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
+                                    kinData{chan,wave}.ay(st,:) = cds.kin.ay(round(kinIdx-opts.PRE_TIME/kin_dt,1):round(kinIdx+opts.POST_TIME/kin_dt-1,1));
+                                end
                             end
+                        end
+                    end
+                    
+                else
+                    kin_dt = 0.001; % assume this and make nan entries to keep indexing correct
+                    for chan = 1:NUM_CHANS
+                        for wave = 1:NUM_WAVEFORM_TYPES   
+                            stimIdx = find(stimInfo.waveSent(1:opts.STIMULATIONS_PER_TRAIN:end) == wave & ...
+                                checkChanListEquality(stimInfo.chanSent(1:opts.STIMULATIONS_PER_TRAIN:numel(stimsPerTrainMask)),CHAN_LIST{chan}));
+                            
+                            kinData{chan,wave}.x = nan(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
+                            kinData{chan,wave}.y = nan(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
+                            kinData{chan,wave}.vx = nan(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
+                            kinData{chan,wave}.vy = nan(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
+                            kinData{chan,wave}.ax = nan(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
+                            kinData{chan,wave}.ay = nan(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
                         end
                     end
                 end
             end
 
             
+            %% grab force data for each stimulation
+            if(opts.GET_FORCE && isprop(cds,'force') && ~isempty(cds.force))
+                force_dt = mode(diff(cds.force.t));
+                for chan = 1:NUM_CHANS
+                    for wave = 1:NUM_WAVEFORM_TYPES
+                        stimIdx = find(stimInfo.waveSent(1:opts.STIMULATIONS_PER_TRAIN:end) == wave & ...
+                            checkChanListEquality(stimInfo.chanSent(1:numel(stimsPerTrainMask)),CHAN_LIST{chan}));
+                        forceData{chan,wave}.x = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/force_dt,1));
+                        forceData{chan,wave}.y = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/force_dt,1));
+                        forceData{chan,wave}.vx = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/force_dt,1));
+                        forceData{chan,wave}.vy = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/force_dt,1));
+                        forceData{chan,wave}.ax = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/force_dt,1));
+                        forceData{chan,wave}.ay = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/force_dt,1));
+
+                        for st = 1:numel(stimIdx)
+                            forceIdx = find(stimInfo.stimOn(stimIdx(st)) <= cds.force.t,1,'first');
+                            if(~isempty(forceIdx))
+                                forceData{chan,wave}.x(st,:) = cds.kin.x(round(kinIdx-opts.PRE_TIME/force_dt,1):round(kinIdx+opts.POST_TIME/force_dt-1,1));
+                                forceData{chan,wave}.y(st,:) = cds.kin.y(round(kinIdx-opts.PRE_TIME/force_dt,1):round(kinIdx+opts.POST_TIME/force_dt-1,1));
+                                forceData{chan,wave}.vx(st,:) = cds.kin.vx(round(kinIdx-opts.PRE_TIME/force_dt,1):round(kinIdx+opts.POST_TIME/force_dt-1,1));
+                                forceData{chan,wave}.vy(st,:) = cds.kin.vy(round(kinIdx-opts.PRE_TIME/force_dt,1):round(kinIdx+opts.POST_TIME/force_dt-1,1));
+                                forceData{chan,wave}.ax(st,:) = cds.kin.ax(round(kinIdx-opts.PRE_TIME/force_dt,1):round(kinIdx+opts.POST_TIME/force_dt-1,1));
+                                forceData{chan,wave}.ay(st,:) = cds.kin.ay(round(kinIdx-opts.PRE_TIME/force_dt,1):round(kinIdx+opts.POST_TIME/force_dt-1,1));
+                            end
+                        end
+                    end
+                end
+            end
+            
             if(size(arrayData,2) < arrayDataIdx) % append data
                 %% store unit data
                 arrayData{arrayDataIdx}.spikeTrialTimes = spikeTrialTimes;
                 arrayData{arrayDataIdx}.stimData = stimuliData;
                 arrayData{arrayDataIdx}.numStims = numStims;
-                arrayData{arrayDataIdx}.bC = binCounts;
-                arrayData{arrayDataIdx}.bE = binEdges;
+                arrayData{arrayDataIdx}.binCounts = binCounts;
+                arrayData{arrayDataIdx}.binEdges = binEdges;
 
                 arrayData{arrayDataIdx}.kin = kinData;
-
+                arrayData{arrayDataIdx}.force = forceData;
                 %% save useful stimulation related information
                 arrayData{arrayDataIdx}.CHAN_LIST = CHAN_LIST;
                 arrayData{arrayDataIdx}.STIM_PARAMETERS = stimInfo.parameters;
@@ -308,10 +357,16 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
                         arrayData{arrayDataIdx}.spikeTrialTimes{chan,wave} = [arrayData{arrayDataIdx}.spikeTrialTimes{chan,wave},spikeTrialTimes{chan,wave}];
                         arrayData{arrayDataIdx}.stimData{chan,wave} = [arrayData{arrayDataIdx}.stimData{chan,wave},stimuliData{chan,wave}+arrayData{arrayDataIdx}.numStims(chan,wave)];
                         arrayData{arrayDataIdx}.numStims(chan,wave) = arrayData{arrayDataIdx}.numStims(chan,wave)+numStims(chan,wave);
-                        arrayData{arrayDataIdx}.bC{chan,wave} = arrayData{arrayDataIdx}.bC{chan,wave}+binCounts{chan,wave};
+                        arrayData{arrayDataIdx}.binCounts{chan,wave} = arrayData{arrayDataIdx}.binCounts{chan,wave}+binCounts{chan,wave};
 
-                        arrayData{arrayDataIdx}.kin{chan,wave} = [arrayData{arrayDataIdx}.kin{chan,wave};kinData{chan,wave}];
+                        arrayData{arrayDataIdx}.kin{chan,wave}.x = [arrayData{arrayDataIdx}.kin{chan,wave}.x;kinData{chan,wave}.x];
+                        arrayData{arrayDataIdx}.kin{chan,wave}.y = [arrayData{arrayDataIdx}.kin{chan,wave}.y;kinData{chan,wave}.y];
+                        arrayData{arrayDataIdx}.kin{chan,wave}.vx = [arrayData{arrayDataIdx}.kin{chan,wave}.vx;kinData{chan,wave}.vx];
+                        arrayData{arrayDataIdx}.kin{chan,wave}.vy = [arrayData{arrayDataIdx}.kin{chan,wave}.vy;kinData{chan,wave}.vy];
+                        arrayData{arrayDataIdx}.kin{chan,wave}.ax = [arrayData{arrayDataIdx}.kin{chan,wave}.ax;kinData{chan,wave}.ax];
+                        arrayData{arrayDataIdx}.kin{chan,wave}.ay = [arrayData{arrayDataIdx}.kin{chan,wave}.ay;kinData{chan,wave}.ay];
                         
+                        arrayData{arrayDataIdx}.force{chan,wave} = [arrayData{arrayDataIdx}.force{chan,wave};forceData{chan,wave}];
                     end
                 end
                 %% append useful stim related info
@@ -325,9 +380,9 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
 
     %% prune waveform/chan combos that have 0 stims
     for arrayDataIdx = 1:numel(arrayData)
-        arrayData_mask = ones(size(arrayData{arrayDataIdx}.bC));
-        for chan = 1:size(arrayData{arrayDataIdx}.bC,1)
-            for wave = 1:size(arrayData{arrayDataIdx}.bC,2)
+        arrayData_mask = ones(size(arrayData{arrayDataIdx}.binCounts));
+        for chan = 1:size(arrayData{arrayDataIdx}.binCounts,1)
+            for wave = 1:size(arrayData{arrayDataIdx}.binCounts,2)
                 if(arrayData{arrayDataIdx}.numStims(chan,wave) == 0)
                     arrayData_mask(chan,wave) = 0;
                 end
@@ -336,9 +391,11 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
         if(~sum(sum(arrayData_mask)) == numel(arrayData_mask)) % prune
             arrayData{arrayDataIdx}.spikeTrialTimes = arrayData{arrayDataIdx}.spikeTrialTimes(arrayData_mask==1);
             arrayData{arrayDataIdx}.stimData = arrayData{arrayDataIdx}.stimData(arrayData_mask==1);
-            arrayData{arrayDataIdx}.bC = arrayData{arrayDataIdx}.bC(arrayData_mask==1);
-            arrayData{arrayDataIdx}.bE = arrayData{arrayDataIdx}.bE(arrayData_mask==1);
+            arrayData{arrayDataIdx}.binCounts = arrayData{arrayDataIdx}.binCounts(arrayData_mask==1);
+            arrayData{arrayDataIdx}.binEdges = arrayData{arrayDataIdx}.binEdges(arrayData_mask==1);
             arrayData{arrayDataIdx}.kin = arrayData{arrayDataIdx}.kin(arrayData_mask==1);
+            arrayData{arrayDataIdx}.force = arrayData{arrayDataIdx}.force(arrayData_mask == 1);
+            
             arrayData{arrayDataIdx}.numStims = arrayData{arrayDataIdx}.numStims(arrayData_mask == 1);
             temp = repmat(arrayData{arrayDataIdx}.CHAN_LIST,1,NUM_WAVEFORM_TYPES)
             arrayData{arrayDataIdx}.STIM_PARAM_LIST(:,1) = temp(arrayData_mask == 1);
@@ -350,13 +407,13 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
         end
     end
     
-    %% adjust bC based on number of stims
+    %% adjust binCounts based on number of stims
     for arrayDataIdx = 1:numel(arrayData)
         arrayData{arrayDataIdx}.binMaxYLim = 0;
-        for chan = 1:size(arrayData{arrayDataIdx}.bC,1)
-            for wave = 1:size(arrayData{arrayDataIdx}.bC,2)
-                arrayData{arrayDataIdx}.bC{chan,wave} = arrayData{arrayDataIdx}.bC{chan,wave}/arrayData{arrayDataIdx}.numStims(chan,wave);
-                arrayData{arrayDataIdx}.binMaxYLim = max(arrayData{arrayDataIdx}.binMaxYLim,max(arrayData{arrayDataIdx}.bC{chan,wave}));
+        for chan = 1:size(arrayData{arrayDataIdx}.binCounts,1)
+            for wave = 1:size(arrayData{arrayDataIdx}.binCounts,2)
+                arrayData{arrayDataIdx}.binCounts{chan,wave} = arrayData{arrayDataIdx}.binCounts{chan,wave}/arrayData{arrayDataIdx}.numStims(chan,wave);
+                arrayData{arrayDataIdx}.binMaxYLim = max(arrayData{arrayDataIdx}.binMaxYLim,max(arrayData{arrayDataIdx}.binCounts{chan,wave}));
             end
         end
         arrayData{arrayDataIdx}.binMaxYLim = arrayData{arrayDataIdx}.binMaxYLim*1.1;
@@ -387,6 +444,7 @@ function [opts] = configureOpts(optsInput)
     opts.NEURON_NUMBER_ALL = [];
     
     opts.GET_KIN = 0;
+    opts.GET_FORCE = 0;
     opts.USE_ANALOG_FOR_STIM_TIMES = 1;
     opts.ANALOG_SYNC_LINE = 'ainp16';
     opts.USE_STIM_CODE = 0;

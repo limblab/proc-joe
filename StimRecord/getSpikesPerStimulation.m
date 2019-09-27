@@ -30,7 +30,7 @@ function [ spikesPerStimulation, figureHandles ] = getSpikesPerStimulation( arra
     end
 
 
-        %% plot distribution for each channel/wave
+    %% plot distribution for each channel/wave
     if(opts.MAKE_DISTRIBUTION_PLOT)
         for chan = 1:size(arrayData{1,1}.numStims,1)
             for wave = 1:size(arrayData{1,1}.numStims,2)
@@ -58,7 +58,7 @@ function [ spikesPerStimulation, figureHandles ] = getSpikesPerStimulation( arra
         end
     end
     
-        %% look at probability distribution assuming independence
+    %% look at probability distribution assuming independence
     if(opts.MAKE_PDF_PLOT)
         for chan = 1:size(arrayData{1,1}.numStims,1)
             for wave = 1:size(arrayData{1,1}.numStims,2)
@@ -124,8 +124,8 @@ end
 
 function [opts] = configureOpts(optsInput)
 
-    opts.MAKE_DISTRIBUTION_PLOT = 1;
-    opts.MAKE_PDF_PLOT = 1;
+    opts.MAKE_DISTRIBUTION_PLOT = 0;
+    opts.MAKE_PDF_PLOT = 0;
     opts.PLOT_PERCENTAGE_STIMULATIONS = 1;
     opts.PLOT_PERCENTAGE_UNITS = 1;
     opts.WINDOW = [1,5]/1000;

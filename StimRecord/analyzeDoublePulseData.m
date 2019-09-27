@@ -116,42 +116,154 @@
         end
     end
     
+     
+%% plot raster 
+    for arrIdx = 3%1:numel(array_data)   
 
-%% plot PSTH for each condition
+        optsPlotFunc.BIN_SIZE = mode(diff(array_data{arrIdx}.binEdges{1,1}));
+        optsPlotFunc.FIGURE_SAVE = 0;
+        optsPlotFunc.FIGURE_DIR = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\StimRecData\';
+        optsPlotFunc.FIGURE_PREFIX = [array_data{arrIdx}.monkey,'_DblPulseTrains_'];
 
-    for u = 1%:numel(unit_idx)
-        for cond = 1:numel(array_data{u}.binCounts)
-            f = figure();
-            f.Name = ['Han_20190304_dblPulse_chan',num2str(input_data.chan_rec),'rec_lat',num2str(input_data.IPI(cond)),'_unitID',num2str(u)];
-            plot(array_data{u}.binEdges{cond}(1:end-1)+mean(diff(array_data{u}.binEdges{cond}))/2,...
-                array_data{u}.binCounts{cond}/array_data{u}.num_stims(cond)/(input_data.bin_size/1000))
-            formatForLee(gcf)
-            xlabel('Time after 1st pulse (ms)');
-            ylabel('Firing rate (spks/s)')
-            set(gca,'fontsize',14);
-            ylim([0,80])
-%             xlim([-50,450])
-        end
+        optsPlotFunc.PRE_TIME = 75/1000;
+        optsPlotFunc.POST_TIME = 300/1000;
+        optsPlotFunc.SORT_DATA = '';
+
+        optsPlotFunc.STIMULATION_LENGTH = 0.453;
+
+        optsPlotFunc.MARKER_STYLE  = '.';
+
+        optsPlotFunc.PLOT_AFTER_STIMULATION_END = 1;
+
+        rasterPlots = plotRasterStim(array_data{arrIdx},arrIdx,optsPlotFunc);
     end
-
+        
+%% plot PSTH for each condition
+    for unit_idx = 8%1:numel(array_data)
+        input_data.unit_idx = unit_idx;
+        input_data.chan_rec = array_data{unit_idx}.CHAN_LIST;
+        plotPSTHArrayData(array_data,input_data);
+    end
+    
     
 %% count spikes in window after each stimulation, plot those values
-    window = [1,8]; % ms
-    prob_spike = zeros(numel(unit_idx),input_data.num_conditions);
     
-    for u = 1:numel(unit_idx)
+    window = [1,5]; % in ms
+    prob_spike = nan(numel(array_data),input_data.num_conditions,2);
+    
+    keep_mask = input_data.num_pulses == 2;
+    
+    
+    for u = 1:numel(array_data)
         for cond = 1:numel(array_data{u}.spikeTrialTimes)
-            if(input_data.IPI(cond) < 0) % single pulse data
-                window_adj = window;
-            else
+            if(keep_mask(cond) == 1)
+                
                 window_adj = window + input_data.IPI(cond);
+                                
+                prob_spike(u,cond,1) = sum(array_data{u}.spikeTrialTimes{cond}*1000 > window(1) & ...
+                    array_data{u}.spikeTrialTimes{cond}*1000 < window(2))/array_data{u}.num_stims(cond);
+                
+                prob_spike(u,cond,2) = sum(array_data{u}.spikeTrialTimes{cond}*1000 > window_adj(1) & ...
+                    array_data{u}.spikeTrialTimes{cond}*1000 < window_adj(2))/array_data{u}.num_stims(cond);
             end
-            prob_spike(u,cond) = sum(array_data{u}.spikeTrialTimes{cond}*1000 > window_adj(1) & ...
-                array_data{u}.spikeTrialTimes{cond}*1000 < window_adj(2))/array_data{u}.num_stims(cond);
         end
     end
+    
+    [sort_IPI,sort_idx] = sort(input_data.IPI);
+    prob_spike_sort = prob_spike(:,sort_idx,:);
+    keep_mask_sort = keep_mask(sort_idx);
+    
+  
+    figure();
+    plot(sort_IPI(keep_mask_sort == 1),prob_spike_sort(:,keep_mask_sort == 1,2) - prob_spike_sort(:,keep_mask_sort == 1,1))
 
-    plot(input_data.IPI,prob_spike)
 
+%% look at duration of inhibition after second pulse compared to the single pulse case
+    optsInhibPlot = [];
+    optsInhibPlot.PRE_WINDOW = [-200,-5];
+    post_window = [0,200]; % ms
+    optsInhibPlot.MAX_TIME_START = 40; % ms
+    optsInhibPlot.BIN_SIZE = 1;
+    optsInhibPlot.KERNEL_LENGTH = 5;
+    blank_time = [0,5]; % ms
+    
+    optsInhibPlot.PW1 = 200;
+    optsInhibPlot.PW2 = 200;
+    optsInhibPlot.POL = 0; % 0 is cathodic first
+    optsInhibPlot.NUM_CONSECUTIVE_BINS = 10;
+    
+    inhibStruct = {};
+    keep_mask = input_data.num_pulses <= 2;
+    
+    figure();
+    
+    for u = 1:numel(array_data)
+        for cond = 1:numel(array_data{u}.spikeTrialTimes)
+            if(input_data.num_pulses(cond) == 1) % single pulse
+                optsInhibPlot.POST_WINDOW = post_window;
+                optsInhibPlot.BLANK_TIME = blank_time;
+            elseif(input_data.num_pulses(cond) == 2)% double pulse
+                optsInhibPlot.POST_WINDOW = post_window + input_data.IPI(cond);
+                optsInhibPlot.BLANK_TIME = blank_time;
+                optsInhibPlot.BLANK_TIME(2) = blank_time(2) + input_data.IPI(cond);
+            else % train
+                optsInhibPlot.POST_WINDOW = post_window + 200;
+                optsInhibPlot.BLANK_TIME = blank_time;
+                optsInhibPlot.BLANK_TIME(2) = blank_time(2) + 200;
 
+            end
+
+            [inhibStruct{u},figure_handles] = plotInhibitionDuration(array_data{u},optsInhibPlot);
+
+        
+        end
+        
+        % plot inhib duration for each condition, have to sort IPI first
+        [IPI_sort,sort_idx] = sort(input_data.IPI);
+        inhib_dur_sort = inhibStruct{u}.inhib_dur(sort_idx);
+        keep_mask_sort = keep_mask(sort_idx);
+        plot(IPI_sort(keep_mask_sort == 1),inhib_dur_sort(keep_mask_sort == 1))
+        hold on
+    end
+    
+%% histogram paired difference between single pulse inhib duration and 
+    
+    single_pulse_idx = find(input_data.num_pulses == 1);
+    dbl_pulse_idx = find(input_data.num_pulses == 2);
+    bin_edges = [-50:10:200];
+    
+    figure();
+    inhib_dur = [];
+    % get relevant inhib dur
+    for u = 1:numel(array_data)
+%         if(sum(isnan(inhibStruct{u}.inhib_dur([single_pulse_idx,dbl_pulse_idx])'))==0)
+            inhib_dur(end+1,:) = inhibStruct{u}.inhib_dur;
+%         end
+    end
+    
+    for d = 1:numel(dbl_pulse_idx)
+        subplot(numel(dbl_pulse_idx),1,d);
+    
+        inhib_dur_diff = diff(inhib_dur(:,[1,d+1])')';
+        histogram(inhib_dur_diff,bin_edges);
+    end
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 

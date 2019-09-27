@@ -55,9 +55,9 @@
             fr_data_move = [];
             td_temp = td_all(trial_mask);
             for t = 1:numel(td_temp)
-                window_bump = td_temp(t).idx_bumpTime + [10,30];
-                window_baseline = td_temp(t).idx_bumpTime - [30,10];
-                window_move = td_temp(t).idx_movement_on + [5,25];
+                window_bump = td_temp(t).idx_bumpTime + [0,100];
+                window_baseline = td_temp(t).idx_bumpTime - [300,100];
+                window_move = td_temp(t).idx_movement_on + [50,250];
                 
 %                 window_baseline = [td_all(t).idx_startTime, td_all(t).idx_bumpTime-2];
                 fr_data_bump(t) = sum(td_temp(t).([array_name,'_spikes'])(window_bump(1):window_bump(2),unit))/(diff(window_bump)*td_temp(t).bin_size);
@@ -65,15 +65,18 @@
                 fr_data_move(t) = sum(td_temp(t).([array_name,'_spikes'])(window_move(1):window_move(2),unit))/(diff(window_move)*td_temp(t).bin_size);
             end
             mean_fr_bump(unit,bd) = mean(fr_data_bump);
-            mean_fr_baseline(unit,bd) = mean(fr_data_baseline);
+%             mean_fr_baseline(unit,bd) = mean(fr_data_baseline);
             mean_fr_move(unit,bd) = mean(fr_data_move);
-            std_fr_baseline(unit,bd) = std(fr_data_baseline)/sqrt(numel(fr_data_baseline));
-            z_score(unit,bd) = (mean_fr_bump(unit,bd) - mean_fr_baseline(unit,bd))./(std_fr_baseline(unit,bd)+eps);
+%             std_fr_baseline(unit,bd) = std(fr_data_baseline);
+%             z_score(unit,bd) = (mean_fr_bump(unit,bd) - mean_fr_baseline(unit,bd))./(std_fr_baseline(unit,bd)+eps);
         end
         chan_num(unit,1) = td_all(1).([array_name,'_unit_guide'])(unit,1);
-
-%         figure()
-%         plot(tgt_dir,mean_fr_bump(unit,:),'.','markersize',14)
+        mean_fr_baseline(unit) = mean(mean_fr_bump(unit,:));
+        std_fr_baseline(unit) = std(mean_fr_bump(unit,:));
+        z_score(unit,:) = (mean_fr_bump(unit,:) - mean_fr_baseline(unit))./(std_fr_baseline(unit)+eps);
+        
+        figure()
+        plot(tgt_dir,z_score(unit,:),'.','markersize',14)
     end
 
 % mean_fr = mean_fr_bump - mean(mean_fr_bump,2);
@@ -82,8 +85,7 @@
 %% plot z-score of responses during a bump dir
     map_filename = input_data.mapFileName(8:end);
     map_data = loadMapFile(map_filename);
-    min_max_z_score = 5;
-
+    min_max_z_score = 2.5;
 
     numColors = 1000;
     color_1 = [153,51,255]/256;
@@ -92,7 +94,7 @@
     colors_2 = [1-(0:numColors-1)'/numColors,1-(0:numColors-1)'/numColors,1-(0:numColors-1)'/numColors].*color_2;
     colors = [colors_2;colors_1];
 
-    for bd = 12%:size(mean_fr_bump,2)
+    for bd = 1:size(mean_fr_bump,2)
         fr_z_score = z_score(:,bd);
         chan_num_z_score = chan_num;
 
@@ -140,7 +142,7 @@
     pattern_data = [];
     pattern_data.num_patterns = 8; % must be even (pairs of bio and nonbio)
     pattern_data.num_chans = 64;
-    pattern_data.frequency = 200;
+    pattern_data.frequency = 250;
     pattern_data.max_amp = 60;
     
     num_amps = 15;
@@ -148,8 +150,8 @@
 
     pattern_data.pred_dirs = [];
     pattern_data.is_biomimetic = [];
-    pattern_data.max_z_score = 5;
-    pattern_data.z_score_cutoff = 2;
+    pattern_data.max_z_score = 2.5;
+    pattern_data.z_score_cutoff = 0.5;
     pattern_data.pattern = [];
 
     % remove channels from chan_num which don't respond in any direction
@@ -160,13 +162,12 @@
     % pick num_patterns/2 directions from the unique list of tgt_dirs used
     tgt_dirs = unique([td_all.tgtDir]); % in deg
     dirs = datasample(tgt_dirs,pattern_data.num_patterns/2,'Replace',false);
-
     for d = dirs % make two patterns per direction (1 non bio, 1 bio)
         bd_idx = find(tgt_dirs == d);
 
         pattern_data.pred_dirs(end+1:end+2) = d;
         chans_use_dir = chans_use_all(abs(z_score(chan_mask,bd_idx)) < 1000 & ~isnan(z_score(chan_mask,bd_idx)));
-        chans = datasample(chans_use_dir,pattern_data.num_chans,'Replace',false);
+        chans = datasample(chans_use_dir,pattern_data.num_chans,'Replace',false); % actual channel numbers
         
         % d is direction, chans represents chan numbers. Make bio pattern
         bio_pattern = []; bio_pattern.amp_ideal = zeros(numel(chans),1); bio_pattern.chans = chans;
@@ -210,7 +211,6 @@
     numColors = 100;
     base_color = [153,51,255]/256;
     colors = [(0:numColors-1)'/numColors,(0:numColors-1)'/numColors,(0:numColors-1)'/numColors].*base_color;
-    rng('shuffle','twister')
     % chan_num_use = chan_num(randperm(96,64));
 
     for pattern_idx = 1:pattern_data.num_patterns

@@ -1,5 +1,5 @@
 %% load in artifact data and cds to get spike times
-    inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\StimRecData\Han\Multielec\Han_20190222_5elecs\';
+    inputData.folderpath = 'C:\Users\jts3256\Desktop\Han_stim_data\Han_20190821_stimrec\chan60\';
     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 %     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
 
@@ -31,12 +31,11 @@
 
 %% make plot with artifacts with neurons and artifacts without neurons
 
-    chan_rec = 8;
+    chan_rec = 60;
     unit_idx = find([cds.units.chan] == chan_rec & [cds.units.ID] == 1);
-    chan_rec = cds.units(unit_idx).chan;
-    wave_idx = 1;
+    wave_idx = 8;
     
-    window = [0,0.005]; % s
+    window = [0,5]/1000; % s
     
     
     artifactData = outputData.artifactData;
@@ -55,20 +54,24 @@
     
     artifact_no_spike_idx = setdiff(1:numel(artifactData.t),artifact_spike_idx);
     
-    %%
-    num_plot = 20;
+    %
+    num_plot = 10;
     plot_filtered = 1;
-    y_limits = 150*[-1,1];
+    y_limits = 250*[-1,1];
     x_data = ((1:size(artifactData.artifact,3))-1-inputData.presample)/30;% - ...
 
     % plot artifact with spikes afterwards
     figure()
     ax1=subplot(2,1,1);
     [~,idx_use] = datasample(artifact_spike_idx,min(num_plot,numel(artifact_spike_idx)),'Replace',false);
+    artifact_chan = chan_rec;
+    if(artifact_chan > size(artifactData.artifact,2)) % in case I only dealt with the stimulated channel
+        artifact_chan = 1;
+    end
     if(plot_filtered)
-        plot(x_data,acausalFilter(squeeze(artifactData.artifact(idx_use,chan_rec,:))'))
+        plot(x_data,acausalFilter(squeeze(artifactData.artifact(idx_use,artifact_chan,:))'))
     else
-        plot(x_data,squeeze(artifactData.artifact(idx_use,chan_rec,:))');
+        plot(x_data,squeeze(artifactData.artifact(idx_use,artifact_chan,:))');
     end
     xlim([-0.3,5]);
     formatForLee(gcf)
@@ -80,9 +83,9 @@
     ax1=subplot(2,1,2);
     [~,idx_use] = datasample(artifact_no_spike_idx,min(num_plot,numel(artifact_no_spike_idx)),'Replace',false);
     if(plot_filtered)
-        plot(x_data,acausalFilter(squeeze(artifactData.artifact(idx_use,chan_rec,:))'))
+        plot(x_data,acausalFilter(squeeze(artifactData.artifact(idx_use,artifact_chan,:))'))
     else
-        plot(x_data,squeeze(artifactData.artifact(idx_use,chan_rec,:))');
+        plot(x_data,squeeze(artifactData.artifact(idx_use,artifact_chan,:))');
     end
     xlim([-0.3,5]);
     formatForLee(gcf)

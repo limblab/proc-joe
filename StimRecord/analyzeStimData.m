@@ -1,6 +1,6 @@
 %% set file names 
 
-    inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\Han_recordingDuringStim\Han_20190611_rt_record\';
+    inputData.folderpath = 'C:\Users\jts3256\Desktop\Han_stim_data\Han_20190923_trains_noAmp\chan94\';
     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
     % inputData.mapFileName = 'mapFileR:\limblab-archive\Retired Animal Logs\Monkeys\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
 %     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
@@ -8,7 +8,7 @@
 
     folderpath = inputData.folderpath; % rest of code uses folderpath currently...may have switched this, not 100% certain
 
-    inputData.task='taskRT';
+    inputData.task='taskCObump';
     inputData.ranBy='ranByJoseph'; 
     inputData.array1='arrayLeftS1'; 
     inputData.monkey='monkeyHan';
@@ -20,74 +20,77 @@
     stimInfoFileList = dirSorted('*stimInfo*');
 
 
-%% extract relevant data for all units -- highly recommend saving arrayData after this step
+%% extract relevant data for all units -- recommend saving arrayData after this step
     tic
 
     optsExtract.STIMULI_RESPONSE = 'all';
-    optsExtract.STIMULATIONS_PER_TRAIN = 1;
+    optsExtract.STIMULATIONS_PER_TRAIN = 11;
     optsExtract.STIMULATION_BATCH_SIZE = 1000;
 
-    optsExtract.USE_STIM_CODE = 1;
-    optsExtract.STIM_ELECTRODE = {23};
+    optsExtract.USE_STIM_CODE = 0;
+    optsExtract.STIM_ELECTRODE = {};
     optsExtract.CHAN_LIST = [];
 
-    optsExtract.PRE_TIME = 100/1000; % made negative in the function
+    optsExtract.PRE_TIME = 150/1000; % made negative in the function
     optsExtract.POST_TIME = 500/1000;
 
-    optsExtract.BIN_SIZE = 5/1000;
+    optsExtract.BIN_SIZE = 0.2/1000;
     optsExtract.TIME_AFTER_STIMULATION_WAVEFORMS = 10/1000;
     optsExtract.USE_ANALOG_FOR_STIM_TIMES = 1; % this uses the analog sync line to get stim times, not sure why you would want to do anything else
-    optsExtract.GET_KIN = 0;
-
+    optsExtract.GET_KIN = 1;
+    optsExtract.GET_FORCE = 0;
+    
     arrayData = extractDataAroundStimulations(inputData,fileList,stimInfoFileList,optsExtract);
 
     toc
+    
+    
 %% pick a unit (index in array data)
 % plot raster, and PSTH for the given unit above
-% for arrIdx = 1:numel(arrayData)
-arrIdx = 18;
+for arrIdx = 1:numel(arrayData)
+% arrIdx = ;
     % plot raster, and PSTH for the given unit above
 
 %     optsPlotFunc.BIN_SIZE = optsExtract.BIN_SIZE;
-    optsPlotFunc.BIN_SIZE = mode(diff(arrayData{1}.bE{1,1}));
+    optsPlotFunc.BIN_SIZE = mode(diff(arrayData{1}.binEdges{1,1}));
     optsPlotFunc.FIGURE_SAVE = 0;
     optsPlotFunc.FIGURE_DIR = inputData.folderpath;
-    optsPlotFunc.FIGURE_PREFIX = 'Han_20190502';
+    optsPlotFunc.FIGURE_PREFIX = 'Han_20190923';
 
-    optsPlotFunc.PRE_TIME = 20/1000;
-    optsPlotFunc.POST_TIME = 300/1000;
-    optsPlotFunc.SORT_DATA = 'postStimuliTime';
+    optsPlotFunc.PRE_TIME = 25/1000;
+    optsPlotFunc.POST_TIME = 175/1000;
+    optsPlotFunc.SORT_DATA = '';
 
     optsPlotFunc.PLOT_AFTER_STIMULATION_END = 0;
     optsPlotFunc.STIMULATION_LENGTH = 0.1+0.5+0.53;
     
-%     rasterPlots = plotRasterStim(arrayData{arrIdx},arrayData{arrIdx}.NN,optsPlotFunc);
+    rasterPlots = plotRasterStim(arrayData{arrIdx},arrayData{arrIdx}.NN,optsPlotFunc);
 
-    optsPlotFunc.PLOT_ALL_ONE_FIGURE = 0;
-    optsPlotFunc.PLOT_LINE = 1;
-    optsPlotFunc.PLOT_TITLE = 1;    
-    optsPlotFunc.PLOT_ALL_WAVES_ONE_FIGURE = 0;
-%     
-    PSTHPlots = plotPSTHStim(arrayData{arrIdx},arrayData{arrIdx}.NN,optsPlotFunc);
+%     optsPlotFunc.PLOT_ALL_ONE_FIGURE = 0;
+%     optsPlotFunc.PLOT_LINE = 1;
+%     optsPlotFunc.PLOT_TITLE = 1;    
+%     optsPlotFunc.PLOT_ALL_WAVES_ONE_FIGURE = 0;
+% %     
+%     PSTHPlots = plotPSTHStim(arrayData{arrIdx},1,optsPlotFunc);
 
-% end
+end
 
 %% plot grid
-optsGrid.STIM_ELECTRODE = unique(arrayData{arrIdx}.CHAN_SENT);
-optsGrid.RECORDING_ELECTRODE = arrayData{arrIdx}.CHAN_REC;
+    optsGrid.STIM_ELECTRODE = unique(arrayData{arrIdx}.CHAN_SENT);
+    optsGrid.RECORDING_ELECTRODE = arrayData{arrIdx}.CHAN_REC;
 
-optsGrid.STIM_ELECTRODE_COLOR = {'k','r','b',[0,0.5,0],'m'};
-optsGrid.STIM_ELECTRODE_LABEL = 'string';
+    optsGrid.STIM_ELECTRODE_COLOR = {'k','r','b',[0,0.5,0],'m'};
+    optsGrid.STIM_ELECTRODE_LABEL = 'string';
 
-optsGrid.RECORDING_ELECTRODE_COLOR = 'k';
-optsGrid.RECORDING_ELECTRODE_LABEL = 'string';
+    optsGrid.RECORDING_ELECTRODE_COLOR = 'k';
+    optsGrid.RECORDING_ELECTRODE_LABEL = 'string';
 
-optsGrid.FIGURE_SAVE = 0;
+    optsGrid.FIGURE_SAVE = 0;
 
-optsGrid.FIGURE_DIR = '';
-optsGrid.FIGURE_PREFIX = 'Duncan_20190213_';
+    optsGrid.FIGURE_DIR = '';
+    optsGrid.FIGURE_PREFIX = 'Duncan_20190213_';
 
-ArrayPlots = plotArrayMap(arrayData{arrIdx},inputData.mapFileName(8:end),optsGrid);
+    ArrayPlots = plotArrayMap(arrayData{arrIdx},inputData.mapFileName(8:end),optsGrid);
 
 
 
@@ -102,64 +105,64 @@ ArrayPlots = plotArrayMap(arrayData{arrIdx},inputData.mapFileName(8:end),optsGri
 
 %% heatmap across whole array
 
-opts.STIM_ELECTRODE_PLOT = [1:numel(uniquecell(arrayData{1}.CHAN_SENT))];
-% opts.STIM_ELECTRODE_PLOT = 1;
-% opts.WAVEFORM_TYPES_PLOT = unique(arrayData{1}.WAVEFORM_SENT);
-opts.WAVEFORM_TYPES_PLOT = [1:size(arrayData{1}.bE,2)];
+    opts.STIM_ELECTRODE_PLOT = [1:numel(unique(arrayData{1}.CHAN_SENT))];
+    % opts.STIM_ELECTRODE_PLOT = 1;
+    % opts.WAVEFORM_TYPES_PLOT = unique(arrayData{1}.WAVEFORM_SENT);
+    opts.WAVEFORM_TYPES_PLOT = [1:size(arrayData{1}.bE,2)];
 
-opts.ALL_NEURONS = 1; % 1 = plot all neurons for each stim chan, 0 = plot all stim chans for a neuron
+    opts.ALL_NEURONS = 1; % 1 = plot all neurons for each stim chan, 0 = plot all stim chans for a neuron
 
-opts.BASELINE_PRE_TIME = -15/1000;
-opts.BASELINE_POST_TIME = -5/1000;
-opts.STIM_PRE_TIME = 2/1000;
-opts.STIM_POST_TIME = 6/1000;
+    opts.BASELINE_PRE_TIME = -15/1000;
+    opts.BASELINE_POST_TIME = -5/1000;
+    opts.STIM_PRE_TIME = 1/1000;
+    opts.STIM_POST_TIME = 10/1000;
 
-opts.AUTO_WINDOW = 0; % 
-opts.INHIBITORY = 0;
-opts.EXCITATORY = 0;
+    opts.AUTO_WINDOW = 0; % 
+    opts.INHIBITORY = 0;
+    opts.EXCITATORY = 0;
 
-opts.MAX_RATIO = 1;
-opts.MIN_RATIO = -1;
-opts.LOG_SCALE = 1;
-opts.LOG_PARAM = 9;
+    opts.MAX_RATIO = 1;
+    opts.MIN_RATIO = -1;
+    opts.LOG_SCALE = 1;
+    opts.LOG_PARAM = 9;
 
-opts.RELATIVE_INHIBITION = 0;
+    opts.RELATIVE_INHIBITION = 0;
 
-opts.FIGURE_SAVE = 0;
-opts.FIGURE_DIR = inputData.folderpath;
-opts.FIGURE_PREFIX = 'Duncan_20190213';
-    [heatmaps, heatmap_data] = plotHeatmaps(arrayData,inputData.mapFileName(8:end),opts);
+    opts.FIGURE_SAVE = 0;
+    opts.FIGURE_DIR = inputData.folderpath;
+    opts.FIGURE_PREFIX = 'Duncan_20190213';
+        [heatmaps, heatmap_data] = plotHeatmaps(arrayData,inputData.mapFileName(8:end),opts);
 
 %% amplitude vs. distance curve for each condition -- excitation
-opts.STIM_ELECTRODE_PLOT = [1:numel(unique(arrayData{1}.CHAN_SENT))];
-opts.WAVEFORM_TYPES_PLOT = 4%unique(arrayData{1}.WAVEFORM_SENT);
-% opts.WAVEFORM_TYPES_PLOT =;
+    opts.STIM_ELECTRODE_PLOT = [1:numel(unique(arrayData{1}.CHAN_SENT))];
+    opts.WAVEFORM_TYPES_PLOT = 1;%unique(arrayData{1}.WAVEFORM_SENT);
+    % opts.WAVEFORM_TYPES_PLOT =;
 
-% maybe automatically find these
-opts.BASELINE_PRE_TIME = -15/1000;
-opts.BASELINE_POST_TIME = -5/1000;
-opts.STIM_PRE_TIME = 2/1000;
-opts.STIM_POST_TIME = 6/1000;
+    % maybe automatically find these
+    opts.BASELINE_PRE_TIME = -15/1000;
+    opts.BASELINE_POST_TIME = -5/1000;
+    opts.STIM_PRE_TIME = 2/1000;
+    opts.STIM_POST_TIME = 6/1000;
 
-opts.AUTO_WINDOW = 0; % doesn't really work...keep as 0
-opts.PLOT_SIGNIFICANT_ONLY = 0;
+    opts.AUTO_WINDOW = 0; % doesn't really work...keep as 0
+    opts.PLOT_SIGNIFICANT_ONLY = 0;
 
-opts.FIGURE_SAVE = 0;
-opts.PLOT_ON_ONE_FIGURE = 1;
-[f,FITS,data_all]=plotAmplitudeVsDistance(arrayData,inputData.mapFileName(8:end),opts);
+    opts.FIGURE_SAVE = 0;
+    opts.PLOT_ON_ONE_FIGURE = 1;
+    [f,FITS,data_all]=plotAmplitudeVsDistance(arrayData,inputData.mapFileName(8:end),opts);
 
 %% latency excitation vs distance
-opts = [];
-opts.PLOT_FIT = 0;
-[peak_latency_data,~,FITS,gof] = plotLatencyExciteVsDistance(arrayData,inputData.mapFileName(8:end),opts);
+    opts = [];
+    opts.PLOT_FIT = 0;
+    [peak_latency_data,~,FITS,gof] = plotLatencyExciteVsDistance(arrayData,inputData.mapFileName(8:end),opts);
 
 %% inhibition duration vs distance
-[~,FITS] = plotInhibitionDurationVsDistance(arrayData,inputData.mapFileName(8:end),opts);
+    [~,FITS] = plotInhibitionDurationVsDistance(arrayData,inputData.mapFileName(8:end),opts);
 
 %% plot amplitude of response vs. inhibition duration
 % opts.UNITS = [5,6,7,10,11,13,14,15,19,20];
 % opts.UNITS = [];
-[~,FITS] = plotAmplitudeVsInhibitionDuration(arrayData,inputData.mapFileName(8:end),opts);
+    [~,FITS] = plotAmplitudeVsInhibitionDuration(arrayData,inputData.mapFileName(8:end),opts);
 
 
 %% make gif

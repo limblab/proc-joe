@@ -34,8 +34,8 @@ function [outputData,figureHandles,FITS,gof] = plotLatencyExciteVsDistance(array
 %                     end
                     distances(unit,1) = 400*sqrt((arrayData{unit}.ROW-STIMCHAN_POS(1)).^2 + (arrayData{unit}.COL-STIMCHAN_POS(2)).^2);
                     
-                    if(latency(unit,1) < 2 && distances(unit,1) > 900)
-                        suspectUnits(end+1) = unit;
+                    if(latency(unit,1) < 2 && distances(unit,1) > 2000)
+                        suspectUnits(end+1,:) = [unit,chan,wave];
                     end
                 end
             end
@@ -101,7 +101,7 @@ function [outputData,figureHandles,FITS,gof] = plotLatencyExciteVsDistance(array
     
     outputData.distancesAll = distancesAll;
     outputData.latencyAll = latencyAll;
-    outputData.suspiciousUnits = unique(suspectUnits);
+    outputData.suspiciousUnits = unique(suspectUnits,'rows');
 end
 
 

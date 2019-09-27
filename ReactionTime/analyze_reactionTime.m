@@ -1,27 +1,27 @@
 %% script to process reaction time data 
 %% determine filename and input data
-    inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\Duncan_20190618_rt\';
+    inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\Han_20190812_for2AFC\chan44\';
 %     inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\Duncan\Duncan_20181126_training\';
     
 %     inputData.folderpath = 'D:\Lab\Data\ReactionTime\Han_20180427_training\';
-%     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
-    inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\right S1 20180919\SN 6251-001804.cmp';
+    inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+%     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\right S1 20180919\SN 6251-001804.cmp';
     
     
     inputData.task='taskRT';
     inputData.ranBy='ranByJoseph'; 
     inputData.array1='arrayLeftS1'; 
-    inputData.monkey='monkeyDuncan';
+    inputData.monkey='monkeyHan';
     inputData.labnum = 6;
     
     pwd=cd;
     cd(inputData.folderpath)
     fileList = dir('*.nev*');
     cd(pwd)
-% load in cds and extract data
+%% load in cds and extract data
     td_all = [];
     num_trials = 0;
-    for fileNumber = 4%:numel(fileList)
+    for fileNumber = 1%:numel(fileList)
         cds = commonDataStructure();
         cds.file2cds([inputData.folderpath fileList(fileNumber).name],inputData.task,inputData.ranBy,...
             inputData.monkey,inputData.labnum,inputData.array1,inputData.mapFileName);
@@ -141,9 +141,9 @@
     opts.FIGURE_PREFIX = 'Han_20181112'; % no _ required
     
 %     opts.BUMP_MAGS = [0.5:0.5:4.5];
-%     opts.STIM_CODES = [2,3,4,5,7,8,9];
+    opts.STIM_CODES = [1,2,3,4,5,6];
     opts.STIM_LABEL = 'Amplitude (\muA)';
-    opts.STIM_PARAMS = [10:10:80];    
+    opts.STIM_PARAMS = [50:10:100];    
 %     opts.STIM_X_LABEL = {'10','15','20','25','30','35'};
 %     opts.STIM_PARAMS = [5:5:35];
 %     opts.STIM_LABEL = 'Frequency (Hz)';
@@ -163,7 +163,7 @@
 %     opts.STIM_LABEL = 'Elec';
 %     opts.COLOR_LIST = 2;
 %     opts.STIM_LABEL = 'Bump Mag';
-    opts.FIT = 	0;
+    opts.FIT = 	1;
     opts.PLOT_BUMP = 0;
     opts.PLOT_STIM = 1;
     

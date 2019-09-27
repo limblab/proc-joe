@@ -1,7 +1,7 @@
 %% build match data with bootstrapping for all neurons in array data
 % and repeat
     params.monkey_name = 'Han';
-    params.bootstrap = 1;
+    params.bootstrap = 0;
     params.num_boot = 1;
     params.array_name = 'LeftS1';
     params.post_stim_window_size = 10;

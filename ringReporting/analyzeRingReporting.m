@@ -1,12 +1,12 @@
 %% set file name and load file into cds
 
-    input_data.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\RingReporting\Han\Han_20190617_RR_singleElecs\';
-%     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
-    input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+    input_data.folderpath = 'C:\Users\jts3256\Desktop\Duncan_curl_field\RR\';
+    input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
+%     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 
-    input_data.date = '20190617';
+    input_data.date = '20190910';
     input_data.array = 'arrayLeftS1';
-    input_data.monkey = 'monkeyHan';
+    input_data.monkey = 'monkeyDuncan';
     input_data.ranBy = 'ranByJoe';
     input_data.lab = 6;
     input_data.task = 'taskRR';
@@ -21,41 +21,69 @@
     input_data.num_bins = 8;
 %% convert file to cds and td
     td_all = [];
-    for f = 1:numel(fileList)
+    for f = 1%1:numel(fileList)
         cds = commonDataStructure();
         cds.file2cds(strcat(input_data.folderpath,fileList(f).name),input_data.array,input_data.monkey,input_data.ranBy,...
             input_data.lab,input_data.mapFileName,input_data.task,'recoverPreSync','ignoreJumps','ignoreFilecat');
         cd(pwd);
     
-        params.event_list = {'otHoldTime';'goCueTime';'tgtDir';'bumpDir';'bumpTime';'bumpMagnitude';'stimTime';'stimCode';'catchTrial';'showOuterTarget'};
+        if(strcmpi(input_data.task,'taskRR'))
+            params.event_list = {'otHoldTime';'goCueTime';'tgtDir';'bumpDir';'bumpTime';'bumpMagnitude';'stimTime';'stimCode';'catchTrial';'showOuterTarget'};
+        else
+            params.event_list = {'goCueTime';'bumpDir';'bumpTime';'bumpMagnitude';'stimTime';'stimCode'};
+        end
         params.trial_results = {'R','F'};
         params.extra_time = [1,2];
         params.include_ts = 0;
         params.exclude_units = [255];
         td_temp = parseFileByTrial(cds,params);
-        td_temp = td_temp(~isnan([td_temp.catchTrial]));
+%         td_temp = td_temp(~isnan([td_temp.catchTrial]));
         
         td_all = [td_all,td_temp];
     end
     
     input_data.tgt_width = mode([cds.trials.tgtWidth]);
     
- 
+%% use sync to get stim times:
+    aIdx = 3; syncName = 'ainp16';
+    stimOnIdx=find(diff(cds.analog{aIdx}.(syncName)-mean(cds.analog{aIdx}.(syncName))>3)>.5);
+    for j=1:numel(stimOnIdx)
+        if j<numel(stimOnIdx)
+            next=stimOnIdx(j+1);
+        else
+            next=numel(cds.analog{aIdx}.(syncName));
+        end
+    end
+
+    stimOnTimes = cds.analog{aIdx}.t(stimOnIdx);
+    timeDiffs = [];
+    td_all_adj = td_all;
+    for tr = 1:size(cds.trials,1)
+        stimOnIdx = find(stimOnTimes > cds.trials.stimTime(tr),1,'first');
+        timeDiff = stimOnTimes(stimOnIdx) - cds.trials.stimTime(tr);
+        
+        tdAllIdx = find([td_all_adj.trial_id] == cds.trials.number(tr));
+        if(~isempty(tdAllIdx) && ~isempty(stimOnIdx))
+            td_all_adj(tdAllIdx).idx_stimTime = td_all_adj(tdAllIdx).idx_stimTime + floor(timeDiff*1000);
+            timeDiffs(end+1,1) = floor(timeDiff*1000);
+        end
+    end
+    
 %% load in pattern file to set predicted direction and have relevant info
 
 %% get bump trials, plot tgt_dir vs reach_dir. 
 % plot percentage correct in bins around a polar plot
 
-    td_bump = td_all(~isnan([td_all.bumpDir]) & ~[td_all.catchTrial]);
+    td_bump = td_all(~isnan([td_all.bumpDir]) & ~[td_all.catchTrial] & isnan([td_all.stimCode]));
     
     % get pos at idx_endTime
-    reach_angles = zeros(numel(td_bump),1);
-    tgt_angles = zeros(numel(td_bump),1);
+    reach_angles_bump = zeros(numel(td_bump),1);
+    tgt_angles_bump = zeros(numel(td_bump),1);
     is_rewarded = zeros(numel(td_bump),1);
     for t = 1:numel(td_bump)
-        tgt_angles(t) = td_bump(t).target_direction;
+        tgt_angles_bump(t) = td_bump(t).target_direction;
         
-        reach_angles(t) = getReachAngle(td_bump,t,[input_data.center_x,input_data.center_y]);
+        reach_angles_bump(t) = getReachAngle(td_bump,t,[input_data.center_x,input_data.center_y]);
         is_rewarded(t) = td_bump(t).result == 'R';
 %         is_rewarded(t) = abs(reach_angles(t) - tgt_angles(t))*180/pi < input_data.tgt_width/2;
     end
@@ -72,7 +100,7 @@
         plot([-180,180],[-180,180]-360+input_data.tgt_width/2,'r--','linewidth',2);
       
     % plot reach vs tgt
-    plot(tgt_angles*180/pi,reach_angles*180/pi,'.','markersize',16)
+    plot(tgt_angles_bump*180/pi,reach_angles_bump*180/pi,'.','markersize',16)
     % format
     xlim([-180,180]); ylim([-180,180]);
     formatForLee(gcf); set(gca,'fontsize',14)
@@ -82,7 +110,7 @@
     bin_edges = [-pi:2*pi/input_data.num_bins:pi];
     percent_correct = zeros(numel(bin_edges)-1,1);
     for i = 1:numel(bin_edges)-1
-        trial_mask = tgt_angles >= bin_edges(i) & tgt_angles < bin_edges(i+1);
+        trial_mask = tgt_angles_bump >= bin_edges(i) & tgt_angles_bump < bin_edges(i+1);
         percent_correct(i) = sum(is_rewarded(trial_mask))/sum(trial_mask);
     end
     
@@ -127,8 +155,11 @@
         if(exist('pattern_data') && stim_code(t) <= numel(pattern_data.pred_dirs))
             pred_angles(t) = pattern_data.pred_dirs(stim_code(t)); % in degrees
             is_biomimetic(t) = pattern_data.is_biomimetic(stim_code(t));
+        elseif(td_stim(t).bumpMagnitude > 0 && stim_code(t) == 2)
+            pred_angles(t) = td_stim(t).tgtDir;
+            is_biomimetic(t) = 0;
         else
-            pred_angles(t) = 0;
+            pred_angles(t) = nan;
             is_biomimetic(t) = -1;
         end
         reach_angles(t) = getReachAngle(td_stim,t,[input_data.center_x,input_data.center_y])*180/pi; % output is in radians.
@@ -146,11 +177,16 @@
     plot([-180,180],[-180,180]-input_data.tgt_width/2*180/180,'r--','linewidth',2);
         plot([-180,180],[-180,180]-360+input_data.tgt_width/2,'r--','linewidth',2);
       
+        
+    % plot bump data 
+        plot(tgt_angles_bump*180/pi,reach_angles_bump*180/pi,'.','markersize',12)
     % plot reach vs tgt for bio patterns as dots
-    plot(pred_angles(is_biomimetic==1),reach_angles(is_biomimetic==1),'.','color',[0,0,0.8],'markersize',16)
+    plot(pred_angles(is_biomimetic==1),reach_angles(is_biomimetic==1),'.','color',[0,0,0.8],'markersize',20,'linewidth',2)
     % plot reach vs tgt for nonbio patterns as x's
-    plot(pred_angles(~is_biomimetic),reach_angles(~is_biomimetic),'x','color',[0,0.5,0],'markersize',16)
+    plot(pred_angles(~is_biomimetic),reach_angles(~is_biomimetic),'x','color',[0,0.5,0],'markersize',20,'linewidth',2)
     
+
+
     % format
     xlim([-180,180]); ylim([-180,180]);
     formatForLee(gcf); set(gca,'fontsize',14)
@@ -214,166 +250,282 @@
     
     
     
+
+%     
+
+    %% plot reach position,
+    td_stim = td_all(~isnan([td_all.stimCode]));
+
+    num_plot = 20;
+    
+    for stimCode = unique([td_stim.stimCode])
+        counter = 0;
+        f=figure();
+        f.Name = [fileList(1).name(1:end-4),'_code',num2str(stimCode),'_position'];
+        for t = 1:numel(td_stim)
+            if(counter < num_plot && td_stim(t).stimCode == stimCode)
+                counter = counter + 1;
+                plot(td_stim(t).pos(td_stim(t).idx_stimTime-50:td_stim(t).idx_stimTime+450,1)-3,...
+                    td_stim(t).pos(td_stim(t).idx_stimTime-50:td_stim(t).idx_stimTime+450,2) + 33,'b','linewidth',2);
+                hold on
+                plot(td_stim(t).pos(td_stim(t).idx_stimTime,1)-3,td_stim(t).pos(td_stim(t).idx_stimTime,2) + 33,'k.','markersize',20);
+                plot(td_stim(t).pos(td_stim(t).idx_stimTime+400,1)-3,td_stim(t).pos(td_stim(t).idx_stimTime+400,2) + 33,'r.','markersize',20);
+            end
+        end
+        xlabel('x-pos (cm)');
+        ylabel('y-pos (cm)');
+        formatForLee(f);
+        set(gca,'fontsize',14);
+        xlim([-2,2]);
+        ylim([-1,3]);
+    end
+    
+%% plot speed
+    td_stim = td_all(~isnan([td_all.stimCode]));
+
+    td_stim = getSpeed(td_stim);
+    
+    
+    num_plot = 10;
+    counter = zeros(numel(unique([td_stim.stimCode])),1);
+    figure();
+    peak_speeds = cell(numel(unique([td_stim.stimCode])),1);
+    latencies = cell(numel(unique([td_stim.stimCode])),1);
+    for t = 1:numel(td_stim)
+
+        [peak_speed,peak_speed_idx] = max((td_stim(t).vel(td_stim(t).idx_stimTime+150:td_stim(t).idx_stimTime+300,2)));
+        peak_speed_idx = peak_speed_idx + 150;
+        peak_speeds{td_stim(t).stimCode+1}(end+1,1) = td_stim(t).vel(peak_speed_idx+td_stim(t).idx_stimTime-1,2) - td_stim(t).vel(td_stim(t).idx_stimTime,2);
+    
+        [~,peak_acc_idx] = max((td_stim(t).acc(td_stim(t).idx_stimTime+150:td_stim(t).idx_stimTime+300,2)));
+        peak_acc_idx = peak_acc_idx + 150;
+        peak_acc =  td_stim(t).acc(peak_acc_idx+td_stim(t).idx_stimTime-1,2);
+        
+        if(peak_speed > 2.5)
+            threshold = abs(peak_acc*0.25);
+            peak_mask = 1:1:numel(td_stim(t).acc(td_stim(t).idx_stimTime:td_stim(t).idx_stimTime+300,2));
+            peak_mask = peak_mask < peak_acc_idx-20;
+            peak_mask = peak_mask';
+            above_threshold = find(td_stim(t).acc(td_stim(t).idx_stimTime:td_stim(t).idx_stimTime+300,2) < threshold & peak_mask,1,'last');
+            if(isempty(above_threshold))
+                latency = nan;
+            else
+                latency = above_threshold(1);
+            end
+            latencies{td_stim(t).stimCode+1}(end+1,1) = latency;
+        else
+            latency = nan;
+            latencies{td_stim(t).stimCode+1}(end+1,1) = latency;
+            peak_speeds{td_stim(t).stimCode+1}(end) = nan;
+        end
+        
+        if(counter(td_stim(t).stimCode+1) < num_plot)
+            figure(td_stim(t).stimCode+1);
+            plot(td_stim(t).speed(td_stim(t).idx_stimTime:td_stim(t).idx_stimTime+400,end),'b');
+            hold on
+            plot(td_stim(t).idx_stimTime-td_stim(t).idx_stimTime,td_stim(t).speed(td_stim(t).idx_stimTime,end),'k.','markersize',20);
+            if(~isnan(latency))
+%                 plot(latency,td_stim(t).vel(td_stim(t).idx_stimTime + latency,2),'r.','markersize',20);
+            end
+        end
+    end
+    
+    for i = 1:numel(counter)
+        f = figure(i);
+        f.Name = [fileList(1).name(1:end-4),'_code',num2str(i-1),'_velocity'];
+        xlabel('Time after stim onset (ms)');
+        ylabel('y-vel (cm/s)');
+        formatForLee(gcf)
+        set(gca,'fontsize',14)
+    end
+    
+%% plot latency and speed of movement during stimulation
+    f=figure();
+    f.Position = [961 463 880 420];
+    f.Name = [fileList(1).name(1:end-4),'_latencies'];
+    subplot(1,2,1)
+    for i = 1:numel(peak_speeds)
+        plot(i*10,peak_speeds{i},'.','markersize',12,'color',[0.5,0.5,0.5]);
+        hold on
+        plot(i*10,mean(peak_speeds{i},'omitnan'),'.','markersize',24,'color','k')
+    end
+    
+    xlim([0,110])
+    ylabel('y-vel (cm/s)')
+    xlabel('Amp (\muA)');
+    formatForLee(gcf)
+    set(gca,'fontsize',16)
+    set(gca,'XTick',[0:20:100]);%numel(peak_speeds)])
+    set(gca,'XMinorTick','on')
+    
+    subplot(1,2,2)
+    for i = 1:numel(peak_speeds)
+        plot(i*10,latencies{i},'.','markersize',12,'color',[0.5,0.5,0.5]);
+        hold on
+        plot(i*10,mean(latencies{i},'omitnan'),'.','markersize',24,'color','k')
+    end
+    
+    xlim([0,110])
+    ylabel('Latency (ms)')
+    xlabel('Amp (\muA)')
+    formatForLee(gcf)
+    set(gca,'fontsize',16)
+    set(gca,'XTick',[0:20:100]);%[1:numel(peak_speeds)])
+    set(gca,'XMinorTick','on')
+    ax=gca; ax.YLim(1) = 0;
+    
+    
+    
+%% look at force onset
+    params.event_list = {'bumpTime';'bumpDir';'otHoldTime'};
+    params.trial_results = {'R','F'};
+    td = parseFileByTrial(cds,params);
+    td = removeBadTrials(td);
+
+%%
+    offset = [0,100];
+    middle = [-3,33];
+    tgt_dir = []; bump_dir = [];
+    acc_dir = [];
+    reach_dir = []; dist_dir = [];
+    for t = 1:300
+        bump_dir(t) = td(t).bumpDir;
+        tgt_dir(t) = td(t).target_direction*180/pi;
+        pos_start = td(t).pos(td(t).idx_bumpTime+offset(1),:);
+        pos_end = td(t).pos(td(t).idx_bumpTime+offset(2),:);
+        acc_dir(t) = atan2(pos_end(2)-pos_start(2),pos_end(1)-pos_start(1))*180/pi;
+        reach_dir(t) = atan2(td(t).pos(td(t).idx_otHoldTime,2)+middle(2),td(t).pos(td(t).idx_otHoldTime,1)+middle(1))*180/pi;
+        dist_dir(t) = sqrt((td(t).pos(td(t).idx_otHoldTime,2)+middle(2)).^2 + (td(t).pos(td(t).idx_otHoldTime,1)+middle(1)).^2);
+    end
+   
+    remove_idx = abs(tgt_dir-acc_dir)*pi/180 > 1;
+    tgt_dir(remove_idx) = []; bump_dir(remove_idx) = [];
+    acc_dir(remove_idx) = [];
+    dist_dir(remove_idx) = [];
+    reach_dir(remove_idx) = [];
+%
+    figure
+    
+    plot(tgt_dir*pi/180,acc_dir*pi/180,'.','markersize',12)
+    hold on
+%     plot(acc_dir,reach_dir,'.','markersize',12)
+    plot([-2*pi,2*pi],[-2*pi,2*pi],'k--','linewidth',2)
+    hold off
+    formatForLee(gcf)
+%     ylabel('acc dir')
+%     xlabel('bump dir')
+    xlim([-pi,pi])
+    ylim([-pi,pi])
+    set(gca,'fontsize',14)
+    
+ 
+%%     
+%% look at force onset
+    params.event_list = {'bumpTime';'bumpDir';'otHoldTime'};
+    params.trial_results = {'R','F'};
+    td = parseFileByTrial(cds,params);
+    td = removeBadTrials(td);
+
+%%
+    offset = [0,400];
+    middle = [-3,33];
+    tgt_dir = []; bump_dir = [];
+    acc_dir = [];
+    reach_dir = []; dist_dir = [];
+    for t = 1:numel(td)
+        bump_dir(t) = td(t).bumpDir;
+        tgt_dir(t) = td(t).target_direction*180/pi;
+        pos_start = td(t).pos(td(t).idx_bumpTime+offset(1),:);
+        pos_end = td(t).pos(td(t).idx_bumpTime+offset(2),:);
+        acc_dir(t) = atan2(pos_end(2)-pos_start(2),pos_end(1)-pos_start(1))*180/pi;
+        reach_dir(t) = atan2(td(t).pos(td(t).idx_otHoldTime,2)+middle(2),td(t).pos(td(t).idx_otHoldTime,1)+middle(1))*180/pi;
+        dist_dir(t) = sqrt((td(t).pos(td(t).idx_otHoldTime,2)+middle(2)).^2 + (td(t).pos(td(t).idx_otHoldTime,1)+middle(1)).^2);
+    end
+   
+    remove_idx = abs(tgt_dir-acc_dir)*pi/180 > 1;
+    tgt_dir(remove_idx) = []; bump_dir(remove_idx) = [];
+    acc_dir(remove_idx) = [];
+    dist_dir(remove_idx) = [];
+    reach_dir(remove_idx) = [];
+%
+    figure
+    
+    plot(tgt_dir*pi/180,acc_dir*pi/180,'.','markersize',12)
+    hold on
+%     plot(acc_dir,reach_dir,'.','markersize',12)
+    plot([-2*pi,2*pi],[-2*pi,2*pi],'k--','linewidth',2)
+    hold off
+    formatForLee(gcf)
+%     ylabel('acc dir')
+%     xlabel('bump dir')
+    xlim([-pi,pi])
+    ylim([-pi,pi])
+    set(gca,'fontsize',14)
     
 %     
-%     
-%     %% plot reach kinematics,
-%     
-%     figure();
-%     for t = 21%numel(td_stim)
-%         plot(td_stim(t).pos(td_stim(t).idx_startTime:td_stim(t).idx_otHoldTime,1),...
-%             td_stim(t).pos(td_stim(t).idx_startTime:td_stim(t).idx_otHoldTime,2),'b','linewidth',2);
-%         hold on
-%         plot(td_stim(t).pos(td_stim(t).idx_stimTime,1),td_stim(t).pos(td_stim(t).idx_stimTime,2),'k.','markersize',20);
-%         plot(td_stim(t).pos(td_stim(t).idx_goCueTime,1),td_stim(t).pos(td_stim(t).idx_goCueTime,2),'r.','markersize',20);
-%     end
-%     
-%     %% plot velocity
-%     figure();
-%     for t = 3%numel(td_stim)
-%         plot(td_stim(t).vel(td_stim(t).idx_startTime:td_stim(t).idx_otHoldTime,2),'b');
-%         hold on
-%         plot(td_stim(t).idx_stimTime-td_stim(t).idx_startTime,td_stim(t).vel(td_stim(t).idx_stimTime,2),'k.','markersize',20);
-%         plot(td_stim(t).idx_goCueTime-td_stim(t).idx_startTime,td_stim(t).vel(td_stim(t).idx_goCueTime,2),'r.','markersize',20);
-%     end
-%     
-% %%
-%     opts.FIGURE_SAVE = 0;
-%     opts.FIGURE_PREFIX = 'Duncan_20190410_RR_training';
-%     opts.FIGURE_DIR = folderpath;
+% fit the data with a function 
+%     acc_dir(bump_dir < -170 & acc_dir > 150) = acc_dir(bump_dir < -170 & acc_dir > 150) - 180;
 % 
-%     opts.NUM_BINS_DIR = 8;
-%     opts.MAKE_FIGURES = 1;
-%     opts.PLOT_POLAR = 1;
-%     opts.MAX_TRIALS_PLOT = 2000;
-%     opts.CIRCLE_RADIUS = 5.75;
-%     opts.CIRCLE_DEPTH = 2;
-% 
-%     opts.DISTRIBUTION_BIN_SIZE = 5;
-%     opts.BUMP_MAGS = [];
-%     opts.BUMP_NONLINEARITY = 0;
-% 
-%     behaviorData = processBehaviorRingReporting(cds,opts);
-% 
+%     [f,gof] = fit(acc_dir'*pi/180,bump_dir'*pi/180,'poly5');
 %     
-%     
-%     
-%     
-%     
-%     
-%     
-%     
-%     
-%     
-%     
-%     
-%     
-%     
-%     
-% %% look at force onset
-%     params.event_list = {'bumpTime';'bumpDir';'otHoldTime'};
-%     params.trial_results = {'R','F'};
-%     td = parseFileByTrial(cds,params);
-%     td = removeBadTrials(td);
-% 
-% %%
-%     offset = [0,100];
-%     middle = [-3,33];
-%     tgt_dir = []; bump_dir = [];
-%     acc_dir = [];
-%     reach_dir = []; dist_dir = [];
-%     for t = 1:300
-%         bump_dir(t) = td(t).bumpDir;
-%         tgt_dir(t) = td(t).target_direction*180/pi;
-%         pos_start = td(t).pos(td(t).idx_bumpTime+offset(1),:);
-%         pos_end = td(t).pos(td(t).idx_bumpTime+offset(2),:);
-%         acc_dir(t) = atan2(pos_end(2)-pos_start(2),pos_end(1)-pos_start(1))*180/pi;
-%         reach_dir(t) = atan2(td(t).pos(td(t).idx_otHoldTime,2)+middle(2),td(t).pos(td(t).idx_otHoldTime,1)+middle(1))*180/pi;
-%         dist_dir(t) = sqrt((td(t).pos(td(t).idx_otHoldTime,2)+middle(2)).^2 + (td(t).pos(td(t).idx_otHoldTime,1)+middle(1)).^2);
-%     end
-%    
-%     remove_idx = abs(tgt_dir-acc_dir)*pi/180 > 1;
-%     tgt_dir(remove_idx) = []; bump_dir(remove_idx) = [];
-%     acc_dir(remove_idx) = [];
-%     dist_dir(remove_idx) = [];
-%     reach_dir(remove_idx) = [];
-% %
-%     figure
-%     
-%     plot(tgt_dir*pi/180,acc_dir*pi/180,'.','markersize',12)
+%     acc_test = [-pi:0.01:pi];
+%     bump_pred = feval(f,acc_test);
 %     hold on
-% %     plot(acc_dir,reach_dir,'.','markersize',12)
-%     plot([-2*pi,2*pi],[-2*pi,2*pi],'k--','linewidth',2)
-%     hold off
-%     formatForLee(gcf)
-% %     ylabel('acc dir')
-% %     xlabel('bump dir')
-%     xlim([-pi,pi])
-%     ylim([-pi,pi])
-%     set(gca,'fontsize',14)
-%     
-% %     
-% % fit the data with a function 
-% %     acc_dir(bump_dir < -170 & acc_dir > 150) = acc_dir(bump_dir < -170 & acc_dir > 150) - 180;
-% % 
-% %     [f,gof] = fit(acc_dir'*pi/180,bump_dir'*pi/180,'poly5');
-% %     
-% %     acc_test = [-pi:0.01:pi];
-% %     bump_pred = feval(f,acc_test);
-% %     hold on
-% %     plot(bump_pred,acc_test,'r','linewidth',2)
-% 
-% %% do PCA on spikes during perturbation to see if nicely laid out
-% 
-%     idx_start = {'idx_bumpTime',0};
-%     idx_end = {'idx_bumpTime',20};
-%     
-%     td_bump = trimTD(td_all,idx_start,idx_end);
-% 
-%     params_dim = [];
-%     params_dim.algorithm = 'ppca';
-%     params_dim.num_dims = 3;
-%     [td_bump,info_out] = dimReduce(td_bump,params_dim)
-%     
-% 
-%     %%
-%     figure();
-%     for tr = 1:numel(td_bump)
-%         
-%         if(~isnan(td_bump(tr).bumpDir))
-%             color_to_use = (td_bump(tr).bumpDir + 180)/720 + [0,0,0];
-%             plot(mean(td_bump(tr).LeftS1_ppca(:,2)),mean(td_bump(tr).LeftS1_ppca(:,3)),'.','color',color_to_use,'markersize',20)
-%             hold on
-%         end
-%         
-%     end
-%     
-%     
-%     
-%     
-% %%
-% 
-%     norm_dist_dir = dist_dir;
-% 
-%     figure();
-%     
-%     plot(tgt_dir*pi/180,norm_dist_dir,'.','markersize',12)
-%     hold on
-%     formatForLee(gcf)
-%     ylabel('Distance')
-%     xlabel('Bump direction')
-%     xlim([-pi,pi])
-%     set(gca,'fontsize',14)
-% %     f = gcf;
-% %     f.Name = 'Duncan_20180904_reachVsAcc_120ms';
-% %     saveFiguresLIB(f,folderpath,f.Name);
-% 
-% 
-% % fit the data with a function 
-%     [f_dist,gof] = fit(tgt_dir'*pi/180,norm_dist_dir','a*cos(b*x+c)+d');
-%     
-%     test = [-pi:0.01:pi];
-%    
-%     pred = feval(f_dist,test);
-%     hold on
-%     plot(test,pred,'r','linewidth',2)
+%     plot(bump_pred,acc_test,'r','linewidth',2)
+
+
+
+%% do PCA on spikes during perturbation to see if nicely laid out
+
+    idx_start = {'idx_bumpTime',0};
+    idx_end = {'idx_bumpTime',20};
+    
+    td_bump = trimTD(td_all,idx_start,idx_end);
+
+    params_dim = [];
+    params_dim.algorithm = 'ppca';
+    params_dim.num_dims = 3;
+    [td_bump,info_out] = dimReduce(td_bump,params_dim)
+    
+
+    %%
+    figure();
+    for tr = 1:numel(td_bump)
+        
+        if(~isnan(td_bump(tr).bumpDir))
+            color_to_use = (td_bump(tr).bumpDir + 180)/720 + [0,0,0];
+            plot(mean(td_bump(tr).LeftS1_ppca(:,2)),mean(td_bump(tr).LeftS1_ppca(:,3)),'.','color',color_to_use,'markersize',20)
+            hold on
+        end
+        
+    end
+    
+    
+    
+    
+%%
+
+    norm_dist_dir = dist_dir;
+
+    figure();
+    
+    plot(tgt_dir*pi/180,norm_dist_dir,'.','markersize',12)
+    hold on
+    formatForLee(gcf)
+    ylabel('Distance')
+    xlabel('Bump direction')
+    xlim([-pi,pi])
+    set(gca,'fontsize',14)
+%     f = gcf;
+%     f.Name = 'Duncan_20180904_reachVsAcc_120ms';
+%     saveFiguresLIB(f,folderpath,f.Name);
+
+
+% fit the data with a function 
+    [f_dist,gof] = fit(tgt_dir'*pi/180,norm_dist_dir','a*cos(b*x+c)+d');
+    
+    test = [-pi:0.01:pi];
+   
+    pred = feval(f_dist,test);
+    hold on
+    plot(test,pred,'r','linewidth',2)
