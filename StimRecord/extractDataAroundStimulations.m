@@ -72,15 +72,19 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
             stimInfo.waveSent = stimInfo.waveSent(stim_info_mask==1);
             
             NUM_WAVEFORM_TYPES = 15;
+            WAVEFORM_NUMS = 1:1:15;
             NUM_CHANS = 1;
             CHAN_LIST = opts.STIM_ELECTRODE; % placeholder because this isn't given that info
         else
             if(~isempty(opts.NUM_WAVEFORM_TYPES))
                 NUM_WAVEFORM_TYPES = opts.NUM_WAVEFORM_TYPES;
+                WAVEFORM_NUMS = 1:1:NUM_WAVEFORM_TYPES;
             elseif(any(isfield(stimInfo,'waveSent')))
                 NUM_WAVEFORM_TYPES = numel(unique(stimInfo.waveSent));
+                WAVEFORM_NUMS = unique(stimInfo.waveSent);
             else
                 NUM_WAVEFORM_TYPES = 1;
+                WAVEFORM_NUMS = 1;
             end
 
             if(~isempty(opts.CHAN_LIST))
@@ -173,11 +177,12 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
             %% extract raster data by looking at each stimulation
             for chan = 1:NUM_CHANS
                 for wave = 1:NUM_WAVEFORM_TYPES
+                    wave_num = WAVEFORM_NUMS(wave);
                     % find artifacts from channel and wave combination
                     stimsPerTrainMask = zeros(min(numel(stimInfo.stimOn),numel(stimInfo.waveSent)),1);
                     stimsPerTrainMask(1:opts.STIMULATIONS_PER_TRAIN:end) = 1;
 %                     stimIdx = find(stimsPerTrainMask == 1 & stimInfo.waveSent(1:numel(stimsPerTrainMask)) == wave & stimInfo.chanSent{1:numel(stimsPerTrainMask)}]' == CHAN_LIST(chan));
-                    stimIdx = find(stimsPerTrainMask == 1 & stimInfo.waveSent(1:numel(stimsPerTrainMask)) == wave & ...
+                    stimIdx = find(stimsPerTrainMask == 1 & stimInfo.waveSent(1:numel(stimsPerTrainMask)) == wave_num & ...
                         checkChanListEquality(stimInfo.chanSent(1:numel(stimsPerTrainMask)),CHAN_LIST{chan}));
 
                     numStims(chan,wave) = numel(stimIdx);
@@ -229,6 +234,7 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
             %% bin data
             for chan = 1:NUM_CHANS
                 for wave = 1:NUM_WAVEFORM_TYPES
+                    
                     % bin data
                     binEdges{chan,wave} = -opts.PRE_TIME:opts.BIN_SIZE:opts.POST_TIME;
                     [binCounts{chan,wave},binEdges{chan,wave}] = histcounts(spikeTrialTimes{chan,wave},binEdges{chan,wave});
@@ -253,7 +259,8 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
                     kin_dt = mode(diff(cds.kin.t));
                     for chan = 1:NUM_CHANS
                         for wave = 1:NUM_WAVEFORM_TYPES
-                            stimIdx = find(stimInfo.waveSent(1:opts.STIMULATIONS_PER_TRAIN:end) == wave & ...
+                            wave_num = WAVEFORM_NUMS(wave);
+                            stimIdx = find(stimInfo.waveSent(1:opts.STIMULATIONS_PER_TRAIN:end) == wave_num & ...
                                 checkChanListEquality(stimInfo.chanSent(1:opts.STIMULATIONS_PER_TRAIN:numel(stimsPerTrainMask)),CHAN_LIST{chan}));
                             kinData{chan,wave}.x = nan(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
                             kinData{chan,wave}.y = nan(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
@@ -280,7 +287,8 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
                     kin_dt = 0.001; % assume this and make nan entries to keep indexing correct
                     for chan = 1:NUM_CHANS
                         for wave = 1:NUM_WAVEFORM_TYPES   
-                            stimIdx = find(stimInfo.waveSent(1:opts.STIMULATIONS_PER_TRAIN:end) == wave & ...
+                            wave_num = WAVEFORM_NUMS(wave);
+                            stimIdx = find(stimInfo.waveSent(1:opts.STIMULATIONS_PER_TRAIN:end) == wave_num & ...
                                 checkChanListEquality(stimInfo.chanSent(1:opts.STIMULATIONS_PER_TRAIN:numel(stimsPerTrainMask)),CHAN_LIST{chan}));
                             
                             kinData{chan,wave}.x = nan(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/kin_dt,1));
@@ -300,7 +308,8 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
                 force_dt = mode(diff(cds.force.t));
                 for chan = 1:NUM_CHANS
                     for wave = 1:NUM_WAVEFORM_TYPES
-                        stimIdx = find(stimInfo.waveSent(1:opts.STIMULATIONS_PER_TRAIN:end) == wave & ...
+                        wave_num = WAVEFORM_NUMS(wave);
+                        stimIdx = find(stimInfo.waveSent(1:opts.STIMULATIONS_PER_TRAIN:end) == wave_num & ...
                             checkChanListEquality(stimInfo.chanSent(1:numel(stimsPerTrainMask)),CHAN_LIST{chan}));
                         forceData{chan,wave}.x = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/force_dt,1));
                         forceData{chan,wave}.y = zeros(numel(stimIdx),round((opts.POST_TIME + opts.PRE_TIME)/force_dt,1));
@@ -340,6 +349,7 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
                 arrayData{arrayDataIdx}.WAVEFORM_SENT = stimInfo.waveSent;
                 arrayData{arrayDataIdx}.CHAN_SENT = stimInfo.chanSent;
                 arrayData{arrayDataIdx}.CHAN_REC = cds.units(opts.NEURON_NUMBER).chan;
+                arrayData{arrayDataIdx}.WAVEFORM_LIST = WAVEFORM_NUMS;
                 
                 %% save useful array information
                 arrayData{arrayDataIdx}.ID = cds.units(opts.NEURON_NUMBER).ID;
