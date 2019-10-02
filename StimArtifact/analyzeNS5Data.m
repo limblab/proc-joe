@@ -1,6 +1,6 @@
 %% load in a ns5
 
-    folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\StimArtifactData\20190923_gen2gen3_testing\';
+    folderpath = 'C:\Users\jts3256\Desktop\Han_stim_data\Han_20190925_multielec_dukeBoardgen2\chan25stim\';
 %     folderpath = 'C:\Users\jts3256\Desktop\Duncan_stim_data\getIPI\';
 
         

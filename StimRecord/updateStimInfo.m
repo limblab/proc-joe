@@ -1,3 +1,4 @@
+
 folderpath = 'C:\Users\joh8881\Desktop\Han_20190924_trains_noAmp\Chan1\';
 
 pwd = cd;
@@ -8,11 +9,14 @@ stimInfoFileList = dir('*stimInfo*');
 for i = 1:numel(stimInfoFileList)
     
     load([folderpath,stimInfoFileList(i).name]);
-%     stimInfoAdj = stimInfo;
-%     stimInfoAdj.waveSent = reshape(repmat(stimInfo.waveSent,11,1),1,numel(stimInfo.waveSent)*11);
-%     stimInfoAdj.chanSent = reshape(repmat(stimInfo.chanSent,11,1),1,numel(stimInfo.chanSent)*11);
-%     stimInfo = stimInfoAdj;
-%     save([folderpath,stimInfoFileList(i).name],'stimInfo');
+    
+    % for multielectrode stim experiment
+    stimInfoAdj = stimInfo;
+    stimInfoAdj.waveSent =  stimInfo.waveSent(1,:)*10 + stimInfo.waveSent(2,:);
+    stimInfoAdj.waveSent = reshape(repmat(stimInfoAdj.waveSent,11,1),1,numel(stimInfoAdj.waveSent)*11);
+    stimInfoAdj.chanSent = reshape(repmat(stimInfoAdj.chanSent,11,1),1,numel(stimInfoAdj.chanSent)*11);
+    stimInfo = stimInfoAdj;
+    save([folderpath,stimInfoFileList(i).name],'stimInfo');
 
 end
 
