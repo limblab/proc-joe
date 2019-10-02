@@ -1,7 +1,7 @@
 %% set file names 
 
-    inputData.folderpath = 'C:\Users\jts3256\Desktop\Han_stim_data\Han_20190923_trains_noAmp\chan94\';
-    inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+    inputData.folderpath = 'C:\Users\joh8881\Desktop\Han_20190924_trains_noAmp\Chan9\';
+    inputData.mapFileName = 'mapFileZ:\Basic_Sciences\Phys\L_MillerLab\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
     % inputData.mapFileName = 'mapFileR:\limblab-archive\Retired Animal Logs\Monkeys\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
 %     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
 
@@ -57,8 +57,8 @@ for arrIdx = 1:numel(arrayData)
     optsPlotFunc.FIGURE_DIR = inputData.folderpath;
     optsPlotFunc.FIGURE_PREFIX = 'Han_20190923';
 
-    optsPlotFunc.PRE_TIME = 25/1000;
-    optsPlotFunc.POST_TIME = 175/1000;
+    optsPlotFunc.PRE_TIME = 50/1000;
+    optsPlotFunc.POST_TIME = 200/1000;
     optsPlotFunc.SORT_DATA = '';
 
     optsPlotFunc.PLOT_AFTER_STIMULATION_END = 0;
@@ -105,17 +105,17 @@ end
 
 %% heatmap across whole array
 
-    opts.STIM_ELECTRODE_PLOT = [1:numel(unique(arrayData{1}.CHAN_SENT))];
+    opts.STIM_ELECTRODE_PLOT = [1];
     % opts.STIM_ELECTRODE_PLOT = 1;
     % opts.WAVEFORM_TYPES_PLOT = unique(arrayData{1}.WAVEFORM_SENT);
-    opts.WAVEFORM_TYPES_PLOT = [1:size(arrayData{1}.bE,2)];
+    opts.WAVEFORM_TYPES_PLOT = [1:size(arrayData{1}.binEdges,2)];
 
     opts.ALL_NEURONS = 1; % 1 = plot all neurons for each stim chan, 0 = plot all stim chans for a neuron
 
-    opts.BASELINE_PRE_TIME = -15/1000;
+    opts.BASELINE_PRE_TIME = -100/1000;
     opts.BASELINE_POST_TIME = -5/1000;
-    opts.STIM_PRE_TIME = 1/1000;
-    opts.STIM_POST_TIME = 10/1000;
+    opts.STIM_PRE_TIME = 0/1000;
+    opts.STIM_POST_TIME = 120/1000;
 
     opts.AUTO_WINDOW = 0; % 
     opts.INHIBITORY = 0;
@@ -123,7 +123,7 @@ end
 
     opts.MAX_RATIO = 1;
     opts.MIN_RATIO = -1;
-    opts.LOG_SCALE = 1;
+    opts.LOG_SCALE = 0;
     opts.LOG_PARAM = 9;
 
     opts.RELATIVE_INHIBITION = 0;
