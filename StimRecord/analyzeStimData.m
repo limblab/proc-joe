@@ -1,9 +1,9 @@
 %% set file names 
 
-    inputData.folderpath = 'C:\Users\jts3256\Desktop\Han_stim_data\Han_20190821_stimrec\chan60\';
-%     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+    inputData.folderpath = 'C:\Users\jts3256\Desktop\Han_stim_data\Han_20190926_multielec_dukeBoardgen2\chan92\';
+    inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
     % inputData.mapFileName = 'mapFileR:\limblab-archive\Retired Animal Logs\Monkeys\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
-    inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
+%     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
 
 
     folderpath = inputData.folderpath; % rest of code uses folderpath currently...may have switched this, not 100% certain
@@ -11,7 +11,7 @@
     inputData.task='taskCObump';
     inputData.ranBy='ranByJoseph'; 
     inputData.array1='arrayLeftS1'; 
-    inputData.monkey='monkeyDuncan';
+    inputData.monkey='monkeyHan';
     inputData.labnum = 6;
 
     pwd=cd;
@@ -24,15 +24,15 @@
     tic
 
     optsExtract.STIMULI_RESPONSE = 'all';
-    optsExtract.STIMULATIONS_PER_TRAIN = 1;
+    optsExtract.STIMULATIONS_PER_TRAIN = 11;
     optsExtract.STIMULATION_BATCH_SIZE = 1000;
 
     optsExtract.USE_STIM_CODE = 0;
     optsExtract.STIM_ELECTRODE = {};
     optsExtract.CHAN_LIST = [];
 
-    optsExtract.PRE_TIME = 100/1000; % made negative in the function
-    optsExtract.POST_TIME = 450/1000;
+    optsExtract.PRE_TIME = 150/1000; % made negative in the function
+    optsExtract.POST_TIME = 500/1000;
 
     optsExtract.BIN_SIZE = 5/1000;
     optsExtract.TIME_AFTER_STIMULATION_WAVEFORMS = 10/1000;
@@ -47,19 +47,19 @@
     
 %% pick a unit (index in array data)
 % plot raster, and PSTH for the given unit above
-% for arrIdx = 1:numel(arrayData)
-arrIdx = 1;
+for arrIdx = 1:numel(arrayData)
+% arrIdx = ;
     % plot raster, and PSTH for the given unit above
 
 %     optsPlotFunc.BIN_SIZE = optsExtract.BIN_SIZE;
     optsPlotFunc.BIN_SIZE = mode(diff(arrayData{1}.binEdges{1,1}));
     optsPlotFunc.FIGURE_SAVE = 0;
     optsPlotFunc.FIGURE_DIR = inputData.folderpath;
-    optsPlotFunc.FIGURE_PREFIX = 'Han_20190502';
+    optsPlotFunc.FIGURE_PREFIX = 'Han_20190923';
 
-    optsPlotFunc.PRE_TIME = 5/1000;
-    optsPlotFunc.POST_TIME = 20/1000;
-    optsPlotFunc.SORT_DATA = 'postStimuliTime';
+    optsPlotFunc.PRE_TIME = 25/1000;
+    optsPlotFunc.POST_TIME = 175/1000;
+    optsPlotFunc.SORT_DATA = '';
 
     optsPlotFunc.PLOT_AFTER_STIMULATION_END = 0;
     optsPlotFunc.STIMULATION_LENGTH = 0.1+0.5+0.53;
@@ -70,10 +70,10 @@ arrIdx = 1;
     optsPlotFunc.PLOT_LINE = 1;
     optsPlotFunc.PLOT_TITLE = 1;    
     optsPlotFunc.PLOT_ALL_WAVES_ONE_FIGURE = 0;
-%     
+% %     
     PSTHPlots = plotPSTHStim(arrayData{arrIdx},1,optsPlotFunc);
 
-% end
+end
 
 %% plot grid
     optsGrid.STIM_ELECTRODE = unique(arrayData{arrIdx}.CHAN_SENT);

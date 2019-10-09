@@ -1,11 +1,11 @@
 %% set initial parameters
 
-    input_data.folderpath = 'C:\Users\jts3256\Desktop\Han_stim_data\Han_20190821_stimrec\chan64\test\';
+    input_data.folderpath = 'C:\Users\jts3256\Desktop\Han_CObump\';
 %     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 %     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Pop_18E3\Array Map Files\6250-002085\SN 6250-002085.cmp';
     
-    input_data.date = '20190722';
+    input_data.date = '20190930';
     input_data.array = 'arrayLeftS1';
     input_data.monkey = 'monkeyHan';
     input_data.ranBy = 'ranByJoe';
@@ -43,22 +43,25 @@
     
     
 %% REMOVE ID FROM UNITS and make trial data
-    removeIDFromUnits;
-    
+   
     td_all = parseFileByTrial(cds,params);
+    td_all = stripSpikeSorting(td_all);
     td_all = getSpeed(td_all);
     td_all = removeBadTrials(td_all);
 %     td_all = getMoveOnset(td_all,move_onset_params);
 %     td_all = removeBadTrials(td_all);
 
-
+    if(td_all(1).bin_size < 0.01)
+        % set it to 50ms
+        td_all = binTD(td_all,ceil(0.05/td_all(1).bin_size));
+    end
     
 %% get PDs
     
     pd_params = [];
     pd_params.out_signals = 'LeftS1_spikes';
-    pd_params.bootForTuning = 0;
-    pd_params.num_boots = 1;
+    pd_params.bootForTuning = 1;
+    pd_params.num_boots = 100;
     pd_params.move_corr = 'vel';
     
     pd_all = getTDPDs(td_all,pd_params);

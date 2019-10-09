@@ -81,7 +81,8 @@ function [figureHandle] = plotRasterStim(unitData,NEURON_NUMBER,optsPlot)
             optsSave.FIGURE_DIR = opts.FIGURE_DIR;
 %                 optsSave.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'nn',num2str(NEURON_NUMBER),'_chan',num2str(unitData.CHAN_REC),'_stimChan',num2str(CHAN_LIST(chan)),'_waveNum',num2str(wave),'_raster');
             
-            if(isfield(unitData,'STIM_PARAMETERS'))
+            if(isfield(unitData,'STIM_PARAMETERS') && size(unitData.spikeTrialTimes,2) <= numel(unitData.STIM_PARAMETERS))
+                
                 amp1 = unitData.STIM_PARAMETERS(wave).amp1;
                 amp2 = unitData.STIM_PARAMETERS(wave).amp2;
                 pw1 = unitData.STIM_PARAMETERS(wave).pWidth1;
@@ -90,6 +91,8 @@ function [figureHandle] = plotRasterStim(unitData,NEURON_NUMBER,optsPlot)
 
                 optsSave.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'nn',num2str(NEURON_NUMBER),'_chan',num2str(unitData.CHAN_REC),'_waveNum',num2str(wave),...
                     '_A1-',num2str(amp1),'_A2-',num2str(amp2),'_pw1-',num2str(pw1),'_pw2-',num2str(pw2),'_pol-',num2str(pol),'_raster');
+            elseif(numel(unitData.CHAN_LIST) > 1)
+                optsSave.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'_chan',num2str(unitData.CHAN_LIST{chan}),'_nn',num2str(NEURON_NUMBER),'_wavenum',num2str(unitData.WAVEFORM_LIST(wave)),'_raster');
             else
                 optsSave.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'_chan',num2str(unitData.CHAN_LIST),'_nn',num2str(NEURON_NUMBER),'_wavenum',num2str(chan),'_raster');
             end

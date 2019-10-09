@@ -1,12 +1,12 @@
 %% set initial parameters
 
-    input_data.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\CObump\Han_20160405_CObump\';
-%     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
-    mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
-    
-    input_data.date = '20160405';
+    input_data.folderpath = 'C:\Users\jts3256\Desktop\Duncan_curl_field\CObump\';
+    mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
+%     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+     
+    input_data.date = '20190910';
     input_data.array = 'arrayLeftS1';
-    input_data.monkey = 'monkeyHan';
+    input_data.monkey = 'monkeyDuncan';
     input_data.ranBy = 'ranByJoe';
     input_data.lab = 6;
     input_data.mapFile = strcat('mapFile',mapFileName);
@@ -22,8 +22,8 @@
 %% load in td's
     cd(input_data.folderpath)
 
-    baseline_file = dir('*baseline*nev*');
-    adaptation_file = dir('*adaptation*nev*');
+%     baseline_file = dir('*baseline*nev*');
+    adaptation_file = dir('*adapt*nev*');
     washout_file = dir('*washout*nev*');
     
     params.event_list = {'goCueTime';'tgtDir'};
@@ -38,23 +38,23 @@
     move_onset_params.max_rt_offset = 400;
     
 
-    cds = commonDataStructure();
-    cds.file2cds(strcat(input_data.folderpath,baseline_file.name),input_data.array,input_data.monkey,input_data.ranBy,...
-        input_data.lab,input_data.mapFile,input_data.task,'recoverPreSync','ignoreJumps','ignoreFilecat');
-    
-    removeIDFromUnits;
-    td_baseline = parseFileByTrial(cds,params);
-    td_baseline = getSpeed(td_baseline);
-    td_baseline = removeBadTrials(td_baseline);
-    td_baseline = getMoveOnset(td_baseline,move_onset_params);
-    td_baseline = removeBadTrials(td_baseline);
+%     cds = commonDataStructure();
+%     cds.file2cds(strcat(input_data.folderpath,baseline_file.name),input_data.array,input_data.monkey,input_data.ranBy,...
+%         input_data.lab,input_data.mapFile,input_data.task,'recoverPreSync','ignoreJumps','ignoreFilecat');
+%     
+%     removeIDFromUnits;
+%     td_baseline = parseFileByTrial(cds,params);
+%     td_baseline = getSpeed(td_baseline);
+%     td_baseline = removeBadTrials(td_baseline);
+%     td_baseline = getMoveOnset(td_baseline,move_onset_params);
+%     td_baseline = removeBadTrials(td_baseline);
     
     
     cds = commonDataStructure();
     cds.file2cds(strcat(input_data.folderpath,adaptation_file.name),input_data.array,input_data.monkey,input_data.ranBy,...
-        input_data.lab,input_data.mapFile,input_data.task,'recoverPreSync','ignoreJumps','ignoreFilecat');
+        input_data.lab,input_data.mapFile,input_data.task);
     
-    removeIDFromUnits;
+%     removeIDFromUnits;
     td_adapt = parseFileByTrial(cds,params);
     td_adapt = getSpeed(td_adapt);
     td_adapt = removeBadTrials(td_adapt);
@@ -63,9 +63,9 @@
     
     cds = commonDataStructure();
     cds.file2cds(strcat(input_data.folderpath,washout_file.name),input_data.array,input_data.monkey,input_data.ranBy,...
-        input_data.lab,input_data.mapFile,input_data.task,'recoverPreSync','ignoreJumps','ignoreFilecat');
+        input_data.lab,input_data.mapFile,input_data.task);
     
-    removeIDFromUnits;
+%     removeIDFromUnits;
     td_washout = parseFileByTrial(cds,params);
     td_washout = getSpeed(td_washout);
     td_washout = removeBadTrials(td_washout);
@@ -85,9 +85,9 @@
     washout_color = [0,0,1];
     window = [0,0];
     
-    figure();
-    plotReaches(td_baseline,datasample([1:numel(td_baseline)],num_baseline_plot,'Replace',false),...
-        'idx_goCueTime','idx_endTime',window,baseline_color)
+%     figure();
+%     plotReaches(td_baseline,datasample([1:numel(td_baseline)],num_baseline_plot,'Replace',false),...
+%         'idx_goCueTime','idx_endTime',window,baseline_color)
     
     figure();
     plotReaches(td_adapt,[1:50],'idx_goCueTime','idx_endTime',window,adapt_color);

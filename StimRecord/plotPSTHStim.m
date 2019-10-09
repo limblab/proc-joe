@@ -93,7 +93,7 @@ function [figureHandle] = plotPSTHStim(unitData,NEURON_NUMBER,optsPlot)
                 elseif(opts.PLOT_ALL_ONE_FIGURE)
                     % no title
                 else
-%                     optsPlot.TITLE = strcat('Stim Chan: ',num2str(CHAN_LIST{chan}),' Wave: ',num2str(wave));
+                    optsPlot.TITLE = strcat('Stim Chan: ',num2str(CHAN_LIST{chan}),' Wave: ',num2str(wave));
                 end
             end
 

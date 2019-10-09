@@ -1,7 +1,7 @@
 %% load in a ns5
 
 
-    folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\StimRecData\trains_IPI_data\';
+    folderpath = 'C:\Users\jts3256\Desktop\Duncan_stim_data\getIPI\';
         
     cd(folderpath);
     file_list = dir('*.ns5');

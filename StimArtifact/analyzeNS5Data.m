@@ -1,6 +1,7 @@
 %% load in a ns5
 
-    folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\StimArtifactData\20190923_gen2gen3_testing\';
+    folderpath = 'C:\Users\jts3256\Desktop\Han_stim_data\Han_20190925_multielec_dukeBoardgen2\chan25stim\';
+%     folderpath = 'C:\Users\jts3256\Desktop\Duncan_stim_data\getIPI\';
 
         
     cd(folderpath);
@@ -23,8 +24,9 @@
         disp(file_list(file_num).name);
         NS5 = openNSx([folderpath,file_list(file_num).name],'uV');
 
-%         artifact_data{file_num} = NS5.Data(analog_pin_idx,:);
-%         sync_line_data{file_num} = NS5.Data(sync_idx,:);
+
+        artifact_data{file_num} = NS5.Data(analog_pin_idx,:);
+        sync_line_data{file_num} = NS5.Data(sync_idx,:);
 %         
 %         % get pulse widths
 %         pw1_idx = strfind(file_list(file_num).name,'PW1');
@@ -47,10 +49,14 @@
     threshold = 0.1;
     peak_data = {};
     
-    for file_num = 1:numel(file_list)
+    for file_num = 1% :numel(file_list)
         disp(file_list(file_num).name);
         
         stim_on=find(diff(sync_line_data{file_num}-mean(sync_line_data{file_num})>3)>.5);
+        
+    end
+    
+    %%
 %         stim_on=stim_on(waveforms.waveSent == 1 & ...
 %             cellfun(@isequal,waveforms.chanSent,mat2cell(analog_pin_idx+zeros(size(waveforms.chanSent)),ones(size(waveforms.chanSent)))));
 %         
