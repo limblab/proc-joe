@@ -377,7 +377,6 @@
         unit = [unit,u*ones(size(inhibStruct{u}.inhib_dur))'];
         
     end
-    
     % remove nan's
     keep_mask = ~isnan(amp) & ~isnan(inhib_dur) & ~isnan(unit);
     amp = amp(keep_mask);
@@ -419,7 +418,7 @@
         hold on
 
     end
-    plot(amps_plot,inhib_dur_total./num_units_inhib,'k-','linewidth',1.5);
+    plot(amps_plot,inhib_dur_total./num_units_inhib,'k-','linewidth',2);
     formatForLee(gcf)
     xlabel('Amplitude (\muA)');
     ylabel('Inhibition duration (ms)');

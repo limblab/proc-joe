@@ -7,7 +7,8 @@ function [output_data] = plotPSTHArrayData(array_data,input_data)
     for u = input_data.unit_idx
         max_y_lim = 0;
         f_list{u} = figure();
-        f_list{u}.Name = [array_data{u}.monkey,'_chan',num2str(input_data.chan_rec)];%'rec_IPI',num2str(input_data.IPI(cond)),...
+        f_list{u}.Position = [251.4000 -49.4000 704 804.8000];
+        f_list{u}.Name = [array_data{u}.monkey,'_DblPulseTrains_PSTH_chan',num2str(input_data.chan_rec)];%'rec_IPI',num2str(input_data.IPI(cond)),...
 %                 '_numPulses',num2str(input_data.num_pulses(cond)),'_unitID',num2str(u)];
         for cond = 1:numel(array_data{u}.binCounts)
             subplot(4,2,cond)
