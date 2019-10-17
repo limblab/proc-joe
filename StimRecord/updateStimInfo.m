@@ -1,5 +1,5 @@
 
-folderpath = 'C:\Users\joh8881\Desktop\Han_20190924_trains_noAmp\Chan1\';
+folderpath = 'C:\Users\joh8881\Desktop\Han_20190924_trains_noAmp\Chan66\';
 
 pwd = cd;
 
@@ -11,12 +11,12 @@ for i = 1:numel(stimInfoFileList)
     load([folderpath,stimInfoFileList(i).name]);
     
     % for multielectrode stim experiment
-    stimInfoAdj = stimInfo;
-    stimInfoAdj.waveSent =  stimInfo.waveSent(1,:)*10 + stimInfo.waveSent(2,:);
-    stimInfoAdj.waveSent = reshape(repmat(stimInfoAdj.waveSent,11,1),1,numel(stimInfoAdj.waveSent)*11);
-    stimInfoAdj.chanSent = reshape(repmat(stimInfoAdj.chanSent,11,1),1,numel(stimInfoAdj.chanSent)*11);
-    stimInfo = stimInfoAdj;
-    save([folderpath,stimInfoFileList(i).name],'stimInfo');
+%     stimInfoAdj = stimInfo;
+ %     stimInfoAdj.waveSent =  stimInfo.waveSent(1,:)*10 + stimInfo.waveSent(2,:);
+%     stimInfoAdj.waveSent = reshape(repmat(stimInfoAdj.waveSent,11,1),1,numel(stimInfoAdj.waveSent)*11);
+%     stimInfoAdj.chanSent = reshape(repmat(stimInfoAdj.chanSent,11,1),1,numel(stimInfoAdj.chanSent)*11);
+%     stimInfo = stimInfoAdj;
+%     save([folderpath,stimInfoFileList(i).name],'stimInfo');
 
 end
 
@@ -63,6 +63,30 @@ for i = 1:numel(stimInfoFileList)
     save([folderpath,stimInfoFileList(i).name],'stimInfo');
 
 end
+
+
+%% fix stim info if someone (Juliet) messed up
+
+folderpath = 'C:\Users\joh8881\Desktop\Han_20190924_trains_noAmp\Chan66\';
+
+pwd = cd;
+
+cd(folderpath);
+outputDataFileList = dir('*outputData*');
+stimInfoFileList = dir('*stimInfo*');
+
+for i = 1:numel(outputDataFileList)
+    
+    load([folderpath,outputDataFileList(i).name]);
+    
+    stimInfo = outputData.stimInfo;
+    stimInfo.chanSent = outputData.waveforms.chanSent';
+    stimInfo.waveSent = outputData.waveforms.waveSent';
+    stimInfo.parameters = outputData.waveforms.parameters;
+    save([folderpath,stimInfoFileList(i).name],'stimInfo');
+end
+
+
 
 
 

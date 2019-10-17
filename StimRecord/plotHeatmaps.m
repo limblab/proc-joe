@@ -75,7 +75,7 @@ function [figureHandles,unit_data] = plotHeatmaps(arrayData,mapFileName,opts)
                 colorToPlot = colorsAboveOne(colorIdx,:);
             end
 
-            rectangle('Position',[heatmap_data{heatmap_idx}.col(unit),heatmap_data{heatmap_idx}.row(unit),1,1],'EdgeColor','k',...
+            rectangle('Position',[heatmap_data{heatmap_idx}.col(unit),(11-heatmap_data{heatmap_idx}.row(unit)),1,1],'EdgeColor','k',...
                         'FaceColor',colorToPlot,'linewidth',0.1);
                     
             plottedHere(heatmap_data{heatmap_idx}.col(unit),heatmap_data{heatmap_idx}.row(unit)) = 1;
@@ -86,7 +86,7 @@ function [figureHandles,unit_data] = plotHeatmaps(arrayData,mapFileName,opts)
         % plot stim chan
         posIdx = find(MAP_DATA.chan == heatmap_data{heatmap_idx}.main_chan);
         posList = [MAP_DATA.row,MAP_DATA.col];
-        stimRow = 11 - posList(posIdx,1);
+        stimRow = posList(posIdx,1);
         stimCol = posList(posIdx,2);
 
         % magenta box
@@ -187,6 +187,9 @@ function [heatmap_data] = getHeatmapDataAllNeurons(arrayData,opts)
 
             dataPre = zeros(numel(arrayData),1);
             dataPost = zeros(numel(arrayData),1);
+            
+            %define dataRatio
+            dataRatio = [];
 
             for unit = 1:numel(arrayData)
                 try
@@ -211,12 +214,51 @@ function [heatmap_data] = getHeatmapDataAllNeurons(arrayData,opts)
                     dataPost(unit) = 0;
                     numPostStimBins(unit) = 0;
                 end
+                
+                %defining arrays and bin sizess
+                lastRep = arrayData{1,unit}.stimData{chan,wave}(numel(arrayData{1,unit}.stimData{chan,wave}));
+                repList = cell(1,lastRep); %all spike times organized by repetition
+                preRepList = zeros(1,lastRep); %number of baseline spikes per repetition
+                postRepList = zeros(1,lastRep); %number of post-stim spikes per repetition
+                preStimWindow = opts.PRE_STIM_WINDOW;
+                postStimWindow = opts.POST_STIM_WINDOW;
+                
+                %separating spike times by repetition into repList
+                for spikeTime=1:numel(arrayData{1,unit}.spikeTrialTimes{chan,wave})
+                    rep = arrayData{1,unit}.stimData{chan,wave}(spikeTime);
+                    repList{1,rep} = [repList{1,rep}, arrayData{1,unit}.spikeTrialTimes{chan,wave}(spikeTime)];
+                end
+                
+                %going through repList 
+                %and counting baseline and post-stim spikes
+                for rep=1:numel(repList)
+                    for spikeTime=1:numel(repList{1,rep})
+                        if (repList{1,rep}(spikeTime)) < 0 && (repList{1,rep}(spikeTime)) > (0-preStimWindow) 
+                            preRepList(rep) = preRepList(rep)+1;
+                        elseif (repList{1,rep}(spikeTime))>0 && (repList{1,rep}(spikeTime)) < postStimWindow
+                            postRepList(rep) = postRepList(rep)+1;
+                        end
+                    end
+                end
+                
+                
+                %calculating standardized value
+%                 disp('preRepList = ')
+%                 disp(preRepList)
+                dataPreMean = mean(preRepList);
+                dataPostMean = mean(postRepList);
+                dataPreStd = std(preRepList);
+                spikesStandardized = (dataPostMean-dataPreMean)/dataPreStd;
+                
+                %adding that value to dataRatio array
+                dataRatio = [dataRatio, spikesStandardized];
+                        
                 heatmap_data{heatmap_idx}.row(unit) = arrayData{unit}.ROW;
                 heatmap_data{heatmap_idx}.col(unit) = arrayData{unit}.COL;
             end
             
-            dataRatio = dataPost-dataPre
-          %  dataRatio = (dataPost-dataPre)/std(dataPre)
+          % dataRatio = dataPost-dataPre
+          % dataRatio = (dataPost-dataPre)/std(dataPre)
             
 
             if(opts.LOG_SCALE)
@@ -313,6 +355,9 @@ function [opts] = configureOpts(optsInput)
     opts.BASELINE_POST_TIME = -3/1000;
     opts.STIM_PRE_TIME = 1.2/1000;
     opts.STIM_POST_TIME = 5/1000;
+    
+    opts.PRE_STIM_WINDOW = 120/1000;
+    opts.POST_STIM_WINDOW = 120/1000;
     
     opts.STIM_ELECTRODE_PLOT = 1;
     opts.WAVEFORM_TYPES_PLOT = 1;

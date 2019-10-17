@@ -96,3 +96,22 @@
     
     
 %% visualize
+%% heatmap for preferred directions
+disp('start')
+    mapData = loadMapFile(mapFileName);
+    
+    optsPD.MAKE_BAR_PLOT = 1;
+
+    optsPD.PLOT_CHANNELS = [1:96];
+    optsPD.STIM_CHANNEL = 41;
+
+    optsPD.MAX_RATIO = 4;
+    optsPD.MIN_RATIO = -1;
+    optsPD.LOG_SCALE = 0;
+    optsPD.LOG_PARAM = 9;
+
+    optsPD.FIGURE_SAVE = 0;
+    optsPD.FIGURE_DIR = input_data.folderpath;
+    optsPD.FIGURE_PREFIX = 'Han_20190924';
+    
+    [heatmapPD] = plotHeatmapsPD(td_all,pd_all,mapData,optsPD);
