@@ -6,7 +6,7 @@
 <setting alwaysvectorfont="no"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="no" altdistance="0.01" altunitdist="inch" altunit="inch"/>
+<grid distance="50" unitdist="mil" unit="mil" style="lines" multiple="1" display="yes" altdistance="5" altunitdist="mil" altunit="mil"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
 <layer number="16" name="Bottom" color="1" fill="1" visible="yes" active="yes"/>
@@ -1364,56 +1364,6 @@
 <connect gate="G$1" pin="P7_NO5B" pad="P7"/>
 <connect gate="G$1" pin="P8_NO4B" pad="P8"/>
 <connect gate="G$1" pin="P9_NO3B" pad="P9"/>
-</connects>
-<technologies>
-<technology name=""/>
-</technologies>
-</device>
-</devices>
-</deviceset>
-<deviceset name="OMNETICS_NANO_18X2">
-<gates>
-<gate name="G$1" symbol="OMNETICS_NANO_18X2" x="0" y="0"/>
-</gates>
-<devices>
-<device name="" package="OMNETICS_NANO_18X2">
-<connects>
-<connect gate="G$1" pin="GND0" pad="GND0"/>
-<connect gate="G$1" pin="GND34" pad="GND34"/>
-<connect gate="G$1" pin="P$1" pad="P_1"/>
-<connect gate="G$1" pin="P$10" pad="P_10"/>
-<connect gate="G$1" pin="P$11" pad="P_11"/>
-<connect gate="G$1" pin="P$12" pad="P_12"/>
-<connect gate="G$1" pin="P$13" pad="P_13"/>
-<connect gate="G$1" pin="P$14" pad="P_14"/>
-<connect gate="G$1" pin="P$15" pad="P_15"/>
-<connect gate="G$1" pin="P$16" pad="P_16"/>
-<connect gate="G$1" pin="P$17" pad="P_17"/>
-<connect gate="G$1" pin="P$18" pad="P_18"/>
-<connect gate="G$1" pin="P$19" pad="P_19"/>
-<connect gate="G$1" pin="P$2" pad="P_2"/>
-<connect gate="G$1" pin="P$20" pad="P_20"/>
-<connect gate="G$1" pin="P$21" pad="P_21"/>
-<connect gate="G$1" pin="P$22" pad="P_22"/>
-<connect gate="G$1" pin="P$23" pad="P_23"/>
-<connect gate="G$1" pin="P$24" pad="P_24"/>
-<connect gate="G$1" pin="P$25" pad="P_25"/>
-<connect gate="G$1" pin="P$26" pad="P_26"/>
-<connect gate="G$1" pin="P$27" pad="P_27"/>
-<connect gate="G$1" pin="P$28" pad="P_28"/>
-<connect gate="G$1" pin="P$29" pad="P_29"/>
-<connect gate="G$1" pin="P$3" pad="P_3"/>
-<connect gate="G$1" pin="P$30" pad="P_30"/>
-<connect gate="G$1" pin="P$31" pad="P_31"/>
-<connect gate="G$1" pin="P$32" pad="P_32"/>
-<connect gate="G$1" pin="P$4" pad="P_4"/>
-<connect gate="G$1" pin="P$5" pad="P_5"/>
-<connect gate="G$1" pin="P$6" pad="P_6"/>
-<connect gate="G$1" pin="P$7" pad="P_7"/>
-<connect gate="G$1" pin="P$8" pad="P_8"/>
-<connect gate="G$1" pin="P$9" pad="P_9"/>
-<connect gate="G$1" pin="REF0" pad="REF0"/>
-<connect gate="G$1" pin="REF33" pad="REF33"/>
 </connects>
 <technologies>
 <technology name=""/>

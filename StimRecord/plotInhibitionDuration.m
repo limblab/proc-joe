@@ -9,6 +9,14 @@ function [inhib_struct, figure_handles] = plotInhibitionDuration(array_data,inpu
     %   BLANK_TIME -- time after stimulation onset to blank to remove
     %       excitatory period due to stimulation
     
+    if(size(input_data.POST_WINDOW,1) == 1) % make it numel(array_data_rebin.binCounts)
+        input_data.POST_WINDOW = repmat(input_data.POST_WINDOW,numel(array_data.binCounts),1);
+    end
+    
+    if(size(input_data.BLANK_TIME,1) == 1) % make it numel(array_data_rebin.binCounts)
+        input_data.BLANK_TIME = repmat(input_data.BLANK_TIME,numel(array_data.binCounts),1);
+    end
+    
     
     figure_handles = [];
     
@@ -35,8 +43,8 @@ function [inhib_struct, figure_handles] = plotInhibitionDuration(array_data,inpu
         PSTH(cond,:) = array_data_rebin.binCounts{cond};
         
         % blank period with mean from baseline
-        blank_idx = [find(array_data_rebin.binEdges{cond} >= input_data.BLANK_TIME(1),1,'first'),...
-            find(array_data_rebin.binEdges{cond} > input_data.BLANK_TIME(2),1,'first')];
+        blank_idx = [find(array_data_rebin.binEdges{cond} >= input_data.BLANK_TIME(cond,1),1,'first'),...
+            find(array_data_rebin.binEdges{cond} > input_data.BLANK_TIME(cond,2),1,'first')];
         pre_window_idx = [find(array_data_rebin.binEdges{cond} > input_data.PRE_WINDOW(1),1,'first'),...
             find(array_data_rebin.binEdges{cond} > input_data.PRE_WINDOW(2),1,'first')];
         
@@ -57,18 +65,20 @@ function [inhib_struct, figure_handles] = plotInhibitionDuration(array_data,inpu
 % %         threshold(cond) = spont_fr*0.75;
 
     end
+    spont_fr = mean(reshape(filtered_PSTH(:,pre_window_idx(1):pre_window_idx(2)),numel(filtered_PSTH(:,pre_window_idx(1):pre_window_idx(2))),1));
+    spont_std = std(reshape(filtered_PSTH(:,pre_window_idx(1):pre_window_idx(2)),numel(filtered_PSTH(:,pre_window_idx(1):pre_window_idx(2))),1));
+    threshold = zeros(numel(array_data_rebin.binCounts),1)+spont_fr - spont_std;
+
     
     for cond = 1:numel(array_data_rebin.binCounts)
-        spont_fr = mean(reshape(filtered_PSTH(cond,pre_window_idx(1):pre_window_idx(2)),numel(filtered_PSTH(cond,pre_window_idx(1):pre_window_idx(2))),1));
-        spont_std = std(reshape(filtered_PSTH(cond,pre_window_idx(1):pre_window_idx(2)),numel(filtered_PSTH(cond,pre_window_idx(1):pre_window_idx(2))),1));
+
         
         
-        threshold = zeros(numel(array_data_rebin.binCounts),1)+spont_fr - spont_std;
         
         % if firing rate undershoots thresh, define duration as the time
         % between this point and when the FR comes back above thresh. 
-        post_window_idx = [find(array_data_rebin.binEdges{cond} > input_data.POST_WINDOW(1),1,'first'),...
-            find(array_data_rebin.binEdges{cond} > input_data.POST_WINDOW(2),1,'first')];
+        post_window_idx = [find(array_data_rebin.binEdges{cond} > input_data.POST_WINDOW(cond,1),1,'first'),...
+            find(array_data_rebin.binEdges{cond} > input_data.POST_WINDOW(cond,2),1,'first')];
         under_one_mask = (filtered_PSTH(cond,post_window_idx(1):post_window_idx(2)) < threshold(cond));
         
         start_ones = strfind([under_one_mask,1],[0 1]);

@@ -17,7 +17,7 @@
     array_data_all = {};
 
     pwd = cd;
-    for h = 1:numel(highest_folderpath)
+    for h = 1:numel(highest_folderpath)num
         cd(highest_folderpath{h})
         files = dir([highest_folderpath{h} '**\*',search_word,'*']);
 
