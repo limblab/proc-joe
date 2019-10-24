@@ -18,7 +18,7 @@
     counter = 1;
     r2_all = [];
     
-    for monk = monkey_names
+    for monk = monkey_names(1)
         % train length data
         file_list = dir([monk{1},'*EXAMPLE*amp*']);
         

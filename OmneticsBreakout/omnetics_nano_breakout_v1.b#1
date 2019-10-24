@@ -443,6 +443,11 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="U$1" pad="32"/>
 <wire x1="11.176" y1="-15.113" x2="24.003" y2="-7.112" width="0" layer="19" extent="1-1"/>
 </signal>
+<signal name="N$18">
+<contactref element="U$2" pad="P_3"/>
+<contactref element="U$1" pad="3"/>
+<wire x1="6.223" y1="-3.81" x2="2.286" y2="-13.843" width="0" layer="19" extent="1-1"/>
+</signal>
 </signals>
 </board>
 </drawing>

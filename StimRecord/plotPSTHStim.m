@@ -102,10 +102,20 @@ function [figureHandle] = plotPSTHStim(unitData,NEURON_NUMBER,optsPlot)
             optsSave.FIGURE_SAVE = opts.FIGURE_SAVE;
             optsSave.FIGURE_DIR = opts.FIGURE_DIR;
             
-            if(~opts.MAKE_SUBPLOTS && opts.PLOT_ALL_ONE_FIGURE)
-                optsSave.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'nn',num2str(NEURON_NUMBER),'_chan',num2str(unitData.CHAN_REC),'_ALL_PSTH');
-            elseif(~opts.MAKE_SUBPLOTS)
-                optsSave.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'nn',num2str(NEURON_NUMBER),'_chan',num2str(unitData.CHAN_REC),'_stimChan',num2str(unitData.CHAN_LIST{chan}),'_waveNum',num2str(wave),'_PSTH');
+            if(isfield(unitData,'STIM_PARAMETERS') && size(unitData.spikeTrialTimes,2) <= numel(unitData.STIM_PARAMETERS))
+                
+                amp1 = unitData.STIM_PARAMETERS(wave).amp1;
+                amp2 = unitData.STIM_PARAMETERS(wave).amp2;
+                pw1 = unitData.STIM_PARAMETERS(wave).pWidth1;
+                pw2 = unitData.STIM_PARAMETERS(wave).pWidth2;
+                pol = unitData.STIM_PARAMETERS(wave).polarity;
+
+                optsSave.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'nn',num2str(NEURON_NUMBER),'_chan',num2str(unitData.CHAN_REC),'_waveNum',num2str(wave),...
+                    '_A1-',num2str(amp1),'_A2-',num2str(amp2),'_pw1-',num2str(pw1),'_pw2-',num2str(pw2),'_pol-',num2str(pol),'_raster');
+            elseif(numel(unitData.CHAN_LIST) > 1)
+                optsSave.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'_chan',num2str(unitData.CHAN_LIST{chan}),'_nn',num2str(NEURON_NUMBER),'_wavenum',num2str(unitData.WAVEFORM_LIST(wave)),'_raster');
+            else
+                optsSave.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'_chan',num2str(unitData.CHAN_LIST),'_nn',num2str(NEURON_NUMBER),'_wavenum',num2str(chan),'_raster');
             end
             
             optsPlot.PLOT_NO_RECORDING_BOX = opts.PLOT_NO_RECORDING_BOX;

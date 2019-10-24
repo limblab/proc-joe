@@ -33,7 +33,7 @@ function [figureHandles,unit_data] = plotHeatmaps(arrayData,mapFileName,opts)
     %% plot heatmaps
     for heatmap_idx = 1:numel(heatmap_data)
         dataRatio = heatmap_data{heatmap_idx}.dataRatio;
-        %% plot heatmap
+        % plot heatmap
         figureHandles{end+1} = figure();
         figureHandles{end}.Position(4) = figureHandles{end}.Position(3);
         figureHandles{end}.Position(2) = figureHandles{end}.Position(2) - 200; % move down to not be annoyingly off my screen

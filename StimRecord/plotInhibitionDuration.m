@@ -66,6 +66,8 @@ function [inhib_struct, figure_handles] = plotInhibitionDuration(array_data,inpu
 
     end
     spont_fr = mean(reshape(filtered_PSTH(:,pre_window_idx(1):pre_window_idx(2)),numel(filtered_PSTH(:,pre_window_idx(1):pre_window_idx(2))),1));
+    baseline_fr = mean(reshape(PSTH(:,pre_window_idx(1):pre_window_idx(2)),numel(PSTH(:,pre_window_idx(1):pre_window_idx(2))),1))/(diff(pre_window_idx)*input_data.BIN_SIZE/1000);
+    
     spont_std = std(reshape(filtered_PSTH(:,pre_window_idx(1):pre_window_idx(2)),numel(filtered_PSTH(:,pre_window_idx(1):pre_window_idx(2))),1));
     threshold = zeros(numel(array_data_rebin.binCounts),1)+spont_fr - spont_std;
 
@@ -136,7 +138,7 @@ function [inhib_struct, figure_handles] = plotInhibitionDuration(array_data,inpu
     inhib_struct.threshold = threshold;
     inhib_struct.amp = amp;
     inhib_struct.keep_mask = keep_mask;
-    
+    inhib_struct.baseline_fr = baseline_fr;
 end
 
 
