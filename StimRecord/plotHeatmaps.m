@@ -36,7 +36,7 @@ function [figureHandles,unit_data] = plotHeatmaps(arrayData,mapFileName,opts)
         % plot heatmap
         figureHandles{end+1} = figure();
         figureHandles{end}.Position(4) = figureHandles{end}.Position(3);
-        figureHandles{end}.Position(2) = figureHandles{end}.Position(2) - 200; % move down to not be annoyingly off my screen
+        figureHandles{end}.Position(2) = figureHandles{end}.Position(2) - 200; % move down to not binEdges annoyingly off my screen
 
         plottedHere = zeros(10,10);
 
@@ -75,7 +75,7 @@ function [figureHandles,unit_data] = plotHeatmaps(arrayData,mapFileName,opts)
                 colorToPlot = colorsAboveOne(colorIdx,:);
             end
 
-            rectangle('Position',[heatmap_data{heatmap_idx}.col(unit),heatmap_data{heatmap_idx}.row(unit),1,1],'EdgeColor','k',...
+            rectangle('Position',[heatmap_data{heatmap_idx}.col(unit),(11-heatmap_data{heatmap_idx}.row(unit)),1,1],'EdgeColor','k',...
                         'FaceColor',colorToPlot,'linewidth',0.1);
                     
             plottedHere(heatmap_data{heatmap_idx}.col(unit),heatmap_data{heatmap_idx}.row(unit)) = 1;
@@ -86,7 +86,7 @@ function [figureHandles,unit_data] = plotHeatmaps(arrayData,mapFileName,opts)
         % plot stim chan
         posIdx = find(MAP_DATA.chan == heatmap_data{heatmap_idx}.main_chan);
         posList = [MAP_DATA.row,MAP_DATA.col];
-        stimRow = 11 - posList(posIdx,1);
+        stimRow = posList(posIdx,1);
         stimCol = posList(posIdx,2);
 
         % magenta box
@@ -178,44 +178,88 @@ function [heatmap_data] = getHeatmapDataAllNeurons(arrayData,opts)
         for wave = opts.WAVEFORM_TYPES_PLOT
            
             %% get data in the correct ranges from arrayData
-            postStim_binEdgePre = max(find(arrayData{1}.bE{chan,wave} <= opts.STIM_PRE_TIME*1000));
-            postStim_binEdgePost = max(find(arrayData{1}.bE{chan,wave} <= opts.STIM_POST_TIME*1000));
+            postStim_binEdgePre = max(find(arrayData{1}.binEdges{chan,wave} <= opts.STIM_PRE_TIME*1000));
+            postStim_binEdgePost = max(find(arrayData{1}.binEdges{chan,wave} <= opts.STIM_POST_TIME*1000));
             numPostStimBins = ones(numel(arrayData))*(postStim_binEdgePost - postStim_binEdgePre);
 
-            baseline_binEdgePre = max(find(arrayData{1}.bE{chan,wave} <= opts.BASELINE_PRE_TIME*1000));
-            baseline_binEdgePost = max(find(arrayData{1}.bE{chan,wave} <= opts.BASELINE_POST_TIME*1000));
+            baseline_binEdgePre = max(find(arrayData{1}.binEdges{chan,wave} <= opts.BASELINE_PRE_TIME*1000));
+            baseline_binEdgePost = max(find(arrayData{1}.binEdges{chan,wave} <= opts.BASELINE_POST_TIME*1000));
 
             dataPre = zeros(numel(arrayData),1);
             dataPost = zeros(numel(arrayData),1);
+            
+            %define dataRatio
+            dataRatio = [];
 
             for unit = 1:numel(arrayData)
                 try
                     if(opts.AUTO_WINDOW && opts.EXCITATORY && arrayData{unit}.isExcitatory{chan,wave})
-                        tempPre = max(find(arrayData{1}.bE{chan,wave} <= arrayData{unit}.excitatoryLatency{chan,wave}(1)));
-                        tempPost = max(find(arrayData{1}.bE{chan,wave} <= arrayData{unit}.excitatoryLatency{chan,wave}(3)));
+                        tempPre = max(find(arrayData{1}.binEdges{chan,wave} <= arrayData{unit}.excitatoryLatency{chan,wave}(1)));
+                        tempPost = max(find(arrayData{1}.binEdges{chan,wave} <= arrayData{unit}.excitatoryLatency{chan,wave}(3)));
 
-                        dataPost(unit) = sum(arrayData{unit}.bC{chan,wave}(tempPre:tempPost));
+                        dataPost(unit) = sum(arrayData{unit}.binCounts{chan,wave}(tempPre:tempPost));
                         numPostStimBins(unit) = tempPost-tempPre;
                     elseif(opts.AUTO_WINDOW && opts.INHIBITORY && arrayData{unit}.isInhibitory{chan,wave})
-                        tempPre = max(find(arrayData{1}.bE{chan,wave} <= arrayData{unit}.inhibitoryLatency{chan,wave}(1)));
-                        tempPost = max(find(arrayData{1}.bE{chan,wave} <= arrayData{unit}.inhibitoryLatency{chan,wave}(2)));
+                        tempPre = max(find(arrayData{1}.binEdges{chan,wave} <= arrayData{unit}.inhibitoryLatency{chan,wave}(1)));
+                        tempPost = max(find(arrayData{1}.binEdges{chan,wave} <= arrayData{unit}.inhibitoryLatency{chan,wave}(2)));
 
-                        dataPost(unit) = sum(arrayData{unit}.bC{chan,wave}(tempPre:tempPost));
+                        dataPost(unit) = sum(arrayData{unit}.binCounts{chan,wave}(tempPre:tempPost));
                         numPostStimBins(unit) = tempPost-tempPre;
                     else
-                        dataPost(unit) = sum(arrayData{unit}.bC{chan,wave}(postStim_binEdgePre:postStim_binEdgePost));
+                        dataPost(unit) = sum(arrayData{unit}.binCounts{chan,wave}(postStim_binEdgePre:postStim_binEdgePost));
                     end
-                    dataPre(unit) = numPostStimBins(unit)*mean(arrayData{unit}.bC{chan,wave}(baseline_binEdgePre:baseline_binEdgePost));
+                    dataPre(unit) = numPostStimBins(unit)*mean(arrayData{unit}.binCounts{chan,wave}(baseline_binEdgePre:baseline_binEdgePost));
                 catch
                     dataPre(unit) = 0;
                     dataPost(unit) = 0;
                     numPostStimBins(unit) = 0;
                 end
+                
+                %defining arrays and bin sizess
+                lastRep = arrayData{1,unit}.stimData{chan,wave}(numel(arrayData{1,unit}.stimData{chan,wave}));
+                repList = cell(1,lastRep); %all spike times organized by repetition
+                preRepList = zeros(1,lastRep); %number of baseline spikes per repetition
+                postRepList = zeros(1,lastRep); %number of post-stim spikes per repetition
+                preStimWindow = opts.PRE_STIM_WINDOW;
+                postStimWindow = opts.POST_STIM_WINDOW;
+                
+                %separating spike times by repetition into repList
+                for spikeTime=1:numel(arrayData{1,unit}.spikeTrialTimes{chan,wave})
+                    rep = arrayData{1,unit}.stimData{chan,wave}(spikeTime);
+                    repList{1,rep} = [repList{1,rep}, arrayData{1,unit}.spikeTrialTimes{chan,wave}(spikeTime)];
+                end
+                
+                %going through repList 
+                %and counting baseline and post-stim spikes
+                for rep=1:numel(repList)
+                    for spikeTime=1:numel(repList{1,rep})
+                        if (repList{1,rep}(spikeTime)) < 0 && (repList{1,rep}(spikeTime)) > (0-preStimWindow) 
+                            preRepList(rep) = preRepList(rep)+1;
+                        elseif (repList{1,rep}(spikeTime))>0 && (repList{1,rep}(spikeTime)) < postStimWindow
+                            postRepList(rep) = postRepList(rep)+1;
+                        end
+                    end
+                end
+                
+                
+                %calculating standardized value
+%                 disp('preRepList = ')
+%                 disp(preRepList)
+                dataPreMean = mean(preRepList);
+                dataPostMean = mean(postRepList);
+                dataPreStd = std(preRepList);
+                spikesStandardized = (dataPostMean-dataPreMean)/dataPreStd;
+                
+                %adding that value to dataRatio array
+                dataRatio = [dataRatio, spikesStandardized];
+                        
                 heatmap_data{heatmap_idx}.row(unit) = arrayData{unit}.ROW;
                 heatmap_data{heatmap_idx}.col(unit) = arrayData{unit}.COL;
             end
-
-            dataRatio = dataPost-dataPre;
+            
+          % dataRatio = dataPost-dataPre
+          % dataRatio = (dataPost-dataPre)/std(dataPre)
+            
 
             if(opts.LOG_SCALE)
                 dataRatio = dataRatio+eps;
@@ -250,20 +294,20 @@ function [heatmap_data] = getHeatmapDataAllStimChans(arrayData,map_data,opts)
     heatmap_data = {};
     for arrIdx = 1:numel(arrayData)
         %% get data in the correct ranges from arrayData
-        postStim_binEdgePre = max(find(arrayData{arrIdx}.bE{1} <= opts.STIM_PRE_TIME*1000));
-        postStim_binEdgePost = max(find(arrayData{arrIdx}.bE{1} <= opts.STIM_POST_TIME*1000));
-        numPostStimBins = ones(numel(arrayData{arrIdx}.bE),1)*(postStim_binEdgePost - postStim_binEdgePre);
+        postStim_binEdgePre = max(find(arrayData{arrIdx}.binEdges{1} <= opts.STIM_PRE_TIME*1000));
+        postStim_binEdgePost = max(find(arrayData{arrIdx}.binEdges{1} <= opts.STIM_POST_TIME*1000));
+        numPostStimBins = ones(numel(arrayData{arrIdx}.binEdges),1)*(postStim_binEdgePost - postStim_binEdgePre);
 
-        baseline_binEdgePre = max(find(arrayData{arrIdx}.bE{1} <= opts.BASELINE_PRE_TIME*1000));
-        baseline_binEdgePost = max(find(arrayData{arrIdx}.bE{1} <= opts.BASELINE_POST_TIME*1000));
+        baseline_binEdgePre = max(find(arrayData{arrIdx}.binEdges{1} <= opts.BASELINE_PRE_TIME*1000));
+        baseline_binEdgePost = max(find(arrayData{arrIdx}.binEdges{1} <= opts.BASELINE_POST_TIME*1000));
 
-        dataPre = zeros(numel(arrayData{arrIdx}.bC),1);
-        dataPost = zeros(numel(arrayData{arrIdx}.bC),1);
+        dataPre = zeros(numel(arrayData{arrIdx}.binCounts),1);
+        dataPost = zeros(numel(arrayData{arrIdx}.binCounts),1);
 
-        for stim_chan = 1:numel(arrayData{arrIdx}.bC)
+        for stim_chan = 1:numel(arrayData{arrIdx}.binCounts)
             try
-                dataPost(stim_chan) = sum(arrayData{arrIdx}.bC{stim_chan}(postStim_binEdgePre:postStim_binEdgePost));
-                dataPre(stim_chan) = numPostStimBins(stim_chan)*mean(arrayData{arrIdx}.bC{stim_chan}(baseline_binEdgePre:baseline_binEdgePost));
+                dataPost(stim_chan) = sum(arrayData{arrIdx}.binCounts{stim_chan}(postStim_binEdgePre:postStim_binEdgePost));
+                dataPre(stim_chan) = numPostStimBins(stim_chan)*mean(arrayData{arrIdx}.binCounts{stim_chan}(baseline_binEdgePre:baseline_binEdgePost));
             catch
                 dataPre(stim_chan) = 0;
                 dataPost(stim_chan) = 0;
@@ -275,7 +319,8 @@ function [heatmap_data] = getHeatmapDataAllStimChans(arrayData,map_data,opts)
             heatmap_data{arrIdx}.col(stim_chan) = map_data.col(map_data_idx);
         end
 
-        dataRatio = dataPost-dataPre;
+        dataRatio = dataPost-dataPre
+        %dataRatio = (dataPost-dataPre)/std(dataPre);
 
         if(opts.LOG_SCALE)
             dataRatio = dataRatio+eps;
@@ -310,6 +355,9 @@ function [opts] = configureOpts(optsInput)
     opts.BASELINE_POST_TIME = -3/1000;
     opts.STIM_PRE_TIME = 1.2/1000;
     opts.STIM_POST_TIME = 5/1000;
+    
+    opts.PRE_STIM_WINDOW = 120/1000;
+    opts.POST_STIM_WINDOW = 120/1000;
     
     opts.STIM_ELECTRODE_PLOT = 1;
     opts.WAVEFORM_TYPES_PLOT = 1;
