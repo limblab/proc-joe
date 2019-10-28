@@ -18,8 +18,9 @@
     f=figure();
     f.Name = '16elecs_summary_figure';
    
+%     num_trials_all = [];
     
-    for monk = monkey_names(1)
+    for monk = monkey_names(2)
         stat_bump = [];
         stat_stim = [];
         
@@ -45,6 +46,8 @@
                 std_bump = std_bump/sqrt(bump_num_trials);
             end
             
+            num_trials_all = [num_trials_all,bump_num_trials];
+            
             % data holds the bump data with bump mag as a variable
             mean_rt = []; std_rt = []; num_trials = []; stim_amps_all = []; rt_data_all = [];
             for d = 1:numel(data.cueInfo)
@@ -58,6 +61,7 @@
                 rt_data_all = [rt_data_all,data.cueInfo(d).rt];
             end
 
+            num_trials_all = [num_trials_all,num_trials];
             
             [~,min_stim_idx] = min(mean_rt);
             stim_amp = STIM_PARAMS(min_stim_idx);

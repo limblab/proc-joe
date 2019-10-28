@@ -18,7 +18,8 @@
     counter = 1;
     r2_all = [];
     
-    for monk = monkey_names(1)
+    
+    for monk = monkey_names(2)
         % train length data
         file_list = dir([monk{1},'*EXAMPLE*amp*']);
         
@@ -42,6 +43,8 @@
                 std_bump = std_bump/sqrt(bump_num_trials);
             end
             
+            num_trials_all = [num_trials_all, bump_num_trials];
+            
             % visual cue data
             vis_data_rt = [];
             if(any(isEqual([data.cueInfo.bumpMag],0) & [data.cueInfo.stimCode] == -1))
@@ -55,6 +58,7 @@
             if(use_std_err)
                 std_vis = std_vis/sqrt(vis_num_trials);
             end
+            num_trials_all = [num_trials_all, vis_num_trials];
             
             % remove stim codes that weren't felt
             amp_idx = find(cellfun(@numel,amps) == numel(data.cueInfo));
@@ -75,6 +79,8 @@
                 amp_all = [amp_all,a(d)*ones(1,numel(data.cueInfo(d).rt))];
                 rt_data_all = [rt_data_all,data.cueInfo(d).rt];
             end
+            
+            num_trials_all = [num_trials_all, num_trials];
             
             chan_all = (counter-1)*10 + file_num + zeros(size(a));
             monk_all = counter + zeros(size(a));

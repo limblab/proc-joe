@@ -39,7 +39,7 @@
                 vis_idx = find([data.cueInfo.bumpMag] == 0);
 
 
-                % data should just have bump data
+                % data should just have vis data
                 if(~isempty(vis_idx) && ~isempty(data.cueInfo(vis_idx).rt))
                     vis_mean_aggregate(end+1,1) = mean(data.cueInfo(vis_idx).rt);
                     vis_std_aggregate(end+1,1) = std(data.cueInfo(vis_idx).rt);

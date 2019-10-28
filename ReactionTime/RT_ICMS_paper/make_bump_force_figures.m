@@ -7,12 +7,14 @@
     
     color_idx = [0,1];
     offset = 2*[-0.01,0.01;-0.05,0.05]/3;
+    
 %% plot bump staircase (2) for each monkey (2 figures total)
+    num_trials_all = [];
     
     counter = 1;
     r2_all = [];
     
-    for monk = monkey_names
+    for monk = monkey_names(2)
         file_list = dir([monk{1},'*']);
         f=figure();
         f.Name = [monk{1},'_bumpStaircase'];
@@ -33,6 +35,7 @@
             if(use_std_err)
                 std_vis = std_vis./sqrt(num_vis_trials);
             end
+            num_trials_all = [num_trials_all, num_vis_trials];
             
             % data holds the bump data with bump mag as a variable
             bump_mags = [data.cueInfo.bumpMag];
@@ -47,6 +50,7 @@
                 bump_mags_all = [bump_mags_all,bump_mags(d)*ones(1,numel(data.cueInfo(d).rt))];
                 rt_data_all = [rt_data_all,data.cueInfo(d).rt];
             end
+            num_trials_all = [num_trials_all, num_trials];
             
             [fitObj,gof] = fit(bump_mags_all',rt_data_all','a*exp(b*x)+c','startPoint',[0,0,0]);
             r2_all(counter,file_num) = gof.rsquare;

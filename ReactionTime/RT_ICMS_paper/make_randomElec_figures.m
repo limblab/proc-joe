@@ -8,12 +8,14 @@
     offset = repmat([-0.35,0,0.35],1,5);
     num_elecs = [4,4,4,6,6,6,8,8,8,12,12,12,24,24,24];
     total_amp = [240,360,480,240,360,480,240,360,480,240,360,480,240,360,480];
+    
 %% plot stim staircase (train length, freq, amp) for each monkey (6 figures total)
     DATA_ALL = [];
-
+%     num_trials_all = [];
+    
     counter = 1;
     data_all = []; % min stim, bump
-    for monk = monkey_names
+    for monk = monkey_names(2)
     % train length data
         file_list = dir([monk{1},'*.mat']);
         
@@ -65,7 +67,8 @@
             DATA_ALL = [DATA_ALL; mean_rt(d), num_elecs(d), total_amp(d), counter];
         end
         [~,min_stim_idx] = min(mean_rt);
-
+        num_trials_all = [num_trials_all,num_trials];
+    
         % fit line to data to get significance?
 %         [fitObj,gof] = fit(num_elecs_all',rt_data_all','a*exp(b*x)+c','startPoint',[0,0,0]);
 %         r2_all(counter) = gof.rsquare;
@@ -123,4 +126,5 @@
     %% lm with DATA_ALL
     data_table = array2table(DATA_ALL,'VariableNames',{'rt','num_elecs','total_amp','monk'});
     data_table.monk = categorical(data_table.monk);
+
     lm = fitlm(data_table,'rt~num_elecs+total_amp+monk')
