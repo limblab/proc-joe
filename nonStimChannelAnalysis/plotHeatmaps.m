@@ -1,4 +1,4 @@
-function [figureHandles,unit_data] = plotHeatmaps(arrayData,mapFileName,opts)
+function [figureHandles,unit_data,dataRatioScaled] = plotHeatmaps(arrayData,mapFileName,opts)
 
     %% configure opts and set default values
     opts = configureOpts(opts);
@@ -25,7 +25,7 @@ function [figureHandles,unit_data] = plotHeatmaps(arrayData,mapFileName,opts)
     %% get heatmap data
     heatmap_data = {};
     if(opts.ALL_NEURONS)
-        heatmap_data = getHeatmapDataAllNeurons(arrayData,opts);
+        [heatmap_data,dataRatioScaled] = getHeatmapDataAllNeurons(arrayData,opts);
     else
         heatmap_data = getHeatmapDataAllStimChans(arrayData,MAP_DATA,opts);
     end
@@ -171,7 +171,7 @@ function [figureHandles,unit_data] = plotHeatmaps(arrayData,mapFileName,opts)
 end
 
 
-function [heatmap_data] = getHeatmapDataAllNeurons(arrayData,opts)
+function [heatmap_data,dataRatioScaled] = getHeatmapDataAllNeurons(arrayData,opts)
     
     heatmap_idx = 1;
     for chan = opts.STIM_ELECTRODE_PLOT
@@ -256,6 +256,23 @@ function [heatmap_data] = getHeatmapDataAllNeurons(arrayData,opts)
                 heatmap_data{heatmap_idx}.row(unit) = arrayData{unit}.ROW;
                 heatmap_data{heatmap_idx}.col(unit) = arrayData{unit}.COL;
             end
+            
+            disp(dataRatio)
+            %find value of 90% percentile
+            maxValue = prctile(dataRatio,90)
+            
+            for i=1:numel(dataRatio)
+                %if data point is above 90th percentile, set it to value of
+                %90th percentile
+                if dataRatio(i)>maxValue
+                    dataRatio(i)=maxValue;
+                end
+                %scale from -1 to 1
+                dataRatio(i) = (dataRatio(i)-(min(dataRatio)))*(1-(-1))/(maxValue-min(dataRatio))+(-1);
+            end
+            
+            dataRatioScaled = dataRatio;
+            disp(dataRatio);
             
           % dataRatio = dataPost-dataPre
           % dataRatio = (dataPost-dataPre)/std(dataPre)

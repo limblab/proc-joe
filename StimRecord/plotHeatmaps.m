@@ -257,6 +257,10 @@ function [heatmap_data] = getHeatmapDataAllNeurons(arrayData,opts)
                 heatmap_data{heatmap_idx}.col(unit) = arrayData{unit}.COL;
             end
             
+            %scaling values from -1 to 1
+            maxValue = prctile(dataRatio,90)
+            dataRatio = rescale(dataRatio,-1,1,'InputMax',maxValue)
+            
           % dataRatio = dataPost-dataPre
           % dataRatio = (dataPost-dataPre)/std(dataPre)
             
