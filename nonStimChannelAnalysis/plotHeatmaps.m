@@ -1,8 +1,8 @@
-function [figureHandles,unit_data,dataRatioScaled] = plotHeatmaps(arrayData,mapFileName,opts)
+function [figureHandles,heatmap_data] = plotHeatmaps(arrayData,mapFileName,opts)
 
     %% configure opts and set default values
     opts = configureOpts(opts);
-    unit_data = {};
+
     if(size(opts.STIM_ELECTRODE_PLOT,1) > size(opts.STIM_ELECTRODE_PLOT,2))
         opts.STIM_ELECTRODE_PLOT = opts.STIM_ELECTRODE_PLOT';
     end
@@ -25,14 +25,14 @@ function [figureHandles,unit_data,dataRatioScaled] = plotHeatmaps(arrayData,mapF
     %% get heatmap data
     heatmap_data = {};
     if(opts.ALL_NEURONS)
-        [heatmap_data,dataRatioScaled] = getHeatmapDataAllNeurons(arrayData,opts);
+        [heatmap_data] = getHeatmapDataAllNeurons(arrayData,opts);
     else
         heatmap_data = getHeatmapDataAllStimChans(arrayData,MAP_DATA,opts);
     end
     
     %% plot heatmaps
     for heatmap_idx = 1:numel(heatmap_data)
-        dataRatio = heatmap_data{heatmap_idx}.dataRatio;
+        dataRatio = heatmap_data{heatmap_idx}.dataRatioPlot;
         % plot heatmap
         figureHandles{end+1} = figure();
         figureHandles{end}.Position(4) = figureHandles{end}.Position(3);
@@ -171,112 +171,26 @@ function [figureHandles,unit_data,dataRatioScaled] = plotHeatmaps(arrayData,mapF
 end
 
 
-function [heatmap_data,dataRatioScaled] = getHeatmapDataAllNeurons(arrayData,opts)
+function [heatmap_data] = getHeatmapDataAllNeurons(arrayData,opts)
     
     heatmap_idx = 1;
     for chan = opts.STIM_ELECTRODE_PLOT
         for wave = opts.WAVEFORM_TYPES_PLOT
            
-            %% get data in the correct ranges from arrayData
-            postStim_binEdgePre = max(find(arrayData{1}.binEdges{chan,wave} <= opts.STIM_PRE_TIME*1000));
-            postStim_binEdgePost = max(find(arrayData{1}.binEdges{chan,wave} <= opts.STIM_POST_TIME*1000));
-            numPostStimBins = ones(numel(arrayData))*(postStim_binEdgePost - postStim_binEdgePre);
-
-            baseline_binEdgePre = max(find(arrayData{1}.binEdges{chan,wave} <= opts.BASELINE_PRE_TIME*1000));
-            baseline_binEdgePost = max(find(arrayData{1}.binEdges{chan,wave} <= opts.BASELINE_POST_TIME*1000));
-
-            dataPre = zeros(numel(arrayData),1);
-            dataPost = zeros(numel(arrayData),1);
-            
             %define dataRatio
             dataRatio = [];
 
             for unit = 1:numel(arrayData)
-                try
-                    if(opts.AUTO_WINDOW && opts.EXCITATORY && arrayData{unit}.isExcitatory{chan,wave})
-                        tempPre = max(find(arrayData{1}.binEdges{chan,wave} <= arrayData{unit}.excitatoryLatency{chan,wave}(1)));
-                        tempPost = max(find(arrayData{1}.binEdges{chan,wave} <= arrayData{unit}.excitatoryLatency{chan,wave}(3)));
-
-                        dataPost(unit) = sum(arrayData{unit}.binCounts{chan,wave}(tempPre:tempPost));
-                        numPostStimBins(unit) = tempPost-tempPre;
-                    elseif(opts.AUTO_WINDOW && opts.INHIBITORY && arrayData{unit}.isInhibitory{chan,wave})
-                        tempPre = max(find(arrayData{1}.binEdges{chan,wave} <= arrayData{unit}.inhibitoryLatency{chan,wave}(1)));
-                        tempPost = max(find(arrayData{1}.binEdges{chan,wave} <= arrayData{unit}.inhibitoryLatency{chan,wave}(2)));
-
-                        dataPost(unit) = sum(arrayData{unit}.binCounts{chan,wave}(tempPre:tempPost));
-                        numPostStimBins(unit) = tempPost-tempPre;
-                    else
-                        dataPost(unit) = sum(arrayData{unit}.binCounts{chan,wave}(postStim_binEdgePre:postStim_binEdgePost));
-                    end
-                    dataPre(unit) = numPostStimBins(unit)*mean(arrayData{unit}.binCounts{chan,wave}(baseline_binEdgePre:baseline_binEdgePost));
-                catch
-                    dataPre(unit) = 0;
-                    dataPost(unit) = 0;
-                    numPostStimBins(unit) = 0;
-                end
                 
-                %defining arrays and bin sizess
-                lastRep = arrayData{1,unit}.stimData{chan,wave}(numel(arrayData{1,unit}.stimData{chan,wave}));
-                repList = cell(1,lastRep); %all spike times organized by repetition
-                preRepList = zeros(1,lastRep); %number of baseline spikes per repetition
-                postRepList = zeros(1,lastRep); %number of post-stim spikes per repetition
-                preStimWindow = opts.PRE_STIM_WINDOW;
-                postStimWindow = opts.POST_STIM_WINDOW;
+                singleCondData = getHeatmapDataSingleCond(arrayData,unit,chan,wave,opts); 
+                dataRatio(unit) = singleCondData.dataRatio;
                 
-                %separating spike times by repetition into repList
-                for spikeTime=1:numel(arrayData{1,unit}.spikeTrialTimes{chan,wave})
-                    rep = arrayData{1,unit}.stimData{chan,wave}(spikeTime);
-                    repList{1,rep} = [repList{1,rep}, arrayData{1,unit}.spikeTrialTimes{chan,wave}(spikeTime)];
-                end
-                
-                %going through repList 
-                %and counting baseline and post-stim spikes
-                for rep=1:numel(repList)
-                    for spikeTime=1:numel(repList{1,rep})
-                        if (repList{1,rep}(spikeTime)) < 0 && (repList{1,rep}(spikeTime)) > (0-preStimWindow) 
-                            preRepList(rep) = preRepList(rep)+1;
-                        elseif (repList{1,rep}(spikeTime))>0 && (repList{1,rep}(spikeTime)) < postStimWindow
-                            postRepList(rep) = postRepList(rep)+1;
-                        end
-                    end
-                end
-                
-                
-                %calculating standardized value
-%                 disp('preRepList = ')
-%                 disp(preRepList)
-                dataPreMean = mean(preRepList);
-                dataPostMean = mean(postRepList);
-                dataPreStd = std(preRepList);
-                spikesStandardized = (dataPostMean-dataPreMean)/dataPreStd;
-                
-                %adding that value to dataRatio array
-                dataRatio = [dataRatio, spikesStandardized];
-                        
                 heatmap_data{heatmap_idx}.row(unit) = arrayData{unit}.ROW;
                 heatmap_data{heatmap_idx}.col(unit) = arrayData{unit}.COL;
             end
             
-            disp(dataRatio)
-            %find value of 90% percentile
-            maxValue = prctile(dataRatio,90)
-            
-            for i=1:numel(dataRatio)
-                %if data point is above 90th percentile, set it to value of
-                %90th percentile
-                if dataRatio(i)>maxValue
-                    dataRatio(i)=maxValue;
-                end
-                %scale from -1 to 1
-                dataRatio(i) = (dataRatio(i)-(min(dataRatio)))*(1-(-1))/(maxValue-min(dataRatio))+(-1);
-            end
-            
-            dataRatioScaled = dataRatio;
-            disp(dataRatio);
-            
-          % dataRatio = dataPost-dataPre
-          % dataRatio = (dataPost-dataPre)/std(dataPre)
-            
+            percentile = 90;
+            dataRatioScaled = scaleDataRatio(dataRatio,percentile);
 
             if(opts.LOG_SCALE)
                 dataRatio = dataRatio+eps;
@@ -289,10 +203,13 @@ function [heatmap_data,dataRatioScaled] = getHeatmapDataAllNeurons(arrayData,opt
                 dataRatio(dataRatio < 0) = dataRatio(dataRatio < 0)./dataPre(dataRatio<0);
             end
 
-            dataRatio(dataRatio > opts.MAX_RATIO) = opts.MAX_RATIO;
-            dataRatio(dataRatio < opts.MIN_RATIO) = opts.MIN_RATIO;
+            dataRatioPlot = dataRatio;
+            dataRatioPlot(dataRatioPlot > opts.MAX_RATIO) = opts.MAX_RATIO;
+            dataRatioPlot(dataRatioPlot < opts.MIN_RATIO) = opts.MIN_RATIO;
             
             heatmap_data{heatmap_idx}.dataRatio = dataRatio;
+            heatmap_data{heatmap_idx}.dataRatioPlot = dataRatioPlot;
+            heatmap_data{heatmap_idx}.dataRatioScaled = dataRatioScaled;
             heatmap_data{heatmap_idx}.chan = chan;
             heatmap_data{heatmap_idx}.wave = wave;
             heatmap_data{heatmap_idx}.main_chan = arrayData{1}.CHAN_LIST(chan);
@@ -309,60 +226,154 @@ end
 function [heatmap_data] = getHeatmapDataAllStimChans(arrayData,map_data,opts)
 
     heatmap_data = {};
+    heatmap_idx = 1;
     for arrIdx = 1:numel(arrayData)
-        %% get data in the correct ranges from arrayData
-        postStim_binEdgePre = max(find(arrayData{arrIdx}.binEdges{1} <= opts.STIM_PRE_TIME*1000));
-        postStim_binEdgePost = max(find(arrayData{arrIdx}.binEdges{1} <= opts.STIM_POST_TIME*1000));
-        numPostStimBins = ones(numel(arrayData{arrIdx}.binEdges),1)*(postStim_binEdgePost - postStim_binEdgePre);
+        for wave = opts.WAVEFORM_TYPES_PLOT
+            dataPre = zeros(size(arrayData{arrIdx}.binCounts,1),1);
+            dataPost = zeros(size(arrayData{arrIdx}.binCounts,1),1);
 
-        baseline_binEdgePre = max(find(arrayData{arrIdx}.binEdges{1} <= opts.BASELINE_PRE_TIME*1000));
-        baseline_binEdgePost = max(find(arrayData{arrIdx}.binEdges{1} <= opts.BASELINE_POST_TIME*1000));
+            for chan = opts.STIM_ELECTRODE_PLOT
 
-        dataPre = zeros(numel(arrayData{arrIdx}.binCounts),1);
-        dataPost = zeros(numel(arrayData{arrIdx}.binCounts),1);
+                singleCondData = getHeatmapDataSingleCond(arrayData,arrIdx,chan,wave,opts); 
+                dataRatio(chan) = singleCondData.dataRatio;
 
-        for stim_chan = 1:numel(arrayData{arrIdx}.binCounts)
-            try
-                dataPost(stim_chan) = sum(arrayData{arrIdx}.binCounts{stim_chan}(postStim_binEdgePre:postStim_binEdgePost));
-                dataPre(stim_chan) = numPostStimBins(stim_chan)*mean(arrayData{arrIdx}.binCounts{stim_chan}(baseline_binEdgePre:baseline_binEdgePost));
-            catch
-                dataPre(stim_chan) = 0;
-                dataPost(stim_chan) = 0;
-                numPostStimBins(stim_chan) = 0;
+                map_data_idx = find(map_data.chan == arrayData{arrIdx}.CHAN_LIST{chan});
+
+                heatmap_data{arrIdx}.row(chan) = 11-map_data.row(map_data_idx);
+                heatmap_data{arrIdx}.col(chan) = map_data.col(map_data_idx);
             end
-            map_data_idx = find(map_data.chan == arrayData{arrIdx}.CHAN_LIST(stim_chan));
+
             
-            heatmap_data{arrIdx}.row(stim_chan) = map_data.row(map_data_idx);
-            heatmap_data{arrIdx}.col(stim_chan) = map_data.col(map_data_idx);
-        end
-
-        dataRatio = dataPost-dataPre
-        %dataRatio = (dataPost-dataPre)/std(dataPre);
-
-        if(opts.LOG_SCALE)
-            dataRatio = dataRatio+eps;
-            if(opts.MAX_RATIO == 0)
-                opts.MAX_RATIO = eps;
+            percentile = 90;
+            dataRatioScaled = scaleDataRatio(dataRatio,percentile);
+            
+            if(opts.LOG_SCALE)
+                dataRatio = dataRatio+eps;
+                if(opts.MAX_RATIO == 0)
+                    opts.MAX_RATIO = eps;
+                end
             end
+
+            if(opts.RELATIVE_INHIBITION)
+                dataRatio(dataRatio < 0) = dataRatio(dataRatio < 0)./dataPre(dataRatio<0);
+            end
+
+            dataRatioPlot = dataRatio;
+            dataRatioPlot(dataRatioPlot > opts.MAX_RATIO) = opts.MAX_RATIO;
+            dataRatioPlot(dataRatioPlot < opts.MIN_RATIO) = opts.MIN_RATIO;
+
+            heatmap_data{heatmap_idx}.dataRatio = dataRatio;
+            heatmap_data{heatmap_idx}.dataRatioPlot = dataRatioPlot;
+            heatmap_data{heatmap_idx}.dataRatioScaled = dataRatioScaled;
+            heatmap_data{heatmap_idx}.chan = 1:numel(arrayData{arrIdx}.CHAN_LIST);
+            heatmap_data{heatmap_idx}.wave = wave*ones(numel(arrayData{arrIdx}.CHAN_LIST),1);
+            heatmap_data{heatmap_idx}.main_chan = arrayData{arrIdx}.CHAN_REC;
+            heatmap_idx = heatmap_idx + 1;
         end
-
-        if(opts.RELATIVE_INHIBITION)
-            dataRatio(dataRatio < 0) = dataRatio(dataRatio < 0)./dataPre(dataRatio<0);
-        end
-
-        dataRatio(dataRatio > opts.MAX_RATIO) = opts.MAX_RATIO;
-        dataRatio(dataRatio < opts.MIN_RATIO) = opts.MIN_RATIO;
-
-        heatmap_data{arrIdx}.dataRatio = dataRatio;
-        heatmap_data{arrIdx}.chan = 1:numel(arrayData{arrIdx}.CHAN_LIST);
-        heatmap_data{arrIdx}.wave = ones(numel(arrayData{arrIdx}.CHAN_LIST),1);
-        heatmap_data{arrIdx}.main_chan = arrayData{arrIdx}.CHAN_REC
-        
     end
 
 end
 
+function [outputData] = getHeatmapDataSingleCond(arrayData,unit,chan,wave,opts)
+    %initialize output data
+    outputData = [];
+    outputData.dataPre = 0; 
+    outputData.dataPost = 0;
+    outputData.numPostStimBins = 0;
+    
+    % get data in the correct ranges from arrayData
+    postStim_binEdgePre = max(find(arrayData{unit}.binEdges{1} <= opts.STIM_PRE_TIME*1000));
+    postStim_binEdgePost = max(find(arrayData{unit}.binEdges{1} <= opts.STIM_POST_TIME*1000));
+    numPostStimBins = ones(numel(arrayData{unit}.binEdges),1)*(postStim_binEdgePost - postStim_binEdgePre);
 
+    baseline_binEdgePre = max(find(arrayData{unit}.binEdges{1} <= opts.BASELINE_PRE_TIME*1000));
+    baseline_binEdgePost = max(find(arrayData{unit}.binEdges{1} <= opts.BASELINE_POST_TIME*1000));
+    
+    try
+        if(opts.AUTO_WINDOW && opts.EXCITATORY && arrayData{arrayDataIdx}.isExcitatory{chan,wave})
+            tempPre = max(find(arrayData{unit}.binEdges{chan,wave} <= arrayData{unit}.excitatoryLatency{chan,wave}(1)));
+            tempPost = max(find(arrayData{unit}.binEdges{chan,wave} <= arrayData{unit}.excitatoryLatency{chan,wave}(3)));
+
+            dataPost = sum(arrayData{unit}.binCounts{chan,wave}(tempPre:tempPost));
+            numPostStimBins = tempPost-tempPre;
+        elseif(opts.AUTO_WINDOW && opts.INHIBITORY && arrayData{unit}.isInhibitory{chan,wave})
+            tempPre = max(find(arrayData{unit}.binEdges{chan,wave} <= arrayData{unit}.inhibitoryLatency{chan,wave}(1)));
+            tempPost = max(find(arrayData{unit}.binEdges{chan,wave} <= arrayData{unit}.inhibitoryLatency{chan,wave}(2)));
+
+            dataPost = sum(arrayData{unit}.binCounts{chan,wave}(tempPre:tempPost));
+            numPostStimBins = tempPost-tempPre;
+        else
+            dataPost = sum(arrayData{unit}.binCounts{chan,wave}(postStim_binEdgePre:postStim_binEdgePost));
+        end
+        dataPre = numPostStimBins(unit)*mean(arrayData{unit}.binCounts{chan,wave}(baseline_binEdgePre:baseline_binEdgePost));
+    catch
+        dataPre = 0;
+        dataPost = 0;
+        numPostStimBins = 0;
+    end
+    
+     %defining arrays and bin sizess
+    lastRep = arrayData{unit}.stimData{chan,wave}(numel(arrayData{unit}.stimData{chan,wave}));
+    repList = cell(1,lastRep); %all spike times organized by repetition
+    preRepList = zeros(1,lastRep); %number of baseline spikes per repetition
+    postRepList = zeros(1,lastRep); %number of post-stim spikes per repetition
+
+    %separating spike times by repetition into repList
+    for spikeTime=1:numel(arrayData{unit}.spikeTrialTimes{chan,wave})
+        rep = arrayData{unit}.stimData{chan,wave}(spikeTime);
+        repList{1,rep} = [repList{1,rep}, arrayData{unit}.spikeTrialTimes{chan,wave}(spikeTime)];
+    end
+
+    %going through repList 
+    %and counting baseline and post-stim spikes
+    for rep=1:numel(repList)
+        for spikeTime=1:numel(repList{1,rep})
+            if (repList{1,rep}(spikeTime)) < opts.BASELINE_POST_TIME && (repList{1,rep}(spikeTime)) > opts.BASELINE_PRE_TIME 
+                preRepList(rep) = preRepList(rep)+1;
+            elseif (repList{1,rep}(spikeTime)) > opts.STIM_PRE_TIME && (repList{1,rep}(spikeTime)) < opts.STIM_POST_TIME
+                postRepList(rep) = postRepList(rep)+1;
+            end
+        end
+    end
+
+
+    %calculating standardized value
+    dataPreMean = mean(preRepList);
+    dataPostMean = mean(postRepList);
+    dataPreStd = std(preRepList);
+    spikesStandardized = (dataPostMean-dataPreMean)/dataPreStd;
+    
+    % package outputs
+    outputData.dataPreMean = dataPreMean; 
+    outputData.dataPostMean = dataPostMean;
+    outputData.dataPreStd = dataPreStd;
+    outputData.dataRatio = spikesStandardized;
+    outputData.numPostStimBins = numPostStimBins;
+    
+    
+end
+
+function [dataRatioScaled] = scaleDataRatio(dataRatio,percentile)
+
+    % scale dataRatio to -1 to 1 for further analysis
+    %find value of 90% percentile
+    dataRatioScaled = dataRatio;
+    maxValue = prctile(dataRatioScaled,percentile);
+
+    for i=1:numel(dataRatioScaled)
+        %if data point is above 90th percentile, set it to value of
+        %90th percentile
+        if dataRatioScaled(i)>maxValue
+            dataRatioScaled(i)=maxValue;
+        end
+
+    end
+
+    %scale from -1 to 1
+    dataRatioScaled = 2*(dataRatioScaled-(min(dataRatioScaled)))/(maxValue-min(dataRatioScaled)) - 1;        
+
+
+end
 
 function [opts] = configureOpts(optsInput)
 
@@ -373,8 +384,6 @@ function [opts] = configureOpts(optsInput)
     opts.STIM_PRE_TIME = 1.2/1000;
     opts.STIM_POST_TIME = 5/1000;
     
-    opts.PRE_STIM_WINDOW = 120/1000;
-    opts.POST_STIM_WINDOW = 120/1000;
     
     opts.STIM_ELECTRODE_PLOT = 1;
     opts.WAVEFORM_TYPES_PLOT = 1;

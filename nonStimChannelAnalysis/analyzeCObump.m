@@ -97,13 +97,12 @@
     
 %% visualize
 %% heatmap for preferred directions
-disp('start')
     mapData = loadMapFile(mapFileName);
     
     optsPD.MAKE_BAR_PLOT = 1;
-
+    
     optsPD.PLOT_CHANNELS = [1:96];
-    optsPD.STIM_CHANNEL = 41;
+    optsPD.CENTER_CHANNEL = 41;
 
     optsPD.MAX_RATIO = 1;
     optsPD.MIN_RATIO = -1;

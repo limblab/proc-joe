@@ -13,7 +13,7 @@ function [heatmapPD,PDscaled] = plotHeatmapsPD(td_all,pd_all,mapData,optsPD)
     
     %plot the pds
     f = figure();
-    f.Name = strcat(optsPD.FIGURE_PREFIX,'_stimChan',num2str(optsPD.STIM_CHANNEL),'_preferredDirectionsHeatmap');
+    f.Name = strcat(optsPD.FIGURE_PREFIX,'_stimChan',num2str(optsPD.CENTER_CHANNEL),'_preferredDirectionsHeatmap');
     heatmapPD = imagesc(heatmapDataPD,'alphaData',alphaArray);
     
     %colormap(redblue)
@@ -43,13 +43,11 @@ function [heatmapDataPD,alphaArray,stimRow,stimCol,PDscaled] = getHeatmapDataPD(
     
     %calculate pd's relative to stimulated channel pd
     for i=1:numel(PDtemp)
-        PDtemp(i) = angleDiff(PDtemp(optsPD.STIM_CHANNEL),PDtemp(i),false,false);
+        PDtemp(i) = angleDiff(PDtemp(optsPD.CENTER_CHANNEL),PDtemp(i),false,false);
         %scale from -1 to 1
-        PDtemp(i) = -1(*(PDtemp(i)-(min(PDtemp)))*(1-(-1))/(max(PDtemp)-min(PDtemp))+(-1));
+        
     end
-    
-    PDscaled = PDtemp;
-    
+    PDscaled = -2*(PDtemp-(min(PDtemp)))/(max(PDtemp)-min(PDtemp)) + 1;   
 
     %put the angles in their respective locations in the array
     for pd=optsPD.PLOT_CHANNELS
@@ -58,7 +56,7 @@ function [heatmapDataPD,alphaArray,stimRow,stimCol,PDscaled] = getHeatmapDataPD(
                 heatmapDataPD((11-mapData.row(chan)),mapData.col(chan)) = PDtemp(pd);
                 alphaArray(11-mapData.row(chan),mapData.col(chan))=1;
                 %setting stimrow and stimcol
-                if mapData.chan(chan) == optsPD.STIM_CHANNEL
+                if mapData.chan(chan) == optsPD.CENTER_CHANNEL
                     stimRow = 11 - mapData.row(chan);
                     stimCol = mapData.col(chan)
                 end
@@ -72,7 +70,7 @@ function [optsPD] = configureOptsPD(optsPDInput)
     optsPD.MAKE_BAR_PLOT = 1;
 
     optsPD.PLOT_CHANNELS = [1:96];
-    optsPD.STIM_CHANNEL = 1;
+    optsPD.CENTER_CHANNEL = 1;
 
     optsPD.MAX_RATIO = 1;
     optsPD.MIN_RATIO = -0.2;
