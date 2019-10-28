@@ -1,4 +1,4 @@
-function [heatmapPD] = plotHeatmapsPD(td_all,pd_all,mapData,optsPD)
+function [heatmapPD,PDscaled] = plotHeatmapsPD(td_all,pd_all,mapData,optsPD)
 
     % configure opts and set default values
     optsPD = configureOptsPD(optsPD);
@@ -9,7 +9,7 @@ function [heatmapPD] = plotHeatmapsPD(td_all,pd_all,mapData,optsPD)
     
     % get heatmap data
     heatmapDataPD = {};
-    [heatmapDataPD,alphaArray,stimRow,stimCol] = getHeatmapDataPD(td_all,pd_all,optsPD,mapData);
+    [heatmapDataPD,alphaArray,stimRow,stimCol,PDscaled] = getHeatmapDataPD(td_all,pd_all,optsPD,mapData);
     
     %plot the pds
     f = figure();
@@ -32,7 +32,7 @@ function [heatmapPD] = plotHeatmapsPD(td_all,pd_all,mapData,optsPD)
     
 end
 
-function [heatmapDataPD,alphaArray,stimRow,stimCol] = getHeatmapDataPD(td_all,pd_all,optsPD,mapData)
+function [heatmapDataPD,alphaArray,stimRow,stimCol,PDscaled] = getHeatmapDataPD(td_all,pd_all,optsPD,mapData)
 
     %create array that you're going to pass to imagesc
     heatmapDataPD = nan(optsPD.NUM_ROWS,optsPD.NUM_COLS);
@@ -44,7 +44,12 @@ function [heatmapDataPD,alphaArray,stimRow,stimCol] = getHeatmapDataPD(td_all,pd
     %calculate pd's relative to stimulated channel pd
     for i=1:numel(PDtemp)
         PDtemp(i) = angleDiff(PDtemp(optsPD.STIM_CHANNEL),PDtemp(i),false,false);
+        %scale from -1 to 1
+        PDtemp(i) = -1(*(PDtemp(i)-(min(PDtemp)))*(1-(-1))/(max(PDtemp)-min(PDtemp))+(-1));
     end
+    
+    PDscaled = PDtemp;
+    
 
     %put the angles in their respective locations in the array
     for pd=optsPD.PLOT_CHANNELS
@@ -54,7 +59,7 @@ function [heatmapDataPD,alphaArray,stimRow,stimCol] = getHeatmapDataPD(td_all,pd
                 alphaArray(11-mapData.row(chan),mapData.col(chan))=1;
                 %setting stimrow and stimcol
                 if mapData.chan(chan) == optsPD.STIM_CHANNEL
-                    stimRow = 11 - mapData.row(chan)
+                    stimRow = 11 - mapData.row(chan);
                     stimCol = mapData.col(chan)
                 end
             end

@@ -107,7 +107,7 @@ arrIdx = 1;
 %% heatmap across whole array
 disp('start')
     inputData.mapFileName = 'mapFileZ:\Basic_Sciences\Phys\L_MillerLab\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
-    inputData.folderpath = 'C:\Users\joh8881\Desktop\Han_20190930_trains_noAmp\';
+    inputData.folderpath = 'C:\Users\joh8881\Desktop\Han_20190924_trains_noAmp\';
     
     opts.STIM_ELECTRODE_PLOT = [1];
     %opts.STIM_ELECTRODE_PLOT = 1;
@@ -140,7 +140,7 @@ disp('start')
     opts.FIGURE_DIR = inputData.folderpath;
     opts.FIGURE_PREFIX = 'Han_20190924';
     
-        [heatmaps, heatmap_data] = plotHeatmaps(arrayData,inputData.mapFileName(8:end),opts);
+        [heatmaps, heatmap_data, dataRatioScaled] = plotHeatmaps(arrayData,inputData.mapFileName(8:end),opts);
         
 
 %% amplitude vs. distance curve for each condition -- excitation

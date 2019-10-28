@@ -45,6 +45,10 @@ function [heatmapDataPD,alphaArray,stimRow,stimCol] = getHeatmapDataPD(td_all,pd
     for i=1:numel(PDtemp)
         PDtemp(i) = angleDiff(PDtemp(optsPD.STIM_CHANNEL),PDtemp(i),false,false);
     end
+    
+    %scaling values from -1 to 1
+    maxValue = prctile(PDtemp,90)
+    PDtemp = rescale(PDtemp,-1,1,'InputMax',maxValue)
 
     %put the angles in their respective locations in the array
     for pd=optsPD.PLOT_CHANNELS
@@ -54,8 +58,8 @@ function [heatmapDataPD,alphaArray,stimRow,stimCol] = getHeatmapDataPD(td_all,pd
                 alphaArray(11-mapData.row(chan),mapData.col(chan))=1;
                 %setting stimrow and stimcol
                 if mapData.chan(chan) == optsPD.STIM_CHANNEL
-                    stimRow = 11 - mapData.row(chan)
-                    stimCol = mapData.col(chan)
+                    stimRow = 11 - mapData.row(chan);
+                    stimCol = mapData.col(chan);
                 end
             end
         end
