@@ -312,7 +312,7 @@ function [outputData] = getHeatmapDataSingleCond(arrayData,unit,chan,wave,opts)
         numPostStimBins = 0;
     end
     
-     %defining arrays and bin sizess
+    %defining arrays and bin sizess
     lastRep = arrayData{unit}.stimData{chan,wave}(numel(arrayData{unit}.stimData{chan,wave}));
     repList = cell(1,lastRep); %all spike times organized by repetition
     preRepList = zeros(1,lastRep); %number of baseline spikes per repetition

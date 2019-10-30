@@ -77,15 +77,17 @@ end
 
 
 %% heatmap across whole array
-%     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
-    inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
-%     inputData.folderpath = 'C:\Users\joh8881\Desktop\Han_20190930_trains_noAmp\';
-    inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\StimRecData\Duncan\Duncan_20191026_trains_noAmp';
+     inputData.mapFileName = 'mapFileZ:\Basic_Sciences\Phys\L_MillerLab\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+%    inputData.mapFileName = 'mapFileZ:\Basic_Sciences\Phys\L_MillerLab\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
+%    inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+%    inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
+     inputData.folderpath = 'C:\Users\joh8881\Desktop\Han_20190924_trains_noAmp\';
+%    inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\StimRecData\Duncan\Duncan_20191026_trains_noAmp';
     
     opts.STIM_ELECTRODE_PLOT = [1:size(arrayData{1}.binEdges,1)];
     opts.WAVEFORM_TYPES_PLOT = [1:size(arrayData{1}.binEdges,2)];
 
-    opts.ALL_NEURONS = 0; % 1 = plot all neurons for each stim chan, 0 = plot all stim chans for a neuron
+    opts.ALL_NEURONS = 1; % 1 = plot all neurons for each stim chan, 0 = plot all stim chans for a neuron
 
     %time window for standardized values
     opts.BASELINE_PRE_TIME = -120/1000;
@@ -97,7 +99,7 @@ end
     opts.INHIBITORY = 0;
     opts.EXCITATORY = 0;
 
-    opts.MAX_RATIO = 7;
+    opts.MAX_RATIO = 1;
     opts.MIN_RATIO = -1;
     opts.LOG_SCALE = 0;
     opts.LOG_PARAM = 9;
@@ -115,13 +117,31 @@ end
 % must make sure PD related data is here, usually from running
 % analyzeCObump or loading a corresponding file
 
+%create array of averageCombinedData to pass through
+%plotCombinedAverageData()
+averageCombinedData = nan(1,360);
+
+%for i=1:numel(heatmap_data) %if multiple waveforms
+for i=1:360 %plotting 360 10x10 arrays (one for each degree)
     inputData.td_all = td_all;
     inputData.mapData = mapData;
     inputData.arrayData = arrayData;
-    inputData.dataRatioScaled = dataRatioScaled;
+    inputData.dataRatioScaled = heatmap_data{i}.dataRatioScaled;
     inputData.PDscaled = PDscaled;
+    %inputData.waveform = heatmap_data{i}.wave; %if multiple waveforms
+    inputData.waveform = 0;
+    inputData.angleNumber = i; %if multiple 10x10 arrays
+    inputData.mainChan = 9;
+    
+    inputData.plotHeatmap = 0; %boolean 1 (plot heatmaps) or 0 (don't)
     
     combinedData = combineHeatmaps(inputData);
+    %fill in averageCombinedData
+    averageCombinedData(i) = combinedData.average;
+end
+
+%plot average values vs. angle (1-360 degrees)
+averageData = plotCombinedAverageData();
 
     
     

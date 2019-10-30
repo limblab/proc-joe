@@ -102,7 +102,7 @@
     optsPD.MAKE_BAR_PLOT = 1;
     
     optsPD.PLOT_CHANNELS = [1:96];
-    optsPD.CENTER_CHANNEL = 41;
+    optsPD.CENTER_CHANNEL = 9; %need to change this to hardcoded input angle
 
     optsPD.MAX_RATIO = 1;
     optsPD.MIN_RATIO = -1;

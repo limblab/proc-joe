@@ -3,10 +3,6 @@ function [heatmapPD,PDscaled] = plotHeatmapsPD(td_all,pd_all,mapData,optsPD)
     % configure opts and set default values
     optsPD = configureOptsPD(optsPD);
     
-    % useful constants
-    colorsBelowOne = [0*(0:63)' 0*(0:63)' 0+(0:63)'/(63)];
-    colorsAboveOne = [0+(0:63)'/(63) 0*(0:63)' 0*(0:63)'];
-    
     % get heatmap data
     heatmapDataPD = {};
     [heatmapDataPD,alphaArray,stimRow,stimCol,PDscaled] = getHeatmapDataPD(td_all,pd_all,optsPD,mapData);
@@ -16,11 +12,6 @@ function [heatmapPD,PDscaled] = plotHeatmapsPD(td_all,pd_all,mapData,optsPD)
     f.Name = strcat(optsPD.FIGURE_PREFIX,'_stimChan',num2str(optsPD.CENTER_CHANNEL),'_preferredDirectionsHeatmap');
     heatmapPD = imagesc(heatmapDataPD,'alphaData',alphaArray);
     
-    %colormap(redblue)
-%     colorArrayR = [linspace(1,0,200),zeros(1,199)]';
-%     colorArrayG = zeros(399,1);
-%     colorArrayB = [zeros(1,199),linspace(0,1,200)]';
-%     colorArray = [colorArrayR colorArrayG colorArrayB];
     colormap(flip(viridis,1));
     colorbar;
     
@@ -41,13 +32,11 @@ function [heatmapDataPD,alphaArray,stimRow,stimCol,PDscaled] = getHeatmapDataPD(
     %ensure all angles are between 1-180deg
     PDtemp = radtodeg(pd_all.velPD);
     
-    %calculate pd's relative to stimulated channel pd
+    %calculate pd's relative to stimulated channel pd (need to change this
+    %to hardcoded input angle)
     for i=1:numel(PDtemp)
         PDtemp(i) = angleDiff(PDtemp(optsPD.CENTER_CHANNEL),PDtemp(i),false,false);
-        %scale from -1 to 1
-        
-    end
-    PDscaled = -2*(PDtemp-(min(PDtemp)))/(max(PDtemp)-min(PDtemp)) + 1;   
+    end 
 
     %put the angles in their respective locations in the array
     for pd=optsPD.PLOT_CHANNELS
@@ -63,6 +52,13 @@ function [heatmapDataPD,alphaArray,stimRow,stimCol,PDscaled] = getHeatmapDataPD(
             end
         end
     end
+    
+    %scale from -1 to 1
+    heatmapDataPDscaled = heatmapDataPD;
+    heatmapDataPDscaled = -2.*(heatmapDataPDscaled-(min(heatmapDataPDscaled)))./(max(heatmapDataPDscaled)-min(heatmapDataPDscaled)) + 1;
+    
+    %save variable for combineHeatmaps
+    PDscaled = heatmapDataPDscaled;
 
 end
 
