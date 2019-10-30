@@ -87,7 +87,7 @@ if(be_aggressive) % find a threshold based on all trials
 end
 
 for trial = 1:length(trial_data)
-    if(isfield(td(trial),'tgtDir') && strcmpi(which_field,'speed')~=1)
+    if(isfield(td(trial),'target_direction') && strcmpi(which_field,'speed')~=1)
 %         project (which_field) onto the target axis
         s = sum(td(trial).(which_field)*[cos(td(trial).tgtDir/180*pi);sin(td(trial).tgtDir/180*pi)],2);
     else
@@ -151,7 +151,7 @@ for trial = 1:length(trial_data)
         if isempty(on_idx) % usually means it never crosses threshold
             on_idx = NaN;
         end
-        if(~isnan(td(trial).tgtDir))
+        if(~isnan(td(trial).target_direction))
             warning('Could not identify movement onset');
         end
     end

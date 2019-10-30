@@ -76,6 +76,27 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
             NUM_CHANS = 1;
             CHAN_LIST = opts.STIM_ELECTRODE; % placeholder because this isn't given that info
         else
+            
+            if(iscell(stimInfo.chanSent) && sum(stimInfo.chanSent{1} == -1) == 1) % try to get chan stim from filename, % handles multiple channels
+                fname = fileList(fileNumber).name;
+                underscoreIdx = strfind(fname,'_');
+                if(~isempty(strfind(fname,'chanStim')))
+                    strIdx = strfind(fname,'chanStim');
+                    underscoreIdx = underscoreIdx(find(underscoreIdx < strIdx,1,'last'));
+                    chanStim = str2num(fname(underscoreIdx+1:strIdx-1));
+                elseif(~isempty(strfind(fname,'stim')) && ~isempty(strfind(fname,'chan')))
+                    strIdx = [strfind(fname,'chan'), strfind(fname,'stim')];
+                    chanStim = str2num(fname(strIdx(end-1)+4:strIdx(end)-1)); % some files have chans....chan#stim
+                end
+                
+                if(~isempty(chanStim))
+                    for chanSentIdx = 1:numel(stimInfo.chanSent)
+                        stimInfo.chanSent{chanSentIdx} = chanStim;
+                    end
+                end
+                
+            end
+            
             if(~isempty(opts.NUM_WAVEFORM_TYPES))
                 NUM_WAVEFORM_TYPES = opts.NUM_WAVEFORM_TYPES;
                 WAVEFORM_NUMS = 1:1:NUM_WAVEFORM_TYPES;
@@ -101,26 +122,6 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
             else
                 CHAN_LIST = opts.STIM_ELECTRODE;
                 NUM_CHANS = 1;
-            end
-            
-            if(iscell(stimInfo.chanSent) && sum(stimInfo.chanSent{1} == -1) == 1) % try to get chan stim from filename, % handles multiple channels
-                fname = fileList(fileNumber).name;
-                underscoreIdx = strfind(fname,'_');
-                if(~isempty(strfind(fname,'chanStim')))
-                    strIdx = strfind(fname,'chanStim');
-                    underscoreIdx = underscoreIdx(find(underscoreIdx < strIdx,1,'last'));
-                    chanStim = str2num(fname(underscoreIdx+1:strIdx-1));
-                elseif(~isempty(strfind(fname,'stim')) && ~isempty(strfind(fname,'chan')))
-                    strIdx = [strfind(fname,'chan'), strfind(fname,'stim')];
-                    chanStim = str2num(fname(strIdx(end-1)+4:strIdx(end)-1)); % some files have chans....chan#stim
-                end
-                
-                if(~isempty(chanStim))
-                    for chanSentIdx = 1:numel(stimInfo.chanSent)
-                        stimInfo.chanSent{chanSentIdx} = chanStim;
-                    end
-                end
-                
             end
             
             if(opts.FLAG_WAVEFORM) % try to get stim amp from file name, get idx for master list of waveforms

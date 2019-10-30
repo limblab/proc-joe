@@ -1,5 +1,5 @@
 %% determine filename and input data
-    input_data.folderpath = 'C:\Users\jts3256\Desktop\Duncan_BD_data\';
+    input_data.folderpath = 'C:\Users\jts3256\Desktop\Duncan_20190709_kramer_training\';
 %     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\right S1 20180919\SN 6251-001804.cmp';
 
@@ -28,18 +28,13 @@
             'bumpTime';'bumpDir';'bumpMagnitude';'isStimTrial';'stimCode'};
         params.trial_results = {'R','F'};
         params.extra_time = [1,2];
-        params.exclude_units = [1:255];
+        params.exclude_units = [255];
         td_temp = parseFileByTrial(cds,params);
-        if(isfield(td_temp,'LeftS1_unit_guide'))
-            td_temp = rmfield(td_temp,'LeftS1_unit_guide');
-            td_temp = rmfield(td_temp,'LeftS1_spikes');
-        end
-        if(isfield(td_temp,'force'))
-            td_temp = rmfield(td_temp,'force');
-        end
+        td_temp = stripSpikeSorting(td_temp);
         td_all = [td_all, td_temp];
     end
-    
+%% rebin td
+    td_all_use = binTD(td_all,50);
     
 %% get psychometric curve data
 % note: all bumpDir's are relative to tgtDir. Is primary target determines
@@ -77,8 +72,7 @@
     %     set(l,'box','off');
     end
 
-%% downsample TD
-    td_all_use = binTD(td_all,50);
+
 
     
 %% look at kinematics during bump for stim and non stim trials
@@ -111,35 +105,7 @@
 %% Friedman test
     
     
-    
-    
-    
-%% choice direction stuff
-%% start with simple neurometric curves -- plot firing rate as function of bump direction for each axis
-    input_data.make_plot = 0;
-    input_data.window = [0,0.4]; % s
-    neurometric_data = makeNeurometricCurves(td_all_use,psych_data,input_data);
-    
-%% perform analysis done by (Ingaki, 2019) -- coding direction
-% find n-dimensional vector (n = num neurons) where each entry is the
-% average difference between spikes during correct left and right trials
-
-    input_data.sample_rate = 0.5;
-    input_data.bump_range = 90 + 50*[-1,1];
-    for axis = 1:numel(neurometric_data)
-        cd_data{axis} = getCodingDirection(neurometric_data{axis},input_data);
-    end
-    
-%% predict decision and visualize projection onto cd over time
-    input_data.bump_range = 90 + 90*[-1,1];
-
-    for axis = 1:numel(neurometric_data)
-        cd_pred_data{axis} = getCodingDirectionPredictions(neurometric_data{axis},cd_data{axis},input_data);
-    end
-    
-
-
-
+ 
     
 
     

@@ -1,6 +1,6 @@
 %% set initial parameters
 
-    input_data.folderpath = 'C:\Users\jts3256\Desktop\Duncan_stim_data\Duncan_CObump\';
+    input_data.folderpath = 'C:\Users\jts3256\Desktop\Duncan_CO_data\';
     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
 %     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 %     mapFileName = '\\fsmresfiles.fsm.northwestern.edu\fsmresfiles\Basic_Sciences\Phys\L_MillerLab\limblab-archive\Retired Animal Logs\Monkeys\Kramer 10I1\Kramer sept 2012 implant array mapping\6251-0922.cmp';
@@ -36,7 +36,7 @@
     
     td_all_files = cell(numel(folders),1);
     
-    for folder_idx = 1%:numel(folders)
+    for folder_idx = 1:numel(folders)
         td_all = [];
         cd([folders(folder_idx).folder,'\',folders(folder_idx).name]);
         file_name = dir('*nev*');
@@ -59,8 +59,8 @@
 
     end
 
-%% remove move bump trials
-    if(strcmpi(input_data.task,'taskCObump'))
+%% remove bump trials
+    if(0 == 1 && strcmpi(input_data.task,'taskCObump')) % not sure why I was doing this...
         td_all_use = td_all_files;
         for t = 1:numel(td_all_files)
             keep_mask = isnan([td_all_use{t}.idx_bumpTime]);
@@ -84,7 +84,7 @@
         pd_params = [];
         pd_params.out_signals = 'LeftS1_spikes';
         pd_params.bootForTuning = 1;
-        pd_params.num_boots = 100;
+        pd_params.num_boots = 1000;
             pd_params.move_corr = 'vel';
 
         pd_temp = getTDPDs(td_all_use{t},pd_params);
@@ -131,7 +131,7 @@
 %% get change in PD, mod depth, and z_score for each direction across files and visualize
     
     file_idx = figure();
-    chan_list = [30,63,68,90,52,72,73,96,3,25,27,71,26,33,66,70,29,47,52,75,6,13,23,62,3,29,88,95,46,52,55,65,18,24,67,70];
+    chan_list = [12,41,91,58,21,9,23,11,22,57,37,50];
     plot(pd_all(chan_list,:)'*180/pi - pd_all(chan_list,1)'*180/pi);
 
 %     f = figure();
@@ -144,7 +144,7 @@
 %     end
 
 %% histogram of differences
-    compare_idx = [1,3];
+    compare_idx = [3,7];
 %     chan_list = [13,15,27,61,24,26,32,95,4,5,29,91,1,2,9,10,7,11,44,64,9,19,62,4,25,85,96,8,23,44,60,22,62];
 %     chan_list = [3,43,49,70,35,44,66,87,46,48,50,51,2,33,67,74];
     keep_mask = is_vel_tuned(1:96,compare_idx(1)) & is_vel_tuned(1:96,compare_idx(2));

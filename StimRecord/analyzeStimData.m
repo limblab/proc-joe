@@ -1,6 +1,6 @@
 %% set file names 
 
-    inputData.folderpath = 'C:\Users\jts3256\Desktop\Han_stim_data\Han_20190926_multielec_dukeBoardgen2\chan92\';
+    inputData.folderpath = 'E:\Data\Joseph\Han_stim_data\Han_20191030_longTrains_dukeGen2\chan14\20Hz\';
     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
     % inputData.mapFileName = 'mapFileR:\limblab-archive\Retired Animal Logs\Monkeys\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
 %     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
@@ -24,17 +24,17 @@
     tic
 
     optsExtract.STIMULI_RESPONSE = 'all';
-    optsExtract.STIMULATIONS_PER_TRAIN = 11;
+    optsExtract.STIMULATIONS_PER_TRAIN = 51;
     optsExtract.STIMULATION_BATCH_SIZE = 1000;
 
     optsExtract.USE_STIM_CODE = 0;
     optsExtract.STIM_ELECTRODE = {};
-    optsExtract.CHAN_LIST = [];
+    optsExtract.CHAN_LIST = {};
 
-    optsExtract.PRE_TIME = 150/1000; % made negative in the function
-    optsExtract.POST_TIME = 500/1000;
+    optsExtract.PRE_TIME = 1000/1000; % made negative in the function
+    optsExtract.POST_TIME = 4000/1000;
 
-    optsExtract.BIN_SIZE = 5/1000;
+    optsExtract.BIN_SIZE = 1/1000;
     optsExtract.TIME_AFTER_STIMULATION_WAVEFORMS = 10/1000;
     optsExtract.USE_ANALOG_FOR_STIM_TIMES = 1; % this uses the analog sync line to get stim times, not sure why you would want to do anything else
     optsExtract.GET_KIN = 1;
@@ -57,21 +57,21 @@ for arrIdx = 1:numel(arrayData)
     optsPlotFunc.FIGURE_DIR = inputData.folderpath;
     optsPlotFunc.FIGURE_PREFIX = 'Han_20190923';
 
-    optsPlotFunc.PRE_TIME = 25/1000;
-    optsPlotFunc.POST_TIME = 175/1000;
+    optsPlotFunc.PRE_TIME = 600/1000;
+    optsPlotFunc.POST_TIME = 1200/1000;
     optsPlotFunc.SORT_DATA = '';
 
     optsPlotFunc.PLOT_AFTER_STIMULATION_END = 0;
-    optsPlotFunc.STIMULATION_LENGTH = 0.1+0.5+0.53;
+    optsPlotFunc.STIMULATION_LENGTH = [];
     
-%     rasterPlots = plotRasterStim(arrayData{arrIdx},arrayData{arrIdx}.NN,optsPlotFunc);
+    rasterPlots = plotRasterStim(arrayData{arrIdx},arrayData{arrIdx}.NN,optsPlotFunc);
 
-    optsPlotFunc.PLOT_ALL_ONE_FIGURE = 0;
-    optsPlotFunc.PLOT_LINE = 1;
-    optsPlotFunc.PLOT_TITLE = 1;    
-    optsPlotFunc.PLOT_ALL_WAVES_ONE_FIGURE = 0;
+%     optsPlotFunc.PLOT_ALL_ONE_FIGURE = 0;
+%     optsPlotFunc.PLOT_LINE = 1;
+%     optsPlotFunc.PLOT_TITLE = 1;    
+%     optsPlotFunc.PLOT_ALL_WAVES_ONE_FIGURE = 0;
 % %     
-    PSTHPlots = plotPSTHStim(arrayData{arrIdx},1,optsPlotFunc);
+%     PSTHPlots = plotPSTHStim(arrayData{arrIdx},1,optsPlotFunc);
 
 end
 

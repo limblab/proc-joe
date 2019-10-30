@@ -1,22 +1,21 @@
 %% set file names 
 
-    input_data.folderpath = 'R:\data\Han_13B1\Raw\stimrecord\DblPulse_trains\Han_20190304_trains\chan56stim\';
+    input_data.folderpath = 'C:\Users\jts3256\Desktop\Han_stim_data\Han_20191011_dukeProjBox_trains\';
     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
     % input_data.mapFileName = 'mapFileR:\limblab-archive\Retired Animal Logs\Monkeys\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
 %     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
 
 
-    input_data.IPI = [-1,5,10,20,50,200,10,20]; % Hz, -1 means single pulse
-    input_data.num_pulses = [1,41,21,11,5,2,2,2];
+    input_data.IPI = [-1,5,10,20,50,50]; % Hz, -1 means single pulse
+    input_data.num_pulses = [1,41,21,11,5,41];
 
     
-    input_data.train_length = 0.2; % s
     input_data.num_conditions = numel(input_data.IPI);
 
     input_data.nom_freq = 2;
-    input_data.window = [-250,500]; % ms before and ms after 1st pulse
+    input_data.window = [-250,2500]; % ms before and ms after 1st pulse
     input_data.bin_size = 2; % in ms
-    input_data.chan_rec = 56;
+    input_data.chan_rec = 51;
 
     folderpath = input_data.folderpath; % rest of code uses folderpath currently...may have switched this, not 100% certain
 
@@ -83,7 +82,10 @@
                     condition = find(input_data.IPI < 0);
                 else
                     IPI = (stimInfo.stimOn(st+1) - stimInfo.stimOn(st))*1000; % in ms
-                    num_pulses = sum(stimInfo.stimOn(st:end) < stimInfo.stimOn(st)+1/input_data.nom_freq-0.01);
+                    num_pulses = find(diff(stimInfo.stimOn(st:end)) > max(input_data.IPI/1000)+0.02,1,'first');
+                    if(isempty(num_pulses)) % last pulse
+                        num_pulses = numel(stimInfo.stimOn)-st+1;
+                    end
                     condition_list = find(input_data.num_pulses == num_pulses);
                     [min_diff,condition_idx] = min(abs(IPI - input_data.IPI(condition_list)));
                     condition = condition_list(condition_idx);
@@ -157,7 +159,15 @@
                 array_data{u}.binCounts{cond} = histcounts(array_data{u}.spikeTrialTimes{cond}*1000,bin_edges);
                 array_data{u}.kin{cond}.mean_speed = mean(array_data{u}.kin{cond}.speed,2);
             end
+            
+            array_data{u}.monkey = input_data.monkey(7:end);
+            array_data{u}.CHAN_LIST = (input_data.chan_rec);
+            array_data{u}.stimData = array_data{u}.trial_num;
+            array_data{u}.numStims = array_data{u}.num_stims;
         end
+        
+
+        
     end
 
     
@@ -184,7 +194,7 @@
         optsPlotFunc.FIGURE_PREFIX = [array_data{arrIdx}.monkey,'_DblPulseTrains_'];
 
         optsPlotFunc.PRE_TIME = 75/1000;
-        optsPlotFunc.POST_TIME = 300/1000;
+        optsPlotFunc.POST_TIME = 250/1000;
         optsPlotFunc.SORT_DATA = '';
 
         optsPlotFunc.STIMULATION_LENGTH = 0.453;

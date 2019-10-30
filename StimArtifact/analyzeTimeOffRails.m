@@ -40,13 +40,13 @@
         NS5 = openNSx([folderpath,file_list(file_num).name],'uV');
     
         artifact_data{file_num} = NS5.Data(stim_chan(file_num),:);
-        sync_line_data{file_num} = NS5.Data(sync_idx,:);
+        sync_line_data{file_num} = NS5.Data(end,:);
     end
     cd(pwd);
     
 %% pick a file (idx) and plot anodic and cathodic data
     time_off_rails_data = [];
-    max_amp = 200;
+    max_amp = 30;
     for file_num = 1:numel(file_list)
         disp(file_list(file_num).name);
         
@@ -73,18 +73,18 @@
         time_off_rails_data(file_num,:) = [temp_cathodic,temp_anodic] +5;
         
         
-        f=figure();
-        f.Name = [file_list(file_num).name(1:end-10),'_raw'];
-        
-        plot(x_data,(plot_data(:,1:2:6)'),'color',getColorFromList(1,0),'linewidth',1.5);
-        hold on 
-        plot(x_data,(plot_data(:,2:2:6)'),'color',getColorFromList(1,1),'linewidth',1.5);
-        xlim([-4,12])
-        ylim([-9000,9000])
-        ylabel('Voltage (\muV)');
-        formatForLee(gcf)
-        xlabel('Time after stimulation offset (ms)');
-        set(gca,'fontsize',14)
+%         f=figure();
+%         f.Name = [file_list(file_num).name(1:end-10),'_raw'];
+%         
+%         plot(x_data,(plot_data(:,1:2:6)'),'color',getColorFromList(1,0),'linewidth',1.5);
+%         hold on 
+%         plot(x_data,(plot_data(:,2:2:6)'),'color',getColorFromList(1,1),'linewidth',1.5);
+%         xlim([-4,12])
+%         ylim([-9000,9000])
+%         ylabel('Voltage (\muV)');
+%         formatForLee(gcf)
+%         xlabel('Time after stimulation offset (ms)');
+%         set(gca,'fontsize',14)
 
 %                 %
 %             f=figure();
@@ -94,19 +94,20 @@
 %             hold on
 %             plot(x_data,(anodic_data'),'b','linewidth',1.5);
 %             xlim([-4,10])
-%             ylim([-9000,9000])
+%             ylim([-100,100])
 %             ylabel('Voltage (\muV)');
 %             formatForLee(gcf)
 %             xlabel('Time after stimulation offset (ms)');
 %             set(gca,'fontsize',14)
 %             hold on
 %             try
-%                 plot(x_data(temp_cathodic+find(x_data >= 0,1,'first')+5)+[0,0],[-9000,9000],'r--');
+%                 plot(x_data(temp_cathodic+find(x_data >= 0,1,'first')+5)+[0,0],[-9000,9000],'--','color',[0,0.5,0],'linewidth',4);
 %                 hold on
-%                 plot(x_data(temp_anodic+find(x_data >= 0,1,'first')+5)+[0,0],[-9000,9000],'b--');
+%                 plot(x_data(temp_anodic+find(x_data >= 0,1,'first')+5)+[0,0],[-9000,9000],'k--','linewidth',4);
 %             catch
 %             end
-        
+%         pause;
+%         close all
     end
     
     
@@ -134,22 +135,23 @@
     mean_time_anodic = mean(time_off_rails_anodic,2,'omitnan');
     
     
-    std_time_cathodic = std(time_off_rails_cathodic,0,2);
-    std_time_anodic = std(time_off_rails_anodic,0,2);
+    std_time_cathodic = std(time_off_rails_cathodic,0,2,'omitnan');
+    std_time_anodic = std(time_off_rails_anodic,0,2,'omitnan');
     
     x_data = amps;
     
-    figure();
-    plot(amps,mean_time_cathodic,'b','marker','.','markersize',20,'linewidth',1.5);
-    hold on
-    plot(amps,mean_time_anodic,'r','marker','.','markersize',20,'linewidth',1.5);
-    
-    xlabel('Amplitude (\muA)');
-    ylabel('Mean time off rails post stim (ms)');
-    formatForLee(gcf);
-    set(gca,'fontsize',14);
-    l=legend('Cathodic','Anodic');
-    set(l,'box','off','fontsize',12,'location','best')
+    f=figure();
+    boxplot(time_off_rails_cathodic');
+%     errorbar(amps,mean_time_cathodic,std_time_cathodic,'color',getColorFromList(1,0),'marker','.','markersize',20,'linewidth',1.5);
+%     hold on
+%     errorbar(amps,mean_time_anodic,std_time_anodic,'color',getColorFromList(1,1),'marker','.','markersize',20,'linewidth',1.5);
+%     
+%     xlabel('Amplitude (\muA)');
+%     ylabel('Mean time off rails post stim (ms)');
+%     formatForLee(gcf);
+%     set(gca,'fontsize',14);
+%     l=legend('Cathodic','Anodic');
+%     set(l,'box','off','fontsize',12,'location','best')
     
     
     

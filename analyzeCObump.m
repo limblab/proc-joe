@@ -1,11 +1,11 @@
 %% set initial parameters
 
-    input_data.folderpath = 'C:\Users\jts3256\Desktop\Han_CObump\';
+    input_data.folderpath = 'C:\Users\jts3256\Desktop\Han_CObump\Han_20191003_CObump_stimDuringTask\';
 %     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 %     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Pop_18E3\Array Map Files\6250-002085\SN 6250-002085.cmp';
     
-    input_data.date = '20190930';
+    input_data.date = '20191003';
     input_data.array = 'arrayLeftS1';
     input_data.monkey = 'monkeyHan';
     input_data.ranBy = 'ranByJoe';
@@ -55,6 +55,8 @@
         % set it to 50ms
         td_all = binTD(td_all,ceil(0.05/td_all(1).bin_size));
     end
+    
+   
     
 %% get PDs
     

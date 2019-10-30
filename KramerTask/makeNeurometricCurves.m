@@ -8,7 +8,7 @@ function [output_data] = makeNeurometricCurves(td,psych_data_all,input_data)
     for i = 1:size(psych_data_all,2) % get plot for each axis
         psych_data = psych_data_all{1,i};
         % trial by num neurons matrix
-        spike_data = zeros(numel(psych_data.trial_ids),size(td(1).LeftS1_unit_guide,1),diff(input_data.window)/td(1).bin_size);
+        spike_data = zeros(numel(psych_data.trial_ids),size(td(1).LeftS1_unit_guide,1),floor(diff(input_data.window)/td(1).bin_size));
 
         % trial by 1 matrix
         bump_dirs = zeros(numel(psych_data.trial_ids),1);
