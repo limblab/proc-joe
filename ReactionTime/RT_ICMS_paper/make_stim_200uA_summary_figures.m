@@ -13,9 +13,11 @@
 %% plot stim staircase (train length, freq, amp) for each monkey (6 figures total)
     counter = 1;
     data_all = []; % min stim, bump
+    num_trials_all = [];
+    
     f=figure();
     f.Name = '200uA_summary_fig';
-    for monk = monkey_names
+    for monk = monkey_names(1)
     % train length data
         file_list = dir([monk{1},'*.mat']);
         
@@ -38,6 +40,7 @@
             if(use_std_err)
                 std_bump = std_bump/sqrt(bump_num_trials);
             end
+            num_trials_all = [num_trials_all,bump_num_trials];
             
             % data holds the bump data with bump mag as a variable
             mean_rt = []; std_rt = []; num_trials = []; stim_amps_all = []; rt_data_all = [];
@@ -49,6 +52,9 @@
                     std_rt(d) = std_rt(d)/sqrt(num_trials(d));
                 end
             end
+            
+            num_trials_all = [num_trials_all,num_trials];
+            
             min_stim_idx = numel(mean_rt);
 
             [h,p] = ttest2(data.cueInfo(end).rt,bump_data_rt,'vartype','unequal');

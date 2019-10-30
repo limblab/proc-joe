@@ -63,9 +63,9 @@ if(be_aggressive) % find a threshold based on all trials
     s_all = [];
     if(threshold_acc <= 0)
         for trial = 1:length(trial_data)
-            if(isfield(td(trial),'tgtDir') && strcmpi(which_field,'speed')~=1)
+            if(isfield(td(trial),'target_direction') && strcmpi(which_field,'speed')~=1)
                 % project (which_field) onto the target axis
-                s_all = [s_all;sum(td(trial).(which_field)(td(trial).idx_tgtOnTime+35:td(trial).(start_idx),:)*[cos(td(trial).tgtDir*pi/180);sin(td(trial).tgtDir*pi/180)],2)];
+                s_all = [s_all;sum(td(trial).(which_field)(td(trial).idx_tgtOnTime+35:td(trial).(start_idx),:)*[cos(td(trial).target_direction*pi/180);sin(td(trial).target_direction*pi/180)],2)];
             else
                 s_all = [s_all;td(trial).(which_field)(td(trial).idx_tgtOnTime+35:td(trial).(start_idx),1)];
             end
@@ -89,7 +89,7 @@ end
 for trial = 1:length(trial_data)
     if(isfield(td(trial),'target_direction') && strcmpi(which_field,'speed')~=1)
 %         project (which_field) onto the target axis
-        s = sum(td(trial).(which_field)*[cos(td(trial).tgtDir/180*pi);sin(td(trial).tgtDir/180*pi)],2);
+        s = sum(td(trial).(which_field)*[cos(td(trial).target_direction/180*pi);sin(td(trial).target_direction/180*pi)],2);
     else
         s = td(trial).(which_field)(:,1);
 %         s = sqrt(sum(td(trial).(which_field).^2,2));

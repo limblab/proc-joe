@@ -100,28 +100,33 @@
     amps_plot = [5,10,15,20,25,30,40,50,100];
     spike_times_amp = cell(numel(amps_plot),1); % preallocate space  
     bin_edges = [0:1:20];
+    bin_counts = cell(numel(amps_plot),1);
     colors = inferno(numel(amps_plot) + 3);
     f_latency=figure(); hold on;
     
     for a = 1:numel(amps_plot)
-        spike_times_amp{a} = [];
+        bin_counts{a} = zeros(1,numel(bin_edges)-1);
+        num_units = 0;
         for unit = 1:numel(spikesStruct)
             amp_idx = find(spikesStruct{unit}.amp == amps_plot(a) & spikesStruct{unit}.keep_mask == 1);
-            if(~isempty(amp_idx))
-                spike_times_amp{a} = [spike_times_amp{a}, spikesStruct{unit}.spike_times_post_stim{amp_idx}*1000];
+            unit_param_idx = find([array_data_all{unit}.STIM_PARAMETERS.amp1] == amps_plot(a))
+
+            if(~isempty(amp_idx) && ~isempty(unit_param_idx))
+                bin_counts{a} = bin_counts{a} + histcounts(spikesStruct{unit}.spike_times_post_stim{amp_idx}*1000,bin_edges)/array_data_all{unit}.numStims(unit_param_idx(1));
+                num_units = num_units + 1;
             end
         end
-        plot(bin_edges(1:end-1)+mode(diff(bin_edges)/2),histcounts(spike_times_amp{a},bin_edges),'color',colors(a,:),'linewidth',1.5)
+        plot(bin_edges(1:end-1)+mode(diff(bin_edges)/2),bin_counts{a}/num_units,'color',colors(a,:),'linewidth',1.5)
         hold on
     end
     
     xlabel('Time after stimulation offset (ms)');
-    ylabel('Number of spikes');
+    ylabel({'Number of spikes per stimulation','per neuron'});
     formatForLee(gcf)
     set(gca,'fontsize',14)
     l=legend('5','10','15','20','25','30','40','50','100');
     set(l,'box','off','fontsize',14);
-% make cdf plot for latencies (dependent on previous section)
+%% make cdf plot for latencies (dependent on previous section)
     
     x_data = {};
     y_data = {};
@@ -344,7 +349,7 @@
     
 %% metric for inhibition
     optsInhibPlot = [];
-    optsInhibPlot.PRE_WINDOW = [-50,-5];
+    optsInhibPlot.PRE_WINDOW = [-100,-5];
     optsInhibPlot.POST_WINDOW = [0,200];
     optsInhibPlot.MAX_TIME_START = 40; % ms
     optsInhibPlot.BIN_SIZE = 1;
@@ -375,9 +380,7 @@
         amp = [amp,inhibStruct{u}.amp];
         inhib_dur = [inhib_dur,inhibStruct{u}.inhib_dur'];
         unit = [unit,u*ones(size(inhibStruct{u}.inhib_dur))'];
-        
     end
-    
     % remove nan's
     keep_mask = ~isnan(amp) & ~isnan(inhib_dur) & ~isnan(unit);
     amp = amp(keep_mask);
@@ -387,6 +390,19 @@
     tbl = table(amp',inhib_dur',unit','VariableNames',{'amp','inhib_dur','unit'});
     mdl = fitlm(tbl,'inhib_dur~amp+unit')
     
+    % plot inhib dur vs. baseline fr for a single amp
+    amp_plot = 100;
+    inhib_dur = [];
+    baseline_fr = [];
+    for u = 1:numel(inhibStruct)
+        amp_idx = find(inhibStruct{u}.amp == amp_plot,1,'first');
+        if(~isempty(amp_idx) && inhibStruct{u}.is_inhib(amp_idx)==1)
+            baseline_fr(end+1,1) = inhibStruct{u}.baseline_fr;
+            inhib_dur(end+1,1) = inhibStruct{u}.inhib_dur(amp_idx);
+        end
+    end
+    
+    figure(); plot(baseline_fr,inhib_dur,'.','markersize',20)
 %% plot each unit as a faded out line, then plot mean as a dark line
     
     figure();
@@ -419,7 +435,7 @@
         hold on
 
     end
-    plot(amps_plot,inhib_dur_total./num_units_inhib,'k-','linewidth',1.5);
+    plot(amps_plot,inhib_dur_total./num_units_inhib,'k-','linewidth',2);
     formatForLee(gcf)
     xlabel('Amplitude (\muA)');
     ylabel('Inhibition duration (ms)');
@@ -435,25 +451,97 @@
     set(gca,'fontsize',14)
        
 
-%% 
-
-    unit_idx = 25;
-    waves = [9];
-    figure()
-    for w = waves
-        plot(inhibStruct{unit}.filtered_PSTH(w,:))
-        hold on
+%% plot PSTH for each condition for low and high speed cases
+    mean_speed_cutoff = [0.2,4]; % plot speeds in range
+    input_data.suffix = 'speed0-2';
+    
+    array_data_trim = arrayData;
+    for u = 1:numel(arrayData)
+        for cond = 1:numel(arrayData{u}.binCounts)
+            arrayData{u}.kin{cond}.speed = sqrt(arrayData{u}.kin{cond}.vx.^2 + arrayData{u}.kin{cond}.vy.^2);
+            arrayData{u}.kin{cond}.mean_speed = mean(arrayData{u}.kin{cond}.speed,2);
+            trial_speeds = arrayData{u}.kin{cond}.mean_speed(arrayData{u}.stimData{cond});
+            keep_mask = trial_speeds > mean_speed_cutoff(1) & trial_speeds < mean_speed_cutoff(2);
+            trials_keep = unique(arrayData{u}.stimData{cond}(keep_mask));
+            
+            
+            spike_trial_times = arrayData{u}.spikeTrialTimes{cond}(keep_mask==1);
+            
+            array_data_trim{u}.num_stims(cond) = sum(arrayData{u}.kin{cond}.mean_speed > mean_speed_cutoff(1) & arrayData{u}.kin{cond}.mean_speed < mean_speed_cutoff(2));
+            array_data_trim{u}.binCounts{cond} = histcounts(spike_trial_times*1000,array_data_trim{u}.binEdges{cond})/array_data_trim{u}.num_stims(cond);
+            array_data_trim{u}.speed{cond} = arrayData{u}.kin{cond}.speed(trials_keep,:);
+            array_data_trim{u}.mean_speed{cond} = arrayData{u}.kin{cond}.mean_speed(trials_keep,:);
+            
+            array_data_trim{u}.binMaxYLim = 1;
+        end
     end
     
+    input_data.unit_idx = 1;
     
+    optsPlotFunc.BIN_SIZE = mode(diff(array_data_trim{arrIdx}.binEdges{1,1}));
+    optsPlotFunc.FIGURE_SAVE = 0;
+    optsPlotFunc.FIGURE_DIR = [];
+    optsPlotFunc.FIGURE_PREFIX = [array_data_trim{arrIdx}.monkey,'_long_'];
+
+    optsPlotFunc.PRE_TIME = 15/1000;
+    optsPlotFunc.POST_TIME = 20/1000;
+    optsPlotFunc.SORT_DATA = 'postStimuliTime';
+
+    optsPlotFunc.MARKER_STYLE  = '.';
+
+    optsPlotFunc.PLOT_AFTER_STIMULATION_END = 1;
+    optsPlotFunc.STIMULATION_LENGTH = [];
+
+    optsPlotFunc.PLOT_ALL_ONE_FIGURE = 0;
+    optsPlotFunc.PLOT_LINE = 1;
+    optsPlotFunc.PLOT_TITLE = 0;    
+    optsPlotFunc.PLOT_ALL_WAVES_ONE_FIGURE = 0;
+        
+    %   
+    PSTHPlots = plotPSTHStim(array_data_trim{arrIdx},array_data_trim{arrIdx}.NN,optsPlotFunc);    
+
     
+
+
+%% plot response vs baseline firing rate for each trial
+
+    num_spikes_per_trial = cell(numel(arrayData{1}.numStims),numel(arrayData));
+    num_spikes_baseline = cell(numel(arrayData{1}.numStims),numel(arrayData));
+    mean_speed_per_trial = cell(numel(arrayData{1}.numStims),numel(arrayData));
+    spike_window = [0,10]/1000; % in s
+    baseline_window = [-100,-5]/1000; % in s
     
+    figure();
+    plot([0,10],[0,10],'k--');
+    hold on
+    for unit = 1:numel(arrayData)
+        for cond = 1:numel(arrayData{unit}.numStims)
+            arrayData{u}.kin{cond}.speed = sqrt(arrayData{u}.kin{cond}.vx.^2 + arrayData{u}.kin{cond}.vy.^2);
+            arrayData{u}.kin{cond}.mean_speed = mean(arrayData{u}.kin{cond}.speed,2);
+            if(arrayData{unit}.numStims(cond) > 0)
+                for tr = 1:arrayData{unit}.numStims(cond)
+                    % get spikes during the train
+                    spike_mask = arrayData{unit}.spikeTrialTimes{cond} > spike_window(1) & arrayData{unit}.spikeTrialTimes{cond} < spike_window(2) & ...
+                        arrayData{unit}.stimData{cond} == tr;
+                    num_spikes_per_trial{cond,unit}(tr,1) = sum(spike_mask);
+                    mean_speed_per_trial{cond,unit}(tr,1) = arrayData{unit}.kin{cond}.mean_speed(tr);
+
+                    % get baseline spike rate
+                    spike_mask = arrayData{unit}.spikeTrialTimes{cond} > baseline_window(1) & arrayData{unit}.spikeTrialTimes{cond} < baseline_window(2) & ...
+                        arrayData{unit}.stimData{cond} == tr;
+                    num_spikes_baseline{cond,unit}(tr,1) = sum(spike_mask);  
+
+                end
+                
+                % plot mean fr baseline for trials with >= 1 spike vs. that for stims with 0 spikes
+                spike_trial_mask = num_spikes_per_trial{cond,unit} > 0;
+                
+                plot(mean(num_spikes_baseline{cond,unit}(spike_trial_mask==0)),mean(num_spikes_baseline{cond,unit}(spike_trial_mask==1)),'.','markersize',16)
+            end
+        end
+    end
+
     
-
-
-
-
-
 
 
 

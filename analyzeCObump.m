@@ -1,11 +1,20 @@
 %% set initial parameters
 
+<<<<<<< HEAD
     input_data.folderpath = 'C:\Users\jts3256\Desktop\Han_CObump\Han_20191003_CObump_stimDuringTask\';
+=======
+    input_data.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\CObump\Han_20191015_CObumpmove\';
+
+>>>>>>> ff068fa3d28917d9beb5af9784dce6464c3b6550
 %     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
-    mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+%     mapFileName = 'Z:\Basic_Sciences\Phys\L_MillerLab\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 %     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Pop_18E3\Array Map Files\6250-002085\SN 6250-002085.cmp';
     
+<<<<<<< HEAD
     input_data.date = '20191003';
+=======
+    input_data.date = '20190924';
+>>>>>>> ff068fa3d28917d9beb5af9784dce6464c3b6550
     input_data.array = 'arrayLeftS1';
     input_data.monkey = 'monkeyHan';
     input_data.ranBy = 'ranByJoe';
@@ -97,23 +106,22 @@
     
     
 %% visualize
-
+%% heatmap for preferred directions
+disp('start')
+    mapData = loadMapFile(mapFileName);
     
+    optsPD.MAKE_BAR_PLOT = 1;
 
+    optsPD.PLOT_CHANNELS = [1:96];
+    optsPD.STIM_CHANNEL = 41;
 
+    optsPD.MAX_RATIO = 1;
+    optsPD.MIN_RATIO = -1;
+    optsPD.LOG_SCALE = 0;
+    optsPD.LOG_PARAM = 9;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    optsPD.FIGURE_SAVE = 0;
+    optsPD.FIGURE_DIR = input_data.folderpath;
+    optsPD.FIGURE_PREFIX = 'Han_20190924';
     
+    [heatmapPD] = plotHeatmapsPD(td_all,pd_all,mapData,optsPD);

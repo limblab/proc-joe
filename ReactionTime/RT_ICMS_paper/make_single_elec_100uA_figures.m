@@ -1,15 +1,16 @@
 %% load in data from folder
     monkey_names = {'Han','Duncan'};
     folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\SingleElecs\';
+    
     cd(folderpath);
     mean_trials = [];
     std_trials = [];
     p_vals_to_bump = [];
     p_vals_all_electrodes = [];
     lm = {};
-    rotation_angles = [0, 0]; %
+    rotation_angles = [0,0]; %
     
-    for monk = monkey_names
+    for monk = monkey_names(2)
         monk = monk{1};
         if(strcmpi(monk,'Duncan'))
             color_use = getColorFromList(1,2);
@@ -118,6 +119,7 @@
         
         % get mean and std of num trials
         trial_length = [all_files_data.num_trials, bump_num_trials, vis_num_trials];
+        num_trials_all = [num_trials_all, trial_length];
         mean_trials(end+1,1) = mean(trial_length);
         std_trials(end+1,1) = std(trial_length);
     

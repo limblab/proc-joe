@@ -2,6 +2,7 @@
 
     inputData.folderpath = 'E:\Data\Joseph\Han_stim_data\Han_20191030_longTrains_dukeGen2\chan14\20Hz\';
     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+
     % inputData.mapFileName = 'mapFileR:\limblab-archive\Retired Animal Logs\Monkeys\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
 %     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
 
@@ -47,8 +48,8 @@
     
 %% pick a unit (index in array data)
 % plot raster, and PSTH for the given unit above
-for arrIdx = 1:numel(arrayData)
-% arrIdx = ;
+% for arrIdx = 1:numel(arrayData)
+arrIdx = 1;
     % plot raster, and PSTH for the given unit above
 
 %     optsPlotFunc.BIN_SIZE = optsExtract.BIN_SIZE;
@@ -57,8 +58,13 @@ for arrIdx = 1:numel(arrayData)
     optsPlotFunc.FIGURE_DIR = inputData.folderpath;
     optsPlotFunc.FIGURE_PREFIX = 'Han_20190923';
 
+<<<<<<< HEAD
     optsPlotFunc.PRE_TIME = 600/1000;
     optsPlotFunc.POST_TIME = 1200/1000;
+=======
+    optsPlotFunc.PRE_TIME = 50/1000;
+    optsPlotFunc.POST_TIME = 200/1000;
+>>>>>>> ff068fa3d28917d9beb5af9784dce6464c3b6550
     optsPlotFunc.SORT_DATA = '';
 
     optsPlotFunc.PLOT_AFTER_STIMULATION_END = 0;
@@ -73,7 +79,7 @@ for arrIdx = 1:numel(arrayData)
 % %     
 %     PSTHPlots = plotPSTHStim(arrayData{arrIdx},1,optsPlotFunc);
 
-end
+% end
 
 %% plot grid
     optsGrid.STIM_ELECTRODE = unique(arrayData{arrIdx}.CHAN_SENT);
@@ -104,18 +110,25 @@ end
 
 
 %% heatmap across whole array
-
-    opts.STIM_ELECTRODE_PLOT = [1:numel(unique(arrayData{1}.CHAN_SENT))];
-    % opts.STIM_ELECTRODE_PLOT = 1;
-    % opts.WAVEFORM_TYPES_PLOT = unique(arrayData{1}.WAVEFORM_SENT);
-    opts.WAVEFORM_TYPES_PLOT = [1:size(arrayData{1}.bE,2)];
+disp('start')
+    inputData.mapFileName = 'mapFileZ:\Basic_Sciences\Phys\L_MillerLab\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+    inputData.folderpath = 'C:\Users\joh8881\Desktop\Han_20190930_trains_noAmp\';
+    
+    opts.STIM_ELECTRODE_PLOT = [1];
+    %opts.STIM_ELECTRODE_PLOT = 1;
+    %opts.WAVEFORM_TYPES_PLOT = unique(arrayData{1}.WAVEFORM_SENT);
+    opts.WAVEFORM_TYPES_PLOT = [1:size(arrayData{1}.binEdges,2)];
 
     opts.ALL_NEURONS = 1; % 1 = plot all neurons for each stim chan, 0 = plot all stim chans for a neuron
 
-    opts.BASELINE_PRE_TIME = -15/1000;
+    opts.BASELINE_PRE_TIME = -100/1000;
     opts.BASELINE_POST_TIME = -5/1000;
-    opts.STIM_PRE_TIME = 1/1000;
-    opts.STIM_POST_TIME = 10/1000;
+    opts.STIM_PRE_TIME = 0/1000;
+    opts.STIM_POST_TIME = 120/1000;
+    
+    %time window for standardized values
+    opts.PRE_STIM_WINDOW = 120/1000;
+    opts.POST_STIM_WINDOW = 120/1000;
 
     opts.AUTO_WINDOW = 0; % 
     opts.INHIBITORY = 0;
@@ -123,15 +136,17 @@ end
 
     opts.MAX_RATIO = 1;
     opts.MIN_RATIO = -1;
-    opts.LOG_SCALE = 1;
+    opts.LOG_SCALE = 0;
     opts.LOG_PARAM = 9;
 
     opts.RELATIVE_INHIBITION = 0;
 
     opts.FIGURE_SAVE = 0;
     opts.FIGURE_DIR = inputData.folderpath;
-    opts.FIGURE_PREFIX = 'Duncan_20190213';
+    opts.FIGURE_PREFIX = 'Han_20190924';
+    
         [heatmaps, heatmap_data] = plotHeatmaps(arrayData,inputData.mapFileName(8:end),opts);
+        
 
 %% amplitude vs. distance curve for each condition -- excitation
     opts.STIM_ELECTRODE_PLOT = [1:numel(unique(arrayData{1}.CHAN_SENT))];

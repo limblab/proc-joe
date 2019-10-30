@@ -47,7 +47,7 @@
                 if(~isempty(bump_idx) && ~isempty(vis_data.rt))
                     rt_vis = vis_data.rt;
                     rt_bump = data.cueInfo(bump_idx).rt;
-                    tail = 'left';
+                    tail = 'both';
                     [h,p,ci,stats] = ttest2(rt_bump,rt_vis,0.95,tail,'unequal');
                     p_vals_bump_vis(end+1,1) = p;
                     if(numel(p_vals_bump_vis) == 7)
