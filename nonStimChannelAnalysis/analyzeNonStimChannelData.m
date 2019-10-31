@@ -47,7 +47,7 @@
     
 %% pick a unit (index in array data)
 % plot raster, and PSTH for the given unit above
-for arrIdx = 6%:numel(arrayData)
+for arrIdx = 26%:numel(arrayData)
 % arrIdx = 1;
     % plot raster, and PSTH for the given unit above
 
@@ -91,7 +91,9 @@ end
     opts.WAVEFORM_TYPES_PLOT = [1:size(arrayData{1}.binEdges,2)];
 
     opts.ALL_NEURONS = 0; % 1 = plot all neurons for each stim chan, 0 = plot all stim chans for a neuron
-
+    opts.MAKE_PLOTS = 1;
+    opts.MAKE_BAR_PLOT = 0;
+    
     %time window for standardized values
     opts.BASELINE_PRE_TIME = -120/1000;
     opts.BASELINE_POST_TIME = -5/1000;
@@ -112,47 +114,34 @@ end
     opts.FIGURE_SAVE = 0;
     opts.FIGURE_DIR = inputData.folderpath;
     opts.FIGURE_PREFIX = 'Han_20191021';
-        [heatmaps, heatmap_data] = plotHeatmaps(arrayData,inputData.mapFileName(8:end),opts);
-        
-        
-        
-%% compare stim response and neural response during a task
-% must make sure PD related data is here, usually from running
-% analyzeCObump or loading a corresponding file
-
-%create array of averageCombinedData to pass through
-%plotCombinedAverageData()
-
-    inputData.td_all = td_all;
-    inputData.mapData = mapData;
-    inputData.arrayData = arrayData;
-    inputData.figPrefix = 'Han_20191022';
     
-    inputData.plotHeatmap = 1; %boolean 1 (plot heatmaps) or 0 (don't)
+    [stimHeatmapHandles, heatmapData] = plotHeatmaps(arrayData,inputData.mapFileName(8:end),opts);
+
+%% Plot evoked response vs distance (400um between channels) for each neuron
+
     
-    test_angles = 0;
+
     
-    averageCombinedData = nan(numel(heatmap_data),numel(test_angles));
+%% plot PD difference heatmap and stim heatmap for each condition
+% PD differences compared to center channel
+%     [pdHeatmapData,pdAlphaData] = getHeatmapDataPD(td_all,pd_all,mapData);
+   inputData.mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 
-    for i=1:numel(heatmap_data) %if multiple waveforms
-        inputData.angleNumber = test_angles(ang); %if multiple 10x10 arrays
-        inputData.mainChan = heatmap_data{i}.main_chan;
-
-        inputData.dataRatioScaled = heatmap_data{i}.dataRatioScaled;
-        inputData.PDscaled = PDscaled;
-        inputData.waveform = heatmap_data{i}.wave; %if multiple waveforms
-
-        combinedData = combineHeatmaps(inputData);
-        %fill in averageCombinedData
-        averageCombinedData(i,ang) = combinedData.average;
+    for i = 1%:numel(heatmapData)
+        [combinedHeatmapHandles] = plotPDandStimHeatmaps(heatmapData{i},pdHeatmapData,inputData.mapFileName);
     end
-
-    %plot average values vs. angle (1-360 degrees)
-    % averageData = plotCombinedAverageData();
-
     
+%% compare stim response and neural response from the task for each condition
+    testAngles = -180:1:180;
     
-    
+    for i = 1:numel(heatmapData)
+        compareData{i} = compareHeatmaps(heatmapData{i},pdHeatmapData,testAngles,inputData.mapFileName);
+        figure();
+        plot(testAngles,compareData{i}.metricAllAngles);
+        hold on
+        plot(compareData{i}.centerChanPD + [0,0], [-0.2,0.2],'r--')
+    end
+  
 
 
 

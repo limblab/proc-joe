@@ -31,89 +31,90 @@ function [figureHandles,heatmap_data] = plotHeatmaps(arrayData,mapFileName,opts)
     end
     
     %% plot heatmaps
-    for heatmap_idx = 1:numel(heatmap_data)
-        dataRatio = heatmap_data{heatmap_idx}.dataRatioPlot;
-        % plot heatmap
-        figureHandles{end+1} = figure();
-        figureHandles{end}.Position(4) = figureHandles{end}.Position(3);
-        figureHandles{end}.Position(2) = figureHandles{end}.Position(2) - 200; % move down to not binEdges annoyingly off my screen
+    if(opts.MAKE_PLOTS)
+        for heatmap_idx = 1:numel(heatmap_data)
+            dataRatio = heatmap_data{heatmap_idx}.dataRatioPlot;
+            % plot heatmap
+            figureHandles{end+1} = figure();
+            figureHandles{end}.Position(4) = figureHandles{end}.Position(3);
+            figureHandles{end}.Position(2) = figureHandles{end}.Position(2) - 200; % move down to not binEdges annoyingly off my screen
 
-        plottedHere = zeros(10,10);
+            plottedHere = zeros(10,10);
 
-        % no grid lines
-%             surface(zeros(opts.NUM_ROWS+1,opts.NUM_COLS+1));
-        plot([1,opts.NUM_ROWS+1,opts.NUM_ROWS+1,1,1],[1,1,opts.NUM_COLS+1,opts.NUM_COLS+1,1],'-k','linewidth',1.5)
+            % no grid lines
+    %             surface(zeros(opts.NUM_ROWS+1,opts.NUM_COLS+1));
+            plot([1,opts.NUM_ROWS+1,opts.NUM_ROWS+1,1,1],[1,1,opts.NUM_COLS+1,opts.NUM_COLS+1,1],'-k','linewidth',1.5)
 
-        ax = gca;
-%             ax.Children(1).LineWidth = 1.5; % thicker box boundaries
+            ax = gca;
+    %             ax.Children(1).LineWidth = 1.5; % thicker box boundaries
 
-        colormap([1,1,1]);
+            colormap([1,1,1]);
 
-        ax.YTickLabel = {};
-        ax.XTickLabel = {};
+            ax.YTickLabel = {};
+            ax.XTickLabel = {};
 
-        hold on
-        % plot each data point
-        for unit = 1:numel(dataRatio)
-            if(dataRatio(unit) < 0)
-                if(~opts.LOG_SCALE)
-                    mapping = floor(size(colorsBelowOne,1)*(-dataRatio(unit))/(-opts.MIN_RATIO));
-                else
-                    mapping = floor(size(colorsBelowOne,1)*(log10(1+-(opts.LOG_PARAM-1)*dataRatio(unit)/-opts.MIN_RATIO)/log10(opts.LOG_PARAM)));
-%                         mapping = floor(size(colorsBelowOne,1)*(1-(log10(-dataRatio(unit)/-opts.MIN_RATIO))/(log10(eps))));
+            hold on
+            % plot each data point
+            for unit = 1:numel(dataRatio)
+                if(dataRatio(unit) < 0)
+                    if(~opts.LOG_SCALE)
+                        mapping = floor(size(colorsBelowOne,1)*(-dataRatio(unit))/(-opts.MIN_RATIO));
+                    else
+                        mapping = floor(size(colorsBelowOne,1)*(log10(1+-(opts.LOG_PARAM-1)*dataRatio(unit)/-opts.MIN_RATIO)/log10(opts.LOG_PARAM)));
+    %                         mapping = floor(size(colorsBelowOne,1)*(1-(log10(-dataRatio(unit)/-opts.MIN_RATIO))/(log10(eps))));
+                    end
+                    colorIdx = min(size(colorsBelowOne,1),max(1,mapping));
+                    colorToPlot = colorsBelowOne(colorIdx,:);
+                elseif(dataRatio(unit) >= 0)
+                    if(~opts.LOG_SCALE)
+                        mapping = floor(size(colorsAboveOne,1)*(dataRatio(unit))/(opts.MAX_RATIO));
+                    else
+                        mapping = floor(size(colorsAboveOne,1)*(log10(1 + opts.LOG_PARAM*dataRatio(unit)/opts.MAX_RATIO)/log10(1+opts.LOG_PARAM)));
+    %                         mapping = floor(size(colorsBelowOne,1)*(1-(log10(dataRatio(unit)/opts.MAX_RATIO))/(log10(eps))));
+                    end
+                    colorIdx = min(size(colorsAboveOne,1),max(1,mapping));
+                    colorToPlot = colorsAboveOne(colorIdx,:);
                 end
-                colorIdx = min(size(colorsBelowOne,1),max(1,mapping));
-                colorToPlot = colorsBelowOne(colorIdx,:);
-            elseif(dataRatio(unit) >= 0)
-                if(~opts.LOG_SCALE)
-                    mapping = floor(size(colorsAboveOne,1)*(dataRatio(unit))/(opts.MAX_RATIO));
-                else
-                    mapping = floor(size(colorsAboveOne,1)*(log10(1 + opts.LOG_PARAM*dataRatio(unit)/opts.MAX_RATIO)/log10(1+opts.LOG_PARAM)));
-%                         mapping = floor(size(colorsBelowOne,1)*(1-(log10(dataRatio(unit)/opts.MAX_RATIO))/(log10(eps))));
-                end
-                colorIdx = min(size(colorsAboveOne,1),max(1,mapping));
-                colorToPlot = colorsAboveOne(colorIdx,:);
+
+                rectangle('Position',[heatmap_data{heatmap_idx}.col(unit),(11-heatmap_data{heatmap_idx}.row(unit)),1,1],'EdgeColor','k',...
+                            'FaceColor',colorToPlot,'linewidth',0.1);
+
+                plottedHere(heatmap_data{heatmap_idx}.col(unit),heatmap_data{heatmap_idx}.row(unit)) = 1;
+    %             unit_location(unit,:) = [heatmap_data{heatmap_idx}.col(unit),heatmap_data{heatmap_idx}.row(unit)];
+    %             unit_channel(unit) = heatmap_data{heatmap_idx}.chan(unit);
             end
 
-            rectangle('Position',[heatmap_data{heatmap_idx}.col(unit),(11-heatmap_data{heatmap_idx}.row(unit)),1,1],'EdgeColor','k',...
-                        'FaceColor',colorToPlot,'linewidth',0.1);
-                    
-            plottedHere(heatmap_data{heatmap_idx}.col(unit),heatmap_data{heatmap_idx}.row(unit)) = 1;
-%             unit_location(unit,:) = [heatmap_data{heatmap_idx}.col(unit),heatmap_data{heatmap_idx}.row(unit)];
-%             unit_channel(unit) = heatmap_data{heatmap_idx}.chan(unit);
-        end
+            % plot stim chan
+            posIdx = find(MAP_DATA.chan == heatmap_data{heatmap_idx}.main_chan);
+            posList = [MAP_DATA.row,MAP_DATA.col];
+            stimRow = posList(posIdx,1);
+            stimCol = posList(posIdx,2);
 
-        % plot stim chan
-        posIdx = find(MAP_DATA.chan == heatmap_data{heatmap_idx}.main_chan);
-        posList = [MAP_DATA.row,MAP_DATA.col];
-        stimRow = posList(posIdx,1);
-        stimCol = posList(posIdx,2);
+            % magenta box
+            plot([stimCol,stimCol+1,stimCol+1,stimCol,stimCol],[stimRow,stimRow,stimRow+1,stimRow+1,stimRow],'m','linewidth',3)
 
-        % magenta box
-        plot([stimCol,stimCol+1,stimCol+1,stimCol,stimCol],[stimRow,stimRow,stimRow+1,stimRow+1,stimRow],'m','linewidth',3)
-
-        if(~plottedHere(stimCol,stimRow))
-            plot([stimCol,stimCol+1],[stimRow,stimRow+1],'m','linewidth',3);
-            plot([stimCol+1,stimCol],[stimRow,stimRow+1],'m','linewidth',3);
-        end
-
-        set(gca,'Visible','off')
-        axis square
-%         unit_data{end+1}.data = dataRatio;
-%         unit_data{end}.loc = unit_location;
-%         unit_data{end}.chan = unit_channel;
-        %% save figures
-        if(opts.FIGURE_SAVE && strcmpi(opts.FIGURE_DIR,'')~=1)
-            if(~opts.AUTO_WINDOW)
-                FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'_stimChan',num2str(heatmap_data{heatmap_idx}.main_chan),'_wave',num2str(heatmap_data{heatmap_idx}.wave),...
-                    '_heatmap');
-            else
-                FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'_stimChan',num2str(heatmap_data{heatmap_idx}.main_chan),'_wave',num2str(heatmap_data{heatmap_idx}.wave),...
-                    '_heatmap');
+            if(~plottedHere(stimCol,stimRow))
+                plot([stimCol,stimCol+1],[stimRow,stimRow+1],'m','linewidth',3);
+                plot([stimCol+1,stimCol],[stimRow,stimRow+1],'m','linewidth',3);
             end
-            saveFiguresLIB(figureHandles{end},opts.FIGURE_DIR,FIGURE_NAME);
-        end
 
+            set(gca,'Visible','off')
+            axis square
+    %         unit_data{end+1}.data = dataRatio;
+    %         unit_data{end}.loc = unit_location;
+    %         unit_data{end}.chan = unit_channel;
+            %% save figures
+            if(opts.FIGURE_SAVE && strcmpi(opts.FIGURE_DIR,'')~=1)
+                if(~opts.AUTO_WINDOW)
+                    FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'_stimChan',num2str(heatmap_data{heatmap_idx}.main_chan),'_wave',num2str(heatmap_data{heatmap_idx}.wave),...
+                        '_heatmap');
+                else
+                    FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'_stimChan',num2str(heatmap_data{heatmap_idx}.main_chan),'_wave',num2str(heatmap_data{heatmap_idx}.wave),...
+                        '_heatmap');
+                end
+                saveFiguresLIB(figureHandles{end},opts.FIGURE_DIR,FIGURE_NAME);
+            end
+        end
     end
     
     %% make bar plots
@@ -190,7 +191,8 @@ function [heatmap_data] = getHeatmapDataAllNeurons(arrayData,opts)
             end
             
             percentile = 90;
-            dataRatioScaled = scaleDataRatio(dataRatio,percentile);
+            dataRatioScaled = makeMatrixSquare(scaleDataRatio(dataRatio,percentile),heatmap_data{heatmap_idx});
+            
             
             if(opts.LOG_SCALE)
                 dataRatio = dataRatio+eps;
@@ -245,7 +247,7 @@ function [heatmap_data] = getHeatmapDataAllStimChans(arrayData,map_data,opts)
 
             
             percentile = 90;
-            dataRatioScaled = scaleDataRatio(dataRatio,percentile);
+            dataRatioScaled = makeMatrixSquare(scaleDataRatio(dataRatio,percentile),heatmap_data{heatmap_idx});;
             
             if(opts.LOG_SCALE)
                 dataRatio = dataRatio+eps;
@@ -359,18 +361,33 @@ function [dataRatioScaled] = scaleDataRatio(dataRatio,percentile)
     %find value of 90% percentile
     dataRatioScaled = dataRatio;
     maxValue = prctile(dataRatioScaled,percentile);
-
+    minValue = min(dataRatioScaled);
+    
     for i=1:numel(dataRatioScaled)
         %if data point is above 90th percentile, set it to value of
         %90th percentile
         if dataRatioScaled(i)>maxValue
             dataRatioScaled(i)=maxValue;
+        elseif dataRatioScaled(i) < minValue
+            dataRatioScaled(i) = minValue;
         end
 
     end
 
-    %scale from -1 to 1
-    dataRatioScaled = 2*(dataRatioScaled-(min(dataRatioScaled)))/(maxValue-min(dataRatioScaled)) - 1;        
+    %scale from -1 to 1, do it so that things above 0 go from 0-1, and
+    %things below 0 go from -1 to 0.
+    dataRatioScaled(dataRatioScaled > 0) = dataRatioScaled(dataRatioScaled >0)/maxValue;
+    dataRatioScaled(dataRatioScaled < 0) = dataRatioScaled(dataRatioScaled <0)/abs(minValue);
+
+end
+
+function [dataRatioScaledSquare] = makeMatrixSquare(data, heatmap_data)
+
+    dataRatioScaledSquare = nan(10,10);
+    
+    for idx = 1:numel(heatmap_data.row)
+        dataRatioScaledSquare(heatmap_data.row(idx),heatmap_data.col(idx)) = data(idx);
+    end
 
 
 end
@@ -378,7 +395,8 @@ end
 function [opts] = configureOpts(optsInput)
 
     opts.MAKE_BAR_PLOT = 1;
-
+    opts.MAKE_PLOTS = 0;
+    
     opts.BASELINE_PRE_TIME = -10/1000;
     opts.BASELINE_POST_TIME = -3/1000;
     opts.STIM_PRE_TIME = 1.2/1000;
