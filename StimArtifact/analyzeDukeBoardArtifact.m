@@ -2,7 +2,7 @@
 
     clear; 
     
-    folderpath = 'E:\Data\Joseph\dukeBoards\DukeAmpGen3_20191025_noiseSolution\';
+    folderpath = 'C:\Users\jts3256\Desktop\Duncan_Han_dukeProjBox\';
         
     cd(folderpath);
     file_list = dir('*.ns5');
@@ -105,33 +105,33 @@
         peak_data{file_num}.chan = stim_chan(file_num);
         
                 %
-        f=figure();
-        f.Name = [file_list(file_num).name(1:end-10),'_raw'];
-        subplot(2,1,1)
-        plot(x_data,(plot_data(:,1:2:6)'),'color',getColorFromList(1,0),'linewidth',1);
-        hold on 
-        plot(x_data,(plot_data(:,2:2:6)'),'color',getColorFromList(1,1),'linewidth',1);
-        xlim([-2,6])
-        ylim([-5100,5100])
-        ylabel('Voltage (\muV)');
-        formatForLee(gcf)
-        xlabel('Time after stimulation offset (ms)');
-        set(gca,'fontsize',14)
+%         f=figure();
+%         f.Name = [file_list(file_num).name(1:end-10),'_raw'];
+%         subplot(2,1,1)
+%         plot(x_data,(plot_data(:,1:2:6)'),'color',getColorFromList(1,0),'linewidth',1);
+%         hold on 
+%         plot(x_data,(plot_data(:,2:2:6)'),'color',getColorFromList(1,1),'linewidth',1);
+%         xlim([-2,6])
+%         ylim([-5100,5100])
+%         ylabel('Voltage (\muV)');
+%         formatForLee(gcf)
+%         xlabel('Time after stimulation offset (ms)');
+%         set(gca,'fontsize',14)
         
         
 %         f = figure();
-        subplot(2,1,2)
-        f.Name = [file_list(file_num).name(1:end-10),'_filtered'];
-        plot(x_data,(acausalFilter(plot_data(:,1:2:6))'),'color',getColorFromList(1,0),'linewidth',1);
-        hold on
-        plot(x_data,(acausalFilter(plot_data(:,2:2:6))'),'color',getColorFromList(1,1),'linewidth',1);
-        xlim([-2,6])
-        ylim([-3000,3000])
-        ylabel('Voltage (\muV)');
-        formatForLee(gcf)
-        xlabel('Time after stimulation offset (ms)');
-        set(gca,'fontsize',14)
-        
+%         subplot(2,1,2)
+%         f.Name = [file_list(file_num).name(1:end-10),'_filtered'];
+%         plot(x_data,(acausalFilter(plot_data(:,1:2:6))'),'color',getColorFromList(1,0),'linewidth',1);
+%         hold on
+%         plot(x_data,(acausalFilter(plot_data(:,2:2:6))'),'color',getColorFromList(1,1),'linewidth',1);
+%         xlim([-2,6])
+%         ylim([-3000,3000])
+%         ylabel('Voltage (\muV)');
+%         formatForLee(gcf)
+%         xlabel('Time after stimulation offset (ms)');
+%         set(gca,'fontsize',14)
+%         
 %         saveFiguresLIB(f,folderpath,f.Name);
 %         close all;
     end
@@ -140,7 +140,6 @@
 %% plot amp of aux channel stim against time post stim
 
     colors = repmat(linspace(0,0.5,numel(peak_data))',1,3);
-    
     
     for fieldname = {'cathodic','anodic'}
         f=figure(); hold on;
@@ -170,7 +169,7 @@
     t_post_stim_test = [0.75:0.01:4];
     
     gain_ratio = nan(numel(t_post_stim_test),numel(amp_1_all),numel(polarity),numel(pw1));
-    gain_ratio_fit = [];
+    gain_ratio_fit = [];cl
     gain_ratio_actual = [];
     t_post_stim_fit = [];
     t_post_stim_actual = [];

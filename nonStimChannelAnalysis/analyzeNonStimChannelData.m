@@ -47,7 +47,7 @@
     
 %% pick a unit (index in array data)
 % plot raster, and PSTH for the given unit above
-for arrIdx = 8%:numel(arrayData)
+for arrIdx = 12%:numel(arrayData)
 % arrIdx = 1;
     % plot raster, and PSTH for the given unit above
 
@@ -80,7 +80,7 @@ end
 %     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
 %     inputData.folderpath = 'C:\Users\joh8881\Desktop\Han_20190930_trains_noAmp\';
-    inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\StimRecData\Duncan\Duncan_20191026_trains_noAmp';
+    inputData.folderpath = 'E:\Data\Joseph\Han_stim_data\Han_20191022_trains_noDukeAmp';
     
     opts.STIM_ELECTRODE_PLOT = [1:size(arrayData{1}.binEdges,1)];
     opts.WAVEFORM_TYPES_PLOT = [1:size(arrayData{1}.binEdges,2)];
@@ -97,7 +97,7 @@ end
     opts.INHIBITORY = 0;
     opts.EXCITATORY = 0;
 
-    opts.MAX_RATIO = 7;
+    opts.MAX_RATIO = 3;
     opts.MIN_RATIO = -1;
     opts.LOG_SCALE = 0;
     opts.LOG_PARAM = 9;
@@ -106,7 +106,7 @@ end
 
     opts.FIGURE_SAVE = 0;
     opts.FIGURE_DIR = inputData.folderpath;
-    opts.FIGURE_PREFIX = 'Han_20190930';
+    opts.FIGURE_PREFIX = 'Han_20191021';
         [heatmaps, heatmap_data] = plotHeatmaps(arrayData,inputData.mapFileName(8:end),opts);
         
         
