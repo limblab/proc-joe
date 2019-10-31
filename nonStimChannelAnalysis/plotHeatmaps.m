@@ -191,7 +191,7 @@ function [heatmap_data] = getHeatmapDataAllNeurons(arrayData,opts)
             
             percentile = 90;
             dataRatioScaled = scaleDataRatio(dataRatio,percentile);
-
+            
             if(opts.LOG_SCALE)
                 dataRatio = dataRatio+eps;
                 if(opts.MAX_RATIO == 0)
@@ -266,7 +266,7 @@ function [heatmap_data] = getHeatmapDataAllStimChans(arrayData,map_data,opts)
             heatmap_data{heatmap_idx}.dataRatioPlot = dataRatioPlot;
             heatmap_data{heatmap_idx}.dataRatioScaled = dataRatioScaled;
             heatmap_data{heatmap_idx}.chan = 1:numel(arrayData{arrIdx}.CHAN_LIST);
-            heatmap_data{heatmap_idx}.wave = wave*ones(numel(arrayData{arrIdx}.CHAN_LIST),1);
+            heatmap_data{heatmap_idx}.wave = wave;
             heatmap_data{heatmap_idx}.main_chan = arrayData{arrIdx}.CHAN_REC;
             heatmap_idx = heatmap_idx + 1;
         end
@@ -312,7 +312,7 @@ function [outputData] = getHeatmapDataSingleCond(arrayData,unit,chan,wave,opts)
         numPostStimBins = 0;
     end
     
-     %defining arrays and bin sizess
+    %defining arrays and bin sizess
     lastRep = arrayData{unit}.stimData{chan,wave}(numel(arrayData{unit}.stimData{chan,wave}));
     repList = cell(1,lastRep); %all spike times organized by repetition
     preRepList = zeros(1,lastRep); %number of baseline spikes per repetition

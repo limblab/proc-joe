@@ -47,7 +47,7 @@
     
 %% pick a unit (index in array data)
 % plot raster, and PSTH for the given unit above
-for arrIdx = 12%:numel(arrayData)
+for arrIdx = 6%:numel(arrayData)
 % arrIdx = 1;
     % plot raster, and PSTH for the given unit above
 
@@ -77,10 +77,15 @@ end
 
 
 %% heatmap across whole array
-%     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
-    inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
+
 %     inputData.folderpath = 'C:\Users\joh8881\Desktop\Han_20190930_trains_noAmp\';
     inputData.folderpath = 'E:\Data\Joseph\Han_stim_data\Han_20191022_trains_noDukeAmp';
+    
+%    inputData.mapFileName = 'mapFileZ:\Basic_Sciences\Phys\L_MillerLab\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+%    inputData.mapFileName = 'mapFileZ:\Basic_Sciences\Phys\L_MillerLab\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
+   inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+%    inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
+
     
     opts.STIM_ELECTRODE_PLOT = [1:size(arrayData{1}.binEdges,1)];
     opts.WAVEFORM_TYPES_PLOT = [1:size(arrayData{1}.binEdges,2)];
@@ -97,7 +102,7 @@ end
     opts.INHIBITORY = 0;
     opts.EXCITATORY = 0;
 
-    opts.MAX_RATIO = 3;
+    opts.MAX_RATIO = 5;
     opts.MIN_RATIO = -1;
     opts.LOG_SCALE = 0;
     opts.LOG_PARAM = 9;
@@ -115,13 +120,35 @@ end
 % must make sure PD related data is here, usually from running
 % analyzeCObump or loading a corresponding file
 
+%create array of averageCombinedData to pass through
+%plotCombinedAverageData()
+
     inputData.td_all = td_all;
     inputData.mapData = mapData;
     inputData.arrayData = arrayData;
-    inputData.dataRatioScaled = dataRatioScaled;
-    inputData.PDscaled = PDscaled;
+    inputData.figPrefix = 'Han_20191022';
     
-    combinedData = combineHeatmaps(inputData);
+    inputData.plotHeatmap = 1; %boolean 1 (plot heatmaps) or 0 (don't)
+    
+    test_angles = 0;
+    
+    averageCombinedData = nan(numel(heatmap_data),numel(test_angles));
+
+    for i=1:numel(heatmap_data) %if multiple waveforms
+        inputData.angleNumber = test_angles(ang); %if multiple 10x10 arrays
+        inputData.mainChan = heatmap_data{i}.main_chan;
+
+        inputData.dataRatioScaled = heatmap_data{i}.dataRatioScaled;
+        inputData.PDscaled = PDscaled;
+        inputData.waveform = heatmap_data{i}.wave; %if multiple waveforms
+
+        combinedData = combineHeatmaps(inputData);
+        %fill in averageCombinedData
+        averageCombinedData(i,ang) = combinedData.average;
+    end
+
+    %plot average values vs. angle (1-360 degrees)
+    % averageData = plotCombinedAverageData();
 
     
     
