@@ -209,7 +209,7 @@
     end
         
 %% plot PSTH for each condition
-    for unit_idx = 23%1:numel(array_data)
+    for unit_idx = 7%1:numel(array_data)
         input_data_all{u}.window = [min(array_data{unit_idx}.binEdges{1}),max(array_data{unit_idx}.binEdges{1})];
         input_data_all{u}.unit_idx = unit_idx;
         input_data_all{u}.chan_rec = array_data{unit_idx}.CHAN_LIST;
@@ -291,9 +291,9 @@
     
     
     freq_stim = [1,180,90,50,20,5,100,50];
+    IPI_plot = [5,10,20,50];
     figure();
     hold on
-    slopes = [];
     norm_resp = nan(numel(array_data),4);
     monkey_idx = zeros(numel(array_data),1); % 1 = han, 0 = duncan
     
@@ -339,9 +339,13 @@
             if(~isempty(IPI_idx))
                 norm_resp(u,i) = evoked_per_stim(IPI_idx);
             end
+            
         end
         % get 5 Hz, 100Hz, 200Hz response for future plot
         monkey_idx(u) = strcmpi(array_data{u}.monkey,'Han'); % 1 = han, 0 = duncan
+        
+                
+        
         
         if(sum(keep_mask) >= 4 && plot_counter < num_plot)
             plot_counter = plot_counter + 1;
@@ -353,7 +357,7 @@
 
 
             % plot data
-            plot(freq_stim_plot,evoked_per_stim_plot,'marker',markers{monkey_idx(u) + 1},...
+            plot(freq_stim_plot,slopes,'marker',markers{monkey_idx(u) + 1},...
                 'linewidth',1.5,'markersize',marker_size(monkey_idx(u) + 1),'color',getColorFromList(2,plot_counter),'markerfacecolor',getColorFromList(2,plot_counter))
             
             xlabel('Stimulation frequency (Hz)')
@@ -361,10 +365,7 @@
             formatForLee(gcf)
             set(gca,'fontsize',14)
         end
-        
-        % fit following summary and get slopes
-%         slope_unit = [ones(sum(keep_mask),1),freq_stim(keep_mask == 1)']\evoked_per_stim(keep_mask == 1)';
-%         slopes(u) = slope_unit(2);
+
     end
     
     f=figure();
@@ -397,25 +398,27 @@
     marker_size = [22,8];
     
     post_window = [0,5]; % in ms
-    num_pulses = 11;
+    num_pulses = 201;
 
     baseline_window = [-150,-5]; % in ms
+    slope_window = [0,210]; % in ms
     
     IPI_plot = [50,20,10,5];
 
     freq_stim = [1,180,90,50,20,5,100,50];
     figure();
     hold on
-    slopes = [];
+    slopes = nan(numel(array_data),4);
     norm_resp = nan(numel(array_data),4);
     monkey_idx = zeros(numel(array_data),1); % 1 = han, 0 = duncan
     
-    num_plot = 50; plot_counter = 0;
+    num_plot = 7; plot_counter = 0;
     
-    for u = 1:numel(array_data)  
+    for u = 7:numel(array_data)  
         baseline_firing_rate = zeros(1,numel(input_data_all{u}.num_pulses));
         stim_firing_rate = zeros(1,numel(input_data_all{u}.num_pulses));
         evoked_per_stim = zeros(1,numel(input_data_all{u}.num_pulses));
+        slopes_temp = zeros(1,numel(input_data_all{u}.num_pulses));
         
         num_pulses_use = input_data_all{u}.num_pulses; % number of pulses to use, deals with situation when we want more pulses than were sent for a condition
         num_pulses_use(num_pulses_use > num_pulses) = num_pulses;
@@ -426,12 +429,15 @@
                 baseline_firing_rate(cond) = sum(array_data{u}.spikeTrialTimes{cond}*1000 > baseline_window(1) & ...
                         array_data{u}.spikeTrialTimes{cond}*1000 < baseline_window(2))/...
                         array_data{u}.num_stims(cond)/(diff(baseline_window))*1000; % convert to Hz
+                    
+                per_pulse_response = zeros(num_pulses_use(cond),1);
                 for pulse = 1:num_pulses_use(cond)
                     % convert window into indices
                     window_offset = input_data_all{u}.IPI(cond)*(pulse-1);
-
-                    stim_firing_rate(cond) = stim_firing_rate(cond) + sum(array_data{u}.spikeTrialTimes{cond}*1000 > post_window(1)+window_offset & ...
-                        array_data{u}.spikeTrialTimes{cond}*1000 < post_window(2)+window_offset) - baseline_firing_rate(cond)*diff(post_window)/1000; % count number of spikes above baseline
+                    per_pulse_response(pulse) = sum(array_data{u}.spikeTrialTimes{cond}*1000 > post_window(1)+window_offset & ...
+                        array_data{u}.spikeTrialTimes{cond}*1000 < post_window(2)+window_offset) - baseline_firing_rate(cond)*diff(post_window)/1000;
+                    
+                    stim_firing_rate(cond) = stim_firing_rate(cond) + per_pulse_response(pulse); % count number of spikes above baseline
                 end
                 
                 % normalize stim_firing rate to be in Hz
@@ -439,6 +445,14 @@
                 
                 % get evoked per stim
                 evoked_per_stim(cond) = (stim_firing_rate(cond))/num_pulses_use(cond);
+                                
+                % get slope throughout train
+                slope_window_idx = [find(array_data{u}.binEdges{cond} > slope_window(1),1,'first'),find(array_data{u}.binEdges{cond} > slope_window(2),1,'first')];
+                slope_y_vals = array_data{u}.binCounts{cond}(slope_window_idx(1):slope_window_idx(2));
+                slope_x_vals = array_data{u}.binEdges{cond}(slope_window_idx(1):slope_window_idx(2));
+                b = [ones(numel(slope_y_vals),1), slope_x_vals']\slope_y_vals';
+                slopes_temp(cond) = b(2);
+                
             end
         end
         
@@ -450,31 +464,33 @@
             IPI_idx = find(abs(input_data_all{u}.IPI - IPI_plot(i)) < 1 & input_data_all{u}.num_pulses > 3 & keep_mask == 1);
             if(~isempty(IPI_idx))
                 norm_resp(u,i) = evoked_per_stim(IPI_idx);
+                slopes(u,i) = slopes_temp(IPI_idx);
             end
         end
         monkey_idx(u) = strcmpi(array_data{u}.monkey,'Han'); % 1 = han, 0 = duncan
         
         if(sum(keep_mask) >= 3 && plot_counter < num_plot)
             plot_counter = plot_counter + 1;
-            
+            disp(u)
             % deal with freq_stim not being sorted
             [freq_stim_plot,sort_idx] = sort(freq_stim(keep_mask == 1));
             evoked_per_stim_plot = evoked_per_stim(keep_mask == 1); 
             evoked_per_stim_plot = evoked_per_stim_plot(sort_idx);
-
+            slopes_plot = slopes_temp(keep_mask == 1); 
+            slopes_plot = slopes_plot(sort_idx);
 
             % plot data
-            plot(freq_stim_plot,evoked_per_stim_plot,'marker',markers{monkey_idx(u) + 1},...
+            plot(freq_stim_plot,slopes_plot,'marker',markers{monkey_idx(u) + 1},...
                 'linewidth',1.5,'markersize',marker_size(monkey_idx(u) + 1),'color',getColorFromList(2,plot_counter),'markerfacecolor',getColorFromList(2,plot_counter))
             
             xlabel('Stimulation frequency (Hz)')
-            ylabel('(F_e - F_b)/N')
+            ylabel('\DeltaFR during train (Hz/ms)')
             formatForLee(gcf)
             set(gca,'fontsize',14)
         end
         
     end
-% plot 20Hz vs higher freq
+%% plot 20Hz vs higher freq
     f=figure();
     f.Name = 'Duncan_Han_following_summary_trains';
     plot([-0.2,1],[-0.2,1],'k--','linewidth',1.5)

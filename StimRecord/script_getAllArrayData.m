@@ -1,6 +1,6 @@
 %% combine array data's that exist within a folder structure
 
-    single_pulse = 1;
+    single_pulse = 0;
     if(single_pulse)
         highest_folderpath{1} = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\StimRecData\Duncan\SinglePulse\';
         highest_folderpath{2} = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\StimRecData\Han\SinglePulse\';
