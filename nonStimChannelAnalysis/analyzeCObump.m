@@ -1,12 +1,13 @@
 %% set initial parameters
 
-    input_data.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\CObump\Han_20191015_CObumpmove\';
+    input_data.folderpath = 'E:\Data\Joseph\Han_stim_data\Han_20191021_CObump_leftS1\';
 
 %     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
+    mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 %     mapFileName = 'Z:\Basic_Sciences\Phys\L_MillerLab\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 %     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Pop_18E3\Array Map Files\6250-002085\SN 6250-002085.cmp';
     
-    input_data.date = '20190924';
+    input_data.date = '20191021';
     input_data.array = 'arrayLeftS1';
     input_data.monkey = 'monkeyHan';
     input_data.ranBy = 'ranByJoe';
@@ -68,7 +69,6 @@
     pd_all = getTDPDs(td_all,pd_params);
     
     
-    
 %% get PDs for bump
 
     td_bump = trimTD(td_all,{'idx_bumpTime',0},{'idx_bumpTime',300});
@@ -92,25 +92,20 @@
     
     pd_move = getTDPDs(td_move,pd_params);
 
-    
-    
-    
+        
 %% visualize
-%% heatmap for preferred directions
+%% get PD data in heatmap form
     mapData = loadMapFile(mapFileName);
+    [pdHeatmapData,pdAlphaData] = getHeatmapDataPD(td_all,pd_all,mapData); 
+
+%% plot heatmaps
     
     optsPD.MAKE_BAR_PLOT = 1;
     
     optsPD.PLOT_CHANNELS = [1:96];
-    optsPD.CENTER_CHANNEL = 41;
-
-    optsPD.MAX_RATIO = 1;
-    optsPD.MIN_RATIO = -1;
-    optsPD.LOG_SCALE = 0;
-    optsPD.LOG_PARAM = 9;
 
     optsPD.FIGURE_SAVE = 0;
     optsPD.FIGURE_DIR = input_data.folderpath;
     optsPD.FIGURE_PREFIX = 'Han_20190924';
     
-    [heatmapPD,PDscaled] = plotHeatmapsPD(td_all,pd_all,mapData,optsPD);
+    [heatmapPD] = plotHeatmapsPD(td_all,pd_all,mapData,optsPD);

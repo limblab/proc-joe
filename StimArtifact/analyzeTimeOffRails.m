@@ -141,10 +141,10 @@
     x_data = amps;
     
     f=figure();
-    boxplot(time_off_rails_cathodic');
-%     errorbar(amps,mean_time_cathodic,std_time_cathodic,'color',getColorFromList(1,0),'marker','.','markersize',20,'linewidth',1.5);
-%     hold on
-%     errorbar(amps,mean_time_anodic,std_time_anodic,'color',getColorFromList(1,1),'marker','.','markersize',20,'linewidth',1.5);
+%     boxplot(time_off_rails_cathodic');
+    errorbar(amps,mean_time_cathodic,std_time_cathodic,'color',getColorFromList(1,0),'marker','.','markersize',20,'linewidth',1.5);
+    hold on
+    errorbar(amps,mean_time_anodic,std_time_anodic,'color',getColorFromList(1,1),'marker','.','markersize',20,'linewidth',1.5);
 %     
 %     xlabel('Amplitude (\muA)');
 %     ylabel('Mean time off rails post stim (ms)');
