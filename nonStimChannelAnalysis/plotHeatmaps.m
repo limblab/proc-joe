@@ -374,10 +374,10 @@ function [dataRatioScaled] = scaleDataRatio(dataRatio,percentile)
 
     end
 
-    %scale from -1 to 1, do it so that things above 0 go from 0-1, and
-    %things below 0 go from -1 to 0.
-    dataRatioScaled(dataRatioScaled > 0) = dataRatioScaled(dataRatioScaled >0)/maxValue;
-    dataRatioScaled(dataRatioScaled < 0) = dataRatioScaled(dataRatioScaled <0)/abs(minValue);
+    % make data ratio a z-score 
+    dataRatioScaled = (dataRatioScaled - median(dataRatioScaled));
+%     dataRatioScaled(dataRatioScaled > 0) = dataRatioScaled(dataRatioScaled >0)/maxValue;
+%     dataRatioScaled(dataRatioScaled < 0) = dataRatioScaled(dataRatioScaled <0)/abs(minValue);
 
 end
 

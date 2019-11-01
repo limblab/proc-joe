@@ -1,4 +1,4 @@
-function [heatmapPD,PDscaled] = plotHeatmapsPD(td_all,pd_all,mapData,optsPD)
+function [heatmapPD,heatmapDataPD,alphaArray] = plotHeatmapsPD(td_all,pd_all,mapData,optsPD)
 
     % configure opts and set default values
     optsPD = configureOptsPD(optsPD);
@@ -21,7 +21,7 @@ function [heatmapPD,PDscaled] = plotHeatmapsPD(td_all,pd_all,mapData,optsPD)
     f.Name = strcat(optsPD.FIGURE_PREFIX,'_preferredDirectionsHeatmap');
     heatmapPD = imagesc(heatmapDataPD,'alphaData',alphaArray);
     
-    colormap(viridis);
+    colormap(twilight);
     colorbar;
     
 %     % magenta box for stim chan
