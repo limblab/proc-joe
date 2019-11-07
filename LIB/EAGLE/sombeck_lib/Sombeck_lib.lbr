@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="8.2.2">
+<eagle version="8.1.0">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="0.05" unitdist="mm" unit="mm" style="lines" multiple="1" display="yes" altdistance="5" altunitdist="mil" altunit="mil"/>
+<grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="no" altdistance="0.01" altunitdist="inch" altunit="inch"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
 <layer number="16" name="Bottom" color="1" fill="1" visible="yes" active="yes"/>
@@ -611,6 +611,45 @@
 <pad name="P$1" x="0" y="0.0508" drill="0.45" diameter="0.8128" rot="R270"/>
 <smd name="P$2" x="0" y="-0.8382" dx="1.27" dy="0.762" layer="1" rot="R90"/>
 </package>
+<package name="FSTH-118">
+<pad name="P$1" x="0" y="0" drill="0.7" diameter="0.9144"/>
+<pad name="P$2" x="1.27" y="0" drill="0.7" diameter="0.9144"/>
+<pad name="P$3" x="2.54" y="0" drill="0.7" diameter="0.9144"/>
+<pad name="P$4" x="3.81" y="0" drill="0.7" diameter="0.9144"/>
+<pad name="P$5" x="5.08" y="0" drill="0.7" diameter="0.9144"/>
+<pad name="P$6" x="6.35" y="0" drill="0.7" diameter="0.9144"/>
+<pad name="P$7" x="7.62" y="0" drill="0.7" diameter="0.9144"/>
+<pad name="P$8" x="8.89" y="0" drill="0.7" diameter="0.9144"/>
+<pad name="P$9" x="10.16" y="0" drill="0.7" diameter="0.9144"/>
+<pad name="P$10" x="11.43" y="0" drill="0.7" diameter="0.9144"/>
+<pad name="P$11" x="12.7" y="0" drill="0.7" diameter="0.9144"/>
+<pad name="P$12" x="13.97" y="0" drill="0.7" diameter="0.9144"/>
+<pad name="P$13" x="15.24" y="0" drill="0.7" diameter="0.9144"/>
+<pad name="P$14" x="16.51" y="0" drill="0.7" diameter="0.9144"/>
+<pad name="P$15" x="17.78" y="0" drill="0.7" diameter="0.9144"/>
+<pad name="P$16" x="19.05" y="0" drill="0.7" diameter="0.9144"/>
+<pad name="P$17" x="20.32" y="0" drill="0.7" diameter="0.9144"/>
+<pad name="P$18" x="21.59" y="0" drill="0.7" diameter="0.9144"/>
+<pad name="P$19" x="21.59" y="1.27" drill="0.7" diameter="0.9144"/>
+<pad name="P$20" x="20.32" y="1.27" drill="0.7" diameter="0.9144"/>
+<pad name="P$21" x="19.05" y="1.27" drill="0.7" diameter="0.9144"/>
+<pad name="P$22" x="17.78" y="1.27" drill="0.7" diameter="0.9144"/>
+<pad name="P$23" x="16.51" y="1.27" drill="0.7" diameter="0.9144"/>
+<pad name="P$24" x="15.24" y="1.27" drill="0.7" diameter="0.9144"/>
+<pad name="P$25" x="13.97" y="1.27" drill="0.7" diameter="0.9144"/>
+<pad name="P$26" x="12.7" y="1.27" drill="0.7" diameter="0.9144"/>
+<pad name="P$27" x="11.43" y="1.27" drill="0.7" diameter="0.9144"/>
+<pad name="P$28" x="10.16" y="1.27" drill="0.7" diameter="0.9144"/>
+<pad name="P$29" x="8.89" y="1.27" drill="0.7" diameter="0.9144"/>
+<pad name="P$30" x="7.62" y="1.27" drill="0.7" diameter="0.9144"/>
+<pad name="P$31" x="6.35" y="1.27" drill="0.7" diameter="0.9144"/>
+<pad name="P$32" x="5.08" y="1.27" drill="0.7" diameter="0.9144"/>
+<pad name="P$33" x="3.81" y="1.27" drill="0.7" diameter="0.9144"/>
+<pad name="P$34" x="2.54" y="1.27" drill="0.7" diameter="0.9144"/>
+<pad name="P$35" x="1.27" y="1.27" drill="0.7" diameter="0.9144"/>
+<pad name="P$36" x="0" y="1.27" drill="0.7" diameter="0.9144"/>
+<text x="-1.27" y="-1.27" size="1.27" layer="21">1</text>
+</package>
 </packages>
 <symbols>
 <symbol name="MIS-019-01-H-D">
@@ -840,6 +879,44 @@
 <symbol name="WIREPAD_PAD">
 <pin name="P$1" x="0" y="0" length="middle" rot="R180"/>
 <pin name="P$2" x="0" y="5.08" length="middle" rot="R180"/>
+</symbol>
+<symbol name="FSTH-118">
+<pin name="P$1" x="-7.62" y="12.7" length="middle"/>
+<pin name="P$2" x="-7.62" y="10.16" length="middle"/>
+<pin name="P$3" x="-7.62" y="7.62" length="middle"/>
+<pin name="P$4" x="-7.62" y="5.08" length="middle"/>
+<pin name="P$5" x="-7.62" y="2.54" length="middle"/>
+<pin name="P$6" x="-7.62" y="0" length="middle"/>
+<pin name="P$7" x="-7.62" y="-2.54" length="middle"/>
+<pin name="P$8" x="-7.62" y="-5.08" length="middle"/>
+<pin name="P$9" x="-7.62" y="-7.62" length="middle"/>
+<pin name="P$10" x="-7.62" y="-10.16" length="middle"/>
+<pin name="P$11" x="-7.62" y="-12.7" length="middle"/>
+<pin name="P$12" x="-7.62" y="-15.24" length="middle"/>
+<pin name="P$13" x="-7.62" y="-17.78" length="middle"/>
+<pin name="P$14" x="-7.62" y="-20.32" length="middle"/>
+<pin name="P$15" x="-7.62" y="-22.86" length="middle"/>
+<pin name="P$16" x="-7.62" y="-25.4" length="middle"/>
+<pin name="P$17" x="17.78" y="-25.4" length="middle" rot="R180"/>
+<pin name="P$18" x="17.78" y="-22.86" length="middle" rot="R180"/>
+<pin name="P$19" x="17.78" y="-20.32" length="middle" rot="R180"/>
+<pin name="P$20" x="17.78" y="-17.78" length="middle" rot="R180"/>
+<pin name="P$21" x="17.78" y="-15.24" length="middle" rot="R180"/>
+<pin name="P$22" x="17.78" y="-12.7" length="middle" rot="R180"/>
+<pin name="P$23" x="17.78" y="-10.16" length="middle" rot="R180"/>
+<pin name="P$24" x="17.78" y="-7.62" length="middle" rot="R180"/>
+<pin name="P$25" x="17.78" y="-5.08" length="middle" rot="R180"/>
+<pin name="P$26" x="17.78" y="-2.54" length="middle" rot="R180"/>
+<pin name="P$27" x="17.78" y="0" length="middle" rot="R180"/>
+<pin name="P$28" x="17.78" y="2.54" length="middle" rot="R180"/>
+<pin name="P$29" x="17.78" y="5.08" length="middle" rot="R180"/>
+<pin name="P$30" x="17.78" y="7.62" length="middle" rot="R180"/>
+<pin name="P$31" x="17.78" y="10.16" length="middle" rot="R180"/>
+<pin name="P$32" x="17.78" y="12.7" length="middle" rot="R180"/>
+<wire x1="-5.08" y1="15.24" x2="-5.08" y2="-27.94" width="0.254" layer="94"/>
+<wire x1="-5.08" y1="-27.94" x2="15.24" y2="-27.94" width="0.254" layer="94"/>
+<wire x1="15.24" y1="-27.94" x2="15.24" y2="15.24" width="0.254" layer="94"/>
+<wire x1="15.24" y1="15.24" x2="-5.08" y2="15.24" width="0.254" layer="94"/>
 </symbol>
 </symbols>
 <devicesets>
@@ -1177,6 +1254,52 @@
 <connects>
 <connect gate="G$1" pin="P$1" pad="P$1"/>
 <connect gate="G$1" pin="P$2" pad="P$2"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="FSTH">
+<gates>
+<gate name="G$1" symbol="FSTH-118" x="-5.08" y="5.08"/>
+</gates>
+<devices>
+<device name="" package="FSTH-118">
+<connects>
+<connect gate="G$1" pin="P$1" pad="P$1"/>
+<connect gate="G$1" pin="P$10" pad="P$10"/>
+<connect gate="G$1" pin="P$11" pad="P$11"/>
+<connect gate="G$1" pin="P$12" pad="P$12"/>
+<connect gate="G$1" pin="P$13" pad="P$13"/>
+<connect gate="G$1" pin="P$14" pad="P$14"/>
+<connect gate="G$1" pin="P$15" pad="P$15"/>
+<connect gate="G$1" pin="P$16" pad="P$16"/>
+<connect gate="G$1" pin="P$17" pad="P$17"/>
+<connect gate="G$1" pin="P$18" pad="P$18"/>
+<connect gate="G$1" pin="P$19" pad="P$19"/>
+<connect gate="G$1" pin="P$2" pad="P$2"/>
+<connect gate="G$1" pin="P$20" pad="P$20"/>
+<connect gate="G$1" pin="P$21" pad="P$21"/>
+<connect gate="G$1" pin="P$22" pad="P$22"/>
+<connect gate="G$1" pin="P$23" pad="P$23"/>
+<connect gate="G$1" pin="P$24" pad="P$24"/>
+<connect gate="G$1" pin="P$25" pad="P$25"/>
+<connect gate="G$1" pin="P$26" pad="P$26"/>
+<connect gate="G$1" pin="P$27" pad="P$27"/>
+<connect gate="G$1" pin="P$28" pad="P$28"/>
+<connect gate="G$1" pin="P$29" pad="P$29"/>
+<connect gate="G$1" pin="P$3" pad="P$3"/>
+<connect gate="G$1" pin="P$30" pad="P$30"/>
+<connect gate="G$1" pin="P$31" pad="P$31"/>
+<connect gate="G$1" pin="P$32" pad="P$32"/>
+<connect gate="G$1" pin="P$4" pad="P$4"/>
+<connect gate="G$1" pin="P$5" pad="P$5"/>
+<connect gate="G$1" pin="P$6" pad="P$6"/>
+<connect gate="G$1" pin="P$7" pad="P$7"/>
+<connect gate="G$1" pin="P$8" pad="P$8"/>
+<connect gate="G$1" pin="P$9" pad="P$9"/>
 </connects>
 <technologies>
 <technology name=""/>

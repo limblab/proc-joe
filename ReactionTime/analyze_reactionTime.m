@@ -1,6 +1,6 @@
 %% script to process reaction time data 
 %% determine filename and input data
-    inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\Han_20180521_stim\';
+    inputData.folderpath = 'D:\Lab\Data\ReactionTime\Han_20180528_stim\';
 %     inputData.folderpath = 'D:\Lab\Data\ReactionTime\Han_20180427_training\';
     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 
@@ -28,7 +28,7 @@
             params.event_list = {'tgtOnTime';'isBumpTrial';'bumpTime';'bumpMagnitude';'bumpDir';'isStimTrial';'stimCode';'tgtDir'};
             params.trial_results = {'R','F'};
             params.extra_time = [1,2];
-            params.include_ts = 1;
+            params.include_ts = 0;
             td_temp = parseFileByTrial(cds,params);
             td_temp = getGoCueTime(td_temp,cds);
             % append trial data into a single struct
@@ -93,9 +93,9 @@
     end
 %% plot a set of reaches aligned to go cue with reaction time markers
     opts.MAX_PLOT = 20;
-    opts.WHICH_FIELD ='acc';
-    opts.WHICH_IDX = [1];
-    opts.BUMP_MAGS = [0.2:0.1:1.0]';
+    opts.WHICH_FIELD ='pos';
+    opts.WHICH_IDX = [2];
+    opts.BUMP_MAGS = [1.0]';
     opts.YLIM = [];
     opts.STIM_CODES = [];
     plotReachesTD(td_reward,opts);
@@ -107,7 +107,7 @@
 
     td_reward_rt = td_reward(~isnan([td_reward.idx_movement_on]));
     opts.FOLDER_PATH = inputData.folderpath;
-    opts.FIGURE_PREFIX = 'Han_20180521'; % no _ required
+    opts.FIGURE_PREFIX = 'Han_20180528'; % no _ required
     opts.BUMP_MAGS = [];
     opts.STIM_CODES = [];
     opts.STIM_PARAMS = [10,20,30,40,50,60,70,80,90,100];
