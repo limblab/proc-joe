@@ -2,7 +2,7 @@ function [ shuffled_mat ] = shuffleMatrix( mat )
 % shuffles data in a NxM matrix, does not touch entries with nan's
     shuffled_mat = mat;
     
-    rows = sum(sum(~isnan(mat)));
+    rows = zeros(sum(sum(~isnan(mat))),1);
     cols = zeros(size(rows));
     data = zeros(size(rows));
     
@@ -24,10 +24,11 @@ function [ shuffled_mat ] = shuffleMatrix( mat )
     data = data(randperm(numel(data)));
     
     % put data into shuffled mat
-    for i = 1:numel(data)
-        shuffled_mat(rows(i),cols(i)) = data(i);
+    if(numel(rows) > 0)
+        for i = 1:numel(data)
+            shuffled_mat(rows(i),cols(i)) = data(i);
+        end
     end
-    
     
 end
 

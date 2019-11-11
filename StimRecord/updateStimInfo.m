@@ -1,4 +1,4 @@
-    folderpath = 'E:\Data\Joseph\Han_stim_data\Han_20191030_longTrains_dukeGen2\chan14\20Hz\';
+    folderpath = 'E:\Data\Joseph\Han_stim_data\Han_20191105_longTrain_dukeGen2\';
 
     pwd = cd;
 
@@ -123,6 +123,28 @@ end
 
     end
 
+
+%% downsample stim on and stim off
+    folderpath = 'E:\Data\Joseph\Han_stim_data\Han_20191105_longTrain_dukeGen2\';
+
+    pwd = cd;
+
+    cd(folderpath);
+    stimInfoFileList = dir('*stimInfo.mat');
+
+    for i = 1:numel(stimInfoFileList)
+
+        load([folderpath,stimInfoFileList(i).name]);
+
+%         idx_keep = find(diff(stimInfo.stimOn) > 1000);
+%         idx_keep = [1;idx_keep + 1];
+%         stimInfo.stimOn = stimInfo.stimOn(idx_keep);
+%         stimInfo.stimOff = stimInfo.stimOff(idx_keep);
+%         
+%         save([folderpath,stimInfoFileList(i).name],'stimInfo');
+
+    end
+    
 
 
 

@@ -20,8 +20,8 @@ function [heatmapPD,heatmapDataPD,alphaArray] = plotHeatmapsPD(td_all,pd_all,map
     f = figure();
     f.Name = strcat(optsPD.FIGURE_PREFIX,'_preferredDirectionsHeatmap');
     heatmapPD = imagesc(heatmapDataPD,'alphaData',alphaArray);
-    
-    colormap(twilight);
+    axis square
+    colormap(colorcet('C9'));
     colorbar;
     
 %     % magenta box for stim chan

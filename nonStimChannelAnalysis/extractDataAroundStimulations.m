@@ -43,6 +43,12 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
                 end
             end
             stimInfo.stimOn = cds.analog{aIdx}.t(find(diff(cds.analog{aIdx}.(opts.ANALOG_SYNC_LINE)-mean(cds.analog{aIdx}.(opts.ANALOG_SYNC_LINE))>3)>.5));
+        
+            if(opts.DOWNSAMPLE_STIM_TIMES && opts.STIMULATIONS_PER_TRAIN == 1)
+                idx_keep = find(diff(stimInfo.stimOn) > 1);
+                idx_keep = [1;idx_keep + 1];
+                stimInfo.stimOn = stimInfo.stimOn(idx_keep);
+            end
         end
 
         %% setup useful variables
@@ -456,6 +462,7 @@ function [opts] = configureOpts(optsInput)
     opts.GET_KIN = 0;
     opts.GET_FORCE = 0;
     opts.USE_ANALOG_FOR_STIM_TIMES = 1;
+    opts.DOWNSAMPLE_STIM_TIMES = 0;
     opts.ANALOG_SYNC_LINE = 'ainp16';
     opts.USE_STIM_CODE = 0;
 

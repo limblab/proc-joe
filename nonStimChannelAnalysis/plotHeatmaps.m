@@ -375,7 +375,7 @@ function [dataRatioScaled] = scaleDataRatio(dataRatio,percentile)
     end
 
     % make data ratio a z-score 
-    dataRatioScaled = (dataRatioScaled - median(dataRatioScaled));
+    dataRatioScaled = (dataRatioScaled - mean(dataRatioScaled));
 %     dataRatioScaled(dataRatioScaled > 0) = dataRatioScaled(dataRatioScaled >0)/maxValue;
 %     dataRatioScaled(dataRatioScaled < 0) = dataRatioScaled(dataRatioScaled <0)/abs(minValue);
 

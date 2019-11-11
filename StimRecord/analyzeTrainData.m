@@ -1,21 +1,21 @@
 %% set file names 
 
-    input_data.folderpath = 'C:\Users\jts3256\Desktop\Han_stim_data\Han_20191011_dukeProjBox_trains\';
+    input_data.folderpath = 'E:\Data\Joseph\Han_stim_data\Han_20191105_longTrain_dukeGen2\';
     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
     % input_data.mapFileName = 'mapFileR:\limblab-archive\Retired Animal Logs\Monkeys\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
 %     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
 
 
-    input_data.IPI = [-1,5,10,20,50,50]; % Hz, -1 means single pulse
-    input_data.num_pulses = [1,41,21,11,5,41];
+    input_data.IPI = [13,6.6]; % Hz, -1 means single pulse
+    input_data.num_pulses = [375,750];
 
     
     input_data.num_conditions = numel(input_data.IPI);
 
     input_data.nom_freq = 2;
-    input_data.window = [-250,2500]; % ms before and ms after 1st pulse
+    input_data.window = [-500,15000]; % ms before and ms after 1st pulse
     input_data.bin_size = 2; % in ms
-    input_data.chan_rec = 51;
+    input_data.chan_rec = 8;
 
     folderpath = input_data.folderpath; % rest of code uses folderpath currently...may have switched this, not 100% certain
 
@@ -34,7 +34,7 @@
 %% load in files, parse appropriately, then combine
     array_data = {};
     
-    for fileNumber = 1:numel(fileList)
+    for fileNumber = 1%:numel(fileList)
         disp(fileList(fileNumber).name)
         cd(input_data.folderpath)
         cds = commonDataStructure();
@@ -188,7 +188,7 @@
 
     
 %% plot raster 
-    for arrIdx = 20%:numel(array_data)   
+    for arrIdx = 1%:numel(array_data)   
 
         optsPlotFunc.BIN_SIZE = mode(diff(array_data{arrIdx}.binEdges{1,1}));
         optsPlotFunc.FIGURE_SAVE = 0;
@@ -196,7 +196,7 @@
         optsPlotFunc.FIGURE_PREFIX = [array_data{arrIdx}.monkey,'_DblPulseTrains_'];
 
         optsPlotFunc.PRE_TIME = 75/1000;
-        optsPlotFunc.POST_TIME = 250/1000;
+        optsPlotFunc.POST_TIME = 6000/1000;
         optsPlotFunc.SORT_DATA = '';
 
         optsPlotFunc.STIMULATION_LENGTH = 0.453;
@@ -567,9 +567,9 @@
     
 %% resample data w/ smaller number of stimulations
 
-    unit_idx = 1;
-    num_boot = 1000;
-    num_stims_use = 35; % really should be less than what I actually used
+    unit_idx = 6;
+    num_boot = 100;
+    num_stims_use = 20; % really should be less than what I actually used
     
     bootstrapped_data = [];
     bootstrapped_firing_rate = zeros(numel(array_data{unit_idx}.binCounts),num_boot,numel(array_data{unit_idx}.binCounts{1}));
@@ -577,10 +577,10 @@
     window_post_stim = [1,10];
     pulse_data = {};
     for cond = 1:numel(array_data{unit_idx}.binCounts) % for each condition
-        if(input_data_all{unit_idx}.num_pulses(cond) == 1) % get timing of each pulse
+        if(input_data_all.num_pulses(cond) == 1) % get timing of each pulse
             pulse_time = 0;
         else
-            pulse_time = [0,input_data_all{unit_idx}.IPI(cond)*(1:input_data_all{unit_idx}.num_pulses(cond)-1)];
+            pulse_time = [0,input_data_all.IPI(cond)*(1:input_data_all.num_pulses(cond)-1)];
         end
         pulse_data{cond}.count = zeros(num_boot,numel(pulse_time));
         
@@ -588,12 +588,12 @@
         
         for boot = 1:num_boot % for each bootstrap iteration
             % downsample data
-            stim_idx_use = datasample(1:array_data{unit_idx}.num_stims(cond),...
-                min(num_stims_use,array_data{unit_idx}.num_stims(cond)),'Replace',false);
-            spike_trial_times = array_data{unit_idx}.spikeTrialTimes{cond}(sum(array_data{unit_idx}.trial_num{cond} == stim_idx_use') > 0);
+            stim_idx_use = datasample(1:array_data{unit_idx}.numStims(cond),...
+                min(num_stims_use,array_data{unit_idx}.numStims(cond)),'Replace',false);
+            spike_trial_times = array_data{unit_idx}.spikeTrialTimes{cond}(sum(array_data{unit_idx}.stimData{cond} == stim_idx_use') > 0);
             % rebin data and store
             bootstrapped_firing_rate(cond,boot,:) = histcounts(spike_trial_times*1000,array_data{unit_idx}.binEdges{cond})/...
-                (input_data_all{unit_idx}.bin_size/1000)/num_stims_use;
+                (input_data_all.bin_size/1000)/num_stims_use;
             
             for p = 1:numel(pulse_time)
                 bin_idx = [find(array_data{unit_idx}.binEdges{cond} > pulse_time(p)+window_post_stim(1),1,'first'),...
@@ -607,17 +607,17 @@
         subplot(2,1,1)
         x_data = array_data{unit_idx}.binEdges{cond}(1:end-1) + mode(diff(array_data{unit_idx}.binEdges{cond}))/2;
         plot(x_data,squeeze(bootstrapped_firing_rate(cond,1,:)),'linewidth',2)
-%         mean_bin_counts = squeeze(mean(bootstrapped_firing_rate(cond,:,:)));
-% 
-%         sorted_bootstrapped_firing_rate = sort(bootstrapped_firing_rate,2);
-%         idx_use = [floor(num_boot*0.025),ceil(num_boot*0.975)];
-%         firing_rate_bound = [squeeze(sorted_bootstrapped_firing_rate(cond,idx_use,:))];
+        mean_bin_counts = squeeze(mean(bootstrapped_firing_rate(cond,:,:)));
+
+        sorted_bootstrapped_firing_rate = sort(bootstrapped_firing_rate,2);
+        idx_use = [floor(num_boot*0.025),ceil(num_boot*0.975)];
+        firing_rate_bound = [squeeze(sorted_bootstrapped_firing_rate(cond,idx_use,:))];
 %         
-%         plot(x_data,mean_bin_counts) % plot the mean
-%         hold on
-%         plot(x_data, firing_rate_bound,'--')
-%         subplot(2,1,2)
-%         histogram(pulse_data{cond}.count(:,1) - pulse_data{cond}.count(:,end));
+        plot(x_data,mean_bin_counts) % plot the mean
+        hold on
+        plot(x_data, firing_rate_bound,'--')
+        subplot(2,1,2)
+        histogram(pulse_data{cond}.count(:,1) - pulse_data{cond}.count(:,end));
 
     end
        

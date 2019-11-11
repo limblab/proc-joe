@@ -114,9 +114,9 @@
     optsPD.FIGURE_DIR = input_data.folderpath;
     optsPD.FIGURE_PREFIX = 'Han_20190924';
     
-    [heatmapPD,heatmapPDData,alphaData] = plotHeatmapsPD(td_all,pd_all,mapData,optsPD);
+    [heatmapPD,pdHeatmapData,alphaData] = plotHeatmapsPD(td_all,pd_all,mapData,optsPD);
     
     figure
-    histogram(heatmapPDData(alphaData == 1),18)
-    [PDBinCount,PDBinEdges] = histcounts(heatmapPDData(alphaData == 1),18);
+    histogram(pdHeatmapData(alphaData == 1),18)
+    [PDBinCount,PDBinEdges] = histcounts(pdHeatmapData(alphaData == 1),18);
     
