@@ -196,48 +196,43 @@
 <smd name="P_31" x="10.16" y="1.27" dx="1.016" dy="0.381" layer="1" rot="R90"/>
 <smd name="REF33" x="10.795" y="1.27" dx="1.016" dy="0.381" layer="1" rot="R90"/>
 </package>
-<package name="OMNETICS-NANO-THROUGHHOLE">
-<pad name="P$1" x="0" y="0.635" drill="0.35" diameter="0.508"/>
-<pad name="P$2" x="0" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$3" x="0.635" y="0.635" drill="0.35" diameter="0.508"/>
-<pad name="P$4" x="0.635" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$5" x="1.27" y="0.635" drill="0.35" diameter="0.508"/>
-<pad name="P$6" x="1.27" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$7" x="1.905" y="0.635" drill="0.35" diameter="0.508"/>
-<pad name="P$8" x="1.905" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$9" x="2.54" y="0.635" drill="0.35" diameter="0.508"/>
-<pad name="P$10" x="2.54" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$11" x="3.175" y="0.635" drill="0.35" diameter="0.508"/>
-<pad name="P$12" x="3.175" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$13" x="3.81" y="0.635" drill="0.35" diameter="0.508"/>
-<pad name="P$14" x="3.81" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$15" x="4.445" y="0.635" drill="0.35" diameter="0.508"/>
-<pad name="P$16" x="4.445" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$17" x="5.08" y="0.635" drill="0.35" diameter="0.508"/>
-<pad name="P$18" x="5.08" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$19" x="5.715" y="0.635" drill="0.35" diameter="0.508"/>
-<pad name="P$20" x="5.715" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$21" x="6.35" y="0.635" drill="0.35" diameter="0.508"/>
-<pad name="P$22" x="6.35" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$23" x="6.985" y="0.635" drill="0.35" diameter="0.508"/>
-<pad name="P$24" x="6.985" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$25" x="7.62" y="0.635" drill="0.35" diameter="0.508"/>
-<pad name="P$26" x="7.62" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$27" x="8.255" y="0.635" drill="0.35" diameter="0.508"/>
-<pad name="P$28" x="8.255" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$29" x="8.89" y="0.635" drill="0.35" diameter="0.508"/>
-<pad name="P$30" x="8.89" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$31" x="9.525" y="0.635" drill="0.35" diameter="0.508"/>
-<pad name="P$32" x="9.525" y="0" drill="0.35" diameter="0.508"/>
-<pad name="REF33" x="10.16" y="0.635" drill="0.35" diameter="0.508"/>
-<pad name="GND34" x="10.16" y="0" drill="0.35" diameter="0.508"/>
-<pad name="GND0" x="-0.635" y="0.635" drill="0.35" diameter="0.508"/>
-<pad name="REF0" x="-0.635" y="0" drill="0.35" diameter="0.508"/>
-<wire x1="-1.27" y1="1.27" x2="-1.27" y2="-0.635" width="0.127" layer="21"/>
-<wire x1="-1.27" y1="-0.635" x2="10.795" y2="-0.635" width="0.127" layer="21"/>
-<wire x1="10.795" y1="-0.635" x2="10.795" y2="1.27" width="0.127" layer="21"/>
-<wire x1="10.795" y1="1.27" x2="-1.27" y2="1.27" width="0.127" layer="21"/>
-<text x="-1.905" y="0.635" size="0.635" layer="21">1</text>
+<package name="OMNETICS_NANO_18X2_THROUGHHOLE">
+<pad name="P$1" x="0" y="0.635" drill="0.3302" diameter="0.4064"/>
+<pad name="P$2" x="0" y="0" drill="0.3302" diameter="0.4064"/>
+<pad name="P$3" x="0.635" y="0.635" drill="0.3302" diameter="0.4064"/>
+<pad name="P$4" x="0.635" y="0" drill="0.3302" diameter="0.4064"/>
+<pad name="P$5" x="1.27" y="0.635" drill="0.3302" diameter="0.4064"/>
+<pad name="P$6" x="1.27" y="0" drill="0.3302" diameter="0.4064"/>
+<pad name="P$7" x="1.905" y="0.635" drill="0.3302" diameter="0.4064"/>
+<pad name="P$8" x="1.905" y="0" drill="0.3302" diameter="0.4064"/>
+<pad name="P$9" x="2.54" y="0.635" drill="0.3302" diameter="0.4064"/>
+<pad name="P$10" x="2.54" y="0" drill="0.3302" diameter="0.4064"/>
+<pad name="P$11" x="3.175" y="0.635" drill="0.3302" diameter="0.4064"/>
+<pad name="P$12" x="3.175" y="0" drill="0.3302" diameter="0.4064"/>
+<pad name="P$13" x="3.81" y="0.635" drill="0.3302" diameter="0.4064"/>
+<pad name="P$14" x="3.81" y="0" drill="0.3302" diameter="0.4064"/>
+<pad name="P$15" x="4.445" y="0.635" drill="0.3302" diameter="0.4064"/>
+<pad name="P$16" x="4.445" y="0" drill="0.3302" diameter="0.4064"/>
+<pad name="P$17" x="5.08" y="0.635" drill="0.3302" diameter="0.4064"/>
+<pad name="P$18" x="5.08" y="0" drill="0.3302" diameter="0.4064"/>
+<pad name="P$19" x="5.715" y="0.635" drill="0.3302" diameter="0.4064"/>
+<pad name="P$20" x="5.715" y="0" drill="0.3302" diameter="0.4064"/>
+<pad name="P$21" x="6.35" y="0.635" drill="0.3302" diameter="0.4064"/>
+<pad name="P$22" x="6.35" y="0" drill="0.3302" diameter="0.4064"/>
+<pad name="P$23" x="6.985" y="0.635" drill="0.3302" diameter="0.4064"/>
+<pad name="P$24" x="6.985" y="0" drill="0.3302" diameter="0.4064"/>
+<pad name="P$25" x="7.62" y="0.635" drill="0.3302" diameter="0.4064"/>
+<pad name="P$26" x="7.62" y="0" drill="0.3302" diameter="0.4064"/>
+<pad name="P$27" x="8.255" y="0.635" drill="0.3302" diameter="0.4064"/>
+<pad name="P$28" x="8.255" y="0" drill="0.3302" diameter="0.4064"/>
+<pad name="P$29" x="8.89" y="0.635" drill="0.3302" diameter="0.4064"/>
+<pad name="P$30" x="8.89" y="0" drill="0.3302" diameter="0.4064"/>
+<pad name="P$31" x="9.525" y="0.635" drill="0.3302" diameter="0.4064"/>
+<pad name="P$32" x="9.525" y="0" drill="0.3302" diameter="0.4064"/>
+<pad name="REF33" x="10.16" y="0.635" drill="0.3302" diameter="0.4064"/>
+<pad name="GND34" x="10.16" y="0" drill="0.3302" diameter="0.4064"/>
+<pad name="GND0" x="-0.635" y="0.635" drill="0.3302" diameter="0.4064"/>
+<pad name="REF0" x="-0.635" y="0" drill="0.3302" diameter="0.4064"/>
 </package>
 </packages>
 <symbols>
@@ -425,7 +420,7 @@
 <technology name=""/>
 </technologies>
 </device>
-<device name="" package="OMNETICS-NANO-THROUGHHOLE">
+<device name="" package="OMNETICS_NANO_18X2_THROUGHHOLE">
 <connects>
 <connect gate="G$1" pin="GND0" pad="GND0"/>
 <connect gate="G$1" pin="GND34" pad="GND34"/>

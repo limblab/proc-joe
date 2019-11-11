@@ -58,13 +58,9 @@ arrIdx = 1;
     optsPlotFunc.FIGURE_DIR = inputData.folderpath;
     optsPlotFunc.FIGURE_PREFIX = 'Han_20190923';
 
-<<<<<<< HEAD
-    optsPlotFunc.PRE_TIME = 600/1000;
-    optsPlotFunc.POST_TIME = 1200/1000;
-=======
+
     optsPlotFunc.PRE_TIME = 50/1000;
     optsPlotFunc.POST_TIME = 200/1000;
->>>>>>> ff068fa3d28917d9beb5af9784dce6464c3b6550
     optsPlotFunc.SORT_DATA = '';
 
     optsPlotFunc.PLOT_AFTER_STIMULATION_END = 0;

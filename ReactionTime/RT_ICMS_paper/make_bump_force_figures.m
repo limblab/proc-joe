@@ -9,7 +9,6 @@
     offset = 2*[-0.01,0.01;-0.05,0.05]/3;
     
 %% plot bump staircase (2) for each monkey (2 figures total)
-    num_trials_all = [];
     
     counter = 1;
     r2_all = [];
