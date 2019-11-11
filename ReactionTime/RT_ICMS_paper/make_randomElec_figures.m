@@ -15,7 +15,7 @@
     
     counter = 1;
     data_all = []; % min stim, bump
-    for monk = monkey_names(2)
+    for monk = monkey_names(1)
     % train length data
         file_list = dir([monk{1},'*.mat']);
         
@@ -50,6 +50,7 @@
         if(use_std_err)
             std_vis = std_vis/sqrt(vis_num_trials);
         end
+        num_trials_all = [num_trials_all, vis_num_trials, bump_num_trials];
         
         % data holds the bump data with bump mag as a variable
         mean_rt = []; std_rt = []; num_trials = []; num_elecs_all = []; rt_data_all = [];

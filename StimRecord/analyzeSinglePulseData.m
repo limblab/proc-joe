@@ -16,8 +16,8 @@
 
 %% plot rasters and psth for each condition and neuron
 
-%     for arrIdx = 1:numel(arrayData)
-    arrIdx = 1;
+    for arrIdx = 7%numel(arrayData)
+%     arrIdx = 1;
         % plot raster, and PSTH for the given unit above
         
     %     optsPlotFunc.BIN_SIZE = optsExtract.BIN_SIZE;
@@ -35,7 +35,7 @@
         optsPlotFunc.PLOT_AFTER_STIMULATION_END = 1;
         optsPlotFunc.STIMULATION_LENGTH = [];
 
-        rasterPlots = plotRasterStim(arrayData{arrIdx},1,optsPlotFunc);
+%         rasterPlots = plotRasterStim(arrayData{arrIdx},1,optsPlotFunc);
 
         optsPlotFunc.PLOT_ALL_ONE_FIGURE = 0;
         optsPlotFunc.PLOT_LINE = 1;
@@ -43,16 +43,16 @@
         optsPlotFunc.PLOT_ALL_WAVES_ONE_FIGURE = 0;
         
     %   
-%         PSTHPlots = plotPSTHStim(arrayData{arrIdx},arrayData{arrIdx}.NN,optsPlotFunc);
+        PSTHPlots = plotPSTHStim(arrayData{arrIdx},arrayData{arrIdx}.NN,optsPlotFunc);
 
-%     end
+    end
 
 
 %% get number of spikes (probability) as a function of amplitude and plot
 % that for each neuron (on one plot probably)
 
     optsSpikesPlot.PRE_WINDOW = [-80,-5]/1000; % in s
-    optsSpikesPlot.POST_WINDOW = [0,20]/1000; % in s
+    optsSpikesPlot.POST_WINDOW = [2,10]/1000; % in s
     optsSpikesPlot.PW1 = 200;
     optsSpikesPlot.PW2 = 200;
     optsSpikesPlot.POL = 0; % 0 is cathodic first
@@ -96,9 +96,12 @@
     mdl = fitlm(tbl,'spikes_evoked~amp+unit')
     
     
-%% make spike time distribution plot
+%% make spike time distribution plot, and % excitatory response at different amplitudes
     amps_plot = [5,10,15,20,25,30,40,50,100];
     spike_times_amp = cell(numel(amps_plot),1); % preallocate space  
+    num_responsive = zeros(1,numel(amps_plot));
+    num_total = zeros(1,numel(amps_plot));
+    
     bin_edges = [0:1:20];
     bin_counts = cell(numel(amps_plot),1);
     colors = inferno(numel(amps_plot) + 3);
@@ -106,17 +109,17 @@
     
     for a = 1:numel(amps_plot)
         bin_counts{a} = zeros(1,numel(bin_edges)-1);
-        num_units = 0;
         for unit = 1:numel(spikesStruct)
             amp_idx = find(spikesStruct{unit}.amp == amps_plot(a) & spikesStruct{unit}.keep_mask == 1);
-            unit_param_idx = find([array_data_all{unit}.STIM_PARAMETERS.amp1] == amps_plot(a))
+            unit_param_idx = find([array_data_all{unit}.STIM_PARAMETERS.amp1] == amps_plot(a));
 
             if(~isempty(amp_idx) && ~isempty(unit_param_idx))
                 bin_counts{a} = bin_counts{a} + histcounts(spikesStruct{unit}.spike_times_post_stim{amp_idx}*1000,bin_edges)/array_data_all{unit}.numStims(unit_param_idx(1));
-                num_units = num_units + 1;
+                num_total(a) = num_total(a) + 1;
+                num_responsive(a) = num_responsive(a) + spikesStruct{unit}.is_excitatory(amp_idx);
             end
         end
-        plot(bin_edges(1:end-1)+mode(diff(bin_edges)/2),bin_counts{a}/num_units,'color',colors(a,:),'linewidth',1.5)
+        plot(bin_edges(1:end-1)+mode(diff(bin_edges)/2),bin_counts{a}/num_total(a),'color',colors(a,:),'linewidth',1.5)
         hold on
     end
     
@@ -126,6 +129,10 @@
     set(gca,'fontsize',14)
     l=legend('5','10','15','20','25','30','40','50','100');
     set(l,'box','off','fontsize',14);
+    
+    f_percent_responsive = figure();
+    plot(amps_plot,num_responsive./num_total)
+    
 %% make cdf plot for latencies (dependent on previous section)
     
     x_data = {};

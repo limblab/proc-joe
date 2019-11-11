@@ -14,7 +14,7 @@
     counter = 1;
     r2_all = [];
     
-    for monk = monkey_names(2)
+    for monk = monkey_names(1)
         file_list = dir([monk{1},'*EXAMPLE*']);
         
         f=figure();
@@ -72,6 +72,7 @@
             y_data_fit = fitObj.a*exp(fitObj.b*x_data_fit)+fitObj.c;
             plot(x_data_fit,y_data_fit,'--','linewidth',2,'color',getColorFromList(1,color_idx(file_num)));
             
+            num_trials_all = [num_trials_all,num_trials,vis_num_trials,bump_num_trials];
  
             % make plots
             % visual bar and horizontal line

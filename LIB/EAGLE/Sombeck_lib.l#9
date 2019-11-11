@@ -6,7 +6,7 @@
 <setting alwaysvectorfont="no"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="1" unitdist="mil" unit="mil" style="lines" multiple="1" display="yes" altdistance="5" altunitdist="mil" altunit="mil"/>
+<grid distance="50" unitdist="mil" unit="mil" style="lines" multiple="1" display="yes" altdistance="5" altunitdist="mil" altunit="mil"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
 <layer number="16" name="Bottom" color="1" fill="1" visible="yes" active="yes"/>
@@ -729,48 +729,43 @@
 <wire x1="22.86" y1="2.54" x2="-1.27" y2="2.54" width="0.127" layer="21"/>
 <text x="-2.54" y="-1.27" size="1.27" layer="21">1</text>
 </package>
-<package name="OMNETICS-NANO-THROUGHHOLE">
-<pad name="P$1" x="0" y="0.762" drill="0.254" diameter="0.508"/>
+<package name="OMNETICS_NANO_18X2_THROUGHHOLE">
+<pad name="P$1" x="0" y="0.635" drill="0.3302" diameter="0.4572"/>
 <pad name="P$2" x="0" y="0" drill="0.3302" diameter="0.4572"/>
-<pad name="P$3" x="0.635" y="0.762" drill="0.254" diameter="0.508"/>
-<pad name="P$4" x="0.635" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$5" x="1.27" y="0.762" drill="0.35" diameter="0.508"/>
-<pad name="P$6" x="1.27" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$7" x="1.905" y="0.762" drill="0.35" diameter="0.508"/>
-<pad name="P$8" x="1.905" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$9" x="2.54" y="0.762" drill="0.35" diameter="0.508"/>
-<pad name="P$10" x="2.54" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$11" x="3.175" y="0.762" drill="0.35" diameter="0.508"/>
-<pad name="P$12" x="3.175" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$13" x="3.81" y="0.762" drill="0.35" diameter="0.508"/>
-<pad name="P$14" x="3.81" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$15" x="4.445" y="0.762" drill="0.35" diameter="0.508"/>
-<pad name="P$16" x="4.445" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$17" x="5.08" y="0.762" drill="0.35" diameter="0.508"/>
-<pad name="P$18" x="5.08" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$19" x="5.715" y="0.762" drill="0.35" diameter="0.508"/>
-<pad name="P$20" x="5.715" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$21" x="6.35" y="0.762" drill="0.35" diameter="0.508"/>
-<pad name="P$22" x="6.35" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$23" x="6.985" y="0.762" drill="0.35" diameter="0.508"/>
-<pad name="P$24" x="6.985" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$25" x="7.62" y="0.762" drill="0.35" diameter="0.508"/>
-<pad name="P$26" x="7.62" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$27" x="8.255" y="0.762" drill="0.35" diameter="0.508"/>
-<pad name="P$28" x="8.255" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$29" x="8.89" y="0.762" drill="0.35" diameter="0.508"/>
-<pad name="P$30" x="8.89" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$31" x="9.525" y="0.762" drill="0.35" diameter="0.508"/>
-<pad name="P$32" x="9.525" y="0" drill="0.35" diameter="0.508"/>
-<pad name="REF33" x="10.16" y="0.762" drill="0.35" diameter="0.508"/>
-<pad name="GND34" x="10.16" y="0" drill="0.35" diameter="0.508"/>
-<pad name="GND0" x="-0.635" y="0.762" drill="0.254" diameter="0.508"/>
+<pad name="P$3" x="0.635" y="0.635" drill="0.3302" diameter="0.4572"/>
+<pad name="P$4" x="0.635" y="0" drill="0.3302" diameter="0.4572"/>
+<pad name="P$5" x="1.27" y="0.635" drill="0.3302" diameter="0.4572"/>
+<pad name="P$6" x="1.27" y="0" drill="0.3302" diameter="0.4572"/>
+<pad name="P$7" x="1.905" y="0.635" drill="0.3302" diameter="0.4572"/>
+<pad name="P$8" x="1.905" y="0" drill="0.3302" diameter="0.4572"/>
+<pad name="P$9" x="2.54" y="0.635" drill="0.3302" diameter="0.4572"/>
+<pad name="P$10" x="2.54" y="0" drill="0.3302" diameter="0.4572"/>
+<pad name="P$11" x="3.175" y="0.635" drill="0.3302" diameter="0.4572"/>
+<pad name="P$12" x="3.175" y="0" drill="0.3302" diameter="0.4572"/>
+<pad name="P$13" x="3.81" y="0.635" drill="0.3302" diameter="0.4572"/>
+<pad name="P$14" x="3.81" y="0" drill="0.3302" diameter="0.4572"/>
+<pad name="P$15" x="4.445" y="0.635" drill="0.3302" diameter="0.4572"/>
+<pad name="P$16" x="4.445" y="0" drill="0.3302" diameter="0.4572"/>
+<pad name="P$17" x="5.08" y="0.635" drill="0.3302" diameter="0.4572"/>
+<pad name="P$18" x="5.08" y="0" drill="0.3302" diameter="0.4572"/>
+<pad name="P$19" x="5.715" y="0.635" drill="0.3302" diameter="0.4572"/>
+<pad name="P$20" x="5.715" y="0" drill="0.3302" diameter="0.4572"/>
+<pad name="P$21" x="6.35" y="0.635" drill="0.3302" diameter="0.4572"/>
+<pad name="P$22" x="6.35" y="0" drill="0.3302" diameter="0.4572"/>
+<pad name="P$23" x="6.985" y="0.635" drill="0.3302" diameter="0.4572"/>
+<pad name="P$24" x="6.985" y="0" drill="0.3302" diameter="0.4572"/>
+<pad name="P$25" x="7.62" y="0.635" drill="0.3302" diameter="0.4572"/>
+<pad name="P$26" x="7.62" y="0" drill="0.3302" diameter="0.4572"/>
+<pad name="P$27" x="8.255" y="0.635" drill="0.3302" diameter="0.4572"/>
+<pad name="P$28" x="8.255" y="0" drill="0.3302" diameter="0.4572"/>
+<pad name="P$29" x="8.89" y="0.635" drill="0.3302" diameter="0.4572"/>
+<pad name="P$30" x="8.89" y="0" drill="0.3302" diameter="0.4572"/>
+<pad name="P$31" x="9.525" y="0.635" drill="0.3302" diameter="0.4572"/>
+<pad name="P$32" x="9.525" y="0" drill="0.3302" diameter="0.4572"/>
+<pad name="REF33" x="10.16" y="0.635" drill="0.3302" diameter="0.4572"/>
+<pad name="GND34" x="10.16" y="0" drill="0.3302" diameter="0.4572"/>
+<pad name="GND0" x="-0.635" y="0.635" drill="0.3302" diameter="0.4572" rot="R180"/>
 <pad name="REF0" x="-0.635" y="0" drill="0.3302" diameter="0.4572"/>
-<wire x1="-1.27" y1="1.27" x2="-1.27" y2="-0.635" width="0.127" layer="21"/>
-<wire x1="-1.27" y1="-0.635" x2="10.795" y2="-0.635" width="0.127" layer="21"/>
-<wire x1="10.795" y1="-0.635" x2="10.795" y2="1.27" width="0.127" layer="21"/>
-<wire x1="10.795" y1="1.27" x2="-1.27" y2="1.27" width="0.127" layer="21"/>
-<text x="-1.905" y="0.635" size="0.635" layer="21">1</text>
 </package>
 </packages>
 <symbols>
@@ -1116,48 +1111,6 @@
 <wire x1="12.7" y1="17.78" x2="12.7" y2="-30.48" width="0.254" layer="94"/>
 <wire x1="12.7" y1="-30.48" x2="-7.62" y2="-30.48" width="0.254" layer="94"/>
 <wire x1="-7.62" y1="-30.48" x2="-7.62" y2="17.78" width="0.254" layer="94"/>
-</symbol>
-<symbol name="OMNETICS-NANO-THROUGHHOLE">
-<pin name="P$1" x="-12.7" y="-25.4" length="middle"/>
-<pin name="P$2" x="12.7" y="-25.4" length="middle" rot="R180"/>
-<pin name="P$3" x="-12.7" y="-22.86" length="middle"/>
-<pin name="P$4" x="12.7" y="-22.86" length="middle" rot="R180"/>
-<pin name="P$5" x="-12.7" y="-20.32" length="middle"/>
-<pin name="P$6" x="12.7" y="-20.32" length="middle" rot="R180"/>
-<pin name="P$7" x="-12.7" y="-17.78" length="middle"/>
-<pin name="P$8" x="12.7" y="-17.78" length="middle" rot="R180"/>
-<pin name="P$9" x="-12.7" y="-15.24" length="middle"/>
-<pin name="P$10" x="12.7" y="-15.24" length="middle" rot="R180"/>
-<pin name="P$11" x="-12.7" y="-12.7" length="middle"/>
-<pin name="P$12" x="12.7" y="-12.7" length="middle" rot="R180"/>
-<pin name="P$13" x="-12.7" y="-10.16" length="middle"/>
-<pin name="P$14" x="12.7" y="-10.16" length="middle" rot="R180"/>
-<pin name="P$15" x="-12.7" y="-7.62" length="middle"/>
-<pin name="P$16" x="12.7" y="-7.62" length="middle" rot="R180"/>
-<pin name="P$17" x="-12.7" y="-5.08" length="middle"/>
-<pin name="P$18" x="12.7" y="-5.08" length="middle" rot="R180"/>
-<pin name="P$19" x="-12.7" y="-2.54" length="middle"/>
-<pin name="P$20" x="12.7" y="-2.54" length="middle" rot="R180"/>
-<pin name="P$21" x="-12.7" y="0" length="middle"/>
-<pin name="P$22" x="12.7" y="0" length="middle" rot="R180"/>
-<pin name="P$23" x="-12.7" y="2.54" length="middle"/>
-<pin name="P$24" x="12.7" y="2.54" length="middle" rot="R180"/>
-<pin name="P$25" x="-12.7" y="5.08" length="middle"/>
-<pin name="P$26" x="12.7" y="5.08" length="middle" rot="R180"/>
-<pin name="P$27" x="-12.7" y="7.62" length="middle"/>
-<pin name="P$28" x="12.7" y="7.62" length="middle" rot="R180"/>
-<pin name="P$29" x="-12.7" y="10.16" length="middle"/>
-<pin name="P$30" x="12.7" y="10.16" length="middle" rot="R180"/>
-<pin name="P$31" x="-12.7" y="12.7" length="middle"/>
-<pin name="P$32" x="12.7" y="12.7" length="middle" rot="R180"/>
-<pin name="GND0" x="-12.7" y="-27.94" length="middle"/>
-<pin name="REF" x="12.7" y="-27.94" length="middle" rot="R180"/>
-<pin name="REF33" x="-12.7" y="15.24" length="middle"/>
-<pin name="GND34" x="12.7" y="15.24" length="middle" rot="R180"/>
-<wire x1="-10.16" y1="17.78" x2="10.16" y2="17.78" width="0.254" layer="94"/>
-<wire x1="10.16" y1="17.78" x2="10.16" y2="-30.48" width="0.254" layer="94"/>
-<wire x1="10.16" y1="-30.48" x2="-10.16" y2="-30.48" width="0.254" layer="94"/>
-<wire x1="-10.16" y1="-30.48" x2="-10.16" y2="17.78" width="0.254" layer="94"/>
 </symbol>
 </symbols>
 <devicesets>
@@ -1582,49 +1535,6 @@
 <connect gate="G$1" pin="P$7" pad="P_7"/>
 <connect gate="G$1" pin="P$8" pad="P_8"/>
 <connect gate="G$1" pin="P$9" pad="P_9"/>
-<connect gate="G$1" pin="REF0" pad="REF0"/>
-<connect gate="G$1" pin="REF33" pad="REF33"/>
-</connects>
-<technologies>
-<technology name=""/>
-</technologies>
-</device>
-<device name="" package="OMNETICS-NANO-THROUGHHOLE">
-<connects>
-<connect gate="G$1" pin="GND0" pad="GND0"/>
-<connect gate="G$1" pin="GND34" pad="GND34"/>
-<connect gate="G$1" pin="P$1" pad="P$1"/>
-<connect gate="G$1" pin="P$10" pad="P$10"/>
-<connect gate="G$1" pin="P$11" pad="P$11"/>
-<connect gate="G$1" pin="P$12" pad="P$12"/>
-<connect gate="G$1" pin="P$13" pad="P$13"/>
-<connect gate="G$1" pin="P$14" pad="P$14"/>
-<connect gate="G$1" pin="P$15" pad="P$15"/>
-<connect gate="G$1" pin="P$16" pad="P$16"/>
-<connect gate="G$1" pin="P$17" pad="P$17"/>
-<connect gate="G$1" pin="P$18" pad="P$18"/>
-<connect gate="G$1" pin="P$19" pad="P$19"/>
-<connect gate="G$1" pin="P$2" pad="P$2"/>
-<connect gate="G$1" pin="P$20" pad="P$20"/>
-<connect gate="G$1" pin="P$21" pad="P$21"/>
-<connect gate="G$1" pin="P$22" pad="P$22"/>
-<connect gate="G$1" pin="P$23" pad="P$23"/>
-<connect gate="G$1" pin="P$24" pad="P$24"/>
-<connect gate="G$1" pin="P$25" pad="P$25"/>
-<connect gate="G$1" pin="P$26" pad="P$26"/>
-<connect gate="G$1" pin="P$27" pad="P$27"/>
-<connect gate="G$1" pin="P$28" pad="P$28"/>
-<connect gate="G$1" pin="P$29" pad="P$29"/>
-<connect gate="G$1" pin="P$3" pad="P$3"/>
-<connect gate="G$1" pin="P$30" pad="P$30"/>
-<connect gate="G$1" pin="P$31" pad="P$31"/>
-<connect gate="G$1" pin="P$32" pad="P$32"/>
-<connect gate="G$1" pin="P$4" pad="P$4"/>
-<connect gate="G$1" pin="P$5" pad="P$5"/>
-<connect gate="G$1" pin="P$6" pad="P$6"/>
-<connect gate="G$1" pin="P$7" pad="P$7"/>
-<connect gate="G$1" pin="P$8" pad="P$8"/>
-<connect gate="G$1" pin="P$9" pad="P$9"/>
 <connect gate="G$1" pin="REF0" pad="REF0"/>
 <connect gate="G$1" pin="REF33" pad="REF33"/>
 </connects>
