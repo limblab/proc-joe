@@ -1,13 +1,13 @@
 %% load in a ns5
 
 
-    folderpath = 'C:\Users\jts3256\Desktop\Duncan_stim_data\getTrainIPI\';
+    folderpath = 'E:\Data\Joseph\Han_stim_data\Han_20191112_longTrains_dukeGen2\';
         
     cd(folderpath);
     file_list = dir('*.ns5');
     
-    analog_pin_idx = 1;
-    sync_idx = 2;
+    analog_pin_idx = 97;
+    sync_idx = 98;
     artifact_data = {};
     pwd = cd;
     window = [-2,8]; % ms

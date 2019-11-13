@@ -1,10 +1,10 @@
 %% set file names 
 
-    inputData.folderpath = 'E:\Data\Joseph\Han_stim_data\Han_20191111_longTrains_dukeGen2\chan94\';
-    inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+    inputData.folderpath = 'E:\Data\Joseph\Duncan_stim_data\Duncan_20191112_longTrains_dukeGen2\chan1\';
+%     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 
     % inputData.mapFileName = 'mapFileR:\limblab-archive\Retired Animal Logs\Monkeys\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
-%     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
+    inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
 
 
     folderpath = inputData.folderpath; % rest of code uses folderpath currently...may have switched this, not 100% certain
@@ -12,7 +12,7 @@
     inputData.task='taskCObump';
     inputData.ranBy='ranByJoseph'; 
     inputData.array1='arrayLeftS1'; 
-    inputData.monkey='monkeyHan';
+    inputData.monkey='monkeyDuncan';
     inputData.labnum = 6;
 
     pwd=cd;
@@ -28,6 +28,8 @@
     optsExtract.STIMULATIONS_PER_TRAIN = 1;
     optsExtract.STIMULATION_BATCH_SIZE = 1000;
     optsExtract.DOWNSAMPLE_STIM_TIMES = 1;
+    
+    optsExtract.NUM_WAVEFORM_TYPES = 4;
     
     optsExtract.USE_STIM_CODE = 0;
     optsExtract.STIM_ELECTRODE = {};

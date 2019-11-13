@@ -1,13 +1,13 @@
 %% set file names 
 
-    input_data.folderpath = 'E:\Data\Joseph\Han_stim_data\Han_20191105_longTrain_dukeGen2\';
+    input_data.folderpath = 'E:\Data\Joseph\Han_stim_data\Han_20191112_longTrains_dukeGen2\';
     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
     % input_data.mapFileName = 'mapFileR:\limblab-archive\Retired Animal Logs\Monkeys\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
 %     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
 
 
-    input_data.IPI = [13,6.6]; % Hz, -1 means single pulse
-    input_data.num_pulses = [375,750];
+    input_data.IPI = 1000./[125,100,75,50]; % Hz, -1 means single pulse
+    input_data.num_pulses = [125,100,75,50]*4;
 
     
     input_data.num_conditionitions = numel(input_data.IPI);
@@ -204,12 +204,15 @@
     end
         
 %% plot PSTH for each conditionition
-    for unit_idx = 1:numel(array_data)
-%         input_data_all{u}.window = [min(array_data{unit_idx}.binEdges{1}),max(array_data{unit_idx}.binEdges{1})];
-        input_data_all{u}.window = [-75,250];
-        input_data_all{u}.unit_idx = unit_idx;
-        input_data_all{u}.chan_rec = array_data{unit_idx}.CHAN_LIST;
-        plotPSTHArrayData(array_data,input_data_all{u});
+    for u = 1:numel(array_data)
+        array_data{u}.monkey = 'Han';
+        array_data{u}.num_stims = array_data{u}.numStims;
+%       input_data_all{u}.window = [min(array_data{unit_idx}.binEdges{1}),max(array_data{unit_idx}.binEdges{1})];
+        input_data.window = [-4000,12000];
+        input_data.unit_idx = u;
+        input_data.chan_rec = array_data{u}.CHAN_LIST{1};
+        
+        plotPSTHArrayData(array_data,input_data);
     end
     
     
