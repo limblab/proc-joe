@@ -123,23 +123,23 @@
         f=figure();
 %         f.Name = file_list(file_num).name(1:end-10);
         
-%         subplot(2,2,condition_counter)
-%         condition_counter = condition_counter + 1;
-%         plot(x_data,(plot_data(:,1:2:6)'),'linewidth',1,'color',getColorFromList(1,0));
-%         hold on
-%         plot(x_data,(plot_data(:,2:2:6)'),'linewidth',1,'color',getColorFromList(1,1));
-%         xlim([-4,12])
-%         ylim([-5000,5000])
-%         ylabel('Voltage (\muV)');
-%         formatForLee(gcf)
-%         xlabel('Time after stimulation offset (ms)');
-%         set(gca,'fontsize',14)
-%         subplot(2,1,2)
-        plot(x_data,(acausalFilter(plot_data(:,1:10:end))'),'color',getColorFromList(1,0));
+        subplot(2,1,1)
+        plot(x_data,(plot_data(:,1:2:6)'),'linewidth',1,'color',getColorFromList(1,0));
         hold on
-        plot(x_data,(acausalFilter(plot_data(:,2:10:end))'),'color',getColorFromList(1,1));
+        plot(x_data,(plot_data(:,2:2:6)'),'linewidth',1,'color',getColorFromList(1,1));
         xlim([-4,12])
         ylim([-5000,5000])
+        ylabel('Voltage (\muV)');
+        formatForLee(gcf)
+        xlabel('Time after stimulation offset (ms)');
+        set(gca,'fontsize',14)
+        subplot(2,1,2)
+        plot(x_data,(acausalFilter(plot_data(:,1:2:6))'),'color',getColorFromList(1,0));
+        hold on
+        plot(x_data,(acausalFilter(plot_data(:,2:2:6))'),'color',getColorFromList(1,1));
+        xlim([-4,12])
+        ylim([-1000,1000])
+
         xlabel('Time after stimulation offset (ms)');
         formatForLee(gcf)
 %         

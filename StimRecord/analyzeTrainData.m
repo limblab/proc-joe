@@ -372,9 +372,6 @@
 %     xlim([-0.5,2]); ylim([-0.5,2])
 %     ylim([0,1]);
 
-
-
-
 %% plot response to each pulse in the trains of each frequency for each neuron
 % 1 plot per frequency
     post_window = [0,5]; % in ms
@@ -411,10 +408,35 @@
     end
         
   
- 
+%% compute baseline firing rate for all neurons across all conditions....
+
+    
+
     
 %% look at rebound excitation
-% amplitude for each frequency
+% size, peak time, onset, duration
+% size = integrate above baseline for the duration
+% peak time = peak if it exists
+% duration = time from onset to offset
+
+    rebound_input_data.post_stim_window = [20,200];
+    rebound_input_data.baseline_window = [-80,-20];
+    rebound_input_data.threshold_mult = 2;
+    rebound_input_data.num_bins_above_thresh = 5;
+    rebound_input_data.bin_size = 5;
+    
+    for u = 32%1:numel(array_data)
+        rebound_input_data.train_length = input_data_all{u}.IPI.*input_data_all{u}.num_pulses;
+        rebound_input_data.train_length(rebound_input_data.train_length < 0) = 1; % single pulse condition
+        
+        reboundExcitation{u} = getReboundExcitationStats(array_data{u},rebound_input_data);
+    end
+
+
+
+    
+
+
     
 %% resample data w/ smaller number of stimulations
 
