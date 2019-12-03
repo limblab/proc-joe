@@ -1,6 +1,6 @@
 %% set file names 
 
-    inputData.folderpath = 'E:\Data\Joseph\Duncan_stim_data\Duncan_20191112_longTrains_dukeGen2\chan1\';
+    inputData.folderpath = 'E:\Data\Joseph\Duncan_stim_data\Duncan_20191124_longTrains_dukeGen2\chan79\';
 %     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 
     % inputData.mapFileName = 'mapFileR:\limblab-archive\Retired Animal Logs\Monkeys\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
@@ -29,14 +29,14 @@
     optsExtract.STIMULATION_BATCH_SIZE = 1000;
     optsExtract.DOWNSAMPLE_STIM_TIMES = 1;
     
-    optsExtract.NUM_WAVEFORM_TYPES = 4;
+    optsExtract.NUM_WAVEFORM_TYPES = 12;
     
     optsExtract.USE_STIM_CODE = 0;
     optsExtract.STIM_ELECTRODE = {};
     optsExtract.CHAN_LIST = {};
 
-    optsExtract.PRE_TIME = 5000/1000; % made negative in the function
-    optsExtract.POST_TIME = 20000/1000;
+    optsExtract.PRE_TIME = 4000/1000; % made negative in the function
+    optsExtract.POST_TIME = 16000/1000;
 
     optsExtract.BIN_SIZE = 100/1000;
     optsExtract.TIME_AFTER_STIMULATION_WAVEFORMS = 10/1000;

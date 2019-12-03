@@ -1,7 +1,7 @@
 %% load in a ns5
 
 
-    folderpath = 'E:\Data\Joseph\Han_stim_data\Han_20191112_longTrains_dukeGen2\';
+    folderpath = 'E:\Data\Joseph\Han_stim_data\Han_20191114_longTrains_dukeGen2\chan4\';
         
     cd(folderpath);
     file_list = dir('*.ns5');
@@ -18,7 +18,7 @@
     window_idx = window*30; % convert to data points
 
     
-    for file_num = 1:numel(file_list)
+    for file_num = 1%:numel(file_list)
         disp(file_list(file_num).name);
         NS5 = openNSx([folderpath,file_list(file_num).name],'uV');
     
@@ -40,7 +40,7 @@
     cd(pwd);
 % get stim on for each file
     freq_deliver = {};
-    for file_num = 1:numel(file_list)
+    for file_num = 1%:numel(file_list)
         stim_on=find(diff(sync_line_data{file_num}-mean(sync_line_data{file_num})>3)>.5);
         unique_IPI = unique(diff(stim_on))/30;
         disp(unique_IPI(unique_IPI < 210));

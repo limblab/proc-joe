@@ -174,7 +174,7 @@
     
     
 %% rebin 
-    binSize = 2.5; % ms
+    binSize = 200; % ms
     
     for u = 1:numel(array_data)
         input_data_all{u}.bin_size = binSize;
@@ -203,14 +203,15 @@
         rasterPlots = plotRasterStim(array_data{arrIdx},arrIdx,optsPlotFunc);
     end
         
-%% plot PSTH for each conditionition
+%% plot PSTH for each condition
     for u = 1:numel(array_data)
-        array_data{u}.monkey = 'Han';
+        array_data{u}.monkey = 'Duncan';
         array_data{u}.num_stims = array_data{u}.numStims;
 %       input_data_all{u}.window = [min(array_data{unit_idx}.binEdges{1}),max(array_data{unit_idx}.binEdges{1})];
         input_data.window = [-4000,12000];
         input_data.unit_idx = u;
         input_data.chan_rec = array_data{u}.CHAN_LIST{1};
+        input_data.num_cols = 3;
         
         plotPSTHArrayData(array_data,input_data);
     end
@@ -417,63 +418,92 @@
     
 %% resample data w/ smaller number of stimulations
 
-    unit_idx = 6;
     num_boot = 100;
-    num_stims_use = 20; % really should be less than what I actually used
+    num_stims_use = 8; % really should be less than what I actually used
     
-    bootstrapped_data = [];
-    bootstrapped_firing_rate = zeros(numel(array_data{unit_idx}.binCounts),num_boot,numel(array_data{unit_idx}.binCounts{1}));
+    p_list = zeros(numel(array_data),numel(array_data{1}.binCounts),num_boot);
+    num_sig = zeros(numel(array_data),numel(array_data{1}.binCounts));
     
-    window_post_stim = [1,10];
-    pulse_data = {};
+    for unit_idx = 1:numel(array_data)
+        f=figure();f.Position = [381 -83 1387 856];
+        bootstrapped_data = [];
+        bootstrapped_firing_rate = zeros(numel(array_data{unit_idx}.binCounts),num_boot,numel(array_data{unit_idx}.binCounts{1}));
 
-    for condition = 1:numel(array_data{unit_idx}.binCounts) % for each conditionition
-        if(input_data_all{unit_idx}.num_pulses(condition) == 1) % get timing of each pulse
-            pulse_time = 0;
-        else
-            pulse_time = [0,input_data_all{unit_idx}.IPI(condition)*(1:input_data_all{unit_idx}.num_pulses(condition)-1)];
-        end
-        pulse_data{condition}.count = zeros(num_boot,numel(pulse_time));
+        window_post_stim = [0,5];
+        pulse_data = {};
+        input_data_all{unit_idx} = input_data;
+        array_data{unit_idx}.num_stims = array_data{unit_idx}.numStims;
+        array_data{unit_idx}.trial_num = array_data{unit_idx}.stimData;
         
-        
-        
-        for boot = 1:num_boot % for each bootstrap iteration
-            % downsample data
-
-            stim_idx_use = datasample(1:array_data{unit_idx}.num_stims(condition),...
-                min(num_stims_use,array_data{unit_idx}.num_stims(condition)),'Replace',false);
-            spike_trial_times = array_data{unit_idx}.spikeTrialTimes{condition}(sum(array_data{unit_idx}.trial_num{condition} == stim_idx_use') > 0);
-            % rebin data and store
-            bootstrapped_firing_rate(condition,boot,:) = histcounts(spike_trial_times*1000,array_data{unit_idx}.binEdges{condition})/...
-                (input_data_all{unit_idx}.bin_size/1000)/num_stims_use;
-            
-            for p = 1:numel(pulse_time)
-                bin_idx = [find(array_data{unit_idx}.binEdges{condition} > pulse_time(p)+window_post_stim(1),1,'first'),...
-                    find(array_data{unit_idx}.binEdges{condition} > pulse_time(p)+window_post_stim(2),1,'first')];
-                
-                pulse_data{condition}.count(boot,p) = mean(bootstrapped_firing_rate(condition,boot,bin_idx(1):bin_idx(2)));
+        for condition = 1:numel(array_data{unit_idx}.binCounts) % for each condition
+            if(input_data_all{unit_idx}.num_pulses(condition) == 1) % get timing of each pulse
+                pulse_time = 0;
+            else
+                pulse_time = [0,input_data_all{unit_idx}.IPI(condition)*(1:input_data_all{unit_idx}.num_pulses(condition)-1)];
             end
+            pulse_data{condition}.count = zeros(num_boot,numel(pulse_time));
+
+
+
+            for boot = 1:num_boot % for each bootstrap iteration
+                % downsample data
+
+                stim_idx_use = datasample(1:array_data{unit_idx}.num_stims(condition),...
+                    min(num_stims_use,array_data{unit_idx}.num_stims(condition)),'Replace',false);
+                 
+                spike_trial_times = array_data{unit_idx}.spikeTrialTimes{condition}(sum(array_data{unit_idx}.trial_num{condition} == stim_idx_use') > 0);
+                
+                % rebin data and store
+                bootstrapped_firing_rate(condition,boot,:) = histcounts(spike_trial_times*1000,array_data{unit_idx}.binEdges{condition})/...
+                    (mode(diff(array_data{unit_idx}.binEdges{condition}))/1000)/num_stims_use;
+                
+                % get p-value for comparing early and late stim
+                trial_counts = zeros(num_stims_use,2);
+                for trial = 1:num_stims_use
+                    spike_trial_times = array_data{unit_idx}.spikeTrialTimes{condition}(array_data{unit_idx}.trial_num{condition} == stim_idx_use(trial)');
+                    trial_counts(trial,:) = [sum(spike_trial_times > 0 & spike_trial_times < 0.5), sum(spike_trial_times > 3 & spike_trial_times < 3.5)];
+                end
+                
+                [~,p_list(unit_idx,condition,boot)] = ttest(trial_counts(:,1),trial_counts(:,2));
+                
+                for p = 1:numel(pulse_time)
+                    bin_idx = [find(array_data{unit_idx}.binEdges{condition} > pulse_time(p)+window_post_stim(1),1,'first'),...
+                        find(array_data{unit_idx}.binEdges{condition} > pulse_time(p)+window_post_stim(2),1,'first')];
+
+                    pulse_data{condition}.count(boot,p) = mean(bootstrapped_firing_rate(condition,boot,bin_idx(1):bin_idx(2)));
+                end
+            end
+
+            subplot(3,4,condition)
+            x_data = array_data{unit_idx}.binEdges{condition}(1:end-1) + mode(diff(array_data{unit_idx}.binEdges{condition}))/2;
+            plot(x_data,squeeze(bootstrapped_firing_rate(condition,1:5:end,:)),'linewidth',1)
+
+            subplot(3,4,condition+4)
+            x_data = array_data{unit_idx}.binEdges{condition}(1:end-1) + mode(diff(array_data{unit_idx}.binEdges{condition}))/2;
+            plot(x_data,squeeze(bootstrapped_firing_rate(condition,1,:)),'linewidth',2)
+            mean_bin_counts = squeeze(mean(bootstrapped_firing_rate(condition,:,:)));
+
+            sorted_bootstrapped_firing_rate = sort(bootstrapped_firing_rate,2);
+            idx_use = [floor(num_boot*0.025),ceil(num_boot*0.975)];
+            firing_rate_bound = [squeeze(sorted_bootstrapped_firing_rate(condition,idx_use,:))];
+    %         
+            plot(x_data,mean_bin_counts) % plot the mean
+            hold on
+            plot(x_data, firing_rate_bound,'--')
+
+            subplot(3,4,condition+8)
+            bin_idx = [find(array_data{unit_idx}.binEdges{condition} >= 0,1,'first'),...
+                        find(array_data{unit_idx}.binEdges{condition} >= 1000,1,'first'),...
+                        find(array_data{unit_idx}.binEdges{condition} >= 2500,1,'first'),...
+                        find(array_data{unit_idx}.binEdges{condition} >= 3500,1,'first')];
+                    
+            histogram(mean(bootstrapped_firing_rate(condition,:,bin_idx(1):bin_idx(2)),3) -...
+                mean(bootstrapped_firing_rate(condition,:,bin_idx(3):bin_idx(4)),3));
+            
+            
+            
         end
-        
-        figure();
-        subplot(2,1,1)
-        x_data = array_data{unit_idx}.binEdges{cond}(1:end-1) + mode(diff(array_data{unit_idx}.binEdges{cond}))/2;
-        plot(x_data,squeeze(bootstrapped_firing_rate(cond,1,:)),'linewidth',2)
-        mean_bin_counts = squeeze(mean(bootstrapped_firing_rate(cond,:,:)));
-
-        sorted_bootstrapped_firing_rate = sort(bootstrapped_firing_rate,2);
-        idx_use = [floor(num_boot*0.025),ceil(num_boot*0.975)];
-        firing_rate_bound = [squeeze(sorted_bootstrapped_firing_rate(cond,idx_use,:))];
-%         
-        plot(x_data,mean_bin_counts) % plot the mean
-        hold on
-        plot(x_data, firing_rate_bound,'--')
-        subplot(2,1,2)
-        histogram(pulse_data{cond}.count(:,1) - pulse_data{cond}.count(:,end));
-        x_data = array_data{unit_idx}.binEdges{condition}(1:end-1) + mode(diff(array_data{unit_idx}.binEdges{condition}))/2;
-        plot(x_data,squeeze(bootstrapped_firing_rate(condition,1,:)),'linewidth',2)
-
     end
        
-
+    num_sig = sum(p_list < 0.05,3)
 

@@ -43,6 +43,12 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
                 end
             end
             stimInfo.stimOn = cds.analog{aIdx}.t(find(diff(cds.analog{aIdx}.(opts.ANALOG_SYNC_LINE)-mean(cds.analog{aIdx}.(opts.ANALOG_SYNC_LINE))>3)>.5));
+        
+            if(opts.DOWNSAMPLE_STIM_TIMES && opts.STIMULATIONS_PER_TRAIN == 1)
+                idx_keep = find(diff(stimInfo.stimOn) > 1);
+                idx_keep = [1;idx_keep + 1];
+                stimInfo.stimOn = stimInfo.stimOn(idx_keep);
+            end
         end
 
         %% setup useful variables
@@ -76,27 +82,6 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
             NUM_CHANS = 1;
             CHAN_LIST = opts.STIM_ELECTRODE; % placeholder because this isn't given that info
         else
-            
-            if(iscell(stimInfo.chanSent) && sum(stimInfo.chanSent{1} == -1) == 1) % try to get chan stim from filename, % handles multiple channels
-                fname = fileList(fileNumber).name;
-                underscoreIdx = strfind(fname,'_');
-                if(~isempty(strfind(fname,'chanStim')))
-                    strIdx = strfind(fname,'chanStim');
-                    underscoreIdx = underscoreIdx(find(underscoreIdx < strIdx,1,'last'));
-                    chanStim = str2num(fname(underscoreIdx+1:strIdx-1));
-                elseif(~isempty(strfind(fname,'stim')) && ~isempty(strfind(fname,'chan')))
-                    strIdx = [strfind(fname,'chan'), strfind(fname,'stim')];
-                    chanStim = str2num(fname(strIdx(end-1)+4:strIdx(end)-1)); % some files have chans....chan#stim
-                end
-                
-                if(~isempty(chanStim))
-                    for chanSentIdx = 1:numel(stimInfo.chanSent)
-                        stimInfo.chanSent{chanSentIdx} = chanStim;
-                    end
-                end
-                
-            end
-            
             if(~isempty(opts.NUM_WAVEFORM_TYPES))
                 NUM_WAVEFORM_TYPES = opts.NUM_WAVEFORM_TYPES;
                 WAVEFORM_NUMS = 1:1:NUM_WAVEFORM_TYPES;
@@ -122,6 +107,26 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
             else
                 CHAN_LIST = opts.STIM_ELECTRODE;
                 NUM_CHANS = 1;
+            end
+            
+            if(iscell(stimInfo.chanSent) && sum(stimInfo.chanSent{1} == -1) == 1) % try to get chan stim from filename, % handles multiple channels
+                fname = fileList(fileNumber).name;
+                underscoreIdx = strfind(fname,'_');
+                if(~isempty(strfind(fname,'chanStim')))
+                    strIdx = strfind(fname,'chanStim');
+                    underscoreIdx = underscoreIdx(find(underscoreIdx < strIdx,1,'last'));
+                    chanStim = str2num(fname(underscoreIdx+1:strIdx-1));
+                elseif(~isempty(strfind(fname,'stim')) && ~isempty(strfind(fname,'chan')))
+                    strIdx = [strfind(fname,'chan'), strfind(fname,'stim')];
+                    chanStim = str2num(fname(strIdx(end-1)+4:strIdx(end)-1)); % some files have chans....chan#stim
+                end
+                
+                if(~isempty(chanStim))
+                    for chanSentIdx = 1:numel(stimInfo.chanSent)
+                        stimInfo.chanSent{chanSentIdx} = chanStim;
+                    end
+                end
+                
             end
             
             if(opts.FLAG_WAVEFORM) % try to get stim amp from file name, get idx for master list of waveforms
@@ -254,7 +259,7 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
             end
 
             %% grab kin data for each stimulation
-            if(opts.GET_KIN)
+            if(opts.GET_KIN && nn_all_idx == 1)
                 % if cds has a kin entry, use it
                 if(isprop(cds,'kin') && ~isempty(cds.kin))
                     kin_dt = mode(diff(cds.kin.t));
@@ -457,6 +462,7 @@ function [opts] = configureOpts(optsInput)
     opts.GET_KIN = 0;
     opts.GET_FORCE = 0;
     opts.USE_ANALOG_FOR_STIM_TIMES = 1;
+    opts.DOWNSAMPLE_STIM_TIMES = 0;
     opts.ANALOG_SYNC_LINE = 'ainp16';
     opts.USE_STIM_CODE = 0;
 
