@@ -1,6 +1,13 @@
 function [arrayDataRebin] = rebinArrayData(arrayData,binSize)
+    
+    remove_cell = 0;
+    if(~iscell(arrayData))
+        arrayData = {arrayData};
+        remove_cell = 1;
+    end
     % rebins data in arrayData based on inputData.bin_size
   
+    
     arrayDataRebin = arrayData;
     binEdges = (arrayData{1}.binEdges{1}(1)):binSize:(arrayData{1}.binEdges{1}(end)); % in ms
     for u = 1:numel(arrayDataRebin)
@@ -18,6 +25,8 @@ function [arrayDataRebin] = rebinArrayData(arrayData,binSize)
         end
     end
 
-
+    if(remove_cell)
+        arrayDataRebin = arrayDataRebin{1};
+    end
 
 end
