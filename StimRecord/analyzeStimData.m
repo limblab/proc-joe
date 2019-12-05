@@ -1,6 +1,6 @@
 %% set file names 
 
-    inputData.folderpath = 'E:\Data\Joseph\Duncan_stim_data\Duncan_20191124_longTrains_dukeGen2\chan79\';
+    inputData.folderpath = 'E:\Data\Joseph\Duncan_stim_data\Duncan_20191119_longTrains_dukeGen2\chan79\';
 %     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 
     % inputData.mapFileName = 'mapFileR:\limblab-archive\Retired Animal Logs\Monkeys\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';

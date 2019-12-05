@@ -16,15 +16,18 @@ function [output_data] = plotPSTHArrayData(array_data,input_data)
         end
         for condition = 1:numel(array_data{u}.binCounts)
             subplot(ceil(numel(array_data{u}.binCounts)/input_data.num_cols),input_data.num_cols,condition)
-
+%             subplot(ceil(numel(array_data{u}.binCounts)/input_data.num_cols),1,ceil(condition/input_data.num_cols))
             
             if(exist('downsample_stims') && downsample_stims == 1) % use num_stims_use 
 %                 plot(array_data{u}.binEdges{cond}(1:end-1)+mean(diff(array_data{u}.binEdges{cond}))/2,...
 %                     array_data{u}.binCounts{cond}/(mode(diff(array_data{u}.binEdges{cond}/1000)))/min(num_stims_use,array_data{u}.num_stims(cond)),'color',getColorFromList(1,1),'linewidth',1.5)
             else % use num_stims from array_data
                 plot(array_data{u}.binEdges{condition}(1:end-1)+mean(diff(array_data{u}.binEdges{condition}))/2,...
-                    array_data{u}.binCounts{condition}/(mode(diff(array_data{u}.binEdges{condition}/1000))),'color',getColorFromList(1,1),'linewidth',1.5)
-                max_y_lim = max(max_y_lim,f_list{u}.Children(1).YLim(end));
+                    array_data{u}.binCounts{condition}/(mode(diff(array_data{u}.binEdges{condition}/1000))),...
+                        'color',getColorFromList(1,1),'linewidth',1.5);
+%                         'color',getColorFromList(1,mod(condition,input_data.num_cols)),'linewidth',1.5)
+                
+                max_y_lim = max(max_y_lim,max(array_data{u}.binCounts{condition}/(mode(diff(array_data{u}.binEdges{condition}/1000)))));
                 hold on
                 stim_on_line = plot([0,0],[0,1000],'r--');
                 stim_off_line = plot([4000,4000],[0,1000],'r--');
@@ -40,7 +43,7 @@ function [output_data] = plotPSTHArrayData(array_data,input_data)
             
         end
         
-        for condition = 1:numel(array_data{u}.binCounts)
+        for condition = 1:numel(f_list{u}.Children)
             f_list{u}.Children(condition).YLim(end) = max_y_lim;
             f_list{u}.Children(condition).XLim = input_data.window;
         end

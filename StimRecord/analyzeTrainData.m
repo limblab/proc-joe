@@ -436,7 +436,33 @@
 
     
 
+    
+    
+%% get decay rate for all conditions and plot
 
+    decay_rates = zeros(numel(array_data),12);
+    
+    for u = 1:numel(array_data)
+        decay_data = getDecayRate(array_data{u},[0,3700],200); % window, then bin size
+        
+        decay_rates(u,:) = decay_data.param_list(:,2)';
+        
+    end
+
+    %%
+    
+    f=figure();
+    plot([131,104,80,51],mean(decay_rates(:,[1:3:12])),'color',getColorFromList(1,0),'linewidth',2)
+    hold on
+    plot([131,104,80,51],mean(decay_rates(:,[2:3:12])),'color',getColorFromList(1,1),'linewidth',2)
+    plot([131,104,80,51],mean(decay_rates(:,[3:3:12])),'color',getColorFromList(1,2),'linewidth',2)
+  
+    formatForLee(gcf);
+    set(gca,'fontsize',14);
+    
+    xlabel('Frequency (Hz)');
+    ylabel('Decay constant (1/s)')
+    
     
 %% resample data w/ smaller number of stimulations
 

@@ -347,8 +347,10 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
                 arrayData{arrayDataIdx}.binCounts = binCounts;
                 arrayData{arrayDataIdx}.binEdges = binEdges;
 
-                arrayData{arrayDataIdx}.kin = kinData;
-                arrayData{arrayDataIdx}.force = forceData;
+                if(arrayDataIdx == 1)
+                    arrayData{arrayDataIdx}.kin = kinData;
+                    arrayData{arrayDataIdx}.force = forceData;
+                end
                 %% save useful stimulation related information
                 arrayData{arrayDataIdx}.CHAN_LIST = CHAN_LIST;
                 arrayData{arrayDataIdx}.STIM_PARAMETERS = stimInfo.parameters;
@@ -374,15 +376,16 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
                         arrayData{arrayDataIdx}.stimData{chan,wave} = [arrayData{arrayDataIdx}.stimData{chan,wave},stimuliData{chan,wave}+arrayData{arrayDataIdx}.numStims(chan,wave)];
                         arrayData{arrayDataIdx}.numStims(chan,wave) = arrayData{arrayDataIdx}.numStims(chan,wave)+numStims(chan,wave);
                         arrayData{arrayDataIdx}.binCounts{chan,wave} = arrayData{arrayDataIdx}.binCounts{chan,wave}+binCounts{chan,wave};
+                        if(arrayDataIdx == 1)
+                            arrayData{arrayDataIdx}.kin{chan,wave}.x = [arrayData{arrayDataIdx}.kin{chan,wave}.x;kinData{chan,wave}.x];
+                            arrayData{arrayDataIdx}.kin{chan,wave}.y = [arrayData{arrayDataIdx}.kin{chan,wave}.y;kinData{chan,wave}.y];
+                            arrayData{arrayDataIdx}.kin{chan,wave}.vx = [arrayData{arrayDataIdx}.kin{chan,wave}.vx;kinData{chan,wave}.vx];
+                            arrayData{arrayDataIdx}.kin{chan,wave}.vy = [arrayData{arrayDataIdx}.kin{chan,wave}.vy;kinData{chan,wave}.vy];
+                            arrayData{arrayDataIdx}.kin{chan,wave}.ax = [arrayData{arrayDataIdx}.kin{chan,wave}.ax;kinData{chan,wave}.ax];
+                            arrayData{arrayDataIdx}.kin{chan,wave}.ay = [arrayData{arrayDataIdx}.kin{chan,wave}.ay;kinData{chan,wave}.ay];
 
-                        arrayData{arrayDataIdx}.kin{chan,wave}.x = [arrayData{arrayDataIdx}.kin{chan,wave}.x;kinData{chan,wave}.x];
-                        arrayData{arrayDataIdx}.kin{chan,wave}.y = [arrayData{arrayDataIdx}.kin{chan,wave}.y;kinData{chan,wave}.y];
-                        arrayData{arrayDataIdx}.kin{chan,wave}.vx = [arrayData{arrayDataIdx}.kin{chan,wave}.vx;kinData{chan,wave}.vx];
-                        arrayData{arrayDataIdx}.kin{chan,wave}.vy = [arrayData{arrayDataIdx}.kin{chan,wave}.vy;kinData{chan,wave}.vy];
-                        arrayData{arrayDataIdx}.kin{chan,wave}.ax = [arrayData{arrayDataIdx}.kin{chan,wave}.ax;kinData{chan,wave}.ax];
-                        arrayData{arrayDataIdx}.kin{chan,wave}.ay = [arrayData{arrayDataIdx}.kin{chan,wave}.ay;kinData{chan,wave}.ay];
-                        
-                        arrayData{arrayDataIdx}.force{chan,wave} = [arrayData{arrayDataIdx}.force{chan,wave};forceData{chan,wave}];
+                            arrayData{arrayDataIdx}.force{chan,wave} = [arrayData{arrayDataIdx}.force{chan,wave};forceData{chan,wave}];
+                        end
                     end
                 end
                 %% append useful stim related info
