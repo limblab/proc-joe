@@ -17,7 +17,7 @@
     
     f=figure();
     f.Name = '200uA_summary_fig';
-    for monk = monkey_names(1)
+    for monk = monkey_names(2)
     % train length data
         file_list = dir([monk{1},'*.mat']);
         

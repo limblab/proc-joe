@@ -17,6 +17,22 @@ function [output_data,figure_handles] = plotSpikesPerCondition(array_data,opts)
     spikes_pre_stim = cell(size(array_data.numStims));
     spike_times_post_stim = cell(size(array_data.numStims));
     
+    is_excitatory_p = zeros(size(array_data.numStims));
+    
+    % compute mean and std of baseline bin counts
+    all_bin_counts = [];
+    for chan = 1:size(array_data.numStims,1)
+        for wave = 1:size(array_data.numStims,2)
+            baseline_idx = [find(array_data.binEdges{chan,wave} > opts.PRE_WINDOW(1)*1000,1,'first'),...
+                find(array_data.binEdges{chan,wave} > opts.PRE_WINDOW(2)*1000,1,'first')];
+            all_bin_counts = [all_bin_counts, array_data.binCounts{chan,wave}(baseline_idx(1):baseline_idx(2))];
+        end
+    end
+                
+    mean_baseline_count = mean(all_bin_counts);
+    std_baseline_count = std(all_bin_counts);
+    threshold = mean_baseline_count+2*std_baseline_count;
+    
     for chan = 1:size(array_data.numStims,1)
         for wave = 1:size(array_data.numStims,2)
             %% collect all unit data into two arrays (one for time, one for stim num)
@@ -32,6 +48,7 @@ function [output_data,figure_handles] = plotSpikesPerCondition(array_data,opts)
             %% remove spikes that are not in the window
             post_mask = spike_times > opts.POST_WINDOW(1) & spike_times < opts.POST_WINDOW(2);
             pre_mask = spike_times > opts.PRE_WINDOW(1) & spike_times < opts.PRE_WINDOW(2);
+            
             %% count how many spikes for each stimulation
             spikes_post_stim{chan,wave} = zeros(array_data.numStims(chan,wave),1);
             spike_times_post_stim{chan,wave} = array_data.spikeTrialTimes{chan,wave}(post_mask);
@@ -40,9 +57,14 @@ function [output_data,figure_handles] = plotSpikesPerCondition(array_data,opts)
             
             for stim = 1:array_data.numStims(chan,wave)
                 spikes_post_stim{chan,wave}(stim) = sum(stim_nums(post_mask) == stim);
-                spikes_pre_stim{chan,wave}(stim) = sum(stim_nums(pre_mask) == stim);
+                spikes_pre_stim{chan,wave}(stim) = sum(stim_nums(pre_mask) == stim)/diff(opts.PRE_WINDOW)*diff(opts.POST_WINDOW);
             end
             
+            %% compute excitatory statistics based on on (kraskov 2011) or a wilcoxon rank sum test
+            
+            bins_above_threshold = array_data.binCounts{chan,wave} > threshold & array_data.binEdges{chan,wave}(2:end) > 0 &  array_data.binEdges{chan,wave}(2:end) < 20;
+%             is_excitatory(chan,wave) = any(movmean(bins_above_threshold,3) >0.99);
+            is_excitatory_p(chan,wave) = signrank(spikes_post_stim{chan,wave},spikes_pre_stim{chan,wave},'tail','right');
         end
     end
         
@@ -98,5 +120,8 @@ function [output_data,figure_handles] = plotSpikesPerCondition(array_data,opts)
    output_data.amp = amp;
    output_data.pw = pw;
    output_data.pol = pol;
+   output_data.is_excitatory_p = is_excitatory_p;
+   output_data.mean_baseline_count = mean_baseline_count;
+   output_data.std_baseline_count = std_baseline_count;
 
 end

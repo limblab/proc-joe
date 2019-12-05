@@ -339,6 +339,8 @@
 <text x="-11.43" y="-2.54" size="1.27" layer="22" rot="MR0">2</text>
 <text x="13.97" y="-2.54" size="1.27" layer="22" rot="MR0">36</text>
 </package>
+<package name="FSTH-118-01-F-D">
+</package>
 </packages>
 <symbols>
 <symbol name="FTSH-118-01-L-MT">

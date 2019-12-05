@@ -1,55 +1,72 @@
 %% load in a ns5
 
-    folderpath = 'E:\Data\Joseph\dukeBoards\Duncan_20190807_gen3\';
+    folderpath = 'E:\Data\Joseph\Han_stim_data\Han_20191125_dukeBoardsComparison\dukeGen3\';
 %     folderpath = 'C:\Users\jts3256\Desktop\Duncan_stim_data\getIPI\';
 
         
     cd(folderpath);
     file_list = dir('*.ns5');
     
-    analog_pin_idx = 1;
-    sync_idx = 2;
+    analog_pin_idx = 97;
+    sync_idx = 98;
     artifact_data = {};
     sync_line_data = {};
     pwd = cd;
-    window = [-4,20]; % ms
+    window = [-4,50]; % ms
     pulse_width_1 = zeros(numel(file_list),1); % us
     pulse_width_2 = zeros(size(pulse_width_1)); % us
     interphase = 53; % us
     
     window_idx = window*30; % convert to data points
 
-    
-    for file_num = 3%:numel(file_list)
+%     f= figure();
+    condition_counter = 1;
+    for file_num = 1:numel(file_list)
         disp(file_list(file_num).name);
         NS5 = openNSx([folderpath,file_list(file_num).name],'uV');
-
-
+    
+% 
         artifact_data{file_num} = NS5.Data(analog_pin_idx,:);
         sync_line_data{file_num} = NS5.Data(sync_idx,:);
+        stim_on=find(diff(sync_line_data{file_num}-mean(sync_line_data{file_num})>3)>.5);
+        
+        pre_stim = artifact_data{file_num}(1:stim_on(1)-1200);
+        during_stim = artifact_data{file_num}(stim_on(1)-1200:stim_on(end)+300);
+        stim_on = stim_on - stim_on(1) + 1201;
+        
+%         subplot(2,2,condition_counter)
+%         condition_counter = condition_counter + 1;
+%         
+%         periodogram(pre_stim);
+%         ylim([-40,100])
+%         title('')
+        
 %         
 %         % get pulse widths
-        pw1_idx = strfind(file_list(file_num).name,'PW1');
-        pw2_idx = strfind(file_list(file_num).name,'PW2');
-        amp1_idx = strfind(file_list(file_num).name,'A1');
-        amp2_idx = strfind(file_list(file_num).name,'A2');
-        stim_idx = strfind(file_list(file_num).name,'stim');
-        chan_idx = strfind(file_list(file_num).name,'chan');
-        underscore_idx = strfind(file_list(file_num).name,'_');
-        
-        pulse_width_1(file_num) = str2num(file_list(file_num).name(pw1_idx+4:underscore_idx(find(underscore_idx > pw1_idx,1,'first'))-1));
-        pulse_width_2(file_num) = str2num(file_list(file_num).name(pw2_idx+4:underscore_idx(find(underscore_idx > pw2_idx,1,'first'))-1));
-        amp_1(file_num) = str2num(file_list(file_num).name(amp1_idx+3:underscore_idx(find(underscore_idx > amp1_idx,1,'first'))-1));
-        amp_2(file_num) = str2num(file_list(file_num).name(amp2_idx+3:underscore_idx(find(underscore_idx > amp2_idx,1,'first'))-1));
-        stim_chan(file_num) = str2num(file_list(file_num).name(chan_idx+4:stim_idx-1));
+%         pw1_idx = strfind(file_list(file_num).name,'PW1');
+%         pw2_idx = strfind(file_list(file_num).name,'PW2');
+%         amp1_idx = strfind(file_list(file_num).name,'A1');
+%         amp2_idx = strfind(file_list(file_num).name,'A2');
+%         stim_idx = strfind(file_list(file_num).name,'stim');
+%         chan_idx = strfind(file_list(file_num).name,'chan');
+%         underscore_idx = strfind(file_list(file_num).name,'_');
+%         
+%         pulse_width_1(file_num) = str2num(file_list(file_num).name(pw1_idx+4:underscore_idx(find(underscore_idx > pw1_idx,1,'first'))-1));
+%         pulse_width_2(file_num) = str2num(file_list(file_num).name(pw2_idx+4:underscore_idx(find(underscore_idx > pw2_idx,1,'first'))-1));
+%         amp_1(file_num) = str2num(file_list(file_num).name(amp1_idx+3:underscore_idx(find(underscore_idx > amp1_idx,1,'first'))-1));
+%         amp_2(file_num) = str2num(file_list(file_num).name(amp2_idx+3:underscore_idx(find(underscore_idx > amp2_idx,1,'first'))-1));
+%         stim_chan(file_num) = str2num(file_list(file_num).name(chan_idx+4:stim_idx-1));
     end
     cd(pwd);
     
 %% pick a file (idx) and plot anodic and cathodic data
     threshold = 0.1;
-    peak_data = {};
+    peak_data = cell(numel(file_list),1);
     
-    for file_num = 1% :numel(file_list)
+    f=figure();
+    condition_counter = 1;
+    
+    for file_num = 1:numel(file_list)
         disp(file_list(file_num).name);
         
         stim_on=find(diff(sync_line_data{file_num}-mean(sync_line_data{file_num})>3)>.5);
@@ -104,10 +121,12 @@
         
                 %
         f=figure();
-        f.Name = file_list(file_num).name(1:end-10);
+%         f.Name = file_list(file_num).name(1:end-10);
         
         subplot(2,1,1)
-        plot(x_data,(plot_data(:,1:5)'),'linewidth',1.5);
+        plot(x_data,(plot_data(:,1:2:6)'),'linewidth',1,'color',getColorFromList(1,0));
+        hold on
+        plot(x_data,(plot_data(:,2:2:6)'),'linewidth',1,'color',getColorFromList(1,1));
         xlim([-4,12])
         ylim([-5000,5000])
         ylabel('Voltage (\muV)');
@@ -115,12 +134,15 @@
         xlabel('Time after stimulation offset (ms)');
         set(gca,'fontsize',14)
         subplot(2,1,2)
-        plot(x_data,(acausalFilter(plot_data(:,1:5))'));
+        plot(x_data,(acausalFilter(plot_data(:,1:2:6))'),'color',getColorFromList(1,0));
+        hold on
+        plot(x_data,(acausalFilter(plot_data(:,2:2:6))'),'color',getColorFromList(1,1));
         xlim([-4,12])
         ylim([-1000,1000])
+
         xlabel('Time after stimulation offset (ms)');
         formatForLee(gcf)
-        
+%         
         
     end
     

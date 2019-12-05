@@ -18,7 +18,7 @@
     f=figure();
     f.Name = 'DistanceExp_scatterSummary';
 
-    for monk = monkey_names
+    for monk = monkey_names(1)
     % train length data
         file_list = dir([monk{1},'*distanceExpAll*.mat']);
         load(file_list.name);
@@ -41,7 +41,7 @@
 
             idx = find(data_all.group == group & data_all.dist == 1,1,'first');
             num_elecs(group) = numel(data_all.chans{idx});
-
+            num_trials_all = [num_trials_all, sum(data_all.group==group & data_all.dist==1), sum(data_all.group==group & data_all.dist==0)];
         end
         NEAR_ALL = [NEAR_ALL, mean_near];
         FAR_ALL = [FAR_ALL, mean_far];

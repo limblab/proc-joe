@@ -20,7 +20,7 @@
    
 %     num_trials_all = [];
     
-    for monk = monkey_names(2)
+    for monk = monkey_names(1)
         stat_bump = [];
         stat_stim = [];
         
@@ -77,8 +77,9 @@
 
         end
 
-        [~,p_vals(end+1)] = ttest(stat_stim,stat_bump);
-        mean_difference(end+1) = mean(stat_stim-stat_bump);
+        stat_bump = unique(stat_bump);
+        [~,p_vals(end+1)] = ttest2(stat_stim,stat_bump,'vartype','unequal');
+%         mean_difference(end+1) = mean(stat_stim-stat_bump);
         counter = counter + 1;
     end
 

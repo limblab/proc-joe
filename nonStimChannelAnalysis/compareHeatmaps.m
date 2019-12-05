@@ -17,24 +17,30 @@ function [outputData] = compareHeatmaps(stimHeatmapData,pdHeatmapData,testAngles
     % output center chan PD
     outputData.centerChanPD = pdHeatmapData(centerRow,centerCol);
     
+    % get difference between pd from an electrode and the test angles
     pdHeatmapDiffData = zeros(size(pdHeatmapData,1),size(pdHeatmapData,2));
+    pdHeatmapWeight = zeros(size(pdHeatmapData,1),size(pdHeatmapData,2));
     
     for angIdx = 1:numel(testAngles)
         for rowIdx = 1:size(pdHeatmapData,1)
             for colIdx = 1:size(pdHeatmapData,2)
                 pdHeatmapDiffData(rowIdx,colIdx) = angleDiff(pdHeatmapData(rowIdx,colIdx),testAngles(angIdx),0,0);
+%                 if(~isnan(stimHeatmapData.dataRatioScaled(rowIdx,colIdx)))
+%                     weight_idx = find(pdHeatmapData(rowIdx,colIdx) > PDBinEdges,1,'last');
+%                     pdHeatmapWeight(rowIdx,colIdx) = 1/PDBinCount(weight_idx);
+%                 end
             end
         end
         % scale pd diff data to -1 -> 1
         pdHeatmapDiffData = -2*pdHeatmapDiffData/180 + 1;
 
-        % multiple matrices
+        % multiply matrices
         matrixMultResult = stimHeatmapData.dataRatioScaled.*pdHeatmapDiffData;
         isEntry = ~isnan(stimHeatmapData.dataRatioScaled) & ~isnan(pdHeatmapDiffData);
         outputData.metricAllAngles(angIdx) = mean(matrixMultResult(isEntry));
     end
     
-    [~,maxAngIdx] = 
+    [~,maxAngIdx] = max(outputData.metricAllAngles);
     outputData.bestAngle = testAngles(maxAngIdx);
     
 

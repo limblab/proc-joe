@@ -1,15 +1,15 @@
 %% set initial parameters
 
-    input_data.folderpath = 'E:\Data\Joseph\Han_stim_data\Han_20191021_CObump_leftS1\';
+    input_data.folderpath = 'E:\Data\Joseph\Duncan_stim_data\Duncan_20191025_CObump\';
 
-%     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
-    mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+    mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
+%     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 %     mapFileName = 'Z:\Basic_Sciences\Phys\L_MillerLab\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 %     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Pop_18E3\Array Map Files\6250-002085\SN 6250-002085.cmp';
     
-    input_data.date = '20191021';
+    input_data.date = '20191025';
     input_data.array = 'arrayLeftS1';
-    input_data.monkey = 'monkeyHan';
+    input_data.monkey = 'monkeyDuncan';
     input_data.ranBy = 'ranByJoe';
     input_data.lab = 6;
     input_data.mapFile = strcat('mapFile',mapFileName);
@@ -102,10 +102,21 @@
     
     optsPD.MAKE_BAR_PLOT = 1;
     
-    optsPD.PLOT_CHANNELS = [1:96];
-
+%     plot_chans = [1:96];
+%     plot_chans = cell2mat(arrayData{1}.CHAN_LIST);
+    plot_chans = [];
+    for i = 1:numel(arrayData)
+        plot_chans(i) = arrayData{i}.CHAN_REC;
+    end
+    optsPD.PLOT_CHANNELS = plot_chans;%[1:96];
+    
     optsPD.FIGURE_SAVE = 0;
     optsPD.FIGURE_DIR = input_data.folderpath;
     optsPD.FIGURE_PREFIX = 'Han_20190924';
     
-    [heatmapPD] = plotHeatmapsPD(td_all,pd_all,mapData,optsPD);
+    [heatmapPD,pdHeatmapData,alphaData] = plotHeatmapsPD(td_all,pd_all,mapData,optsPD);
+    
+    figure
+    histogram(pdHeatmapData(alphaData == 1),18)
+    [PDBinCount,PDBinEdges] = histcounts(pdHeatmapData(alphaData == 1),18);
+    

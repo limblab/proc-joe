@@ -1,10 +1,10 @@
 %% set file names 
 
-    inputData.folderpath = 'E:\Data\Joseph\Han_stim_data\Han_20191030_longTrains_dukeGen2\chan14\20Hz\';
-    inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+    inputData.folderpath = 'E:\Data\Joseph\Duncan_stim_data\Duncan_20191119_longTrains_dukeGen2\chan79\';
+%     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 
     % inputData.mapFileName = 'mapFileR:\limblab-archive\Retired Animal Logs\Monkeys\Chips_12H1\map_files\left S1\SN 6251-001455.cmp';
-%     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
+    inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
 
 
     folderpath = inputData.folderpath; % rest of code uses folderpath currently...may have switched this, not 100% certain
@@ -12,32 +12,36 @@
     inputData.task='taskCObump';
     inputData.ranBy='ranByJoseph'; 
     inputData.array1='arrayLeftS1'; 
-    inputData.monkey='monkeyHan';
+    inputData.monkey='monkeyDuncan';
     inputData.labnum = 6;
 
     pwd=cd;
     cd(inputData.folderpath)
     fileList = dirSorted('*spikesExtracted.nev*');
-    stimInfoFileList = dirSorted('*stimInfo*');
+    stimInfoFileList = dirSorted('*stimInfo.mat');
 
 
 %% extract relevant data for all units -- recommend saving arrayData after this step
     tic
 
     optsExtract.STIMULI_RESPONSE = 'all';
-    optsExtract.STIMULATIONS_PER_TRAIN = 51;
+    optsExtract.STIMULATIONS_PER_TRAIN = 1;
     optsExtract.STIMULATION_BATCH_SIZE = 1000;
-
+    optsExtract.DOWNSAMPLE_STIM_TIMES = 1;
+    
+    optsExtract.NUM_WAVEFORM_TYPES = 12;
+    
     optsExtract.USE_STIM_CODE = 0;
     optsExtract.STIM_ELECTRODE = {};
     optsExtract.CHAN_LIST = {};
 
-    optsExtract.PRE_TIME = 1000/1000; % made negative in the function
-    optsExtract.POST_TIME = 4000/1000;
+    optsExtract.PRE_TIME = 4000/1000; % made negative in the function
+    optsExtract.POST_TIME = 16000/1000;
 
-    optsExtract.BIN_SIZE = 1/1000;
+    optsExtract.BIN_SIZE = 100/1000;
     optsExtract.TIME_AFTER_STIMULATION_WAVEFORMS = 10/1000;
     optsExtract.USE_ANALOG_FOR_STIM_TIMES = 1; % this uses the analog sync line to get stim times, not sure why you would want to do anything else
+    
     optsExtract.GET_KIN = 1;
     optsExtract.GET_FORCE = 0;
     
@@ -48,8 +52,8 @@
     
 %% pick a unit (index in array data)
 % plot raster, and PSTH for the given unit above
-% for arrIdx = 1:numel(arrayData)
-arrIdx = 1;
+for arrIdx = 1:numel(arrayData)
+% arrIdx = 13;
     % plot raster, and PSTH for the given unit above
 
 %     optsPlotFunc.BIN_SIZE = optsExtract.BIN_SIZE;
@@ -58,28 +62,24 @@ arrIdx = 1;
     optsPlotFunc.FIGURE_DIR = inputData.folderpath;
     optsPlotFunc.FIGURE_PREFIX = 'Han_20190923';
 
-<<<<<<< HEAD
-    optsPlotFunc.PRE_TIME = 600/1000;
-    optsPlotFunc.POST_TIME = 1200/1000;
-=======
-    optsPlotFunc.PRE_TIME = 50/1000;
-    optsPlotFunc.POST_TIME = 200/1000;
->>>>>>> ff068fa3d28917d9beb5af9784dce6464c3b6550
+    optsPlotFunc.PRE_TIME = 5000/1000;
+    optsPlotFunc.POST_TIME = 20000/1000;
+
     optsPlotFunc.SORT_DATA = '';
 
     optsPlotFunc.PLOT_AFTER_STIMULATION_END = 0;
     optsPlotFunc.STIMULATION_LENGTH = [];
     
-    rasterPlots = plotRasterStim(arrayData{arrIdx},arrayData{arrIdx}.NN,optsPlotFunc);
+%     rasterPlots = plotRasterStim(arrayData{arrIdx},arrayData{arrIdx}.NN,optsPlotFunc);
 
-%     optsPlotFunc.PLOT_ALL_ONE_FIGURE = 0;
-%     optsPlotFunc.PLOT_LINE = 1;
-%     optsPlotFunc.PLOT_TITLE = 1;    
-%     optsPlotFunc.PLOT_ALL_WAVES_ONE_FIGURE = 0;
+    optsPlotFunc.PLOT_ALL_ONE_FIGURE = 0;
+    optsPlotFunc.PLOT_LINE = 1;
+    optsPlotFunc.PLOT_TITLE = 1;    
+    optsPlotFunc.PLOT_ALL_WAVES_ONE_FIGURE = 0;
 % %     
-%     PSTHPlots = plotPSTHStim(arrayData{arrIdx},1,optsPlotFunc);
+    PSTHPlots = plotPSTHStim(arrayData{arrIdx},1,optsPlotFunc);
 
-% end
+end
 
 %% plot grid
     optsGrid.STIM_ELECTRODE = unique(arrayData{arrIdx}.CHAN_SENT);
