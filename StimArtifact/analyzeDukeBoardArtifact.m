@@ -2,17 +2,17 @@
 
     clear; 
     
-    folderpath = 'C:\Users\jts3256\Desktop\Duncan_Han_dukeProjBox\';
+    folderpath = 'E:\Data\Joseph\Duncan_stim_data\Duncan_20191124_longTrains_dukeRecovery\';
         
     cd(folderpath);
     file_list = dir('*.ns5');
     
-    analog_pin_idx = 1;
-    sync_idx = 2;
+    analog_pin_idx = 97;
+    sync_idx = 98;
     artifact_data = {};
     sync_line_data = {};
     pwd = cd;
-    window = [-4,20]; % ms
+    window = [-4,5]; % ms
     pulse_width_1 = zeros(numel(file_list),1); % us
     pulse_width_2 = zeros(size(pulse_width_1)); % us
     interphase = 53; % us
@@ -21,31 +21,31 @@
     
     for file_num = 1:numel(file_list)
         NS5 = openNSx([folderpath,file_list(file_num).name],'uV');
-        if(size(NS5.Data,2) > 500000)
-            data = NS5.Data(1,1:500000);
-            save([file_list(file_num).name(1:end-4),'_data'],'data');
-        end
+%         if(size(NS5.Data,2) > 500000)
+%             data = NS5.Data(1,1:500000);
+%             save([file_list(file_num).name(1:end-4),'_data'],'data');
+%         end
 %         f=figure();
 %         f.Name = file_list(file_num).name;
 %         periodogram(NS5.Data(1,:))
 %         hold on
-%         artifact_data{file_num} = NS5.Data(analog_pin_idx,:);
-%         sync_line_data{file_num} = NS5.Data(sync_idx,:);
+        artifact_data{file_num} = NS5.Data(analog_pin_idx,:);
+        sync_line_data{file_num} = NS5.Data(sync_idx,:);
 %         
 %         % get pulse widths
-%         pw1_idx = strfind(file_list(file_num).name,'PW1');
-%         pw2_idx = strfind(file_list(file_num).name,'PW2');
-%         amp1_idx = strfind(file_list(file_num).name,'A1');
-%         amp2_idx = strfind(file_list(file_num).name,'A2');
-%         stim_idx = strfind(file_list(file_num).name,'stim');
-%         chan_idx = strfind(file_list(file_num).name,'chan');
-%         underscore_idx = strfind(file_list(file_num).name,'_');
-%         
-%         pulse_width_1(file_num) = str2num(file_list(file_num).name(pw1_idx+4:underscore_idx(find(underscore_idx > pw1_idx,1,'first'))-1));
-%         pulse_width_2(file_num) = str2num(file_list(file_num).name(pw2_idx+4:underscore_idx(find(underscore_idx > pw2_idx,1,'first'))-1));
-%         amp_1(file_num) = str2num(file_list(file_num).name(amp1_idx+3:underscore_idx(find(underscore_idx > amp1_idx,1,'first'))-1));
-%         amp_2(file_num) = str2num(file_list(file_num).name(amp2_idx+3:underscore_idx(find(underscore_idx > amp2_idx,1,'first'))-1));
-%         stim_chan(file_num) = str2num(file_list(file_num).name(chan_idx+4:stim_idx-1));
+        pw1_idx = strfind(file_list(file_num).name,'PW1');
+        pw2_idx = strfind(file_list(file_num).name,'PW2');
+        amp1_idx = strfind(file_list(file_num).name,'A1');
+        amp2_idx = strfind(file_list(file_num).name,'A2');
+        stim_idx = strfind(file_list(file_num).name,'stim');
+        chan_idx = strfind(file_list(file_num).name,'chan');
+        underscore_idx = strfind(file_list(file_num).name,'_');
+        
+        pulse_width_1(file_num) = str2num(file_list(file_num).name(pw1_idx+4:underscore_idx(find(underscore_idx > pw1_idx,1,'first'))-1));
+        pulse_width_2(file_num) = str2num(file_list(file_num).name(pw2_idx+4:underscore_idx(find(underscore_idx > pw2_idx,1,'first'))-1));
+        amp_1(file_num) = str2num(file_list(file_num).name(amp1_idx+3:underscore_idx(find(underscore_idx > amp1_idx,1,'first'))-1));
+        amp_2(file_num) = str2num(file_list(file_num).name(amp2_idx+3:underscore_idx(find(underscore_idx > amp2_idx,1,'first'))-1));
+        stim_chan(file_num) = str2num(file_list(file_num).name(chan_idx+4:stim_idx-1));
     end
     cd(pwd);
     
@@ -73,36 +73,36 @@
         filtered_cathodic_data = mean(acausalFilter(plot_data(:,cathodic_idx))');
         filtered_anodic_data = mean(acausalFilter(plot_data(:,anodic_idx))');
         
-        max_cathodic_peak = max(filtered_cathodic_data(find(x_data > 4,1,'first'):find(x_data > 7,1,'first')));
-        min_cathodic_peak = min(filtered_cathodic_data(find(x_data > 4,1,'first'):find(x_data > 7,1,'first')));
-        
-        max_anodic_peak = max(filtered_anodic_data(find(x_data > 4,1,'first'):find(x_data > 7,1,'first')));
-        min_anodic_peak = min(filtered_cathodic_data(find(x_data > 4,1,'first'):find(x_data > 7,1,'first')));
-        
-        [pks,locs,~,~] = findpeaks(abs(filtered_cathodic_data),'MinPeakHeight',max_cathodic_peak*threshold);
-        locs(pks < max_cathodic_peak*threshold) = [];
-        locs(x_data(locs) < 0.4 | x_data(locs) > 4) = [];
-        
-        peak_data{file_num}.cathodic.t_post_stim = x_data(locs);
-        peak_data{file_num}.cathodic.peak = filtered_cathodic_data(locs);
-        peak_data{file_num}.cathodic.max_peak = mean(peak_data{file_num}.cathodic.peak(peak_data{file_num}.cathodic.t_post_stim' > 3 & peak_data{file_num}.cathodic.peak > 0));
-        peak_data{file_num}.cathodic.min_peak = mean(peak_data{file_num}.cathodic.peak(peak_data{file_num}.cathodic.t_post_stim' > 3 & peak_data{file_num}.cathodic.peak < 0));
-
-        
-        [pks,locs,~,~] = findpeaks(abs(filtered_anodic_data),'MinPeakHeight',max_anodic_peak*threshold);
-        locs(pks < max_anodic_peak*threshold) = [];
-        locs(x_data(locs) < 0.4 | x_data(locs) > 4) = [];
-        
-        peak_data{file_num}.anodic.t_post_stim = x_data(locs);
-        peak_data{file_num}.anodic.peak = filtered_anodic_data(locs);
-        peak_data{file_num}.anodic.max_peak = mean(peak_data{file_num}.anodic.peak(peak_data{file_num}.anodic.t_post_stim' > 3 & peak_data{file_num}.anodic.peak > 0));
-        peak_data{file_num}.anodic.min_peak = mean(peak_data{file_num}.anodic.peak(peak_data{file_num}.anodic.t_post_stim' > 3 & peak_data{file_num}.anodic.peak < 0));
-        
-        peak_data{file_num}.amp1 = amp_1(file_num);
-        peak_data{file_num}.amp2 = amp_2(file_num);
-        peak_data{file_num}.pw1 = pulse_width_1(file_num);
-        peak_data{file_num}.pw2 = pulse_width_2(file_num);
-        peak_data{file_num}.chan = stim_chan(file_num);
+%         max_cathodic_peak = max(filtered_cathodic_data(find(x_data > 4,1,'first'):find(x_data > 7,1,'first')));
+%         min_cathodic_peak = min(filtered_cathodic_data(find(x_data > 4,1,'first'):find(x_data > 7,1,'first')));
+%         
+%         max_anodic_peak = max(filtered_anodic_data(find(x_data > 4,1,'first'):find(x_data > 7,1,'first')));
+%         min_anodic_peak = min(filtered_cathodic_data(find(x_data > 4,1,'first'):find(x_data > 7,1,'first')));
+%         
+%         [pks,locs,~,~] = findpeaks(abs(filtered_cathodic_data),'MinPeakHeight',max_cathodic_peak*threshold);
+%         locs(pks < max_cathodic_peak*threshold) = [];
+%         locs(x_data(locs) < 0.4 | x_data(locs) > 4) = [];
+%         
+%         peak_data{file_num}.cathodic.t_post_stim = x_data(locs);
+%         peak_data{file_num}.cathodic.peak = filtered_cathodic_data(locs);
+%         peak_data{file_num}.cathodic.max_peak = mean(peak_data{file_num}.cathodic.peak(peak_data{file_num}.cathodic.t_post_stim' > 3 & peak_data{file_num}.cathodic.peak > 0));
+%         peak_data{file_num}.cathodic.min_peak = mean(peak_data{file_num}.cathodic.peak(peak_data{file_num}.cathodic.t_post_stim' > 3 & peak_data{file_num}.cathodic.peak < 0));
+% 
+%         
+%         [pks,locs,~,~] = findpeaks(abs(filtered_anodic_data),'MinPeakHeight',max_anodic_peak*threshold);
+%         locs(pks < max_anodic_peak*threshold) = [];
+%         locs(x_data(locs) < 0.4 | x_data(locs) > 4) = [];
+%         
+%         peak_data{file_num}.anodic.t_post_stim = x_data(locs);
+%         peak_data{file_num}.anodic.peak = filtered_anodic_data(locs);
+%         peak_data{file_num}.anodic.max_peak = mean(peak_data{file_num}.anodic.peak(peak_data{file_num}.anodic.t_post_stim' > 3 & peak_data{file_num}.anodic.peak > 0));
+%         peak_data{file_num}.anodic.min_peak = mean(peak_data{file_num}.anodic.peak(peak_data{file_num}.anodic.t_post_stim' > 3 & peak_data{file_num}.anodic.peak < 0));
+%         
+%         peak_data{file_num}.amp1 = amp_1(file_num);
+%         peak_data{file_num}.amp2 = amp_2(file_num);
+%         peak_data{file_num}.pw1 = pulse_width_1(file_num);
+%         peak_data{file_num}.pw2 = pulse_width_2(file_num);
+%         peak_data{file_num}.chan = stim_chan(file_num);
         
                 %
 %         f=figure();
@@ -119,18 +119,18 @@
 %         set(gca,'fontsize',14)
         
         
-%         f = figure();
+        f = figure();
 %         subplot(2,1,2)
-%         f.Name = [file_list(file_num).name(1:end-10),'_filtered'];
-%         plot(x_data,(acausalFilter(plot_data(:,1:2:6))'),'color',getColorFromList(1,0),'linewidth',1);
-%         hold on
-%         plot(x_data,(acausalFilter(plot_data(:,2:2:6))'),'color',getColorFromList(1,1),'linewidth',1);
-%         xlim([-2,6])
-%         ylim([-3000,3000])
-%         ylabel('Voltage (\muV)');
-%         formatForLee(gcf)
-%         xlabel('Time after stimulation offset (ms)');
-%         set(gca,'fontsize',14)
+        f.Name = [file_list(file_num).name(1:end-10),'_filtered'];
+        plot(x_data,(acausalFilter(plot_data(:,1:5:100))'),'color',getColorFromList(1,0),'linewidth',1);
+        hold on
+        plot(x_data,(acausalFilter(plot_data(:,end-100:5:end))'),'color',getColorFromList(1,1),'linewidth',1);
+        xlim([-2,6])
+        ylim([-3000,3000])
+        ylabel('Voltage (\muV)');
+        formatForLee(gcf)
+        xlabel('Time after stimulation offset (ms)');
+        set(gca,'fontsize',14)
 %         
 %         saveFiguresLIB(f,folderpath,f.Name);
 %         close all;

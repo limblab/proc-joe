@@ -34,29 +34,28 @@ function [output_data] = getReboundExcitationStats(array_data,input_data)
         % find peak in window provided, if peak is bigger than mean +
         % thresh*std, we have rebound excitation
         
-        post_stim_idx = [find(array_data.binEdges{condition} > input_data.train_length(condition) + input_data.post_stim_window(1),1,'first'),...
-            find(array_data.binEdges{condition} > input_data.train_length(condition) + input_data.post_stim_window(2),1,'first')];
+        post_stim_idx = [find(array_data.binEdges{condition} > array_data.PULSE_TIMES{condition}{1}(end)*1000 + input_data.post_stim_window(1),1,'first'),...
+            find(array_data.binEdges{condition} > array_data.PULSE_TIMES{condition}{1}(end)*1000 + input_data.post_stim_window(2),1,'first')];
         
-        above_thresh = array_data.binCounts{condition}(post_stim_idx(1):post_stim_idx(2)) > mean_baseline_count + input_data.threshold_mult*std_baseline_count;
+        above_threshold = array_data.binCounts{condition}(post_stim_idx(1):post_stim_idx(2)) > mean_baseline_count + input_data.threshold_mult*std_baseline_count;
         
-        flip_on = find(diff(above_thresh) == 1);
-        flip_off = find(diff(above_thresh) == -1);
+        up_step_idx = strfind([0,above_threshold],[0 1]);
+        consecutive_ones = strfind([above_threshold,0],[1 0]) - up_step_idx + 1;
+
+        [max_consec, max_idx] = max(consecutive_ones);
         
-        
-        is_rebound(condition) = sum(above_thresh)  > input_data.num_bins_above_thresh;
-        
+        if(~isempty(max_consec))
+            is_rebound(condition) = max_consec  > input_data.num_bins_above_thresh;
+        end
+            
         if(is_rebound(condition)) % compute relevant statistics
             [~, peak_idx] = max(array_data.binCounts{condition}(post_stim_idx(1):post_stim_idx(2)));
             zero_idx = find(array_data.binEdges{condition} > 0,1,'first');
             
             peak_time(condition) = (peak_idx - 1)*input_data.bin_size + input_data.post_stim_window(1);
-            
-            
-            
-%             rebound_amp = nan(size(array_data.spikeTrialTimes));
-%             peak_time = nan(size(rebound_amp));
-%             duration = nan(size(rebound_amp));
-            
+            duration(condition) = max_consec*input_data.bin_size;
+            rebound_amp = sum(array_data.binCounts{condition});
+                        
         end
     end
     

@@ -43,7 +43,7 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
                 end
             end
             stimInfo.stimOn = cds.analog{aIdx}.t(find(diff(cds.analog{aIdx}.(opts.ANALOG_SYNC_LINE)-mean(cds.analog{aIdx}.(opts.ANALOG_SYNC_LINE))>3)>.5));
-        
+            
             if(opts.DOWNSAMPLE_STIM_TIMES && opts.STIMULATIONS_PER_TRAIN == 1)
                 idx_keep = find(diff(stimInfo.stimOn) > 1);
                 idx_keep = [1;idx_keep + 1];

@@ -1,7 +1,7 @@
 %% load in a ns5
 
 
-    folderpath = 'E:\Data\Joseph\Han_stim_data\Han_20191114_longTrains_dukeGen2\chan4\';
+    folderpath = 'E:\Data\Juliet\Han_20191204_longTrains_dukeGen2\';
         
     cd(folderpath);
     file_list = dir('*.ns5');
@@ -40,6 +40,7 @@
     cd(pwd);
 % get stim on for each file
     freq_deliver = {};
+    %%
     for file_num = 1%:numel(file_list)
         stim_on=find(diff(sync_line_data{file_num}-mean(sync_line_data{file_num})>3)>.5);
         unique_IPI = unique(diff(stim_on))/30;
