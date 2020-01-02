@@ -109,20 +109,20 @@ end
 
 %% heatmap across whole array
 disp('start')
-    inputData.mapFileName = 'mapFileZ:\Basic_Sciences\Phys\L_MillerLab\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
-    inputData.folderpath = 'C:\Users\joh8881\Desktop\Han_20190930_trains_noAmp\';
+    inputData.mapFileName = 'mapFileR:\Basic_Sciences\Phys\L_MillerLab\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+    inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\StimRecData\Han\Multielec\Han_20190407_2elecs\';
     
-    opts.STIM_ELECTRODE_PLOT = [1];
+    opts.STIM_ELECTRODE_PLOT = [1:size(arrayData{1}.bE,1)];
     %opts.STIM_ELECTRODE_PLOT = 1;
     %opts.WAVEFORM_TYPES_PLOT = unique(arrayData{1}.WAVEFORM_SENT);
-    opts.WAVEFORM_TYPES_PLOT = [1:size(arrayData{1}.binEdges,2)];
+    opts.WAVEFORM_TYPES_PLOT = [1:size(arrayData{1}.bE,2)];
 
-    opts.ALL_NEURONS = 1; % 1 = plot all neurons for each stim chan, 0 = plot all stim chans for a neuron
+    opts.ALL_NEURONS = 0; % 1 = plot all neurons for each stim chan, 0 = plot all stim chans for a neuron
 
     opts.BASELINE_PRE_TIME = -100/1000;
     opts.BASELINE_POST_TIME = -5/1000;
     opts.STIM_PRE_TIME = 0/1000;
-    opts.STIM_POST_TIME = 120/1000;
+    opts.STIM_POST_TIME = 10/1000;
     
     %time window for standardized values
     opts.PRE_STIM_WINDOW = 120/1000;

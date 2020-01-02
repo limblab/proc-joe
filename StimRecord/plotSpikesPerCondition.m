@@ -44,7 +44,9 @@ function [output_data,figure_handles] = plotSpikesPerCondition(array_data,opts)
                 stim_nums = [stim_nums, array_data.stimData{chan,wave}];
             end
             
-            
+            if(opts.ADJUST_SPIKE_TIMES)
+                spike_times = spike_times - opts.WAVEFORM_LENGTH;
+            end
             %% remove spikes that are not in the window
             post_mask = spike_times > opts.POST_WINDOW(1) & spike_times < opts.POST_WINDOW(2);
             pre_mask = spike_times > opts.PRE_WINDOW(1) & spike_times < opts.PRE_WINDOW(2);

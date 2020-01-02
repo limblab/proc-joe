@@ -52,7 +52,7 @@
 % that for each neuron (on one plot probably)
 
     optsSpikesPlot.PRE_WINDOW = [-80,-5]/1000; % in s
-    optsSpikesPlot.POST_WINDOW = [2,10]/1000; % in s
+    optsSpikesPlot.POST_WINDOW = [0,20]/1000; % in s
     optsSpikesPlot.PW1 = 200;
     optsSpikesPlot.PW2 = 200;
     optsSpikesPlot.POL = 0; % 0 is cathodic first
@@ -60,6 +60,7 @@
     optsSpikesPlot.PLOT_PULSE_WIDTH = 0;
     
     optsSpikesPlot.ADJUST_SPIKE_TIMES = 1;
+    optsSpikesPlot.WAVEFORM_LENGTH = 0.453/1000; % s
     
     spikesStruct = {}; amp = []; spikes_evoked = []; unit_idx = [];
     
@@ -117,7 +118,7 @@
                 num_total(a) = num_total(a) + 1;
                 if(spikesStruct{unit}.is_excitatory_p(amp_idx) < 0.05)
                     bin_counts{a} = bin_counts{a} + histcounts(spikesStruct{unit}.spike_times_post_stim{amp_idx}*1000,bin_edges)/array_data_all{unit}.numStims(unit_param_idx(1));
-                
+                    spike_times_amp{a} = [spike_times_amp{a},spikesStruct{unit}.spike_times_post_stim{amp_idx}*1000];
                     num_responsive(a) = num_responsive(a) + 1;% (spikesStruct{unit}.is_excitatory_p(amp_idx) < 0.05);
                 end
             end
@@ -151,7 +152,7 @@
         plot(x_data{a},y_data{a},'color',colors(a,:),'linewidth',1.5)
 
     end
-    xlabel('Peak latency (ms)');
+    xlabel('Time after stim offset (ms)');
     ylabel('Cumulative count');
     formatForLee(gcf);
     set(gca,'fontsize',14)

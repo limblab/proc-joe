@@ -204,9 +204,10 @@
     end
         
 %% plot PSTH for each conditionition
-    for unit_idx = 32%1:numel(array_data)
+    for unit_idx = 12%1:numel(array_data)
+        array_data{unit_idx}.monkey = 'Han';
 %         input_data_all{u}.window = [min(array_data{unit_idx}.binEdges{1}),max(array_data{unit_idx}.binEdges{1})];
-        input_data_all{u}.window = [-80,400];
+        input_data_all{u}.window = [-10,20];
         input_data_all{u}.unit_idx = unit_idx;
         input_data_all{u}.chan_rec = array_data{unit_idx}.CHAN_LIST;
         plotPSTHArrayData(array_data,input_data_all{u});

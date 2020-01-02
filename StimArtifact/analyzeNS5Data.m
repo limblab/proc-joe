@@ -1,14 +1,14 @@
 %% load in a ns5
 
-    folderpath = 'E:\Data\Joseph\Han_stim_data\Han_20191105_longTrain_dukeGen2\';
+    folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\StimArtifactData\Han_20191206_dukeBoardsComparison_modBreakoutBoard\';
 %     folderpath = 'C:\Users\jts3256\Desktop\Duncan_stim_data\getIPI\';
 
         
     cd(folderpath);
     file_list = dir('*.ns5');
     
-    analog_pin_idx = 97;
-    sync_idx = 98;
+    analog_pin_idx = 1;
+    sync_idx = 2;
     artifact_data = {};
     sync_line_data = {};
     pwd = cd;
@@ -20,10 +20,10 @@
     window_idx = window*30; % convert to data points
 
     
-    for file_num = 1%:numel(file_list)
+    for file_num = 1:numel(file_list)
         disp(file_list(file_num).name);
-        NS5 = openNSx([folderpath,file_list(file_num).name]);
-
+        NS5 = openNSx([folderpath,file_list(file_num).name],'uV');
+        
 
         artifact_data{file_num} = NS5.Data(analog_pin_idx,:);
         sync_line_data{file_num} = NS5.Data(sync_idx,:);
@@ -31,7 +31,8 @@
         f.Name = file_list(file_num).name(1:end-10);
         
         periodogram(NS5.Data(analog_pin_idx,1:(25*30000)));
-        ylim([-40,100])
+        hold on
+        ylim([-40,40])
 %         
 
 % %         % get pulse widths

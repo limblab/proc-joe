@@ -45,8 +45,8 @@
     toc
     
     
-%% pick a unit (index in array data)
-% plot raster, and PSTH for the given unit above
+
+%% plot raster, and PSTH for the given unit above
 for arrIdx = 1%:numel(arrayData)
 % arrIdx = 1;
     % plot raster, and PSTH for the given unit above
@@ -76,48 +76,61 @@ for arrIdx = 1%:numel(arrayData)
 end
 
 
+%% get response amplitude for each condition/neuron
+    
+    for unit = 1:numel(arrayData)
+        arrayData{unit} = getResponseAmplitude(arrayData{unit},0.2); % bin size (ms), 
+  
+    end
+
 %% heatmap across whole array
 
 %     inputData.folderpath = 'C:\Users\joh8881\Desktop\Han_20190930_trains_noAmp\';
     inputData.folderpath = 'E:\Data\Joseph\Duncan_stim_data\Duncan_20191026_trains_noAmp\';
+%     inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\StimRecData\Han\Multielec\Han_20190406_2elecs\';
     
 %    inputData.mapFileName = 'mapFileZ:\Basic_Sciences\Phys\L_MillerLab\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 %    inputData.mapFileName = 'mapFileZ:\Basic_Sciences\Phys\L_MillerLab\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
-%    inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
-   inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
-
+   inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+%     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
+%     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\right S1 20180919\SN 6251-001804.cmp';
     
     opts.STIM_ELECTRODE_PLOT = [1:size(arrayData{1}.binEdges,1)];
     opts.WAVEFORM_TYPES_PLOT = [1:size(arrayData{1}.binEdges,2)];
-
-    opts.ALL_NEURONS = 1; % 1 = plot all neurons for each stim chan, 0 = plot all stim chans for a neuron
-    opts.MAKE_PLOTS = 1;
-    opts.MAKE_BAR_PLOT = 0;
-    
-    %time window for standardized values
-    opts.BASELINE_PRE_TIME = -120/1000;
-    opts.BASELINE_POST_TIME = -5/1000;
-    opts.STIM_PRE_TIME = 0/1000;
-    opts.STIM_POST_TIME = 120/1000;
-
-    opts.AUTO_WINDOW = 0; % 
-    opts.INHIBITORY = 0;
-    opts.EXCITATORY = 0;
-
-    opts.MAX_RATIO = 5;
+    opts.MAX_RATIO = 0.5;
     opts.MIN_RATIO = -1;
     opts.LOG_SCALE = 0;
     opts.LOG_PARAM = 9;
-
-    opts.RELATIVE_INHIBITION = 0;
-
-    opts.FIGURE_SAVE = 0;
-    opts.FIGURE_DIR = inputData.folderpath;
-    opts.FIGURE_PREFIX = 'Han_20191021';
     
-    [stimHeatmapHandles, heatmapData] = plotHeatmaps(arrayData,inputData.mapFileName(8:end),opts);
+    [stimHeatmapHandles] = plotHeatmaps(arrayData,inputData.mapFileName(8:end),opts);
+    
 
-%% Plot evoked response vs distance (400um between channels) for each neuron
+% 
+%     opts.ALL_NEURONS = 1; % 1 = plot all neurons for each stim chan, 0 = plot all stim chans for a neuron
+%     opts.MAKE_PLOTS = 1;
+%     opts.MAKE_BAR_PLOT = 0;
+%     
+%     %time window for standardized values
+%     opts.BASELINE_PRE_TIME = -30/1000;
+%     opts.BASELINE_POST_TIME = -5/1000;
+%     opts.STIM_PRE_TIME = 1/1000;
+%     opts.STIM_POST_TIME = 6/1000;
+% 
+%     opts.AUTO_WINDOW = 0; % 
+%     opts.INHIBITORY = 0;
+%     opts.EXCITATORY = 0;
+% 
+
+% 
+%     opts.RELATIVE_INHIBITION = 0;
+% 
+%     opts.FIGURE_SAVE = 0;
+%     opts.FIGURE_DIR = inputData.folderpath;
+%     opts.FIGURE_PREFIX = 'Han_20191021';
+%     
+%     
+
+%% Plot evoked response vs distance (400um between channels) for each channel or neuron
 
     
 
