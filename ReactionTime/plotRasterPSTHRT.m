@@ -91,6 +91,7 @@ function [plots] = plotRasterPSTHRT(td,opts)
         plot_order(~[td(plot_order).isStimTrial]) = []; % remove non stim trials
         plot_order([td(plot_order).stimCode]==-1) = []; % remove bad stim trials (sanity check)
         plot_order(isnan([td(plot_order).idx_movement_on])) = []; % remove nan movement on trials
+        
         [~,stim_sort] = sort([td(plot_order).stimCode]);% sort by stim code
         plot_order = plot_order(stim_sort);
 
@@ -148,7 +149,7 @@ function [plots] = plotRasterPSTHRT(td,opts)
                 end
                 % deal with optsSave and optsPlot
                 optsSave.FIGURE_SAVE = opts.SAVE_FIGURES;
-                f.Name = strcat(opts.FIGURE_PREFIX,'_nn',num2str(unit),'_chan',num2str(td(1).LeftS1_unit_guide(1)),'_unit',num2str(td(1).LeftS1_unit_guide(2)),'_bumpPSTH');
+                f.Name = strcat(opts.FIGURE_PREFIX,'_nn',num2str(unit),'_chan',num2str(td(1).LeftS1_unit_guide(1)),'_unit',num2str(td(1).LeftS1_unit_guide(2)),'_stimPSTH');
                 optsSave.FIGURE_NAME = f.Name;
                 optsSave.FIGURE_DIR = opts.FIGURE_PATH;
 

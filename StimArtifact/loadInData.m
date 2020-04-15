@@ -1,4 +1,4 @@
-folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\Han_20180403_doublePulse\chan62stim\';
+folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\StimArtifactData\ArtificialMonkey_20171221\ArtMonk\';
 
 inputData.monkey = 'monkeyHan';
 inputData.array =  'arrayLeftS1';
@@ -8,10 +8,10 @@ inputData.ranBy = 'ranByJoseph';
 inputData.mapFile = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 
 cd(folderpath)
-fileList = dir('*spikesExtracted.nev*');
+fileList = dir('*nev*');
 
 %%
-fileNum = 4;
+fileNum = 1;
 disp(fileList(fileNum).name)
 cds = commonDataStructure();
 cds.file2cds([folderpath fileList(fileNum).name],inputData.monkey,inputData.array,...

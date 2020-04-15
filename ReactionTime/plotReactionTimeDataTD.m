@@ -3,10 +3,8 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
     %% configure opts
     opts = configureOpts(opts);
     plots = [];
-    f_means_bump = [];
-    f_all_bump = [];
-    f_all_stim = [];
-    f_means_stim = [];
+    f_bump = [];
+    f_stim = [];
     g_bump = [];
     g_stim = [];
     learn_mdl_bump = [];
@@ -32,24 +30,24 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
     cueIdx = 1;
     cueInfo = [];
     
-    %% remove fastest 5% and slowest 5%
-    num_remove = floor(size(td_reward,2)*0.05);
-    rt_all = [td_reward.idx_movement_on]-[td_reward.idx_goCueTime];
-    [~,rt_sort_idx] = sort(rt_all);
-    rt_remove = [rt_sort_idx(1:num_remove),rt_sort_idx(end-num_remove+1:end)];
-    trial_id_remove = [td_reward(rt_remove).trial_id];
-    td_reward(rt_remove) = [];
-    for i = 1:numel(trial_id_remove)
-        td_all_idx = find([td_all.trial_id] == trial_id_remove(i));
-        td_all(td_all_idx) = [];
-    end
-    %% remove chains of fail from td_all -- this is when the monkey is not paying attention
-%     fail_idx = find([td_all.result] == 'F');
-%     td_all_remove = fail_idx(find(fail_idx(opts.NUM_SEQUENCE_FAILS:end) - fail_idx(1:end-opts.NUM_SEQUENCE_FAILS+1) == opts.NUM_SEQUENCE_FAILS-1));
-%     if(~isempty(td_all_remove))
-%         td_all_remove = unique([td_all_remove,reshape(td_all_remove + [1:opts.NUM_SEQUENCE_FAILS-1]',1,numel(td_all_remove)*(opts.NUM_SEQUENCE_FAILS-1))]);
-%         td_all(td_all_remove) = [];
+%     num_remove = floor(size(td_reward,2)*0.05);
+%     rt_all = [td_reward.idx_movement_on]-[td_reward.idx_goCueTime];
+%     [~,rt_sort_idx] = sort(rt_all);
+%     rt_remove = [rt_sort_idx(1:num_remove),rt_sort_idx(end-num_remove+1:end)];
+%     trial_id_remove = [td_reward(rt_remove).trial_id];
+%     td_reward(rt_remove) = [];
+%     for i = 1:numel(trial_id_remove)
+%         td_all_idx = find([td_all.trial_id] == trial_id_remove(i));
+%         td_all(td_all_idx) = [];
 %     end
+    %% remove chains of fail from td_all -- this is when the monkey is not paying attention
+    fail_idx = find([td_all.result] == 'F');
+    td_all_remove = fail_idx(find(fail_idx(opts.NUM_SEQUENCE_FAILS:end) - fail_idx(1:end-opts.NUM_SEQUENCE_FAILS+1) == opts.NUM_SEQUENCE_FAILS-1));
+    if(~isempty(td_all_remove))
+        td_all_remove = unique([td_all_remove;repmat(td_all_remove,opts.NUM_SEQUENCE_FAILS-1,1) + repmat([1:opts.NUM_SEQUENCE_FAILS-1]',1,size(td_all_remove,2))]);
+        td_all(td_all_remove) = [];
+    end
+    
     %% for each cue, store indexes in td_reward, get reaction time
     for b = 1:numel(bumpList)
         for s = 1:numel(stimCodeList)
@@ -79,6 +77,42 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
         end
     end
         
+    %% remove outliers
+        % remove top and bottom 5% (Godlove 2014 did this)
+    for c = 1:numel(cueInfo)
+%         Q1 = quantile(cueInfo(c).rt,0.05);
+%         Q3 = quantile(cueInfo(c).rt,0.95);
+        mean_rt = mean(cueInfo(c).rt);
+        std_rt = std(cueInfo(c).rt);
+        
+        outlier_mask = cueInfo(c).rt > mean_rt+2*std_rt | cueInfo(c).rt < mean_rt-2*std_rt;
+
+%         cueInfo(c).td_idx_reward(outlier_mask) = [];
+%         cueInfo(c).td_idx_all(outlier_mask) = [];
+        cueInfo(c).rt(outlier_mask) = [];
+    end
+        
+    %% find fastest bump data (across bump magnitudes)
+    fastest_bump_data.mean = 10000;
+    fastest_bump_data.std_err = [];
+    
+    
+    for cueIdx = 1:numel(cueInfo)
+        if(cueInfo(cueIdx).bumpMag~=0 && cueInfo(cueIdx).stimCode == -1)
+            if(mean(cueInfo(cueIdx).rt) < fastest_bump_data.mean && numel(cueInfo(cueIdx).rt)>3)
+                fastest_bump_data.mean = mean(cueInfo(cueIdx).rt);
+                fastest_bump_data.std_err = std(cueInfo(cueIdx).rt)/sqrt(numel(cueInfo(cueIdx).rt));
+            end
+        end
+    end
+        
+    %% get visual data (if it exists)
+    visual_data = [];
+    cueInfo_idx = find([cueInfo.bumpMag] == 0 & [cueInfo.stimCode] == -1);
+    if(~isempty(cueInfo_idx) && ~isempty(cueInfo(cueInfo_idx).rt))
+        visual_data.mean = mean(cueInfo(cueInfo_idx).rt);
+        visual_data.std_err = std(cueInfo(cueInfo_idx).rt)/sqrt(numel(cueInfo(cueInfo_idx).rt));
+    end
     
     %% make a histogram
 %     % get bin counts
@@ -102,232 +136,97 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
 %     formatForLee(gcf);
     
     %% plot mean rt as a function of bump magnitude
+    
     if(opts.PLOT_BUMP)
-        plots{end+1} = figure();
-        plots{end}.Name = strcat(opts.FIGURE_PREFIX,'_bump_rtMeans');
-        fitData.x = [];
-        fitData.y = [];
-        for cueIdx = 1:numel(cueInfo)
-            if(cueInfo(cueIdx).bumpMag ~= 0 && ~isempty(cueInfo(cueIdx).rt))
-                plot(cueInfo(cueIdx).bumpMag,mean(cueInfo(cueIdx).rt),'k.','markersize',opts.MARKER_SIZE)
-                hold on
-                plot(cueInfo(cueIdx).bumpMag + [0,0],mean(cueInfo(cueIdx).rt) + [-std(cueInfo(cueIdx).rt), std(cueInfo(cueIdx).rt)],'k')
-                fitData.x(end+1,1) = cueInfo(cueIdx).bumpMag;
-                fitData.y(end+1,1) = mean(cueInfo(cueIdx).rt);
-            end
-        end
-
-        % if fit, fit with a decaying exponential
-        f_means_bump = [];
-        if(opts.FIT)
-            [f_means_bump.fitObj,f_means_bump.gof] = fit(fitData.x,fitData.y,'a*exp(b*x)+c','startPoint',[0,0,0.15]);
-
-            xData = linspace(min(fitData.x*0.9),max(fitData.x)*1.1,100);
-            yData = f_means_bump.fitObj.a*exp(f_means_bump.fitObj.b*xData)+f_means_bump.fitObj.c;
-            plot(xData,yData,'k--','linewidth',opts.LINE_WIDTH);
-        end
-
-        ax1 = gca;
-        ax1.XLim(1) = 0;
-        ax1.YLim(1) = 0;
-        xlabel('Bump Magnitude (N)');
-        ylabel('RT (s)');
-        formatForLee(gcf);
-        set(gca,'fontsize',opts.FONT_SIZE);
-        % plot all rt's for bumps
-        plots{end+1} = figure();
-        plots{end}.Name = strcat(opts.FIGURE_PREFIX,'_bump_rtAllDots');
-        hold on
-        fitData.x = [];
-        fitData.y = [];
-        for cueIdx = 1:numel(cueInfo)
-            if(cueInfo(cueIdx).bumpMag ~= 0 && ~isempty(cueInfo(cueIdx).rt))
-                plot(cueInfo(cueIdx).bumpMag,cueInfo(cueIdx).rt,'k.','markersize',opts.MARKER_SIZE)
-                fitData.x = [fitData.x,cueInfo(cueIdx).bumpMag+zeros(size(cueInfo(cueIdx).rt))];
-                fitData.y = [fitData.y,cueInfo(cueIdx).rt];
-            end
-        end
-
         
-        if(opts.FIT)
-            [f_all_bump.fitObj,f_all_bump.gof] = fit(fitData.x',fitData.y','a*exp(b*x)+c','startPoint',[0,0,0.15]);
-
-            xData = linspace(min(fitData.x*0.9),max(fitData.x)*1.1,100);
-            yData = f_all_bump.fitObj.a*exp(f_all_bump.fitObj.b*xData)+f_all_bump.fitObj.c;
-            plot(xData,yData,'k--','linewidth',opts.LINE_WIDTH);
+        % extract data
+        plot_data.x = [];
+        plot_data.y = [];
+        
+        if(~isempty(visual_data))
+            plot_data.visual_data = visual_data;
         end
-
-        ax2 = gca;
-        ax2.XLim(1) = 0;
-        ylim([0,max(ax1.YLim(2),ax2.YLim(2))]);
-        xlabel('Bump Magnitude (N)')
-        ylabel('RT (s)');
-        formatForLee(gcf);
-        ax1.YLim(2) = max(ax1.YLim(2),ax2.YLim(2));
-        set(gca,'fontsize',opts.FONT_SIZE);
+        
+        for cueIdx = 1:numel(cueInfo)
+            if(cueInfo(cueIdx).bumpMag ~= 0 && ~isempty(cueInfo(cueIdx).rt))
+                plot_data.x = [plot_data.x;ones(numel(cueInfo(cueIdx).rt),1)*cueInfo(cueIdx).bumpMag];
+                plot_data.y = [plot_data.y;cueInfo(cueIdx).rt'];
+            end
+        end
+        % call plotting function
+        figure_name = strcat(opts.FIGURE_PREFIX,'_bump_rtMeans');
+        bump_flag = 1;
+        [plots{end+1}, f_bump] = plotRTvsCue(plot_data,figure_name,bump_flag,opts);
 
     end
 %% plot mean rt as a function of stim code
     if(opts.PLOT_STIM)
-        plots{end+1} = figure();
-        plots{end}.Name = strcat(opts.FIGURE_PREFIX,'_stim_rtMeans');
-        fitData.x = [];
-        fitData.y = [];
-        for cueIdx = 1:numel(cueInfo)
-            if(cueInfo(cueIdx).stimCode ~= -1 && ~isempty(cueInfo(cueIdx).rt) && cueInfo(cueIdx).bumpMag == 0)
-                plot(opts.STIM_PARAMS(cueInfo(cueIdx).stimCode+1),mean(cueInfo(cueIdx).rt),'k.','markersize',opts.MARKER_SIZE)
-                hold on
-                plot(opts.STIM_PARAMS(cueInfo(cueIdx).stimCode+1) + [0,0],mean(cueInfo(cueIdx).rt) + [-std(cueInfo(cueIdx).rt), std(cueInfo(cueIdx).rt)],'k')
-                fitData.x(end+1,1) = opts.STIM_PARAMS(cueInfo(cueIdx).stimCode+1);
-                fitData.y(end+1,1) = mean(cueInfo(cueIdx).rt);
-            end
-        end
-
-        % if fit, fit with a decaying exponential
-        f_means_stim = [];
-        if(opts.FIT)
-            [f_means_stim.fitObj,f_means_stim.gof] = fit(fitData.x,fitData.y,'a*exp(b*x)+c','startPoint',[0,0,0.15]);
-
-            xData = linspace(min(fitData.x*0.9),max(fitData.x)*1.1,100);
-            yData = f_means_stim.fitObj.a*exp(f_means_stim.fitObj.b*xData)+f_means_stim.fitObj.c;
-            plot(xData,yData,'k--','linewidth',opts.LINE_WIDTH);
-        end
-
-        ax1 = gca;
-        ax1.XLim(1) = 0;
-        ax1.YLim(1) = 0;
-        xlabel(opts.STIM_LABEL);
-        ylabel('RT (s)');
-        formatForLee(gcf);
-        set(gca,'fontsize',opts.FONT_SIZE);
-
-        % plot all rt's for bumps
-        plots{end+1} = figure();
-        plots{end}.Name = strcat(opts.FIGURE_PREFIX,'_stim_rtAllDots');
-        fitData.x = [];
-        fitData.y = [];
-        for cueIdx = 1:numel(cueInfo)
-            if(cueInfo(cueIdx).stimCode ~= -1 && ~isempty(cueInfo(cueIdx).rt) && cueInfo(cueIdx).bumpMag == 0)
-                plot(opts.STIM_PARAMS(cueInfo(cueIdx).stimCode+1),cueInfo(cueIdx).rt,'k.','markersize',opts.MARKER_SIZE)
-                hold on
-                fitData.x = [fitData.x,opts.STIM_PARAMS(cueInfo(cueIdx).stimCode+1)+zeros(size(cueInfo(cueIdx).rt))];
-                fitData.y = [fitData.y,cueInfo(cueIdx).rt];
-            end
-        end
-
         
-        if(opts.FIT)
-            [f_all_stim.fitObj,f_all_stim.gof] = fit(fitData.x',fitData.y','a*exp(b*x)+c','startPoint',[0,0,0.15]);
-
-            xData = linspace(min(fitData.x*0.9),max(fitData.x)*1.1,100);
-            yData = f_all_stim.fitObj.a*exp(f_all_stim.fitObj.b*xData)+f_all_stim.fitObj.c;
-            plot(xData,yData,'k--','linewidth',opts.LINE_WIDTH);
+        % extract data
+        plot_data.x = [];
+        plot_data.y = [];
+        
+        plot_data.bump_data = fastest_bump_data;
+        if(~isempty(visual_data))
+            plot_data.visual_data = visual_data;
         end
-
-        ax2 = gca;
-        ax2.XLim(1) = 0;
-        ylim([0,max(ax1.YLim(2),ax2.YLim(2))]);
-        xlabel(opts.STIM_LABEL)
-        ylabel('RT (s)');
-        formatForLee(gcf);
-        set(gca,'fontsize',opts.FONT_SIZE);
-        ax1.YLim(2) = max(ax1.YLim(2),ax2.YLim(2));
+        
+        stim_param_idx = 1;
+        for cueIdx = 1:numel(cueInfo)
+            if(cueInfo(cueIdx).stimCode ~= -1 && (isempty(opts.STIM_CODES) || ~isempty(find(opts.STIM_CODES == cueInfo(cueIdx).stimCode)))...
+                    && cueInfo(cueIdx).bumpMag == 0)
+                plot_data.x = [plot_data.x;ones(numel(cueInfo(cueIdx).rt),1)*opts.STIM_PARAMS(stim_param_idx)];
+                plot_data.y = [plot_data.y;cueInfo(cueIdx).rt'];
+                stim_param_idx = stim_param_idx + 1;                
+            end
+        end
+        
+        % call plotting function
+        figure_name = strcat(opts.FIGURE_PREFIX,'_stim_rtMeans');
+        bump_flag = 0;
+        [plots{end+1}, f_stim] = plotRTvsCue(plot_data,figure_name,bump_flag,opts);
     end
 
     %% plot psychometric curve for bump data
     
     if(opts.PLOT_BUMP)
-        plots{end+1} = figure();
-        plots{end}.Name = strcat(opts.FIGURE_PREFIX,'_bump_detectionCurve');
-        hold on
-        fitData.x = [];
-        fitData.y = [];
+        % extract data
+        plot_data.x = [];
+        plot_data.y = [];
+        
         for cueIdx = 1:numel(cueInfo)
             if(cueInfo(cueIdx).bumpMag ~= 0 && ~isempty(cueInfo(cueIdx).rt))
-                plot(cueInfo(cueIdx).bumpMag,cueInfo(cueIdx).percent_respond,'k.','markersize',opts.MARKER_SIZE)
-                fitData.x(end+1,1) = cueInfo(cueIdx).bumpMag;
-                fitData.y(end+1,1) = cueInfo(cueIdx).percent_respond;
+                plot_data.x = [plot_data.x;cueInfo(cueIdx).bumpMag];
+                plot_data.y = [plot_data.y;cueInfo(cueIdx).percent_respond];
             end
         end
-
-        % fit psychometric curve
-
-        if(opts.FIT)
-            xData = linspace(0,max(fitData.x*1.1),100);
-
-            if(opts.USE_ML_FIT)
-                mlFit_fun = @(params)(sum((fitData.y-(params(1)+params(2)*erf(params(3)*(fitData.x-params(4))))).^2));
-                min_options = optimset('MaxIter',10000,'MaxFunEvals',10000);
-                g_bump = fminsearch(mlFit_fun, [.45 .4 .05 1],min_options);
-
-                yData = g_bump(1) + g_bump(2)*erf(g_bump(3)*(xData-g_bump(4))); 
-            else
-                s = fitoptions('Method','NonlinearLeastSquares', 'Startpoint', [.5 .5 .1 90], 'Lower', [0 0 0 0], 'Upper', [1 1 10 1.5],...
-                    'MaxFunEvals',10000,'MaxIter',1000,'TolFun',10E-8,'TolX',10E-8);
-                ft = fittype('a+b*(erf(c*(x-d)))','options',s);
-                [g_bump.fitObj,g_bump.gof] = fit(fitData.x', fitData.y', ft);
-
-                yData = feval(g_bump.fitObj,xData);
-            end
-
-            plot(xData,yData,'k--','linewidth',opts.LINE_WIDTH);
-        end
-
-        ax = gca;
-        ax.XLim(1) = 0;
-        ax.YLim = [0,1];
-        xlabel('Bump Magnitude (N)');
-        ylabel('Proportion detected');
-        formatForLee(gcf);
-        set(gca,'fontsize',opts.FONT_SIZE);
-
+        % call plotting function
+        figure_name = strcat(opts.FIGURE_PREFIX,'_bump_detectionCurve');
+        bump_flag = 1;
+        [plots{end+1}, f_bump] = plotDetectionCurve(plot_data,figure_name,bump_flag,opts);
+        
     end
     %% plot psychometric curve for stim data
     
     if(opts.PLOT_STIM)
-        plots{end+1} = figure();
-        plots{end}.Name = strcat(opts.FIGURE_PREFIX,'_stim_detectionCurve');
-        hold on
-        fitData.x = [];
-        fitData.y = [];
+        % extract data
+        plot_data.x = [];
+        plot_data.y = [];
+        
+        stim_param_idx = 1;
         for cueIdx = 1:numel(cueInfo)
-            if(cueInfo(cueIdx).stimCode ~= -1 && cueInfo(cueIdx).bumpMag == 0)
-                plot(opts.STIM_PARAMS(cueInfo(cueIdx).stimCode+1),cueInfo(cueIdx).percent_respond,'k.','markersize',opts.MARKER_SIZE)
-                fitData.x(end+1,1) = opts.STIM_PARAMS(cueInfo(cueIdx).stimCode+1);
-                fitData.y(end+1,1) = cueInfo(cueIdx).percent_respond;
+            if(cueInfo(cueIdx).stimCode ~= -1 && cueInfo(cueIdx).bumpMag == 0 && ~isnan(cueInfo(cueIdx).percent_respond))
+                plot_data.x = [plot_data.x;opts.STIM_PARAMS(stim_param_idx)];
+                plot_data.y = [plot_data.y;cueInfo(cueIdx).percent_respond];
+                stim_param_idx = stim_param_idx + 1;
             end
         end
-
-        % fit psychometric curve
-        if(opts.FIT)
-            xData = linspace(0,max(fitData.x*1.1),100);
-
-            if(opts.USE_ML_FIT)
-                mlFit_fun = @(params)(sum((fitData.y-(params(1)+params(2)*erf(params(3)*(fitData.x-params(4))))).^2));
-                min_options = optimset('MaxIter',10000,'MaxFunEvals',10000);
-                g_stim = fminsearch(mlFit_fun, [.45 .4 .05 1],min_options);
-
-                yData = g_stim(1) + g_stim(2)*erf(g_stim(3)*(xData-g_stim(4))); 
-            else
-                s = fitoptions('Method','NonlinearLeastSquares', 'Startpoint', [.5 .5 .1 90], 'Lower', [0 0 0 0], 'Upper', [1 1 10 1.5],...
-                    'MaxFunEvals',10000,'MaxIter',1000,'TolFun',10E-8,'TolX',10E-8);
-                ft = fittype('a+b*(erf(c*(x-d)))','options',s);
-                [g_stim.fitObj,g_stim.gof] = fit(fitData.x', fitData.y', ft);
-
-                yData = feval(g_stim.fitObj,xData);
-            end
-
-            plot(xData,yData,'k--','linewidth',opts.LINE_WIDTH);
-        end
-
-        ax = gca;
-        ax.XLim(1) = 0;
-        ax.YLim = [0,1];
-        xlabel(opts.STIM_LABEL);
-        ylabel('Proportion detected');
-        formatForLee(gcf);
-        set(gca,'fontsize',opts.FONT_SIZE);
-
+        % call plotting function
+        figure_name = strcat(opts.FIGURE_PREFIX,'_stim_detectionCurve');
+        bump_flag = 0;
+        [plots{end+1}, f_bump] = plotDetectionCurve(plot_data,figure_name,bump_flag,opts);
+       
+        
     end
     %% plot BUMP reaction time vs trial idx
     
@@ -399,6 +298,7 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
     ylabel('RT (s)')
     formatForLee(gcf)
     set(gca,'fontsize',opts.FONT_SIZE);
+    
     %% deal with saving figures
     if(opts.SAVE_FIGURES && strcmp(opts.FOLDER_PATH,'')==0)
         for p = 1:numel(plots)
@@ -406,15 +306,158 @@ function [outputData,plots] = plotReactionTimeDataTD(td_reward,td_all,opts)
         end
     end
     %% setup output data
-    outputData.rt_fit_means_stim = f_means_stim;
-    outputData.rt_fit_all_stim = f_all_stim;
-    outputData.rt_fit_means_bump = f_means_bump;
-    outputData.rt_fit_all_bump = f_all_bump;
+    outputData.rt_fit_stim = f_stim;
+    outputData.rt_fit_bump = f_bump;
     outputData.psychometric_fit_stim = g_stim;
     outputData.psychometric_fit_bump = g_bump;
     outputData.cueInfo = cueInfo;
     outputData.stim_learn_fit = learn_mdl_stim;
     outputData.bump_learn_fit = learn_mdl_bump;
+end
+
+
+
+function [fig,fit_out] = plotRTvsCue(plot_data,figure_name,bump_flag,opts)
+
+    fig = figure();
+    fig.Name = figure_name;
+    hold on;
+    % plot mean and std error
+    unique_x_vals = unique(plot_data.x);
+    mean_y = zeros(size(unique_x_vals));
+    std_err_y = zeros(size(unique_x_vals));
+    
+    % if fit, fit with a decaying exponential
+    fit_out = [];
+    if(opts.FIT)
+        [fit_out.fitObj,fit_out.gof] = fit(plot_data.x,plot_data.y,'a*exp(b*x)+c','startPoint',[0,0,0]);
+
+        x_data_fit = linspace(min(plot_data.x*0.9),max(plot_data.x)*1.1,100);
+        y_data_fit = fit_out.fitObj.a*exp(fit_out.fitObj.b*x_data_fit)+fit_out.fitObj.c;
+        plot(x_data_fit,y_data_fit,'k--','linewidth',opts.LINE_WIDTH,'color',opts.COLOR);
+    end
+
+    ax1 = gca;
+
+    if(isfield(plot_data,'bump_data') && plot_data.bump_data.mean < 100 && ~bump_flag)
+        bump_bar = fill([min(plot_data.x)*0.5,max(plot_data.x)*1.1,max(plot_data.x)*1.1,min(plot_data.x)*0.5],...
+            plot_data.bump_data.mean(1)+plot_data.bump_data.std_err*[-1,-1,1,1],opts.COLOR,'linestyle','none');
+        alpha(opts.ALPHA);
+        plot([min(plot_data.x)*0.5,max(plot_data.x)*1.1],plot_data.bump_data.mean+[0,0],'-','linewidth',1,'color','k');
+        uistack(bump_bar,'bottom');
+    end
+    
+    if(isfield(plot_data,'visual_data') && plot_data.visual_data.mean < 100 && ~bump_flag)
+        visual_bar = fill([min(plot_data.x)*0.5,max(plot_data.x)*1.1,max(plot_data.x)*1.1,min(plot_data.x)*0.5],...
+            plot_data.visual_data.mean(1)+plot_data.visual_data.std_err*[-1,-1,1,1],opts.COLOR,'linestyle','none');
+        alpha(opts.ALPHA);
+        plot([min(plot_data.x)*0.5,max(plot_data.x)*1.1],plot_data.visual_data.mean+[0,0],'--','linewidth',1,'color','k');
+        uistack(visual_bar,'bottom');
+    end
+    
+    x_diff = max(unique_x_vals)-min(unique_x_vals);
+    for i = 1:numel(unique_x_vals)
+        if(~isempty(opts.STIM_COLOR_IDX))
+            color = getColorFromList(opts.COLOR_LIST,opts.STIM_COLOR_IDX(i));
+            if(~isempty(opts.STIM_COLOR_ALPHA))
+                color = ((1-opts.STIM_COLOR_ALPHA(i))*1+(opts.STIM_COLOR_ALPHA(i)*color));
+            end
+        else
+            color = opts.COLOR;
+        end
+        plot_data_mask = plot_data.x == unique_x_vals(i);
+        mean_y(i) = mean(plot_data.y(plot_data_mask));
+        std_err_y(i) = std(plot_data.y(plot_data_mask))/sqrt(sum(plot_data_mask));
+
+        % plot std error
+        errorbar(unique_x_vals(i),mean_y(i),std_err_y(i),...
+            'marker','.','markersize',opts.MARKER_SIZE,...
+            'linewidth',opts.LINE_WIDTH,'color',color);
+%         errorbar_LIB(unique_x_vals(i),mean_y(i),std_err_y(i),...
+%             'marker','.','markersize',opts.MARKER_SIZE,...
+%             'linewidth',opts.LINE_WIDTH,'color',color,'caplength',opts.CAPLENGTH_MULTIPLIER*x_diff);
+            
+        % plot means
+%         plot(unique_x_vals(i),mean_y(i),'.','color',color,'markersize',opts.MARKER_SIZE)
+%         plot(unique_x_vals(i)+[0,0],mean_y(i)+[-1,1]*std_err_y(i),'-','color',opts.COLOR,'linewidth',opts.LINE_WIDTH);
+        % plot horizontal bar on std error line
+%         plot(unique_x_vals(i)+opts.HORZ_BAR_LENGTH*[-1,1],mean_y(i)+std_err_y(i)+[0,0],'-','color',opts.COLOR,'linewidth',opts.LINE_WIDTH);
+%         plot(unique_x_vals(i)+opts.HORZ_BAR_LENGTH*[-1,1],mean_y(i)-std_err_y(i)+[0,0],'-','color',opts.COLOR,'linewidth',opts.LINE_WIDTH);
+
+        % plot all dots
+        plot_data_idx = find(plot_data.x == unique_x_vals(i));
+        scatter(plot_data.x(plot_data_idx),plot_data.y(plot_data_idx),opts.MARKER_AREA,'markeredgecolor','none','markerfacecolor',color);
+        alpha(opts.ALPHA);
+    end
+    
+%     % plot all dots
+%     scatter(plot_data.x,plot_data.y,opts.MARKER_AREA,'markeredgecolor','none','markerfacecolor',opts.COLOR);
+%     alpha(opts.ALPHA);
+    
+    
+    if(bump_flag)
+        xlabel('Bump Magnitude (N)');
+    else
+        xlabel(opts.STIM_LABEL,'Interpreter','tex');
+        if(~isempty(opts.STIM_X_LABEL))
+            [~,sort_idx] = sort(opts.STIM_PARAMS);
+            set(gca,'XTick',opts.STIM_PARAMS(sort_idx),'XTickLabel',opts.STIM_X_LABEL(sort_idx));
+            set(gca,'XMinorTick','off');
+        end
+    end
+    ylabel('RT (s)');
+    formatForLee(gcf);
+    set(gca,'fontsize',opts.FONT_SIZE);
+
+end
+
+function [fig, psych_fit] = plotDetectionCurve(plot_data,figure_name,bump_flag,opts)
+    psych_fit = [];
+    fig = figure();
+    fig.Name = figure_name;
+    hold on
+
+    plot(plot_data.x,plot_data.y,'.','markersize',opts.MARKER_SIZE,'color',opts.COLOR);
+   
+    % fit psychometric curve
+    if(opts.FIT)
+        x_data = linspace(0,max(plot_data.x*1.1),100);
+
+        if(opts.USE_ML_FIT)
+            mlFit_fun = @(params)(sum((plot_data.y-(params(1)+params(2)*erf(params(3)*(plot_data.x-params(4))))).^2));
+            min_options = optimset('MaxIter',10000,'MaxFunEvals',10000);
+            psych_fit = fminsearch(mlFit_fun, [.45 .4 .05 1],min_options);
+
+            y_data = psych_fit(1) + psych_fit(2)*erf(psych_fit(3)*(x_data-psych_fit(4))); 
+        else
+            s = fitoptions('Method','NonlinearLeastSquares', 'Startpoint', [.5 .5 .1 90], 'Lower', [0 0 0 0], 'Upper', [1 1 10 1.5],...
+                'MaxFunEvals',10000,'MaxIter',1000,'TolFun',10E-8,'TolX',10E-8);
+            ft = fittype('a+b*(erf(c*(x-d)))','options',s);
+            [psych_fit.fitObj,psych_fit.gof] = fit(plot_data.x', plot_data.y', ft);
+
+            y_data = feval(psych_fit.fitObj,x_data);
+        end
+
+        plot(x_data,y_data,'k--','linewidth',opts.LINE_WIDTH);
+    end
+
+    ax = gca;
+
+    if(bump_flag)
+        xlabel('Bump Magnitude (N)');
+    else
+        xlabel(opts.STIM_LABEL);
+        if(~isempty(opts.STIM_X_LABEL))
+            [~,sort_idx] = sort(opts.STIM_PARAMS);
+            set(gca,'XTick',opts.STIM_PARAMS(sort_idx),'XTickLabel',opts.STIM_X_LABEL(sort_idx));
+            set(gca,'XMinorTick','off');
+        end
+    end
+    ylabel('Proportion detected');
+    formatForLee(gcf);
+    set(gca,'fontsize',opts.FONT_SIZE);
+
+    
 end
 
 
@@ -427,13 +470,18 @@ function [opts] = configureOpts(optsInput)
     opts.BIN_SIZE = 0.02;
     
     opts.LINE_WIDTH = 1.5;
-    opts.MARKER_SIZE = 12;
+    opts.MARKER_SIZE = 24; % mean data points ...
+    opts.MARKER_AREA = 20; % opaque raw data...
     opts.FIT = 1;
     opts.USE_ML_FIT = 1;
     opts.FONT_SIZE = 16;
+    opts.ALPHA = 0.5;
+    opts.HORZ_BAR_LENGTH = 0.; % horz bar on std error bars
     
-    opts.COLORS = {'k','r',[0 0.6 0],'b','m',[0.5,0.5,0.5],[0.4,0.4,0.2]};
-
+    opts.COLORS = [228,26,28;55,126,184;77,175,74;152,78,163;255,127,0;255,255,51;166,86,40;247,129,191;153,153,153]/255;
+    opts.COLOR = 'k';
+    opts.COLOR_LIST = 1;
+    
     opts.SAVE_FIGURES = 0;
     opts.FIGURE_PREFIX = '';
     opts.FOLDER_PATH = '';
@@ -441,12 +489,17 @@ function [opts] = configureOpts(optsInput)
     opts.BUMP_MAGS = [];
     opts.STIM_CODES = [];
     opts.STIM_PARAMS = [];
+    opts.STIM_X_LABEL = {};
     
     opts.PLOT_BUMP = 1;
     opts.PLOT_STIM = 1;
     
     opts.NUM_SEQUENCE_FAILS = 3;
     opts.STIM_LABEL = 'Stim amp (\muA)';
+    opts.STIM_COLOR_IDX = [];
+    opts.STIM_COLOR_ALPHA = [];
+    
+    opts.CAPLENGTH_MULTIPLIER = 0.01;
     %% check if in optsSave and optsSaveInput, overwrite if so
     try
         inputFieldNames = fieldnames(optsInput);

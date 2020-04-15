@@ -88,6 +88,14 @@
 <text x="4.787" y="20.828" size="0.6096" layer="22" rot="MR270">REF</text>
 <text x="4.152" y="16.637" size="0.6096" layer="22" rot="MR90">GND</text>
 <text x="1.231" y="15.494" size="0.6096" layer="22" rot="MR180">STIM</text>
+<text x="5.842" y="13.589" size="0.8128" layer="21">1</text>
+<text x="7.112" y="13.589" size="0.8128" layer="21">2</text>
+<text x="10.922" y="13.589" size="0.8128" layer="21">5</text>
+<text x="16.891" y="13.589" size="0.8128" layer="21">10</text>
+<text x="23.241" y="13.589" size="0.8128" layer="21">15</text>
+<text x="29.591" y="13.589" size="0.8128" layer="21">20</text>
+<text x="35.941" y="13.589" size="0.8128" layer="21">25</text>
+<text x="42.291" y="13.589" size="0.8128" layer="21">30</text>
 </plain>
 <libraries>
 <library name="con-molex" urn="urn:adsk.eagle:library:165">

@@ -13,9 +13,11 @@ function [ figHandle ] = plotPSTHLIB(xData,yData,optsPlotInput,optsSaveInput)
     optsSave = configureOptionsSave(optsSaveInput);
     
     %% check for size
-    if(size(xData,2) ~= optsPlot.NUM_PLOTS || size(yData,2) ~= optsPlot.NUM_PLOTS || max(size(xData)) ~= max(size(yData)))
+    if(~isempty(optsPlot.NUM_PLOTS) && (size(xData,2) ~= optsPlot.NUM_PLOTS || size(yData,2) ~= optsPlot.NUM_PLOTS || max(size(xData)) ~= max(size(yData))))
         warning('Aborting due to incorrectly sized inputs');
         return;
+    elseif(isempty(optsPlot.NUM_PLOTS))
+        optsPlot.NUM_PLOTS = size(xData,2);
     end
 
 
@@ -138,7 +140,7 @@ function [optsPlot] = configureOptionsPlot(optsPlotInput,xData,yData)
     optsPlot.Y_TICK_LABEL = '';
     optsPlot.TITLE = '';
     optsPlot.BAR_STYLE = 'bar';
-    optsPlot.EDGE_COLOR= {'k','r',[0 0.6 0],'b','m',[0.5,0.5,0.5],[0.4,0.4,0.2],[0.8,0.8,0.2],'g',[0.8,0.8,0.8]};
+    optsPlot.EDGE_COLOR= {getColorFromList(1,0),getColorFromList(1,1),getColorFromList(1,2),getColorFromList(1,3),getColorFromList(1,4),getColorFromList(1,5)};
     optsPlot.FACE_COLOR = optsPlot.EDGE_COLOR;
     optsPlot.LINE_WIDTH = 1;
     optsPlot.LINE_STYLE = '-';
