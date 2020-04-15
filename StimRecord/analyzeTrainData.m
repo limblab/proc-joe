@@ -174,7 +174,7 @@
     
     
 %% rebin 
-    binSize = 100; % ms
+    binSize = 1; % ms
     
     for u = 1:numel(array_data)
         input_data_all{u}.bin_size = binSize;
@@ -183,15 +183,15 @@
 
     
 %% plot raster 
-    for arrIdx = 22%:numel(array_data)   
+    for arrIdx = 8%:numel(array_data)   
         array_data{arrIdx}.monkey = 'Han';
         optsPlotFunc.BIN_SIZE = mode(diff(array_data{arrIdx}.binEdges{1,1}));
         optsPlotFunc.FIGURE_SAVE = 0;
         optsPlotFunc.FIGURE_DIR = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\StimRecData\';
         optsPlotFunc.FIGURE_PREFIX = [array_data{arrIdx}.monkey,'_DblPulseTrains_'];
 
-        optsPlotFunc.PRE_TIME = 20/1000;
-        optsPlotFunc.POST_TIME = 50/1000;
+        optsPlotFunc.PRE_TIME = 10/1000;
+        optsPlotFunc.POST_TIME = 20/1000;
         optsPlotFunc.SORT_DATA = '';
 
         optsPlotFunc.STIMULATION_LENGTH = 0.453;
@@ -205,16 +205,16 @@
         
 
 %% plot PSTH for each condition
-    for u = 1:numel(array_data)
+    for u = 8%numel(array_data)
         input_data.amp_freq = 1;
 %         array_data{u}.monkey = 'Han';
-        array_data{u}.num_stims = array_data{u}.numStims;
+%         array_data{u}.num_stims = array_data{u}.numStims;
 %       input_data_all{u}.window = [min(array_data{unit_idx}.binEdges{1}),max(array_data{unit_idx}.binEdges{1})];
-        input_data.window = [-4000,12000];
+        input_data.window = [-5,20];
         input_data.unit_idx = u;
-        input_data.chan_rec = array_data{u}.CHAN_LIST{1};
-        input_data.num_cols = 3;
-        input_data.account_for_artifact = 1;
+%         input_data.chan_rec = num2str(array_data{u}.CHAN_LIST);%{1};
+        input_data.num_cols = 4;
+        input_data.account_for_artifact = 0;
         plotPSTHArrayData(array_data,input_data);
 %         f=figure(1);
 %         saveFiguresLIB(f,fpath,f.Name);
@@ -222,7 +222,7 @@
     end
     
     
-%% plot PSTH for each conditionition for low and high speed cases
+%% plot PSTH for each condition for low and high speed cases
     mean_speed_cutoff = [0,4;12,10000000]; % plot speeds in range
     input_data.suffix = 'speed0-2';
     input_data.window = [-75,250];
@@ -239,37 +239,35 @@
     stim_firing_rate = nan(numel(array_data),1);
     baseline_firing_rate = nan(numel(array_data),1);
     
-    spike_window = [0,200]; % in s
-    baseline_window = [-80,-5]; % in s
+    spike_window = [0,200]; % in ms
+    baseline_window = [-80,-5]; % in ms
     
     freq_plot = 20;
-    
-    for unit = 1:numel(array_data)
-        freq_idx = find(abs(1000/freq_plot - input_data_all{unit}.IPI) < 2 & input_data_all{unit}.num_pulses > 2);
-        freq_idx = freq_idx(1);
+    freq_idx = [];
+    for unit = [1:numel(array_data)]
+%         freq_idx = find(abs(1000/freq_plot - input_data_all{unit}.IPI) < 2 & input_data_all{unit}.num_pulses > 2);
+%         freq_idx = freq_idx(1);
         
         baseline_firing_rate(unit) = mean(getSpikesInWindow(array_data{unit},freq_idx,baseline_window,1),'omitnan');
-        stim_firing_rate(unit) = getSpikesInWindow(array_data{unit},freq_idx,spike_window,1);
+%         stim_firing_rate(unit) = getSpikesInWindow(array_data{unit},freq_idx,spike_window,1);
         
     end
 
-    plot(baseline_firing_rate,stim_firing_rate,'.','markersize',20)
-   
+%     plot(baseline_firing_rate,stim_firing_rate,'.','markersize',20)
+    histogram(baseline_firing_rate,20)
 %% plot response to train against stimulation frequency, use same number of pulses throughout
     markers = {'.','s'};
     marker_size = [22,8];
     
     post_window = [0,5]; % in ms
-    num_pulses = 401;
-
-    baseline_window = [-150,-5]; % in ms
-    slope_window = [0,190]; % in ms
+    num_pulses = 41;
+    use_time_for_fit = 1;
+    baseline_window = [-80,-5]; % in ms
+    slope_window = [10,190]; % in ms
     slope_bin_size = 5;
     
     IPI_plot = [50,20,10,5];
 
-    figure();
-    hold on
     slopes = nan(numel(array_data),4);
     evoked_response = nan(numel(array_data),4);
     monkey_idx = zeros(numel(array_data),1); % 1 = han, 0 = duncan
@@ -287,18 +285,26 @@
         % define arrays to store evoked data
         stim_firing_rate = zeros(1,numel(array_data{u}.binCounts));
         evoked_per_pulse = zeros(1,numel(array_data{u}.binCounts));
-        slopes_temp = zeros(1,numel(array_data{u}.binCounts));
+        slopes_temp = nan(1,numel(array_data{u}.binCounts));
         
         for condition = 1:numel(array_data{u}.binCounts)
-            if(input_data_all{u}.num_pulses(condition) > 2)
+            if(~isempty(array_data{u}.PULSE_TIMES{condition}))
                 per_pulse_response = zeros(num_pulses_use(condition),1);
+                time_data = array_data{u}.PULSE_TIMES{condition}{1}*1000;
                 for pulse = 1:num_pulses_use(condition)
                     % convert window into indices
-                    window_offset = input_data_all{u}.IPI(condition)*(pulse-1);
+                    window_offset = time_data(pulse);
                     
-                    per_pulse_response(pulse) = getSpikesInWindow(array_data{u},condition,post_window+window_offset,0) - baseline_num_spikes*diff(post_window)/diff(baseline_window); % num_spikes above baseline
+                    per_pulse_response(pulse) = getSpikesInWindow(array_data{u},condition,post_window+window_offset,1) - baseline_num_spikes/diff(baseline_window)*1000; % num_spikes above baseline
                     
                 end
+                
+                if(use_time_for_fit)
+                    b_pulse = [ones(numel(per_pulse_response),1),time_data(1:numel(per_pulse_response))']\per_pulse_response;
+                else
+                    b_pulse = [ones(numel(per_pulse_response),1),(1:1:numel(per_pulse_response))']\per_pulse_response;
+                end
+                slopes_temp(condition) = b_pulse(2);
                 
                 % get FR across whole train 
                 stim_firing_rate(condition) = sum(per_pulse_response)/(diff(post_window)*num_pulses_use(condition))/1000; 
@@ -310,10 +316,11 @@
         end
         
         % get slope during train
-        b_train = getSlopeDuringTrain(array_data{u},[],slope_window,slope_bin_size);
-        slopes_temp = b_train(2,:);
+%         b_train = getSlopeDuringTrain(array_data{u},[],slope_window,slope_bin_size);
+%         slopes_temp = b_train(2,:);
         
         keep_mask = (input_data_all{u}.num_pulses > 3) & ~isnan(evoked_per_pulse); 
+        
         % remove very long train conditionition
         keep_mask(find(input_data_all{u}.num_pulses == 41 & abs(input_data_all{u}.IPI-50) < 1)) = 0;
         
@@ -326,57 +333,83 @@
         end
         monkey_idx(u) = strcmpi(array_data{u}.monkey,'Han'); % 1 = han, 0 = duncan
         
-        if(sum(keep_mask) >= 3 && plot_counter < num_plot)
-            plot_counter = plot_counter + 1;
-            disp(u)
-            % deal with freq_stim not being sorted
-            freq_stim = 1000./input_data_all{u}.IPI; 
-            freq_stim(freq_stim < 0) = 0;
-            [freq_stim_plot,sort_idx] = sort(freq_stim(keep_mask == 1));
-            evoked_per_stim_plot = evoked_per_pulse(keep_mask == 1); 
-            evoked_per_stim_plot = evoked_per_stim_plot(sort_idx);
-            slopes_plot = slopes_temp(keep_mask == 1); 
-            slopes_plot = slopes_plot(sort_idx);
-
-            % plot data
-            plot(freq_stim_plot,slopes_plot,'marker',markers{monkey_idx(u) + 1},...
-                'linewidth',1.5,'markersize',marker_size(monkey_idx(u) + 1),'color',getColorFromList(2,plot_counter),'markerfacecolor',getColorFromList(2,plot_counter))
-            
-            xlabel('Stimulation frequency (Hz)')
-            ylabel('\DeltaFR during train (Hz/ms)')
-            formatForLee(gcf)
-            set(gca,'fontsize',14)
-        end
+%         if(sum(keep_mask) >= 3 && plot_counter < num_plot)
+%             plot_counter = plot_counter + 1;
+%             % deal with freq_stim not being sorted
+%             freq_stim = 1000./input_data_all{u}.IPI; 
+%             freq_stim(freq_stim < 0) = 0;
+%             [freq_stim_plot,sort_idx] = sort(freq_stim(keep_mask == 1));
+%             evoked_per_stim_plot = evoked_per_pulse(keep_mask == 1); 
+%             evoked_per_stim_plot = evoked_per_stim_plot(sort_idx);
+%             slopes_plot = slopes_temp(keep_mask == 1); 
+%             slopes_plot = slopes_plot(sort_idx);
+% 
+%             % plot data
+%             plot(freq_stim_plot,slopes_plot,'marker',markers{monkey_idx(u) + 1},...
+%                 'linewidth',1.5,'markersize',marker_size(monkey_idx(u) + 1),'color',getColorFromList(2,plot_counter),'markerfacecolor',getColorFromList(2,plot_counter))
+%             
+%             xlabel('Stimulation frequency (Hz)')
+%             ylabel('\DeltaFR during train (Hz/ms)')
+%             formatForLee(gcf)
+%             set(gca,'fontsize',14)
+%         end
         
     end
     
 % plot 20Hz vs higher freq
 
-    f=figure();
+    f=figure(); hold on;
     f.Name = 'Duncan_Han_following_summary_trains';
-    plot([-1,1],[-1,1],'k--','linewidth',1.5)
+    plot([-100,100],[-100,100],'k--','linewidth',1.5)
     hold on
     for idx = 1:2 % duncan, then han
         keep_mask = monkey_idx == idx-1; % matlab indexing causes issues...
         
         plot(slopes(keep_mask,1),slopes(keep_mask,2),'linestyle','none',...
-            'marker',markers{idx},'color',getColorFromList(1,0),'markerfacecolor',getColorFromList(1,0),'markersize',marker_size(idx));
+            'marker',markers{idx},'color',getColorFromList(5,2),'markerfacecolor',getColorFromList(5,2),'markersize',marker_size(idx));
 %         
         plot(slopes(keep_mask,1),slopes(keep_mask,3),'linestyle','none',...
-            'marker',markers{idx},'color',getColorFromList(1,1),'markerfacecolor',getColorFromList(1,1),'markersize',marker_size(idx));
+            'marker',markers{idx},'color',getColorFromList(5,3),'markerfacecolor',getColorFromList(5,3),'markersize',marker_size(idx));
         
         plot(slopes(keep_mask,1),slopes(keep_mask,4),'linestyle','none',...
-            'marker',markers{idx},'color',getColorFromList(1,2),'markerfacecolor',getColorFromList(1,2),'markersize',marker_size(idx));
+            'marker',markers{idx},'color',getColorFromList(5,4),'markerfacecolor',getColorFromList(5,4),'markersize',marker_size(idx));
         
     end
-    xlabel('Response to 20Hz trains');
-    ylabel('Response to higher freq trains');
+    
+    if(use_time_for_fit)
+        xlabel('Slope during 20Hz trains (Hz/ms)');
+        ylabel('Slope during higher freq trains (Hz/ms)');
+    else
+        xlabel('Slope during 20Hz trains (Hz/pulse)');
+        ylabel('Slope during higher freq trains (Hz/pulse)');
+    end
 %     set(l,'box','off','fontsize',14,'location','northwest');
     formatForLee(gcf);
     set(gca,'fontsize',14);
-%     xlim([-0.5,2]); ylim([-0.5,2])
-%     ylim([0,1]);
+    xlim([min(slopes(:,1))*1.3,max(slopes(:,1))*1.3]); ylim([-0.5,2])
+    ylim([min([slopes(:,2);slopes(:,3);slopes(:,4)])*1.1,max([slopes(:,2);slopes(:,3);slopes(:,4)])*1.1]);
+    
+%     l=legend('50Hz','94Hz','180Hz')
+%     set(l,'box','off')
+    
 
+%% stats to see if slopes are more negative than the 20Hz slope
+    x_data = []; y_data = []; freqs = [20,50,95,180];
+    for j = 1:4
+        slopes_use = slopes(~isnan(slopes(:,j)),j);
+        x_data = [x_data; freqs(j)*ones(numel(slopes_use),1)];
+        y_data = [y_data; slopes_use];
+    end
+    
+    mdl = fitlm(x_data,y_data)
+    
+    p_list = zeros(3,1);
+    for j = 2:4
+        p_list(j-1) = ranksum(slopes(:,1),slopes(:,j),'tail','right');
+    end
+    p_list
+    
+    
 %% plot response to each pulse in the trains of each frequency for each neuron
 % 1 plot per frequency
     post_window = [0,5]; % in ms
@@ -416,26 +449,168 @@
 %% compute baseline firing rate for all neurons across all conditions....
 
     
-
+%% look at inhibition
+    optsInhibPlot = [];
+    optsInhibPlot.PRE_WINDOW = [-80,-5]; % ms
+    post_window = [0,250]; % ms
+    optsInhibPlot.MAX_TIME_START = 225; % ms
+    optsInhibPlot.BIN_SIZE = 1;
+    optsInhibPlot.KERNEL_LENGTH = 10;
+    blank_time = [0,5]; % ms
     
+    optsInhibPlot.PW1 = 200;
+    optsInhibPlot.PW2 = 200;
+    optsInhibPlot.POL = 0; % 0 is cathodic first
+    optsInhibPlot.NUM_CONSECUTIVE_BINS = 10;
+    
+    inhibStruct = {};
+    
+    inhib_dur = [];
+    monkey_idx = [];
+    for u = 1:numel(array_data)
+        if(numel(array_data{u}.num_stims) == 8)
+            for cond = 1:numel(array_data{u}.spikeTrialTimes)
+                if(~isempty(array_data{u}.PULSE_TIMES{cond}) && numel(array_data{u}.PULSE_TIMES{cond}{1}) == 1) % single pulse
+                    optsInhibPlot.POST_WINDOW(cond,:) = post_window;
+                    optsInhibPlot.BLANK_TIME(cond,:) = blank_time;
+                elseif(~isempty(array_data{u}.PULSE_TIMES{cond}) && numel(array_data{u}.PULSE_TIMES{cond}{1}) == 2)% double pulse
+                    optsInhibPlot.POST_WINDOW(cond,:) = post_window + array_data{u}.PULSE_TIMES{cond}{1}(2)*1000;
+                    optsInhibPlot.BLANK_TIME(cond,:) = blank_time + array_data{u}.PULSE_TIMES{cond}{1}(2)*1000;
+                else % train
+                    optsInhibPlot.POST_WINDOW(cond,:) = post_window + 200;
+                    optsInhibPlot.BLANK_TIME(cond,:) = blank_time + 200;
+
+                end
+
+            end
+
+            [inhibStruct{u},figure_handles] = plotInhibitionDuration(array_data{u},optsInhibPlot);
+            
+            if(~isempty(inhibStruct{u}))
+                monkey_idx(end+1,1) = strcmpi(array_data{u}.monkey,'Han'); % 1 = han, 0 = duncan 
+                inhib_dur(end+1,:) = inhibStruct{u}.inhib_dur;
+            end
+        end
+        % plot inhib duration for each condition, have to sort IPI first
+%         [IPI_sort,sort_idx] = sort(input_data.IPI);
+%         inhib_dur_sort = inhibStruct{u}.inhib_dur(sort_idx);
+%         keep_mask_sort = keep_mask(sort_idx);
+%         plot(IPI_sort(keep_mask_sort == 1),inhib_dur_sort(keep_mask_sort == 1))
+%         hold on
+    end
+ 
+% dot plot showing inhib dur to a single pulse and to the last pulse for
+% different train frequencies
+    markers = {'.','s'};
+    marker_size = [22,8];
+    f=figure();
+    f.Name = 'Duncan_Han_dblPulse_inhib_trains';
+    hold on
+    for m = 1:2 % duncan, then han
+        keep_mask = monkey_idx == m-1; % matlab indexing causes issues...
+        
+        plot(inhib_dur(keep_mask,1),inhib_dur(keep_mask,5),'linestyle','none',...
+            'marker',markers{m},'color',getColorFromList(5,1),'markerfacecolor',getColorFromList(5,1),'markersize',marker_size(m));
+        
+        plot(inhib_dur(keep_mask,1),inhib_dur(keep_mask,4),'linestyle','none',...
+            'marker',markers{m},'color',getColorFromList(5,2),'markerfacecolor',getColorFromList(5,2),'markersize',marker_size(m));
+        
+        plot(inhib_dur(keep_mask,1),inhib_dur(keep_mask,3),'linestyle','none',...
+            'marker',markers{m},'color',getColorFromList(5,3),'markerfacecolor',getColorFromList(5,3),'markersize',marker_size(m));
+        
+        plot(inhib_dur(keep_mask,1),inhib_dur(keep_mask,2),'linestyle','none',...
+            'marker',markers{m},'color',getColorFromList(5,4),'markerfacecolor',getColorFromList(5,4),'markersize',marker_size(m));
+        
+    end
+    
+    unity_line = plot([-20,100],[-20,100],'k--','linewidth',1.5);
+    
+    xlabel('Inhibition duration to single pulse (ms)');
+    ylabel('Inhibition duration to last pulse (ms)');
+%     l=legend('200ms','20ms','10ms'); % actual IPI is [10.6,20.6,201.03]
+%     set(l,'box','off','fontsize',14,'location','southeast');
+    uistack(unity_line,'bottom');
+    formatForLee(gcf);
+    set(gca,'fontsize',14);
+    xlim([0,100]); ylim([0,100])
+%     ylim([0,1]);
+
+%% plot showing percentage of cells displaying inhibition
+    freqs_plot = [-1,20,50,100,180]; % -1 means single pulse
+    num_units_total = zeros(numel(freqs_plot),1);
+    num_units_inhib = zeros(numel(freqs_plot),1);
+    
+    for iUnit = 1:numel(inhibStruct)
+        if(~isempty(inhibStruct{iUnit}))
+            for condition = 1:numel(array_data{iUnit}.spikeTrialTimes)
+                if(~isempty(array_data{iUnit}.PULSE_TIMES{condition}))
+                    num_stims = numel(array_data{iUnit}.PULSE_TIMES{condition}{1});
+                    if(num_stims == 1)
+                        idx = 1;
+                    elseif(num_stims == 2)
+                        idx = [];
+                        freq_use = -1; % won't go in next if statement
+                    else % train
+                        freq_use = 1/(array_data{iUnit}.PULSE_TIMES{condition}{1}(2) - array_data{iUnit}.PULSE_TIMES{condition}{1}(1));
+                    end
+                    
+                    if(num_stims == 1)
+                        idx = 1;
+                    elseif(num_stims == 2) % do nothing
+                        idx = [];
+                    elseif(freq_use > 150)
+                        idx = 5;
+                    elseif(freq_use > 80)
+                        idx = 4;
+                    elseif(freq_use > 35)
+                        idx = 3;
+                    elseif(freq_use > 10)
+                        idx = 2;
+                    end
+                    
+                    if(~isempty(idx))
+                        num_units_total(idx) = num_units_total(idx) + 1;
+                        if(inhibStruct{iUnit}.is_inhib(condition))
+                            num_units_inhib(idx) = num_units_inhib(idx) + 1;
+                        end
+                    end
+                    
+                    
+                end
+            end
+        end
+        
+    end
+
+    figure();
+    hold on
+    
+    plot(freqs_plot, num_units_inhib./num_units_total);
+
 %% look at rebound excitation
 % size, peak time, onset, duration
 % size = integrate above baseline for the duration
 % peak time = peak if it exists
 % duration = time from onset to offset
 
-    rebound_input_data.post_stim_window = [20,200];
+    rebound_input_data.post_stim_window = [10,200];
     rebound_input_data.baseline_window = [-80,-20];
     rebound_input_data.threshold_mult = 2;
     rebound_input_data.num_bins_above_thresh = 3;
-    rebound_input_data.bin_size = 25;
+    rebound_input_data.bin_size = 10;
     
-    for u = 22%1:numel(array_data)
+    
+    for u = 9:numel(array_data)
         reboundExcitation{u} = getReboundExcitationStats(array_data{u},rebound_input_data);
+    
     end
 
 
-
+    % plot % rebound excitation
+    
+    
+    
+    % report duration of rebound excitation
     
 
     

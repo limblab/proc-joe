@@ -4,6 +4,10 @@ function [spikes_in_window] = getSpikesInWindow(array_data,condition_compute,win
         condition_compute = 1:1:numel(array_data.binCounts);
     end
 
+    if(~isfield(array_data,'num_stims'))
+        array_data.num_stims = array_data.numStims;
+    end
+    
     spikes_in_window = zeros(1,numel(condition_compute));
     spikes_in_window_idx = 1;
     for condition = condition_compute

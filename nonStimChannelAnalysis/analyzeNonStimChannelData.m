@@ -45,30 +45,31 @@
     toc
     
     
-
 %% plot raster, and PSTH for the given unit above
-for arrIdx = 1%:numel(arrayData)
+for arrIdx = 4%1:numel(arrayData)
 % arrIdx = 1;
     % plot raster, and PSTH for the given unit above
 
 %     optsPlotFunc.BIN_SIZE = optsExtract.BIN_SIZE;
+    optsPlotFunc.MAKE_SUBPLOTS = 1;
+    optsPlotFunc.PLOT_TITLE = 0;    
+
     optsPlotFunc.BIN_SIZE = mode(diff(arrayData{1}.binEdges{1,1}));
     optsPlotFunc.FIGURE_SAVE = 0;
     optsPlotFunc.FIGURE_DIR = inputData.folderpath;
     optsPlotFunc.FIGURE_PREFIX = 'Han_20190923';
 
-    optsPlotFunc.PRE_TIME = 50/1000;
-    optsPlotFunc.POST_TIME = 200/1000;
+    optsPlotFunc.PRE_TIME = 5/1000;
+    optsPlotFunc.POST_TIME = 10/1000;
     optsPlotFunc.SORT_DATA = '';
 
-    optsPlotFunc.PLOT_AFTER_STIMULATION_END = 0;
-    optsPlotFunc.STIMULATION_LENGTH = 0.1+0.5+0.53;
+    optsPlotFunc.PLOT_AFTER_STIMULATION_END = 1;
+    optsPlotFunc.STIMULATION_LENGTH = 0.4+0.53;
     
     rasterPlots = plotRasterStim(arrayData{arrIdx},arrayData{arrIdx}.NN,optsPlotFunc);
 
     optsPlotFunc.PLOT_ALL_ONE_FIGURE = 0;
     optsPlotFunc.PLOT_LINE = 1;
-    optsPlotFunc.PLOT_TITLE = 1;    
     optsPlotFunc.PLOT_ALL_WAVES_ONE_FIGURE = 0;
 % %     
 %     PSTHPlots = plotPSTHStim(arrayData{arrIdx},1,optsPlotFunc);
@@ -78,9 +79,10 @@ end
 
 %% get response amplitude for each condition/neuron
     
+    baseline_list = [];
     for unit = 1:numel(arrayData)
-        arrayData{unit} = getResponseAmplitude(arrayData{unit},0.2); % bin size (ms), 
-  
+        arrayData{unit} = getResponseAmplitude(arrayData{unit},unit,0.2,2); % bin size (ms), window width (bins on either side of peak)
+        baseline_list(unit) = mean(mean(arrayData{unit}.mean_baseline));
     end
 
 %% heatmap across whole array
@@ -97,8 +99,8 @@ end
     
 
     opts.STIM_ELECTRODE_PLOT = [1:size(arrayData{1}.binEdges,1)];
-    opts.WAVEFORM_TYPES_PLOT = [1:size(arrayData{1}.binEdges,2)];
-    opts.MAX_RATIO = 0.5;
+    opts.WAVEFORM_TYPES_PLOT = 4%[1:size(arrayData{1}.binEdges,2)];
+    opts.MAX_RATIO = 1;
     opts.MIN_RATIO = -1;
     opts.LOG_SCALE = 0;
     opts.LOG_PARAM = 9;
@@ -106,36 +108,37 @@ end
     [stimHeatmapHandles] = plotHeatmaps(arrayData,inputData.mapFileName(8:end),opts);
     
 
-% 
-%     opts.ALL_NEURONS = 1; % 1 = plot all neurons for each stim chan, 0 = plot all stim chans for a neuron
-%     opts.MAKE_PLOTS = 1;
-%     opts.MAKE_BAR_PLOT = 0;
-%     
-%     %time window for standardized values
-%     opts.BASELINE_PRE_TIME = -30/1000;
-%     opts.BASELINE_POST_TIME = -5/1000;
-%     opts.STIM_PRE_TIME = 1/1000;
-%     opts.STIM_POST_TIME = 6/1000;
-% 
-%     opts.AUTO_WINDOW = 0; % 
-%     opts.INHIBITORY = 0;
-%     opts.EXCITATORY = 0;
-% 
-
-% 
-%     opts.RELATIVE_INHIBITION = 0;
-% 
-%     opts.FIGURE_SAVE = 0;
-%     opts.FIGURE_DIR = inputData.folderpath;
-%     opts.FIGURE_PREFIX = 'Han_20191021';
-%     
-%     
-
-%% Plot evoked response vs distance (400um between channels) for each channel or neuron
+%% Plot evoked response vs distance (400um between channels)
+    
+    inputData.use_responsive_only = 0;
+    inputData.color_idx = [4,3,2,5];
+    inputData.use_boxplots = 0;
+    
+    inputData.distance_bin_size = 300;
+    inputData.dist_offset = [-75,-25,25,75];
+    inputData.linewidth = 1.75;
+    inputData.box_width = 30;
+    inputData.outlier_marker = '.';
+    inputData.outlier_marker_size = 12;
+    
+    
+    amp_data = plotResponseAmpVsDistance(arrayData,inputData);
 
     
-
+%% Plot latency vs distance (400um between channels)
+    inputData.color_idx = [4,3,2,5];
+    inputData.use_boxplots = 0;
     
+    inputData.distance_bin_size = 600;
+    inputData.dist_offset = [-75,-25,25,75];
+    inputData.linewidth = 1.75;
+    inputData.box_width = 30;
+    inputData.outlier_marker = '.';
+    inputData.outlier_marker_size = 12;
+    
+    latency_data = plotLatencyVsDistance(arrayData,inputData);
+
+ 
 %% plot PD difference heatmap and stim heatmap for each condition
 % PD differences compared to center channel
 %     [pdHeatmapData,pdAlphaData] = getHeatmapDataPD(td_all,pd_all,mapData);

@@ -12,7 +12,7 @@ function [b_out] = getSlopeDuringTrain(array_data,condition_compute,slope_window
 
 
         slope_window_idx = [find(array_data.binEdges{condition} > slope_window(1),1,'first'),find(array_data.binEdges{condition} > slope_window(2),1,'first')];
-        slope_y_vals = array_data.binCounts{condition}(slope_window_idx(1):slope_window_idx(2))/array_data.num_stims(condition)/(bin_size)*1000;
+        slope_y_vals = array_data.binCounts{condition}(slope_window_idx(1):slope_window_idx(2))/(bin_size)*1000;
         slope_x_vals = array_data.binEdges{condition}(slope_window_idx(1):slope_window_idx(2));
         b_out(:,condition_counter) = [ones(numel(slope_y_vals),1), slope_x_vals']\slope_y_vals';
         condition_counter = condition_counter + 1;

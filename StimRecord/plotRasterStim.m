@@ -44,20 +44,40 @@ function [figureHandle] = plotRasterStim(unitData,NEURON_NUMBER,optsPlot)
                 optsPlot.SORT_DATA = opts.SORT_DATA;
             end
             % plot related information
-            optsPlot.MAKE_FIGURE = opts.MAKE_FIGURE;
+            if(opts.MAKE_SUBPLOTS == 1) % make figure if first idx
+                optsPlot.MAKE_SUBPLOT = 1;
+                if(chan == 1 && wave == 1)
+                    optsPlot.MAKE_FIGURE = 1;
+                else
+                    optsPlot.MAKE_FIGURE = 0;
+                end
+                % deal with subplot idx
+                optsPlot.SUBPLOT_IDX = (chan-1)*NUM_WAVEFORM_TYPES + wave;
+                optsPlot.SUBPLOT_SIZE = [NUM_CHANS,NUM_WAVEFORM_TYPES];
+                optsPlot.PLOT_ZERO_LINE = 1;
+            else
+                optsPlot.MAKE_FIGURE = opts.MAKE_FIGURE;
+            end
             optsPlot.X_LIMITS = [-opts.PRE_TIME*1000,opts.POST_TIME*1000];
-            optsPlot.Y_LIMITS = [-3,unitData.numStims(chan,wave)+1];
-            if(~opts.MAKE_SUBPLOTS || wave == NUM_WAVEFORM_TYPES)
+            optsPlot.Y_LIMITS = [0.5,unitData.numStims(chan,wave)+0.5];
+            if(optsPlot.Y_LIMITS(2) <= optsPlot.Y_LIMITS(1))
+                optsPlot.Y_LIMITS(2) = optsPlot.Y_LIMITS(1) + 0.01;
+            end
+            if(~opts.MAKE_SUBPLOTS)
                 if(~opts.PLOT_AFTER_STIMULATION_END)
                     optsPlot.X_LABEL = 'Time after stimulation onset (ms)';
+                    optsPlot.Y_LABEL = 'Stimuli';
                 else
-                    optsPlot.X_LABEL = 'Time after stimulation offset (ms)';
+%                     optsPlot.X_LABEL = 'Time after stimulation offset (ms)';
+                    optsPlot.X_LABEL = 'Time after first pulse ends (ms)';
+                    optsPlot.Y_LABEL = 'Stimuli';
                 end
             else
                 optsPlot.X_LABEL = '';
+                optsPlot.Y_LABEL = '';
             end
             
-            optsPlot.Y_LABEL = 'Stimuli';
+            
             % deals with title requests
             if(opts.PLOT_TITLE)
                 if(strcmp(opts.TITLE_TO_PLOT,'') == 0)
@@ -69,13 +89,24 @@ function [figureHandle] = plotRasterStim(unitData,NEURON_NUMBER,optsPlot)
                         optsPlot.TITLE = strcat('Stim Chan: ',num2str(CHAN_LIST(chan)),' Wave: ',num2str(wave));
                     end
                 end
+            else
+                optsPlot.TITLE = '';
             end
-            optsPlot.Y_TICK = [0;max(unitData.numStims(chan,wave))];
-            optsPlot.Y_MINOR_TICK = 'on';
-            optsPlot.Y_TICK_LABEL = {num2str(1),num2str(unitData.numStims(chan,wave))};
-            if(strcmpi(opts.SORT_DATA,'velocity'))
-                optsPlot.Y_TICK_LABEL = {'Low','High'};
-                optsPlot.Y_LABEL = 'Velocity';
+            
+            
+            if(opts.MAKE_SUBPLOTS)
+                optsPlot.Y_TICK = [];
+                optsPlot.Y_MINOR_TICK = 'off';
+                optsPlot.X_TICK = [];
+                optsPlot.X_MINOR_TICK = 'off';
+            else
+                optsPlot.Y_TICK = [1;max(unitData.numStims(chan,wave))];
+                optsPlot.Y_MINOR_TICK = 'on';
+                optsPlot.Y_TICK_LABEL = {num2str(1),num2str(unitData.numStims(chan,wave))};
+                if(strcmpi(opts.SORT_DATA,'velocity'))
+                    optsPlot.Y_TICK_LABEL = {'Low','High'};
+                    optsPlot.Y_LABEL = 'Velocity';
+                end
             end
             optsSave.FIGURE_SAVE = opts.FIGURE_SAVE;
             optsSave.FIGURE_DIR = opts.FIGURE_DIR;
@@ -132,6 +163,7 @@ end
 function [opts] = configureOpts(optsInput)
 
     opts = [];
+    
     opts.MARKER_SIZE = 4;
     opts.MARKER_STYLE  = '.';
     opts.PLOT_TITLE = 0;

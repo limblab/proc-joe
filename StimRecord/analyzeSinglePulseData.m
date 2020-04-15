@@ -16,7 +16,7 @@
 
 %% plot rasters and psth for each condition and neuron
 
-    for arrIdx = 1%numel(arrayData)
+    for arrIdx = 5%numel(arrayData)
 %     arrIdx = 1;
         % plot raster, and PSTH for the given unit above
         
@@ -24,13 +24,13 @@
         optsPlotFunc.BIN_SIZE = mode(diff(arrayData{arrIdx}.binEdges{1,1}));
         optsPlotFunc.FIGURE_SAVE = 0;
         optsPlotFunc.FIGURE_DIR = [];
-        optsPlotFunc.FIGURE_PREFIX = [arrayData{arrIdx}.monkey,'_long_'];
+        optsPlotFunc.FIGURE_PREFIX = [arrayData{arrIdx}.monkey,'_short_'];
 
-        optsPlotFunc.PRE_TIME = 15/1000;
-        optsPlotFunc.POST_TIME = 20/1000;
+        optsPlotFunc.PRE_TIME = 30/1000;
+        optsPlotFunc.POST_TIME = 60/1000;
         optsPlotFunc.SORT_DATA = '';
 
-        optsPlotFunc.MARKER_STYLE  = '.';
+        optsPlotFunc.MARKER_STYLE  = 'line';
         
         optsPlotFunc.PLOT_AFTER_STIMULATION_END = 1;
         optsPlotFunc.STIMULATION_LENGTH = [];
@@ -51,8 +51,24 @@
 %% get number of spikes (probability) as a function of amplitude and plot
 % that for each neuron (on one plot probably)
 
-    optsSpikesPlot.PRE_WINDOW = [-80,-5]/1000; % in s
-    optsSpikesPlot.POST_WINDOW = [0,20]/1000; % in s
+    optsSpikesPlot.PRE_WINDOW = [-81,-5]/1000; % in s
+%     optsSpikesPlot.POST_WINDOW = [1,10]/1000; % in s, for amp plot
+    optsSpikesPlot.POST_WINDOW = [0,10]/1000; % in s, for latency plot
+    optsSpikesPlot.MAXIMIZE_RESPONSE_PROB = 0; % find maximum for each condition instead of using the window
+%     optsSpikesPlot.POST_WINDOW = [0.75,3; % 5uA
+%                                     0.75,3; % 10uA
+%                                     0.75,3; % 15uA
+%                                     0.75,5; % 20uA
+%                                     0.75,5; % 25uA
+%                                     0.75,7; % 30uA
+%                                     1,7.5; % 40uA
+%                                     1.25,7.5; % 50uA
+%                                     1.25,7.5; % 60uA
+%                                     1.5,8.25; % 80uA
+%                                     1.5,9]/1000; % 100uA
+%     optsSpikesPlot.POST_WINDOW(:,1) = 1.5/1000;
+    optsSpikesPlot.AMP_LIST = [5;10;15;20;25;30;40;50;60;80;100];
+    
     optsSpikesPlot.PW1 = 200;
     optsSpikesPlot.PW2 = 200;
     optsSpikesPlot.POL = 0; % 0 is cathodic first
@@ -63,13 +79,18 @@
     optsSpikesPlot.WAVEFORM_LENGTH = 0.453/1000; % s
     
     spikesStruct = {}; amp = []; spikes_evoked = []; unit_idx = [];
-    
+    max_rgb = 0.6;
+    min_rgb = 0;
     
     for unit = 1:numel(arrayData)
         if(unit == 1)
             optsSpikesPlot.MAKE_FIGURE = 1;
         else
             optsSpikesPlot.MAKE_FIGURE = 0;
+        end
+        optsSpikesPlot.COLOR = ones(1,3)*(unit/numel(arrayData))*(max_rgb-min_rgb) + min_rgb; 
+        if(unit == 15)
+            optsSpikesPlot.COLOR = getColorFromList(1,1);
         end
         [spikesStruct{unit},figure_handles] = plotSpikesPerCondition(arrayData{unit},optsSpikesPlot);
         hold on
@@ -81,9 +102,9 @@
         
         amp = [amp,spikesStruct{unit}.amp(spikesStruct{unit}.keep_mask==1)];
         spikes_evoked = [spikes_evoked, spikesStruct{unit}.prob_spike(spikesStruct{unit}.keep_mask==1)];
-        unit_idx = [unit_idx, unit + zeros(1,sum(spikesStruct{unit}.keep_mask==1))];
+        unit_idx = [unit_idx, unit + zeros(1,sum(sum(spikesStruct{unit}.keep_mask==1)))];
     end  
-    
+%     
     amps_plot = unique(amp);
     mean_spikes_evoked = zeros(1,numel(amps_plot));
     
@@ -94,20 +115,59 @@
     end
     
     tbl = table(amp',spikes_evoked',unit_idx','VariableNames',{'amp','spikes_evoked','unit'});
+    tbl.unit = categorical(tbl.unit);
     mdl = fitlm(tbl,'spikes_evoked~amp+unit')
     
+    x_data = unique(amp);
+    y_data = mean(mdl.Coefficients.Estimate(1)+mdl.Coefficients.Estimate(3:end)) + mdl.Coefficients.Estimate(2).*x_data;
+    plot(x_data,y_data,'color',getColorFromList(1,0),'linewidth',3,'linestyle','--');
+%     figure();
+%     plot(mdl)
     
+%% compare response at two amplitudes
+    amps = [20,50];
+    data = [];
+    for unit = 1:numel(spikesStruct)
+        amp_1_idx = find(spikesStruct{unit}.amp == amps(1) & spikesStruct{unit}.keep_mask == 1);
+        amp_2_idx = find(spikesStruct{unit}.amp == amps(2) & spikesStruct{unit}.keep_mask == 1);
+        
+        if(~isempty(amp_1_idx) && ~isempty(amp_2_idx))
+            data = [data; spikesStruct{unit}.prob_spike(amp_1_idx), spikesStruct{unit}.prob_spike(amp_2_idx)];
+        end
+    end
+    
+    figure();
+    subplot(1,2,1)
+    plot(data','k')
+    subplot(1,2,2)
+    histogram(diff(data'),-2:0.2:2);
 %% make spike time distribution plot, and % excitatory response at different amplitudes
     amps_plot = [5,10,15,20,25,30,40,50,100];
     spike_times_amp = cell(numel(amps_plot),1); % preallocate space  
     num_responsive = zeros(1,numel(amps_plot));
     num_total = zeros(1,numel(amps_plot));
+    num_stims = zeros(1,numel(amps_plot));
     
     bin_edges = [0:1:20];
     bin_counts = cell(numel(amps_plot),1);
-    colors = inferno(numel(amps_plot) + 3);
+    colors = inferno(10);
     f_latency=figure(); hold on;
+    simulation_gain = ones(numel(amps_plot),size(bin_edges,2)-1);
+    if(exist('spikes_found'))
+        [~,~,bin_edge_idx] = histcounts(spikes_found_t,bin_edges);
+        unique_bin_edge_idx = unique(bin_edge_idx);
+        unique_bin_edge_idx(unique_bin_edge_idx == 0) = [];
+        for i_amp = 1:numel(amps_plot)
+            for i_unique = unique_bin_edge_idx
+%                 simulation_gain(i_amp,i_unique) = 1/mean(spikes_found(i_amp,bin_edge_idx == i_unique)./spikes_total(i_amp,bin_edge_idx == i_unique),'omitnan');
+
+            end
+        end
+    end
     
+    simulation_gain(isnan(simulation_gain)) = 1;
+    color_counter= 1;
+    baseline_fr_all = cell(numel(amps_plot),1);
     for a = 1:numel(amps_plot)
         bin_counts{a} = zeros(1,numel(bin_edges)-1);
         for unit = 1:numel(spikesStruct)
@@ -116,49 +176,57 @@
 
             if(~isempty(amp_idx) && ~isempty(unit_param_idx))
                 num_total(a) = num_total(a) + 1;
-                if(spikesStruct{unit}.is_excitatory_p(amp_idx) < 0.05)
+                if(any(spikesStruct{unit}.is_excitatory_p < 0.05) || 1==1) % use all neurons for now....
                     bin_counts{a} = bin_counts{a} + histcounts(spikesStruct{unit}.spike_times_post_stim{amp_idx}*1000,bin_edges)/array_data_all{unit}.numStims(unit_param_idx(1));
                     spike_times_amp{a} = [spike_times_amp{a},spikesStruct{unit}.spike_times_post_stim{amp_idx}*1000];
                     num_responsive(a) = num_responsive(a) + 1;% (spikesStruct{unit}.is_excitatory_p(amp_idx) < 0.05);
+                    num_stims(a) = num_stims(a) + arrayData{unit}.numStims(amp_idx);   
+                        baseline_fr_all{a}(end+1,1) = spikesStruct{unit}.mean_baseline_fr;
                 end
             end
         end
-        plot(bin_edges(1:end-1)+mode(diff(bin_edges)/2),bin_counts{a}/num_responsive(a),'color',colors(a,:),'linewidth',1.5)
+        plot(bin_edges(1:end-1)+mode(diff(bin_edges)/2),bin_counts{a}.*simulation_gain(a,:)/num_responsive(a),'color',colors(color_counter,:),'linewidth',1.5)
+%         plot(simulation_gain(a,:),'color',colors(a,:),'linewidth',1.5)
         hold on
+        color_counter = color_counter + 1;
     end
     
     xlabel('Time after stimulation offset (ms)');
     ylabel({'Number of spikes per stimulation','per neuron'});
     formatForLee(gcf)
     set(gca,'fontsize',14)
-    l=legend('5','10','15','20','25','30','40','50','100');
+%     l=legend('5','10','15','20','25','30','40','50','100');
+    l=legend('5\muA','10\muA','15\muA','25\muA','40\muA','100\muA')
     set(l,'box','off','fontsize',14);
     
-    f_percent_responsive = figure();
-    plot(amps_plot,num_responsive./num_total)
+%     f_percent_responsive = figure();
+%     plot(amps_plot,num_responsive./num_total)
     
 %% make cdf plot for latencies (dependent on previous section)
     
     x_data = {};
     y_data = {};
-    colors = inferno(numel(amps_plot) + 3);
+    colors = inferno(10);
     figure(); hold on
+    color_counter = 1;
+    linewidth_list = linspace(0.75,3,10);
     for a = 1:numel(amps_plot)
                 
         x_data{a} = sort([0;spike_times_amp{a}';spike_times_amp{a}';max(bin_edges)]);
-        y_data_list = (0:numel(spike_times_amp{a}));
+        y_data_list = (0:numel(spike_times_amp{a}))/num_stims(a);
         y_data{a} = reshape(repmat(y_data_list,2,1),[1,numel(y_data_list)*2]);
         
-        plot(x_data{a},y_data{a},'color',colors(a,:),'linewidth',1.5)
-
+        plot(x_data{a},y_data{a},'color',colors(color_counter,:),'linewidth',linewidth_list(color_counter))
+        color_counter = color_counter + 1;
     end
     xlabel('Time after stim offset (ms)');
-    ylabel('Cumulative count');
+    ylabel('Cumulative spikes per stimulation');
     formatForLee(gcf);
     set(gca,'fontsize',14)
-    l=legend('5','10','15','20','25','30','40','50','100');
+%     l=legend('5','10','15','20','25','30','40','50','100');
+    l=legend('5\muA','10\muA','15\muA','25\muA','40\muA','100\muA')
     set(l,'box','off','fontsize',14);
-    
+    xlim([0,10])
 %% get number of spikes (probability) as a function of polarity and pulse width
 % that for each neuron (on one plot probably)
 
@@ -206,13 +274,13 @@
     optsLatencyPlot.PW2 = 200;
     optsLatencyPlot.POL = 0; % 0 is cathodic first
     optsLatencyPlot.BIN_SIZE = 0.01; % ms
-    optsLatencyPlot.KERNEL_LENGTH = 20; % in bins
+    optsLatencyPlot.KERNEL_LENGTH = 50; % in bins
     optsLatencyPlot.PEAK_WINDOW = [0,20]; % in ms
-    optsLatencyPlot.BASELINE_WINDOW = [-100,-5]; % in ms
+    optsLatencyPlot.BASELINE_WINDOW = [-80,-5]; % in ms
     
     optsLatencyPlot.ADJUST_LATENCY_TIME = 1;
     
-    colors = inferno(numel(amps_plot));
+    colors = inferno(numel(amps_plot)+2);
     latencyStruct = {};
     
     amps_plot = [5,10,15,20,25,30,40,50,100];
@@ -241,11 +309,12 @@
         end
     end
     for a = 1:size(filtered_PSTH,1)
-        plot(filtered_PSTH(a,:)/num_units(a),'color',colors(a,:),'linewidth',1.5);
+        plot(latencyStruct{1}.x_data-0.453, filtered_PSTH(a,:)/num_units(a),'color',colors(a,:),'linewidth',1.5);
         hold on
     end
     l=legend('5','10','15','20','25','30','40','50','100');
-    
+    xlim([0,20])
+
 %% gaussian filter spike result to look at peaks specifically, look at independence of those peaks as well
 
     optsLatencyPlot.PW1 = 200;
@@ -360,20 +429,21 @@
     
 %% metric for inhibition
     optsInhibPlot = [];
-    optsInhibPlot.PRE_WINDOW = [-100,-5];
-    optsInhibPlot.POST_WINDOW = [0,200];
+    optsInhibPlot.PRE_WINDOW = [-80,-5];
+    optsInhibPlot.POST_WINDOW = [0,220];
     optsInhibPlot.MAX_TIME_START = 40; % ms
     optsInhibPlot.BIN_SIZE = 1;
-    optsInhibPlot.KERNEL_LENGTH = 5;
+    optsInhibPlot.KERNEL_LENGTH = 10;
     optsInhibPlot.BLANK_TIME = [0,5]; % ms
     
     optsInhibPlot.PW1 = 200;
     optsInhibPlot.PW2 = 200;
     optsInhibPlot.POL = 0; % 0 is cathodic first
     optsInhibPlot.NUM_CONSECUTIVE_BINS = 10;
+    optsInhibPlot.AMPS_PLOT = [5,10,15,20,25,30,40,50,100];
     
     inhibStruct = {};
-    for unit = 1:numel(arrayData)
+    for unit = 1:104%numel(arrayData)
         if(unit == 1)
             optsSpikesPlot.MAKE_FIGURE = 1;
         else
@@ -392,76 +462,96 @@
         inhib_dur = [inhib_dur,inhibStruct{u}.inhib_dur'];
         unit = [unit,u*ones(size(inhibStruct{u}.inhib_dur))'];
     end
-    % remove nan's
+%     % remove nan's
     keep_mask = ~isnan(amp) & ~isnan(inhib_dur) & ~isnan(unit);
     amp = amp(keep_mask);
     inhib_dur = inhib_dur(keep_mask);
-    unit = unit(keep_mask);
-    
-    tbl = table(amp',inhib_dur',unit','VariableNames',{'amp','inhib_dur','unit'});
-    mdl = fitlm(tbl,'inhib_dur~amp+unit')
-    
+    unit_idx = unit(keep_mask);
+%     
+% %     [inhib_dur_adj,lambda] = boxcox(inhib_dur');
+%     
+    inhib_dur_all = inhib_dur;
     % plot inhib dur vs. baseline fr for a single amp
-    amp_plot = 100;
-    inhib_dur = [];
-    baseline_fr = [];
-    for u = 1:numel(inhibStruct)
-        amp_idx = find(inhibStruct{u}.amp == amp_plot,1,'first');
-        if(~isempty(amp_idx) && inhibStruct{u}.is_inhib(amp_idx)==1)
-            baseline_fr(end+1,1) = inhibStruct{u}.baseline_fr;
-            inhib_dur(end+1,1) = inhibStruct{u}.inhib_dur(amp_idx);
-        end
-    end
+%     amp_plot = 100;
+%     inhib_dur = [];
+%     baseline_fr = [];
+%     for u = 1:numel(inhibStruct)
+%         amp_idx = find(inhibStruct{u}.amp == amp_plot,1,'first');
+%         if(~isempty(amp_idx) && inhibStruct{u}.is_inhib(amp_idx)==1)
+%             baseline_fr(end+1,1) = inhibStruct{u}.baseline_fr;
+%             inhib_dur(end+1,1) = inhibStruct{u}.inhib_dur(amp_idx);
+%         end
+%     end
     
-    figure(); plot(baseline_fr,inhib_dur,'.','markersize',20)
-%% plot each unit as a faded out line, then plot mean as a dark line
+%     figure(); plot(baseline_fr,inhib_dur,'.','markersize',20)
+% plot each unit as a faded out line, then plot mean as a dark line
+    max_rgb = 0.6;
+    min_rgb = 0;
+    num_colors = numel(arrayData);
+    f=figure(); f.Name = 'Duncan_Han_inhib_dur';
     
-    figure();
-    faded_color = [0,0,0,0.5];
     amps_plot = [5,10,15,20,25,30,40,50,100];
-    num_units_per_amp = zeros(size(amps_plot));
+    num_units_per_amp = zeros(2,numel(amps_plot));
     inhib_dur_total = zeros(size(amps_plot));
-    num_units_inhib = zeros(size(amps_plot));
+    num_units_inhib = zeros(2,numel(amps_plot));
+    monkey = ones(numel(arrayData),1);
     
     for unit = 1:numel(arrayData)
-       for a = 1:numel(inhibStruct{unit}.amp)
+        if(strcmpi(arrayData{unit}.monkey,'Duncan'))
+            monkey(unit) = 2;
+        end
+        for a = 1:numel(inhibStruct{unit}.amp)
             if(inhibStruct{unit}.keep_mask(a) == 1 && ~isempty(find(amps_plot == inhibStruct{unit}.amp(a))) && inhibStruct{unit}.is_inhib(a))
                 amp_idx = find(amps_plot == inhibStruct{unit}.amp(a));
                 inhib_dur_total(amp_idx) = inhib_dur_total(amp_idx) + inhibStruct{unit}.inhib_dur(a);
-                
-                
-                num_units_inhib(amp_idx) = num_units_inhib(amp_idx) + 1;
+
+                num_units_inhib(monkey(unit),amp_idx) = num_units_inhib(monkey(unit),amp_idx) + 1;
             end
             
             if((inhibStruct{unit}.keep_mask(a) == 1 || (inhibStruct{unit}.amp(a) ~=50 && inhibStruct{unit}.amp(a) ~= 20)) && ~isempty(find(amps_plot == inhibStruct{unit}.amp(a))))
                 amp_idx = find(amps_plot == inhibStruct{unit}.amp(a));
-                num_units_per_amp(amp_idx) = num_units_per_amp(amp_idx) + 1;
+                num_units_per_amp(monkey(unit),amp_idx) = num_units_per_amp(monkey(unit),amp_idx) + 1;
             end
             
         end
-        
+        faded_color = ones(1,3).*(unit/num_colors)*(max_rgb-min_rgb) + min_rgb;
+        if(unit == 15)
+            faded_color = getColorFromList(1,1);
+        end
         plot(inhibStruct{unit}.amp(inhibStruct{unit}.keep_mask==1),inhibStruct{unit}.inhib_dur(inhibStruct{unit}.keep_mask==1),...
-            'marker','none','markersize',16,'color',faded_color,'linewidth',0.5)
-        
+            'marker','.','markersize',12,'color',faded_color,'linewidth',0.75)
         hold on
 
     end
-    plot(amps_plot,inhib_dur_total./num_units_inhib,'k-','linewidth',2);
+    
+    tbl = table(amp',sqrt(inhib_dur_all'),unit_idx','VariableNames',{'amp','inhib_dur','unit'});
+    tbl.unit = categorical(tbl.unit);
+    mdl = fitlm(tbl,'inhib_dur~amp+unit')
+    x_data = unique(amp);
+    y_data = mean(mdl.Coefficients.Estimate(1)+mdl.Coefficients.Estimate(3:end)) + mdl.Coefficients.Estimate(2).*x_data;
+    plot(x_data,y_data.^2,'color',getColorFromList(1,0),'linewidth',3,'linestyle','--');
+    
     formatForLee(gcf)
     xlabel('Amplitude (\muA)');
     ylabel('Inhibition duration (ms)');
     set(gca,'fontsize',14)
        
     
-    figure();
-    plot(amps_plot,num_units_inhib./num_units_per_amp,'marker','.','markersize',16,'linewidth',1.5)
-    
+    f=figure(); hold on;
+    f.Name = 'Duncan_Han_inhibitory_percent_cell';
+%     for i = 1:2
+        plot(amps_plot,sum(num_units_inhib,1)./sum(num_units_per_amp,1),'marker','.','markersize',16,'linewidth',1.5,'linestyle','-','color',getColorFromList(1,1))
+%         fits = fit(amps_plot',(num_units_inhib(i,:)./num_units_per_amp(i,:))','cubicinterp')
+%         plot(amps_plot,feval(fits,amps_plot),'linewidth',1.5,'color',getColorFromList(1,1+i))
+%     end
     formatForLee(gcf)
     xlabel('Amplitude (\muA)');
     ylabel('Percent of cells with inhibitory response');
     set(gca,'fontsize',14)
-       
-
+%     l=legend('Monkey H','Monkey D');
+%     set(l,'box','off')
+    ylim([0,1])
+    xlim([0,105])
 %% plot PSTH for each condition for low and high speed cases
     mean_speed_cutoff = [0.2,4]; % plot speeds in range
     input_data.suffix = 'speed0-2';
@@ -557,9 +647,41 @@
 
 
 
-
-
-
-
-
-
+%% proportion of cells with only inhib response, only excite response, or both
+%     is_excite_inhib = zeros(numel(spikesStruct),9,2); % 9 amps, is_excite, is_inhib
+    is_excite_inhib = [];
+    for u = 1:numel(spikesStruct)
+        if(numel(inhibStruct{u}.amp) > 9)
+            for a_idx = 1:size(spikesStruct{u}.is_excitatory_p,1)
+                is_excite_inhib(end+1,:,1) = spikesStruct{u}.is_excitatory_p(a_idx,:) < 0.05;
+                is_excite_inhib(end,:,2) = inhibStruct{u}.is_inhib(a_idx,:);
+            end
+        end
+    end
+    total_cells = size(is_excite_inhib,1);
+    excite_only = sum(is_excite_inhib(:,:,1) == 1 & is_excite_inhib(:,:,2) == 0,1)./total_cells;
+    inhib_only = sum(is_excite_inhib(:,:,1) == 0 & is_excite_inhib(:,:,2) == 1,1)./total_cells;
+    excite_and_inhib = sum(is_excite_inhib(:,:,1) == 1 & is_excite_inhib(:,:,2) == 1,1)./total_cells;
+    neither = sum(is_excite_inhib(:,:,1) == 0 & is_excite_inhib(:,:,2) == 0,1)./total_cells;
+    
+    x = inhibStruct{1}.amp(1:4:end);
+    
+    figure(); hold on
+    
+    plot(x(1:4),excite_only','color',getColorFromList(1,0),'linewidth',2)
+    plot(x(1:4),inhib_only,'color',getColorFromList(1,1),'linewidth',2)
+    plot(x(1:4),excite_and_inhib,'color',getColorFromList(1,2),'linewidth',2)
+    plot(x(1:4),neither,'color',getColorFromList(1,3),'linewidth',2)
+    l=legend('excite only','inhib only','both','neither');
+    set(l,'box','off','location','best');
+    set(gca,'fontsize',14);
+    
+    xlabel('Amplitude (\muA)')
+    ylabel('Proportion')
+    ylim([0,1])
+    formatForLee(gcf);
+%     x = repmat(x,3,1);
+%     x = reshape(x,size(x,1)*size(x,2),1) + repmat([-0.3;0;0.3],size(is_excite_inhib,2),1);
+    
+    
+    
