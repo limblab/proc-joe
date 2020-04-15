@@ -167,12 +167,14 @@
 %% design stim pattern
         
     pattern_data = [];
-    pattern_data.num_patterns = 8; % must be even (pairs of bio and nonbio)
+    pattern_data.num_patterns = 10; % must be even (pairs of bio and nonbio)
     pattern_data.num_chans = 64;
     pattern_data.frequency = 200;
-    pattern_data.max_amp = 30;
+    pattern_data.max_amp = 60;
     
     num_amps = 15;
+    pattern_MSD_list = [];
+    
     pattern_data.amps = floor(linspace(pattern_data.max_amp/num_amps,pattern_data.max_amp,num_amps));
 
     pattern_data.pred_tgt_dir = [];
@@ -190,7 +192,7 @@
     % pick num_patterns/2 directions from the unique list of tgt_dirs used
     tgt_dirs = unique([td_all.target_direction]); % in deg
     bump_dirs = [90,270];
-    t_dirs = datasample(tgt_dirs,pattern_data.num_patterns/2,'Replace',false);
+    t_dirs = datasample(tgt_dirs,pattern_data.num_patterns/2,'Replace',true);
     b_dirs = datasample(bump_dirs,pattern_data.num_patterns/2);
     
     for d = 1:numel(t_dirs) % make two patterns per direction (1 non bio, 1 bio)
@@ -209,10 +211,14 @@
         for c = 1:numel(chans) % for each channel, find z_score in direction and map to amplitude
             z_score_idx = find(chan_num == chans(c));
             z = z_score(z_score_idx,td_idx,bd_idx);
+            z_all = reshape(z_score(z_score_idx,:,:),size(z_score,2)*size(z_score,3),1);
             
             norm_amp = min(1,max(0,z/pattern_data.max_z_score));
+            norm_amp_all = min(1,max(0,z_all/pattern_data.max_z_score));
+            
             bio_pattern.amp_ideal(c) = norm_amp*pattern_data.max_amp;
             bio_pattern.wave_num(c) = round(norm_amp*num_amps);
+            bio_pattern.amp_all_dirs(:,c) = norm_amp_all*pattern_data.max_amp;
             if(bio_pattern.wave_num(c) == 0)
                 bio_pattern.amp(c) = 0;
             else
@@ -232,12 +238,13 @@
         pattern_data.pattern{end+1} = nonbio_pattern;
         pattern_data.is_biomimetic(end+1) = 0;
         
+        pattern_MSD_list(end+1,1) = min(mean((nonbio_pattern.amp-bio_pattern.amp_all_dirs).^2,2)/(pattern_data.max_amp.^2));
     end
 
     for p = 1:pattern_data.num_patterns
         total_current(p) = sum(pattern_data.pattern{p}.amp);
     end
-    total_current
+%     total_current
     
  %% heatmap of patterns using pattern_data
     

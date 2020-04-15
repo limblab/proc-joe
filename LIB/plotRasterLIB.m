@@ -56,6 +56,9 @@ function [ figHandle ] = plotRasterLIB(xData,yData,optsPlotInput,optsSaveInput)
     else
         figHandle = gcf;
     end
+    if(optsPlot.MAKE_SUBPLOT)
+        subplot(optsPlot.SUBPLOT_SIZE(1),optsPlot.SUBPLOT_SIZE(2),optsPlot.SUBPLOT_IDX)
+    end
     % plot data
     if(strcmpi(optsPlot.MARKER_STYLE,'line')==0) % normal plot routine
         plot(xData,yData,'.','marker',optsPlot.MARKER_STYLE,'color',optsPlot.MARKER_COLOR,'markersize',optsPlot.MARKER_SIZE);
@@ -103,12 +106,20 @@ function [ figHandle ] = plotRasterLIB(xData,yData,optsPlotInput,optsSaveInput)
         end
     end
     
+
+    
     % do x and y limits last
     if(strcmpi(optsPlot.X_LIMITS,'')~=1)
         figHandle.CurrentAxes.XLim = optsPlot.X_LIMITS;
     end
     if(strcmpi(optsPlot.Y_LIMITS,'')~=1)
         figHandle.CurrentAxes.YLim = optsPlot.Y_LIMITS;
+    end
+    
+    % plot zero line if prompted
+    if(optsPlot.PLOT_ZERO_LINE)
+        hold on
+        plot([0,0],figHandle.CurrentAxes.YLim,'r--','linewidth',1)
     end
     
     % format for lee
@@ -161,7 +172,7 @@ function [optsPlot] = configureOptionsPlot(optsPlotInput,xData,yData)
     optsPlot.LINE_STYLE = '';
     optsPlot.LINE_LENGTH = 0.95;
     optsPlot.TITLE = '';
-    optsPlot.LINE_WIDTH = 1.2;
+    optsPlot.LINE_WIDTH = 1.5;
     optsPlot.MARKER_STYLE = '.';
     optsPlot.MARKER_COLOR = 'k';
     optsPlot.MARKER_SIZE = 3;
@@ -173,8 +184,12 @@ function [optsPlot] = configureOptionsPlot(optsPlotInput,xData,yData)
     optsPlot.STIM_DATA_COLOR = 'r';
     optsPlot.STIM_LINE_WIDTH = 1.2;
     optsPlot.SORT_DATA = 'no'; % postStimuliTime
-    optsPlot.FONT_SIZE = 16;
+    optsPlot.FONT_SIZE = 14;
     
+    optsPlot.MAKE_SUBPLOT = 0;
+    optsPlot.SUBPLOT_IDX = -1;
+    optsPlot.SUBPLOT_SIZE = [];
+    optsPlot.PLOT_ZERO_LINE = 0;
     %% check if in optsPlot and optsPlotInput, overwrite if so
     try
         inputFieldnames = fieldnames(optsPlotInput);

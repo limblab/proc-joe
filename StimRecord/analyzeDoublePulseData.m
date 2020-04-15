@@ -118,7 +118,7 @@
     
      
 %% plot raster 
-    for arrIdx = 4%:numel(array_data)   
+    for arrIdx = 15%:numel(array_data)   
 
         optsPlotFunc.BIN_SIZE = mode(diff(array_data{arrIdx}.binEdges{1,1}));
         optsPlotFunc.FIGURE_SAVE = 0;
@@ -131,7 +131,7 @@
 
         optsPlotFunc.STIMULATION_LENGTH = 0.453;
 
-        optsPlotFunc.MARKER_STYLE  = '.';
+        optsPlotFunc.MARKER_STYLE  = 'line';
 
         optsPlotFunc.PLOT_AFTER_STIMULATION_END = 1;
 
@@ -147,41 +147,38 @@
     
     
 %% count spikes in window after each stimulation, plot those values
-    baseline_window = [-100,-5]; % in ms
+    baseline_window = [-80,-5]; % in ms
     window = [0,9]; % in ms
-    post_stim_fr = nan(numel(array_data),input_data.num_conditions,2);
-    stim_firing_rate = nan(numel(array_data),input_data.num_conditions,2);
-    baseline_firing_rate = nan(numel(array_data),input_data.num_conditions,1);
+    post_stim_fr = nan(numel(array_data),8,2);
+    stim_firing_rate = nan(numel(array_data),8,2);
+    baseline_firing_rate = nan(numel(array_data),8,1);
     
-    keep_mask = input_data.num_pulses == 2;
     single_pulse_idx = find(input_data.num_pulses == 1);
     monkey_idx = [];
     
     for u = 1:numel(array_data)
+        keep_mask = zeros(8,1);
         for cond = 1:numel(array_data{u}.spikeTrialTimes)
-            if(keep_mask(cond) == 1 || cond == single_pulse_idx)
-                stim_offset = input_data.IPI(cond);
-                if(input_data.IPI(cond) == 20)
-                    stim_offset = 20.63;
-                elseif(input_data.IPI(cond) == 10)
-                    stim_offset = 10.6;
-                elseif(input_data.IPI(cond) == 200)
-                    stim_offset = 201.3;
-                end
-                window_adj = window + stim_offset;
-                       
+            
+            if(~isempty(array_data{u}.PULSE_TIMES{cond}) && numel(array_data{u}.PULSE_TIMES{cond}{1}) <= 2)
+                keep_mask(cond) = 1;
+                if(cond == 1)
+                    window_adj = window;
+                else
+                    window_adj = window + array_data{u}.PULSE_TIMES{cond}{1}(2)*1000;
+                end 
                 baseline_firing_rate(u,cond) = sum(array_data{u}.spikeTrialTimes{cond}*1000 > baseline_window(1) & ...
                      array_data{u}.spikeTrialTimes{cond}*1000 < baseline_window(2))/ ...
-                     array_data{u}.num_stims(cond)/(diff(baseline_window))*1000; % convert to Hz
+                     array_data{u}.num_stims(cond)/(diff(baseline_window))*diff(window);%*1000; % convert to Hz
                  
                 stim_firing_rate(u,cond,1) = sum(array_data{u}.spikeTrialTimes{cond}*1000 > window(1) & ...
                      array_data{u}.spikeTrialTimes{cond}*1000 < window(2))/ ...
-                     array_data{u}.num_stims(cond)/(diff(window))*1000; % convert to Hz, first pulse response
+                     array_data{u}.num_stims(cond);%/(diff(window))*1000; % convert to Hz, first pulse response
                 
              
                 stim_firing_rate(u,cond,2) = sum(array_data{u}.spikeTrialTimes{cond}*1000 > window_adj(1) & ...
                      array_data{u}.spikeTrialTimes{cond}*1000 < window_adj(2))/ ...
-                     array_data{u}.num_stims(cond)/(diff(window_adj))*1000; % convert to Hz, second pulse response
+                     array_data{u}.num_stims(cond);%/(diff(window_adj))*1000; % convert to Hz, second pulse response
                  
                 post_stim_fr(u,cond,:) = stim_firing_rate(u,cond,:) - baseline_firing_rate(u,cond,1);
                
@@ -207,37 +204,40 @@
     for m = 1:2 % duncan, then han
         keep_mask = monkey_idx == m-1; % matlab indexing causes issues...
         
-        plot(post_stim_fr(keep_mask,single_pulse_idx,1),post_stim_fr(keep_mask,input_data.num_pulses == 2 & input_data.IPI == 200,2),'linestyle','none',...
-            'marker',markers{m},'color',getColorFromList(1,0),'markerfacecolor',getColorFromList(1,0),'markersize',marker_size(m));
+        % 200 ms
+        plot(post_stim_fr(keep_mask,6,1),post_stim_fr(keep_mask,6,2),'linestyle','none',...
+            'marker',markers{m},'color',getColorFromList(5,0),'markerfacecolor',getColorFromList(5,0),'markersize',marker_size(m));
         
-        plot(post_stim_fr(keep_mask,single_pulse_idx,1),post_stim_fr(keep_mask,input_data.num_pulses == 2 & input_data.IPI == 20,2),'linestyle','none',...
-            'marker',markers{m},'color',getColorFromList(1,1),'markerfacecolor',getColorFromList(1,1),'markersize',marker_size(m));
+        % 20 ms
+        plot(post_stim_fr(keep_mask,7,1),post_stim_fr(keep_mask,8,2),'linestyle','none',...
+            'marker',markers{m},'color',getColorFromList(5,2),'markerfacecolor',getColorFromList(5,2),'markersize',marker_size(m));
         
-        plot(post_stim_fr(keep_mask,single_pulse_idx,1),post_stim_fr(keep_mask,input_data.num_pulses == 2 & input_data.IPI == 10,2),'linestyle','none',...
-            'marker',markers{m},'color',getColorFromList(1,2),'markerfacecolor',getColorFromList(1,2),'markersize',marker_size(m));
+        % 10 ms
+        plot(post_stim_fr(keep_mask,8,1),post_stim_fr(keep_mask,7,2),'linestyle','none',...
+            'marker',markers{m},'color',getColorFromList(5,3),'markerfacecolor',getColorFromList(5,3),'markersize',marker_size(m));
         
     end
     
-    unity_line = plot([-20,150],[-20,150],'k--','linewidth',1.5);
+    unity_line = plot([-0.2,1.2],[-0.2,1.2],'k--','linewidth',1.5);
 
-    xlabel('Response to single pulse (Hz)');
-    ylabel('Response to second pulse (Hz)');
+    xlabel('Response to single pulse (# spikes/stim)');
+    ylabel('Response to second pulse (# spikes/stim)');
     l=legend('200ms','20ms','10ms'); % actual IPI is [10.6,20.6,201.03]
     set(l,'box','off','fontsize',14,'location','northwest');
     uistack(unity_line,'bottom');
     formatForLee(gcf);
     set(gca,'fontsize',14);
-    xlim([-20,150]); ylim([-20,150])
-%     ylim([0,1]);
+%     xlim([-20,150]); ylim([-20,150])
+    xlim([-0.2,1.2]); ylim([-0.2,1.2]);
 
 
 %% look at duration of inhibition after second pulse compared to the single pulse case
     optsInhibPlot = [];
-    optsInhibPlot.PRE_WINDOW = [-200,-5];
+    optsInhibPlot.PRE_WINDOW = [-80,-5]; % ms
     post_window = [0,200]; % ms
     optsInhibPlot.MAX_TIME_START = 70; % ms
     optsInhibPlot.BIN_SIZE = 1;
-    optsInhibPlot.KERNEL_LENGTH = 5;
+    optsInhibPlot.KERNEL_LENGTH = 10;
     blank_time = [0,5]; % ms
     
     optsInhibPlot.PW1 = 200;
@@ -246,41 +246,42 @@
     optsInhibPlot.NUM_CONSECUTIVE_BINS = 10;
     
     inhibStruct = {};
-    keep_mask = input_data.num_pulses <= 2;
     
-    figure();
     inhib_dur = [];
     monkey_idx = [];
     for u = 1:numel(array_data)
-        for cond = 1:numel(array_data{u}.spikeTrialTimes)
-            if(input_data.num_pulses(cond) == 1) % single pulse
-                optsInhibPlot.POST_WINDOW(cond,:) = post_window;
-                optsInhibPlot.BLANK_TIME(cond,:) = blank_time;
-            elseif(input_data.num_pulses(cond) == 2)% double pulse
-                optsInhibPlot.POST_WINDOW(cond,:) = post_window + input_data.IPI(cond);
-                optsInhibPlot.BLANK_TIME(cond,:) = blank_time + input_data.IPI(cond);
-            else % train
-                optsInhibPlot.POST_WINDOW(cond,:) = post_window + 200;
-                optsInhibPlot.BLANK_TIME(cond,:) = blank_time + 200;
+        if(numel(array_data{u}.num_stims) == 8)
+            for cond = 1:numel(array_data{u}.spikeTrialTimes)
+                if(~isempty(array_data{u}.PULSE_TIMES{cond}) && numel(array_data{u}.PULSE_TIMES{cond}{1}) == 1) % single pulse
+                    optsInhibPlot.POST_WINDOW(cond,:) = post_window;
+                    optsInhibPlot.BLANK_TIME(cond,:) = blank_time;
+                elseif(~isempty(array_data{u}.PULSE_TIMES{cond}) && numel(array_data{u}.PULSE_TIMES{cond}{1}) == 2)% double pulse
+                    optsInhibPlot.POST_WINDOW(cond,:) = post_window + array_data{u}.PULSE_TIMES{cond}{1}(2)*1000;
+                    optsInhibPlot.BLANK_TIME(cond,:) = blank_time + array_data{u}.PULSE_TIMES{cond}{1}(2)*1000;
+                else % train
+                    optsInhibPlot.POST_WINDOW(cond,:) = post_window + 200;
+                    optsInhibPlot.BLANK_TIME(cond,:) = blank_time + 200;
+
+                end
 
             end
-        
-        end
-        
-        [inhibStruct{u},figure_handles] = plotInhibitionDuration(array_data{u},optsInhibPlot);
 
-        monkey_idx(u) = strcmpi(array_data{u}.monkey,'Han'); % 1 = han, 0 = duncan 
-        inhib_dur(end+1,:) = inhibStruct{u}.inhib_dur;
-        
+            [inhibStruct{u},figure_handles] = plotInhibitionDuration(array_data{u},optsInhibPlot);
+            
+            if(~isempty(inhibStruct{u}))
+                monkey_idx(end+1,1) = strcmpi(array_data{u}.monkey,'Han'); % 1 = han, 0 = duncan 
+                inhib_dur(end+1,:) = inhibStruct{u}.inhib_dur;
+            end
+        end
         % plot inhib duration for each condition, have to sort IPI first
-        [IPI_sort,sort_idx] = sort(input_data.IPI);
-        inhib_dur_sort = inhibStruct{u}.inhib_dur(sort_idx);
-        keep_mask_sort = keep_mask(sort_idx);
-        plot(IPI_sort(keep_mask_sort == 1),inhib_dur_sort(keep_mask_sort == 1))
-        hold on
+%         [IPI_sort,sort_idx] = sort(input_data.IPI);
+%         inhib_dur_sort = inhibStruct{u}.inhib_dur(sort_idx);
+%         keep_mask_sort = keep_mask(sort_idx);
+%         plot(IPI_sort(keep_mask_sort == 1),inhib_dur_sort(keep_mask_sort == 1))
+%         hold on
     end
  
-%% dot plot showing inhib dur to a single pulse and to the second pulse for different IPIs
+% dot plot showing inhib dur to a single pulse and to the second pulse for different IPIs
 
     markers = {'.','s'};
     marker_size = [22,8];
@@ -290,19 +291,18 @@
     for m = 1:2 % duncan, then han
         keep_mask = monkey_idx == m-1; % matlab indexing causes issues...
         
-        plot(inhib_dur(keep_mask,single_pulse_idx),inhib_dur(keep_mask,input_data.num_pulses == 2 & input_data.IPI == 200),'linestyle','none',...
-            'marker',markers{m},'color',getColorFromList(1,0),'markerfacecolor',getColorFromList(1,0),'markersize',marker_size(m));
+        plot(inhib_dur(keep_mask,1),inhib_dur(keep_mask,6),'linestyle','none',...
+            'marker',markers{m},'color',getColorFromList(5,0),'markerfacecolor',getColorFromList(5,0),'markersize',marker_size(m));
         
-        plot(inhib_dur(keep_mask,single_pulse_idx),inhib_dur(keep_mask,input_data.num_pulses == 2 & input_data.IPI == 20),'linestyle','none',...
-            'marker',markers{m},'color',getColorFromList(1,1),'markerfacecolor',getColorFromList(1,1),'markersize',marker_size(m));
+        plot(inhib_dur(keep_mask,1),inhib_dur(keep_mask,8),'linestyle','none',...
+            'marker',markers{m},'color',getColorFromList(5,2),'markerfacecolor',getColorFromList(5,2),'markersize',marker_size(m));
         
-        plot(inhib_dur(keep_mask,single_pulse_idx),inhib_dur(keep_mask,input_data.num_pulses == 2 & input_data.IPI == 10),'linestyle','none',...
-            'marker',markers{m},'color',getColorFromList(1,2),'markerfacecolor',getColorFromList(1,2),'markersize',marker_size(m));
+        plot(inhib_dur(keep_mask,1),inhib_dur(keep_mask,7),'linestyle','none',...
+            'marker',markers{m},'color',getColorFromList(5,3),'markerfacecolor',getColorFromList(5,3),'markersize',marker_size(m));
         
     end
     
-    unity_line = plot([-20,200],[-20,200],'k--','linewidth',1.5);
-    double_line = plot([-20,200],[-40,400],'--','color',[0.5,0.5,0.5],'linewidth',1.5);
+    unity_line = plot([-20,175],[-20,175],'k--','linewidth',1.5);
     
     xlabel('Inhibition duration to single pulse (ms)');
     ylabel('Inhibition duration to second pulse (ms)');
@@ -311,11 +311,11 @@
     uistack(unity_line,'bottom');
     formatForLee(gcf);
     set(gca,'fontsize',14);
-    xlim([0,200]); ylim([0,200])
+    xlim([0,175]); ylim([0,175])
 %     ylim([0,1]);
 
 
-%% dot plot showing inhib dur due to superposition vs. second pulse inhib dur
+% dot plot showing inhib dur due to superposition vs. second pulse inhib dur
   
     markers = {'.','s'};
     marker_size = [22,8];
@@ -324,53 +324,36 @@
     hold on
     for m = 1:2 % duncan, then han
         keep_mask = monkey_idx == m-1; % matlab indexing causes issues...
-        inhib_dur_superposition = repmat(inhib_dur(:,single_pulse_idx),1,size(inhib_dur,2)) + max(repmat(inhib_dur(:,single_pulse_idx),1,size(inhib_dur,2)) - repmat(input_data.IPI,size(inhib_dur,1),1),zeros(size(inhib_dur)));
+%         inhib_dur_superposition = repmat(inhib_dur(:,1),1,size(inhib_dur,2)) + max(repmat(inhib_dur(:,1),1,size(inhib_dur,2)) - repmat(input_data.IPI,size(inhib_dur,1),1),zeros(size(inhib_dur)));
         
-        plot(inhib_dur_superposition(keep_mask,input_data.num_pulses == 2 & input_data.IPI == 200),inhib_dur(keep_mask,input_data.num_pulses == 2 & input_data.IPI == 200),'linestyle','none',...
-            'marker',markers{m},'color',getColorFromList(1,0),'markerfacecolor',getColorFromList(1,0),'markersize',marker_size(m));
+        plot(inhib_dur(keep_mask,1) + max(inhib_dur(keep_mask,1)-200,zeros(sum(keep_mask),1)),inhib_dur(keep_mask,6),'linestyle','none',...
+            'marker',markers{m},'color',getColorFromList(5,0),'markerfacecolor',getColorFromList(5,0),'markersize',marker_size(m));
         
-        plot(inhib_dur_superposition(keep_mask,input_data.num_pulses == 2 & input_data.IPI == 20),inhib_dur(keep_mask,input_data.num_pulses == 2 & input_data.IPI == 20),'linestyle','none',...
-            'marker',markers{m},'color',getColorFromList(1,1),'markerfacecolor',getColorFromList(1,1),'markersize',marker_size(m));
+        plot(inhib_dur(keep_mask,1) + max(inhib_dur(keep_mask,1)-20,zeros(sum(keep_mask),1)),inhib_dur(keep_mask,8),'linestyle','none',...
+            'marker',markers{m},'color',getColorFromList(5,2),'markerfacecolor',getColorFromList(5,2),'markersize',marker_size(m));
         
-        plot(inhib_dur_superposition(keep_mask,input_data.num_pulses == 2 & input_data.IPI == 10),inhib_dur(keep_mask,input_data.num_pulses == 2 & input_data.IPI == 10),'linestyle','none',...
-            'marker',markers{m},'color',getColorFromList(1,2),'markerfacecolor',getColorFromList(1,2),'markersize',marker_size(m));
+        plot(inhib_dur(keep_mask,1) + max(inhib_dur(keep_mask,1)-10,zeros(sum(keep_mask),1)),inhib_dur(keep_mask,7),'linestyle','none',...
+            'marker',markers{m},'color',getColorFromList(5,3),'markerfacecolor',getColorFromList(5,3),'markersize',marker_size(m));
         
     end
     
-    unity_line = plot([-20,300],[-20,300],'k--','linewidth',1.5);
-
-    xlabel('Inhibition duration to superposition (ms)');
-    ylabel('Inhibition duration to second pulse (ms)');
+    unity_line = plot([-20,175],[-20,175],'k--','linewidth',1.5);
+    xlabel('Inhibition duration predicted by superposition (ms)');
+    ylabel('Inhibition duration to second pulse');
     l=legend('200ms','20ms','10ms'); % actual IPI is [10.6,20.6,201.03]
     set(l,'box','off','fontsize',14,'location','northwest');
     uistack(unity_line,'bottom');
     formatForLee(gcf);
     set(gca,'fontsize',14);
-    xlim([0,300]); ylim([0,300])
+    xlim([0,175]); ylim([0,175])
 %     ylim([0,1]);
-
-
-%% histogram paired difference between single pulse inhib duration and 
+    % fit 10 and 20 ms data to get line representing fraction less of
+    % inhibition
     
-    single_pulse_idx = find(input_data.num_pulses == 1);
-    dbl_pulse_idx = find(input_data.num_pulses == 2);
-    bin_edges = [-50:10:200];
+    super_data = [inhib_dur(keep_mask,1) + max(inhib_dur(keep_mask,8)-20,zeros(sum(keep_mask),1)); inhib_dur(keep_mask,1) + max(inhib_dur(keep_mask,7)-10,zeros(sum(keep_mask),1))];
+    second_pulse_data = [inhib_dur(keep_mask,8); inhib_dur(keep_mask,7)];
     
-    figure();
-    inhib_dur = [];
-    % get relevant inhib dur
-    for u = 1:numel(array_data)
-%         if(sum(isnan(inhibStruct{u}.inhib_dur([single_pulse_idx,dbl_pulse_idx])'))==0)
-            inhib_dur(end+1,:) = inhibStruct{u}.inhib_dur;
-%         end
-    end
-    
-    for d = 1:numel(dbl_pulse_idx)
-        subplot(numel(dbl_pulse_idx),1,d);
-    
-        inhib_dur_diff = diff(inhib_dur(:,[1,dbl_pulse_idx(d)])')';
-        histogram(inhib_dur_diff,bin_edges);
-    end
+    mdl = fitlm(super_data,second_pulse_data)
     
     
     

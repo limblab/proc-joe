@@ -2,11 +2,11 @@
 
 
 %% determine filename and input data
-    input_data.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\RingReporting\Han\Han_20190603_RR_training\';
+    input_data.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\CObump\Han_20200127_CObumpmove\';
 %     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 
-    input_data.task='taskRR';
+    input_data.task='taskCObump';
     input_data.ranBy='ranByJoseph'; 
     input_data.array1='arrayLeftS1'; 
     input_data.monkey='monkeyHan';
@@ -24,59 +24,73 @@
     cd(pwd);
     
   %% covert to td
-      params.event_list = {'goCueTime';'tgtDir';'bumpDir';'bumpTime'};
-    params.trial_results = {'R','F'};
+    params.event_list = {'goCueTime';'tgtDir';'bumpDir';'bumpTime'};
+    params.trial_results = {'R'};
     params.extra_time = [1,2];
     params.include_ts = 0;
-    params.exclude_units = [1,255];
-    td_all = parseFileByTrial(cds,params);
+    params.exclude_units = [];
+    params.remove_nan_idx = true;
+    params.nan_idx_names = {'idx_goCueTime','idx_startTime','idx_endTime'};
+    td = parseFileByTrial(cds,params);
+    td = stripSpikeSorting(td);
+    td = removeBadTrials(td,params);
+
     params.start_idx = 'idx_goCueTime';
     params.end_idx = 'idx_endTime';
-    td_all = getMoveOnsetAndPeak(td_all,params);
-    td_all = removeBadTrials(td_all);
-    [td_all] = removeBadNeurons(td_all,params);
+    td = getMoveOnsetAndPeak(td,params);
+    [td] = removeBadNeurons(td,params);
    
+    td_all = td([td.idx_goCueTime] > [td.idx_bumpTime]);
     
+    for tr = 1:numel(td_all)
+        td_all(tr).bumpDir = mod(td_all(tr).bumpDir,360);
+    end
 %% for each neuron, get the mean firing rate for each unique BD and during baseline
-    tgt_dir = unique([td_all.tgtDir]);
+    bump_dir = unique([td_all.bumpDir]);
+    bump_dir(isnan(bump_dir)) = [];
+    
     mean_fr_bump = [];
     mean_fr_baseline = [];
     mean_fr_move = [];
+    std_fr_baseline_all_dir = [];
+    mean_fr_baseline_all_dir = [];
     z_score = [];
     chan_num = [];
     array_name = 'LeftS1';
     
     
     for unit = 1:size(td_all(1).([array_name,'_unit_guide']),1)
-        for bd = 1:numel(tgt_dir)
-            trial_mask = isEqual(round([td_all.tgtDir]), tgt_dir(bd));
+        for bd = 1:numel(bump_dir)
+            trial_mask = isEqual(round([td_all.bumpDir]), bump_dir(bd));
             fr_data_bump = [];
             fr_data_baseline = [];
             fr_data_move = [];
             td_temp = td_all(trial_mask);
             for t = 1:numel(td_temp)
-                window_bump = td_temp(t).idx_bumpTime + [0,100];
-                window_baseline = td_temp(t).idx_bumpTime - [300,100];
-                window_move = td_temp(t).idx_movement_on + [50,250];
+                window_bump = td_temp(t).idx_bumpTime + [0,5];
+                window_baseline = td_temp(t).idx_bumpTime - [40,20];
+%                 window_move = td_temp(t).idx_movement_on + [5,25];
                 
 %                 window_baseline = [td_all(t).idx_startTime, td_all(t).idx_bumpTime-2];
                 fr_data_bump(t) = sum(td_temp(t).([array_name,'_spikes'])(window_bump(1):window_bump(2),unit))/(diff(window_bump)*td_temp(t).bin_size);
                 fr_data_baseline(t) = sum(td_temp(t).([array_name,'_spikes'])(window_baseline(1):window_baseline(2),unit))/(diff(window_baseline)*td_temp(t).bin_size);
-                fr_data_move(t) = sum(td_temp(t).([array_name,'_spikes'])(window_move(1):window_move(2),unit))/(diff(window_move)*td_temp(t).bin_size);
+%                 fr_data_move(t) = sum(td_temp(t).([array_name,'_spikes'])(window_move(1):window_move(2),unit))/(diff(window_move)*td_temp(t).bin_size);
             end
             mean_fr_bump(unit,bd) = mean(fr_data_bump);
-%             mean_fr_baseline(unit,bd) = mean(fr_data_baseline);
-            mean_fr_move(unit,bd) = mean(fr_data_move);
-%             std_fr_baseline(unit,bd) = std(fr_data_baseline);
+            mean_fr_baseline(unit,bd) = mean(fr_data_baseline);
+            
+%             mean_fr_move(unit,bd) = mean(fr_data_move);
+            std_fr_baseline(unit,bd) = std(fr_data_baseline);
 %             z_score(unit,bd) = (mean_fr_bump(unit,bd) - mean_fr_baseline(unit,bd))./(std_fr_baseline(unit,bd)+eps);
         end
         chan_num(unit,1) = td_all(1).([array_name,'_unit_guide'])(unit,1);
-        mean_fr_baseline(unit) = mean(mean_fr_bump(unit,:));
-        std_fr_baseline(unit) = std(mean_fr_bump(unit,:));
-        z_score(unit,:) = (mean_fr_bump(unit,:) - mean_fr_baseline(unit))./(std_fr_baseline(unit)+eps);
+        std_fr_baseline_all_dir(unit,1) = std(mean_fr_baseline(unit,:));
+
+        mean_fr_baseline_all_dir(unit,1) = mean(mean_fr_baseline(unit,:));
+        z_score(unit,:) = (mean_fr_bump(unit,:) - mean_fr_baseline_all_dir(unit))./(std_fr_baseline_all_dir(unit)+eps);
         
-        figure()
-        plot(tgt_dir,z_score(unit,:),'.','markersize',14)
+%         figure()
+%         plot(bump_dir,z_score(unit,:),'.','markersize',14)
     end
 
 % mean_fr = mean_fr_bump - mean(mean_fr_bump,2);
@@ -85,7 +99,7 @@
 %% plot z-score of responses during a bump dir
     map_filename = input_data.mapFileName(8:end);
     map_data = loadMapFile(map_filename);
-    min_max_z_score = 2.5;
+    min_max_z_score = 4;
 
     numColors = 1000;
     color_1 = [153,51,255]/256;
@@ -131,7 +145,7 @@
         b.Label.String = 'Normalized change in firing rate';
         b.Label.FontSize = 16;
 
-        f.Name = ['Duncan_20190410_RRBumpHeatmap_',num2str(tgt_dir(bd)),'deg'];
+        f.Name = ['Duncan_20190410_RRBumpHeatmap_',num2str(bump_dir(bd)),'deg'];
     %     saveFiguresLIB(f,input_data.folderpath,f.Name);
 
     end
@@ -140,18 +154,20 @@
 %% design stim pattern
         
     pattern_data = [];
-    pattern_data.num_patterns = 8; % must be even (pairs of bio and nonbio)
-    pattern_data.num_chans = 64;
-    pattern_data.frequency = 250;
+    pattern_data.num_patterns = 10000; % must be even (pairs of bio and nonbio)
+    pattern_data.num_chans = 32;
+    pattern_data.frequency = 200;
     pattern_data.max_amp = 60;
     
     num_amps = 15;
     pattern_data.amps = floor(linspace(pattern_data.max_amp/num_amps,pattern_data.max_amp,num_amps));
 
+    pattern_MSD_list = [];
+    
     pattern_data.pred_dirs = [];
     pattern_data.is_biomimetic = [];
-    pattern_data.max_z_score = 2.5;
-    pattern_data.z_score_cutoff = 0.5;
+    pattern_data.max_z_score = 4;
+    pattern_data.z_score_cutoff = 1;
     pattern_data.pattern = [];
 
     % remove channels from chan_num which don't respond in any direction
@@ -160,10 +176,11 @@
     chans_use_all = chan_num(chan_mask);
 
     % pick num_patterns/2 directions from the unique list of tgt_dirs used
-    tgt_dirs = unique([td_all.tgtDir]); % in deg
-    dirs = datasample(tgt_dirs,pattern_data.num_patterns/2,'Replace',false);
+%     bump_dirs = unique([td_all.bumpDir]); % in deg
+    bump_dirs = [0,90,180,270]; % only do these....
+    dirs = datasample(bump_dirs,pattern_data.num_patterns/2,'Replace',true);
     for d = dirs % make two patterns per direction (1 non bio, 1 bio)
-        bd_idx = find(tgt_dirs == d);
+        bd_idx = find(bump_dirs == d);
 
         pattern_data.pred_dirs(end+1:end+2) = d;
         chans_use_dir = chans_use_all(abs(z_score(chan_mask,bd_idx)) < 1000 & ~isnan(z_score(chan_mask,bd_idx)));
@@ -198,12 +215,13 @@
         pattern_data.pattern{end+1} = nonbio_pattern;
         pattern_data.is_biomimetic(end+1) = 0;
         
+        pattern_MSD_list(end+1,1) = mean((nonbio_pattern.amp-bio_pattern.amp).^2)/(pattern_data.max_amp.^2);
     end
 
     for p = 1:pattern_data.num_patterns
         total_current(p) = sum(pattern_data.pattern{p}.amp);
     end
-    total_current
+%     total_current
     
  %% heatmap of patterns using pattern_data
     

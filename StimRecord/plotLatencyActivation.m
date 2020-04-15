@@ -27,7 +27,7 @@ function [output_data,figure_handles] = plotLatencyActivation(array_data, input_
                 
         % filter with gaussian kernel 
         filtered_PSTH(cond,:) = gaussianKernel(array_data_rebin.binCounts{cond},input_data.KERNEL_LENGTH);
-        
+        x_data = array_data_rebin.binEdges{cond}(1:end-1) + mode(diff(array_data_rebin.binEdges{cond}(1:end-1)))/2;
         % get peak latencies in filtered_PSTH
         peak_window_idx = [find(array_data_rebin.binEdges{cond} > input_data.PEAK_WINDOW(1),1,'first'),...
             find(array_data_rebin.binEdges{cond} > input_data.PEAK_WINDOW(2),1,'first')];
@@ -74,6 +74,7 @@ function [output_data,figure_handles] = plotLatencyActivation(array_data, input_
     output_data.keep_mask = keep_mask;
     output_data.pw1 = pw1;
     output_data.pol = pol;
+    output_data.x_data = x_data;
 end
 
 

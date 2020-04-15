@@ -9,8 +9,13 @@
     p_vals_all_electrodes = [];
     lm = {};
     rotation_angles = [0,0]; %
+    anova_data = [];
+    anova_data.session = [];
+    anova_data.ICMS = [];
+    anova_data.bump = [];
+    anova_data.rt = [];
     
-    for monk = monkey_names(2)
+    for monk = monkey_names(1)
         monk = monk{1};
         if(strcmpi(monk,'Duncan'))
             color_use = getColorFromList(1,2);
@@ -102,8 +107,16 @@
                 
                 [h,p] = ttest2(rt_data,bump_data,'vartype','unequal');
                 p_vals_to_bump(end+1,:) = [p,mean(rt_data) < mean(bump_data)];
+                
+                anova_data.rt(end+1,1) = all_files_data.mean_rt(i+start_idx-1);
+                anova_data.session(end+1,1) = fnum;
+                anova_data.ICMS(end+1,1) = 1;
             end
             
+            anova_data.rt(end+1,1) = mean(bump_data);
+            anova_data.session(end+1,1) = fnum;
+            anova_data.ICMS(end+1,1) = 0;
+            anova_data.bump(end+1,1) = 1;
             
         end
 
@@ -119,15 +132,15 @@
         
         % get mean and std of num trials
         trial_length = [all_files_data.num_trials, bump_num_trials, vis_num_trials];
-        num_trials_all = [num_trials_all, trial_length];
+%         num_trials_all = [num_trials_all, trial_length];
         mean_trials(end+1,1) = mean(trial_length);
         std_trials(end+1,1) = std(trial_length);
     
-    
+        num_trials_all = [num_trials_all,trial_length];
         
         
         
-% vertical histogram of RTs (meant to go next to above plot)
+    % vertical histogram of RTs (meant to go next to above plot)
         binSize = 0.01;
         binEdges = 0.1:binSize:0.4;
         f=figure();
@@ -168,8 +181,9 @@
             stat_rt(end+1) = all_files_data.mean_rt(i); 
             stat_bump(end+1) = mean(all_files_data.bump_all{i});
         end
+        stat_bump = unique(stat_bump); % only use 1 bump per session and do not pair data
         
-        [h,p] = ttest(stat_rt,stat_bump);
+        [h,p] = ttest2(stat_rt,stat_bump,'vartype','unequal');
         p_vals_all_electrodes(end+1) = p;
         
         
@@ -186,6 +200,7 @@
         set(gca,'fontsize',14)
         ylim([0.,0.5])
         xlim([0,0.2])
+        
 % plot heatmap of RT across array
         pos_all = [];
         if(strcmpi(monk,'Han'))
@@ -256,7 +271,8 @@
         end
         b.Label.String = 'RT (s)';
         b.Label.FontSize = 16;
-        %% linear model for each monkey
+        
+        % linear model for each monkey
         if(strcmpi(monk,'Han')==1)
             rot = rotation_angles(1);
         else

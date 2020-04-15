@@ -15,6 +15,8 @@
     counter = 1;
     r2_all = [];
     
+    num_trials_all = [];
+    
     for monk = monkey_names
     % train length data
         file_list = dir([monk{1},'*EXAMPLE*data*']);
@@ -66,6 +68,8 @@
                 stim_amps_all = [stim_amps_all,STIM_PARAMS(d)*ones(1,numel(data.cueInfo(d).rt))];
                 rt_data_all = [rt_data_all,data.cueInfo(d).rt];
             end
+            
+            num_trials_all = [num_trials_all,num_trials];
             
 %             if(strcmpi(monk{1},'Han') == 1)
 %                 [fitObj,gof] = fit(stim_amps_all',rt_data_all','a*exp(b*x)+c','startPoint',[0,0,0]);

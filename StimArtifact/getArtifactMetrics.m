@@ -7,13 +7,15 @@ function [output_data] = getArtifactMetrics(artifact)
     % 2. Settling time??
     
     max_amp = 1000;
-    output_data.idx_off_rails = -1000 + zeros(size(artifact,1),size(artifact,2));
+    output_data.idx_off_rails = nan(size(artifact,1),size(artifact,2));
     
     for stim = 1:size(artifact,1)
         for chan = 1:size(artifact,2)
             temp = find(abs(artifact(stim,chan,:)) > max_amp,1,'last');
             if(~isempty(temp))
-                output_data.idx_off_rails(stim,chan) = temp;
+                if(temp > 100) % presample
+                    output_data.idx_off_rails(stim,chan) = temp;
+                end
             end
         end
     end
