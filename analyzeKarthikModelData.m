@@ -76,17 +76,30 @@
 %% plot activation vs distance for the model
 
     
-    bin_edges_model = [0,3]; 
+    bin_edges = [1.5,3]; 
     dist_range = [0,200];
     wave_length = 0;
-    bin_counts_model = getProbSpikeKarthikModel(neuron_struct_all,bin_edges_model,dist_range,numel(ICMS_times),amps,wave_length,0); % don't do mean
-
-    neuron_mask = squeeze(bin_counts_model(9,1,:)) > -1000;
+    [bin_counts_model, num_spikes_model] = getProbSpikeKarthikModel(neuron_struct_all,bin_edges,dist_range,numel(ICMS_times),amps,wave_length,0); % don't do mean
+    
+    % compute threshold
+    threshold = nan(size(num_spikes_model,2),1);
+    dist = nan(size(num_spikes_model,2),1);
+    for i_neuron = 1:size(num_spikes_model,2)
+        if(~isempty(find(num_spikes_model(:,i_neuron) >= 8)))
+            threshold(i_neuron) = amps(find(num_spikes_model(:,i_neuron) >=8, 1,'first'));
+            dist(i_neuron) = neuron_struct_all{i_neuron}.dist;
+        end
+    end
+    
+    neuron_mask =~isnan(threshold) & threshold < 100 & dist < 120;
+    
     neuron_struct = neuron_struct_all(neuron_mask == 1);
     
-    bin_counts_model = getProbSpikeKarthikModel(neuron_struct,bin_edges_model,dist_range,numel(ICMS_times),amps,wave_length,0); % don't do mean
+    bin_counts_model = getProbSpikeKarthikModel(neuron_struct,bin_edges,dist_range,numel(ICMS_times),amps,wave_length,0); % don't do mean
 
-    figure()
+    bin_counts_exp = getProbSpikeExperiment(arrayData,spikesStruct,amps,bin_edges,0);
+    
+    figure();
     for amp_idx = 1:9
         subplot(3,3,amp_idx)
 %         densityplot(dist_list(neuron_mask==1),squeeze(bin_counts_model(amp_idx,1,:)),'edges',{[dist_range(1):20:dist_range(end)],[0:0.05:1]});
@@ -98,19 +111,18 @@
             ylabel('Response amp')
         end
     end
+        
+    figure();
+    
+    plot(amps,squeeze(bin_counts_exp),'.','color','k'); formatForLee(gcf);
+    
 %% plot mean FR at different bin points for model neurons at specific distances
 % compare to recorded neurons (arrayData)
-    bin_size = 1; min_bin = 0; max_bin = 7;
-    dist_range = [0,200];
-    adj_wave_time = 0;
+    bin_size = 1; min_bin = 0; max_bin = 8;
+    dist_range = [0,120];
+    adj_wave_time = 1;
     
-    bin_edges_model = [min_bin:bin_size:max_bin];
-    
-    bin_counts_model = zeros(numel(amps),numel(bin_edges_model)-1);
-    num_neurons_model = zeros(numel(amps),1);
-    
-    bin_counts_exp = zeros(numel(amps),numel(bin_edges_model)-1);
-    num_neurons_exp = zeros(numel(amps),1);
+    bin_edges_model = [min_bin:bin_size:max_bin]; 
     
     % bin model data
     if(adj_wave_time)
@@ -121,26 +133,15 @@
     do_mean = 1;
     bin_counts_model = getProbSpikeKarthikModel(neuron_struct,bin_edges_model,dist_range,numel(ICMS_times),amps,wave_length,do_mean);
     
-    for i_amp = 1:numel(amps)
-        % bin experimental data
-        for i_neuron = 1:numel(arrayData)
-            amp_idx = find([arrayData{i_neuron}.STIM_PARAMETERS.amp1] == amps(i_amp),1,'first');
-            amp_100uA_idx = find(spikesStruct{i_neuron}.amp == 100,1,'first');
-            if(~isempty(amp_idx))
-                baseline_count = spikesStruct{i_neuron}.mean_baseline_fr*bin_size/1000;
-                bin_counts_exp(i_amp,:) = bin_counts_exp(i_amp,:) +  ... 
-                    histcounts(arrayData{i_neuron}.spikeTrialTimes{amp_idx} - 0.453/1000,bin_edges_model/1000)/arrayData{i_neuron}.numStims(amp_idx) - baseline_count;
-                num_neurons_exp(i_amp) = num_neurons_exp(i_amp) + 1;
-            end
-        end
-        bin_counts_exp(i_amp,:) = bin_counts_exp(i_amp,:)./num_neurons_exp(i_amp);
-    end
+    [bin_counts_exp,~,prob_spike] = getProbSpikeExperiment(arrayData,spikesStruct,amps,bin_edges_model,0);
     
+    above_threshold = any(prob_spike(1:end-1,:) >= 0.5);
+    bin_counts_exp = mean(bin_counts_exp(:,:,above_threshold==1),3,'omitnan');
     
     % plot bin counts for stim and model on same figures
-    y_limits = [-0.1,0.4]; x_limits = [0,7];
-    amp_idx = [1,2,4,6,7,8];
-    subplot_idx = [1,1,2,2,3,3,];
+    y_limits = [-0.1,0.4]; x_limits = [min_bin,max_bin];
+    amp_idx = [1,2,3,4,5,6,7,8,9];
+    subplot_idx = [1,1,2,2,3,3,4,4,5,5];
     color_idx = [0,1,2,3,4,5,6,7,8];
     x_data = bin_edges_model(1:end-1) + mode(diff(bin_edges_model))/2;
     figure('Position',[2014 462 1713 420]);
@@ -164,33 +165,18 @@
     
 %% plot activation across neurons for model and experiment
 
-    bin_edges_model = [0,1.5;1.5,3]; 
-    dist_range = [0,200];
+    bin_edges_model = [0,1.25;1.25,3]; 
+    dist_range = [40,120];
     wave_length = 0;
-    model_offset = [-1.5,-0.75,0];
-    model_colors = [getColorFromList(1,1); getColorFromList(1,2); getColorFromList(1,3)];
-    bin_edges_exp = [1.5,3];
-    exp_offset = [0.75,1.5]; exp_colors = [getColorFromList(1,0); getColorFromList(1,4)];
+    model_offset = [-1,1];
+    model_colors = [getColorFromList(1,0); getColorFromList(1,1); getColorFromList(1,2)];
+    bin_edges_exp = [1.25,3];
+    exp_offset = [0]; exp_colors = [getColorFromList(1,1)];
         
-    figure(); subplot(1,2,1); hold on;
+    figure(); hold on;
     % make experiment plots
     for i_bin = 1:size(bin_edges_exp,1)
-        bin_counts_exp = nan(numel(amps),numel(arrayData));
-        num_neurons_exp = zeros(numel(amps),1);
-        for i_amp = 1:numel(amps)
-            % bin experimental data
-            for i_neuron = 1:16%numel(arrayData)
-                amp_idx = find([arrayData{i_neuron}.STIM_PARAMETERS.amp1] == amps(i_amp),1,'first');
-                amp_100uA_idx = find(spikesStruct{i_neuron}.amp == 100,1,'first');
-                if(~isempty(amp_idx))
-                    baseline_count = spikesStruct{i_neuron}.mean_baseline_fr*bin_size/1000;
-                    bin_counts_exp(i_amp,i_neuron) = histcounts(arrayData{i_neuron}.spikeTrialTimes{amp_idx} - 0.453/1000,bin_edges_exp(i_bin,:)/1000)/arrayData{i_neuron}.numStims(amp_idx) - baseline_count;
-                    num_neurons_exp(i_amp) = num_neurons_exp(i_amp) + 1;
-                end
-            end
-            bin_counts_exp(i_amp,:) = bin_counts_exp(i_amp,:);
-        end
-        
+        bin_counts_exp = squeeze(getProbSpikeExperiment(arrayData,spikesStruct,amps,bin_edges_exp(i_bin,:),0));
         errorbar(amps+exp_offset(i_bin),mean(bin_counts_exp,2,'omitnan'),std(bin_counts_exp,0,2,'omitnan'),'linestyle','none',...
             'marker','.','markersize',20,'linewidth',1.5,'color',exp_colors(i_bin,:)); 
         
@@ -199,7 +185,6 @@
     
     % make model plots
 
-    subplot(1,2,2); hold on
     for i_bin = 1:size(bin_edges_model,1)
         bin_counts_model = squeeze(getProbSpikeKarthikModel(neuron_struct,bin_edges_model(i_bin,:),dist_range,numel(ICMS_times),amps,wave_length,0)); % don't do mean
 
@@ -233,5 +218,8 @@
 %     ylim([0.5,stim_idx-0.5])
 %     
 
+%% get threshold for each neuron
+    
 
 
+    

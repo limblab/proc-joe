@@ -617,13 +617,13 @@
     
     
 %% get decay time constant for all conditions and plot
-    is_intermittent = 0;
+    is_intermittent = 1;
     bin_size = 50; % ms
     min_rate = 0.5; % Hz
     
     response_amp_time = 500; % ms
     response_amp_num_pulses = -1; % set as a positive number to override time
-    response_amp_pulse_window = [2,7]; % if using num_pulses, this determines when after each pulse to count spikes
+    response_amp_pulse_window = [1.5,7]; % if using num_pulses, this determines when after each pulse to count spikes
        
     decay_rates = zeros(numel(array_data),12);
     is_responsive = zeros(numel(array_data),12);
@@ -670,7 +670,7 @@
     end
     
 %% plot time constant
-    amp_freq_data = 1;
+    amp_freq_data = 0;
     marker_size = 8;
     offset = [0.95,1,1.05];
         

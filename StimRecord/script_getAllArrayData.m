@@ -9,8 +9,10 @@
         highest_folderpath{2} = 'D:\Lab\Data\StimArtifact\singlePulseModelExperiment\data\stim_rec_single_pulse_data\Han\';
         search_word = 'arrayData';
    elseif(~single_pulse && include_non_stim_data)
-        highest_folderpath{1} = 'E:\Data\Joseph\long_trains_array_data\amp_freq\pulse_times\';
+%         highest_folderpath{1} = 'E:\Data\Joseph\long_trains_array_data\amp_freq\pulse_times\';
 %         highest_folderpath{1} = 'E:\Data\Joseph\long_trains_array_data\intermittent_130Hz\pulse_times\';
+%         highest_folderpath{1} = 'D:\Lab\Data\LongTrains\amp_freq\';
+        highest_folderpath{1} = 'D:\Lab\Data\LongTrains\intermittent_180Hz\';
         search_word = 'arrayData';
     elseif(single_pulse && include_non_stim_data)
         highest_folderpath{1} = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\StimRecData\SinglePulseNonStimChan\';

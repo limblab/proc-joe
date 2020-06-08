@@ -1,6 +1,6 @@
 %% set initial parameters
 
-    input_data.folderpath = 'D:\Lab\Data\StimPDs\';
+    input_data.folderpath = 'D:\Lab\Data\StimPDs\Han_20191003_CObump_stimDuringTask\';
 
 %     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
@@ -37,26 +37,26 @@
     move_onset_params.min_s = 3;
     move_onset_params.start_idx_offset = -10;
     move_onset_params.max_rt_offset = 400;
-    
+    td_all = [];
+    for i = 1:numel(file_name)
+        cds = commonDataStructure();
+        cds.file2cds(strcat(input_data.folderpath,file_name(i).name),input_data.array,input_data.monkey,input_data.ranBy,...
+            input_data.lab,input_data.mapFile,input_data.task,'recoverPreSync','ignoreJumps','ignoreFilecat');
 
-    cds = commonDataStructure();
-    cds.file2cds(strcat(input_data.folderpath,file_name(1).name),input_data.array,input_data.monkey,input_data.ranBy,...
-        input_data.lab,input_data.mapFile,input_data.task,'recoverPreSync','ignoreJumps','ignoreFilecat');
-    
-    
-%% make trial data
-   
-    td_all = parseFileByTrial(cds,params);
-    td_all = stripSpikeSorting(td_all);
-    td_all = getSpeed(td_all);
-%     td_all = getMoveOnset(td_all,move_onset_params);
-%     td_all = removeBadTrials(td_all);
-
-    if(td_all(1).bin_size < 0.05)
-        % set it to 50ms
-        td_all = binTD(td_all,ceil(0.05/td_all(1).bin_size));
+       
+        td_temp = parseFileByTrial(cds,params);
+        td_temp = stripSpikeSorting(td_temp);
+        td_temp = getSpeed(td_temp);
+    %     td_all = getMoveOnset(td_all,move_onset_params);
+    %     td_all = removeBadTrials(td_all);
+        td_all = [td_all,td_temp];
     end
+%     if(td_all(1).bin_size < 0.05)
+%         % set it to 50ms
+%         td_all = binTD(td_all,ceil(0.05/td_all(1).bin_size));
+%     end
     
+        
 %% get correlation during movement epoch
     corr_params = [];
     corr_params.signals = {'LeftS1_spikes'};

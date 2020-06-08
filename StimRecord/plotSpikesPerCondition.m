@@ -154,12 +154,12 @@ function [output_data,figure_handles] = plotSpikesPerCondition(array_data,opts)
         x_data = [1:1:sum(keep_mask)];
         y_data = prob_spikes(keep_mask == 1);
         if(numel(y_data) == numel(x_data)) % some data in Han does not have the pulse width conditions
-%             plot(x_data,y_data,'-','marker','none','markersize',16,'color',getColorFromList(1,0),'linewidth',1)
+            plot(x_data,y_data,'-','marker','none','markersize',16,'color',getColorFromList(1,0),'linewidth',1)
         end
     else
         %   plot prob_spikes against amp
         
-%         plot(amp(keep_mask==1),prob_spikes(keep_mask==1),'-','marker','.','markersize',12,'color',opts.COLOR,'linewidth',1)
+        plot(amp(keep_mask==1),prob_spikes(keep_mask==1),'-','marker','.','markersize',12,'color',opts.COLOR,'linewidth',1)
     end
     
    output_data.num_spikes_post_stim = num_spikes_post_stim;

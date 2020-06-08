@@ -33,9 +33,9 @@
     
     
 %% make trial data
-    BIN_SIZE = 0.02; NUM_BINS = 5;
+    BIN_SIZE = 0.05; NUM_BINS = 3;
     
-    params.event_list = {'goCueTime'};
+    params.event_list = {'goCueTime';'bumpTime';'bumpDir'};
     params.trial_results = {'R'};
     params.extra_time = [1,2];
     params.include_ts = 0;
@@ -47,9 +47,10 @@
     move_onset_params.max_rt_offset = 400;
     
     td_all = parseFileByTrial(cds,params);
-    td_all = stripSpikeSorting(td_all);
     td_all = getSpeed(td_all);
-%     td_all = getMoveOnset(td_all,move_onset_params);
+    
+    td_all = getNorm(td_all,struct('signals',{'vel'}));
+    td_all = getMoveOnsetAndPeak(td_all);
     td_all = removeBadTrials(td_all);
 
 %     if(td_all(1).bin_size < 1)
@@ -60,8 +61,9 @@
 %% get correlation during movement epoch
     corr_params = [];
     corr_params.signals = {'LeftS1_spikes'};
-    td_move = trimTD(td_all,{'idx_goCueTime',-5},{'idx_goCueTime',15});
-    td_move = softNormalize(td_move);
+    td_move = smoothSignals(td_all,struct('signals','LeftS1_spikes'));
+    td_move = trimTD(td_move,{'idx_goCueTime',-3},{'idx_goCueTime',6});
+%     td_move = softNormalize(td_move);
 
 %     [td_move_avg,cond_idx] = trialAverage(td_move,{'target_direction'});
 %     td_move_mean_sub = subtractConditionMean(td_move);
@@ -145,68 +147,70 @@
     end
 
 
-%% can we look at the effect of stim in a movement predictive space
-% build pca space, project stim data into it
-    plot_stim = 1;
-    wave_idx = 3;
-    idx_plot = [2,3];
+%% use dPCA to project into a lower dimensional space
+
+    plot_stim = 0;
+    wave_idx = 5;
+    
     unique_tgt_dir = unique([td_move.target_direction]);
+    move_magnitude = [];
     color_list = inferno(9);
-    pca_params = []; pca_params.signals = {'LeftS1_spikes'};
+    pca_params = []; pca_params.signals = {'LeftS1_spikes'}; pca_params.do_plot = 1;
+    pca_params.num_dims = 16;
+    pca_params.marg_names = {'time','target','time/target interaction'}; 
+    [td_move_pca,dpca_info] = runDPCA(td_move,'target_direction', pca_params);
+    idx_plot = find(dpca_info.which_marg == 2,2,'first');
     
-    [td_move_pca,pca_info] = getPCA(td_move, pca_params);
-    td_move_pca = getPCA(td_move,pca_info);
-    td_move_pca_avg =  trialAverage(td_move_pca,{'target_direction'});
+    td_move_pca_avg = trialAverage(td_move_pca,{'target_direction'});
     
-    f=figure();  
-    if(plot_stim) subplot(1,2,1); f.Position = [680 558 1018 420]; end 
-    hold on;
-    move_magnitude = zeros(numel(td_move_pca_avg),size(td_move_pca_avg(1).LeftS1_pca,2));
+    f_proj = figure();
+    if(plot_stim) subplot(1,2,1); f_proj.Position = [694 543 1069 430]; end 
+    hold on
     for i_trial = 1:numel(td_move_pca_avg)
         color_idx = find(td_move_pca_avg(i_trial).target_direction == unique_tgt_dir);
+        td_move_pca_avg(i_trial).LeftS1_pca = td_move_pca_avg(i_trial).LeftS1_spikes*dpca_info.W;
         
         plot(td_move_pca_avg(i_trial).LeftS1_pca(:,idx_plot(1)),td_move_pca_avg(i_trial).LeftS1_pca(:,idx_plot(2)),'color',color_list(color_idx,:),'linewidth',2);
         plot(td_move_pca_avg(i_trial).LeftS1_pca(1,idx_plot(1)),td_move_pca_avg(i_trial).LeftS1_pca(1,idx_plot(2)),'.','color',color_list(color_idx,:),'markersize',20);
-       
-        formatForLee(gcf);
-        xlabel(['PC',num2str(idx_plot(1))]);
-        ylabel(['PC',num2str(idx_plot(2))]);
-        
-        data_1 = td_move_pca_avg(i_trial).LeftS1_pca(1,:);
-        data_2 = td_move_pca_avg(i_trial).LeftS1_pca(end,:);
-        move_magnitude(i_trial,:) = sqrt((data_1-data_2).^2 + (data_1-data_2).^2);
-    end
 
-%     for i_trial = 1:numel(td_move_pca)
-%         color_idx = find(td_move_pca(i_trial).target_direction == unique_tgt_dir);
-%         
-%         plot(td_move_pca(i_trial).LeftS1_pca(end,2),td_move_pca(i_trial).LeftS1_pca(end,3),'.','color',color_list(color_idx,:),'markersize',10);
-%         
-%     end
-    % project stim data into pca space
-    max_stim_time = 0.10;
+        td_move_dir = td_move([td_move.target_direction] == unique_tgt_dir(i_trial));
+        for i_single = 1:numel(td_move_dir)
+            pca_temp = td_move_dir(i_single).LeftS1_spikes*dpca_info.W;
+            plot(pca_temp(end,idx_plot(1)),pca_temp(end,idx_plot(2)),'.','color',color_list(color_idx,:))
+        end
+        
+        formatForLee(gcf);
+        xlabel(['dPC',num2str(idx_plot(1))]);
+        ylabel(['dPC',num2str(idx_plot(2))]);
+        
+        data_1 = td_move_pca_avg(i_trial).LeftS1_pca(3,:);
+        data_2 = td_move_pca_avg(i_trial).LeftS1_pca(5,:);
+        move_magnitude(i_trial,:) = abs(data_1-data_2);
+    end
     
-    num_bins = floor(max_stim_time/BIN_SIZE) + 1; % 200 ms of stim data to project
-    bin_edges = -BIN_SIZE:BIN_SIZE:max_stim_time;
-    spike_matrix = zeros(num_bins,numel(arrayData));
-    stim_magnitude = [];
+    max_stim_time = 0.2;
+    
     if(plot_stim && exist('arrayData') > 0) 
+        num_bins = floor(max_stim_time/BIN_SIZE) + 1; % 200 ms of stim data to project
+        bin_edges = -BIN_SIZE:BIN_SIZE:max_stim_time;
+        spike_matrix = zeros(num_bins,numel(arrayData));
+        stim_magnitude = [];
         for arr_idx = 1:numel(arrayData)
             chan(arr_idx) = arrayData{arr_idx}.CHAN_REC;
             spike_matrix(:,arr_idx) = histcounts(arrayData{arr_idx}.spikeTrialTimes{wave_idx},bin_edges)/arrayData{arr_idx}.numStims(wave_idx);
             % soft normalize spikes
-            spike_matrix(:,arr_idx) = spike_matrix(:,arr_idx)./(range(spike_matrix(:,arr_idx))+5);
+%             spike_matrix(:,arr_idx) = spike_matrix(:,arr_idx)./(range(spike_matrix(:,arr_idx))+5);
         end
         
         % project into pca space found above
-        pca_spike_matrix = (spike_matrix - repmat(pca_info.mu,size(spike_matrix,1),1))*pca_info.w;
+        pca_spike_matrix = spike_matrix*dpca_info.W;
         
-        plot(pca_spike_matrix(:,idx_plot(1)), pca_spike_matrix(:,idx_plot(2)),'color',getColorFromList(1,1),'linewidth',3,'linestyle','--')
-        plot(pca_spike_matrix(1,idx_plot(1)), pca_spike_matrix(1,idx_plot(2)),'.','markersize',20,'color',getColorFromList(1,1))
+        plot(pca_spike_matrix(:,idx_plot(1)), pca_spike_matrix(:,idx_plot(2)),'color',getColorFromList(1,1),'linewidth',3,'linestyle','-')
+        plot(pca_spike_matrix(1,idx_plot(1)), pca_spike_matrix(1,idx_plot(2)),'.','markersize',24,'color',getColorFromList(1,1))
 
         data_1 = pca_spike_matrix(1,:);
-        data_2 = pca_spike_matrix(end,:);
-        stim_magnitude = sqrt((data_1-data_2).^2 + (data_1-data_2).^2);
+        data_2 = pca_spike_matrix(find(bin_edges >= 0.1,1,'first')-1,:);
+        stim_magnitude = abs(data_1-data_2);
         
         subplot(1,2,2)
         plot(mean(move_magnitude)','k','linewidth',1.5);
@@ -215,20 +219,8 @@
         plot(idx_plot,stim_magnitude(idx_plot),'.','color',getColorFromList(1,1),'markersize',20)
         l=legend('movement','stim'); set(l,'box','off');
         formatForLee(gcf)
-        xlabel('PC'); ylabel('Magnitude');
+        xlabel('dPC'); ylabel('Magnitude');
     end
-
-
-%% investigate effect of stimulating a single neuron (stimulated channel esque)
-    % plot weights for a single neuron across dimensions
-    unit = 1;
-    figure()
-    plot(pca_info.w(unit,:))
-
-
-
-
-
 
 
 

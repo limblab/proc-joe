@@ -52,7 +52,7 @@ function [ figHandle ] = plotRasterLIB(xData,yData,optsPlotInput,optsSaveInput)
     end
     
     if(optsPlot.MAKE_FIGURE)
-        figHandle = figure();
+        figHandle = figure('Position',[2826 421 560 420]);
     else
         figHandle = gcf;
     end
