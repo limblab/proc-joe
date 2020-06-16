@@ -1,6 +1,6 @@
 %% set initial parameters
 
-    input_data.folderpath = 'D:\Lab\Data\StimPDs\Han_20191003_CObump_stimDuringTask\';
+    input_data.folderpath = 'D:\Lab\Data\CObumpmove\Han_20200610_stim\';
 %     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 %     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Pop_18E3\Array Map Files\6250-002085\SN 6250-002085.cmp';
@@ -33,7 +33,7 @@
     
     td_all = [];
     td_all = [];
-    for file_num = 1:numel(file_name)
+    for file_num = 2:numel(file_name)
         cds = commonDataStructure();
         cds.file2cds(strcat(input_data.folderpath,file_name(file_num).name),input_data.array,input_data.monkey,input_data.ranBy,...
             input_data.lab,input_data.mapFile,input_data.task,'recoverPreSync','ignoreJumps','ignoreFilecat');
@@ -47,12 +47,13 @@
 
     td_all = getAdjustedSpikeCount(td_all,struct('num_pulses',10,'IPI',10.6));
     td_all = getNorm(td_all,struct('signals',{'vel'}));
+    td_all = removeBadTrials(td_all,struct('remove_nan_idx',true,'nan_idx_names',{'idx_goCueTime'}));
     td_all = getMoveOnsetAndPeak(td_all,struct('which_field','vel_norm','start_idx_offset',-5));
     td_all = removeBadTrials(td_all);
     
     % remove stim trials where stim happens too far after movement onset
     td_all = td_all(isnan([td_all.idx_stimTime]) | ... 
-        [td_all.idx_stimTime] - [td_all.idx_movement_on] <= 0.4/td_all(1).bin_size);
+        [td_all.idx_stimTime] - [td_all.idx_goCueTime] <= 0.4/td_all(1).bin_size);
     
 %% plot kinematics....
     % plot example traces for each target
@@ -69,32 +70,37 @@
     formatForLee(gcf); xlabel('Time relative to movement onset (s)');
     ylabel('Speed (cm/s)');
     for i_tgt = 1:numel(tgt_dir)
-        td_dir = td_all([td_all.target_direction] == tgt_dir(i_tgt));
+        td_dir = td_all([td_all.target_direction] == tgt_dir(i_tgt) & [td_all.idx_endTime] - [td_all.idx_goCueTime] < 1000);
         td_dir = td_dir(datasample(1:1:numel(td_dir),num_trials));
-        td_dir = trimTD(td_dir,{'idx_movement_on',-4},{'idx_endTime',0});
+        td_dir = trimTD(td_dir,{'idx_goCueTime',-4},{'idx_endTime',0});
         
         for i_trial = 1:numel(td_dir)
 %             % plot traces
             figure(f_trace);
             linestyle = '-';
-            if(~isnan(td_dir(i_trial).idx_stimTime) && td_dir(i_trial).idx_stimTime > td_dir(i_trial).idx_goCueTime)
+            if(isfield(td_dir,'idx_stimTime') && ~isnan(td_dir(i_trial).idx_stimTime) && td_dir(i_trial).idx_stimTime > td_dir(i_trial).idx_goCueTime)
                 stim_idx = td_dir(i_trial).idx_stimTime;
                 plot(td_dir(i_trial).pos(stim_idx,1),td_dir(i_trial).pos(stim_idx,2),'k.','markersize',12)
                 linestyle = '--';
+            end
+            if(isfield(td_dir,'idx_bumpTime') && ~isnan(td_dir(i_trial).idx_bumpTime) && td_dir(i_trial).idx_bumpTime > td_dir(i_trial).idx_goCueTime)
+                bump_idx = td_dir(i_trial).idx_bumpTime;
+                plot(td_dir(i_trial).pos(bump_idx,1),td_dir(i_trial).pos(bump_idx,2),'k.','markersize',12)
+                linestyle = '-.';
             end
             plot(td_dir(i_trial).pos(:,1),td_dir(i_trial).pos(:,2),'color',color_list(i_tgt,:),'linestyle',linestyle);
             
             % plot velocity on correct subplot
             figure(f_vel);
             subplot(3,3,subplot_idx(i_tgt)); hold on;
-            if(~isnan(td_dir(i_trial).idx_stimTime) && td_dir(i_trial).idx_stimTime > td_dir(i_trial).idx_goCueTime)
+            if(isfield(td_dir,'idx_stimTime') && ~isnan(td_dir(i_trial).idx_stimTime) && td_dir(i_trial).idx_stimTime > td_dir(i_trial).idx_goCueTime)
                 linestyle = '--';
             else
                 linestyle = '-';
             end
             x_data = ((1:1:numel(td_dir(i_trial).speed)) - td_dir(i_trial).idx_movement_on - 1)*td_dir(i_trial).bin_size;
             plot(x_data,td_dir(i_trial).speed,'color',color_list(i_tgt,:),'linestyle',linestyle);
-            if(~isnan(td_dir(i_trial).idx_stimTime) && td_dir(i_trial).idx_stimTime > td_dir(i_trial).idx_goCueTime)
+            if(isfield(td_dir,'idx_stimTime') && ~isnan(td_dir(i_trial).idx_stimTime) && td_dir(i_trial).idx_stimTime > td_dir(i_trial).idx_goCueTime)
                 stim_idx = td_dir(i_trial).idx_stimTime;
                 plot(x_data(stim_idx),td_dir(i_trial).speed(stim_idx),'k.','markersize',12)
             end
