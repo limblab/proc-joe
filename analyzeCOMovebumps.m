@@ -354,18 +354,42 @@
 %% convert patterns into wave_mappings and freq_all for code
 
     wave_mappings = {}; % chan_num, wave_freq_norm, wave_num
-    freq_all_norm = pattern_data.freqs/pattern_data.max_freq;
+    stim_norm_all = linspace(0,1,16); stim_norm_all = stim_norm_all(2:end);
     
     for i_patt = 1:numel(pattern_data.pattern)
-        wave_mappings{end+1} = [];
-        field_name = 'wave_num';
-        chan_ = pattern_data.pattern{i_patt}.chans(pattern_data.pattern{i_patt}.(field_name)>0);
-        wave_ = pattern_data.pattern{i_patt}.(field_name)(pattern_data.pattern{i_patt}.(field_name)>0);
-            
-        for i_wave = 1:numel(wave_)
-            wave_mappings{end}(i_wave,1) = chan_(i_wave);
-            wave_mappings{end}(i_wave,2) = freq_all_norm(wave_(i_wave));
-            wave_mappings{end}(i_wave,3) = wave_(i_wave);
+        wave_mappings{end+1} = [];        
+        wave_mappings_counter = 1;    
+        for i_chan = 1:numel(pattern_data.pattern{i_patt}.chans)
+            if(pattern_data.pattern{i_patt}.stim_norm(i_chan) > 0)
+                [~,wave_] = min(abs(pattern_data.pattern{i_patt}.stim_norm(i_chan) - stim_norm_all));
+                wave_mappings{end}(wave_mappings_counter,1) = pattern_data.pattern{i_patt}.chans(i_chan);
+                wave_mappings{end}(wave_mappings_counter,2) = stim_norm_all(wave_);
+                wave_mappings{end}(wave_mappings_counter,3) = wave_;
+                wave_mappings_counter = wave_mappings_counter + 1;
+            end
         end
         
     end 
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
