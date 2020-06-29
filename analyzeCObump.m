@@ -1,20 +1,13 @@
 %% set initial parameters
 
-<<<<<<< HEAD
-    input_data.folderpath = 'C:\Users\jts3256\Desktop\Han_CObump\Han_20191003_CObump_stimDuringTask\';
-=======
-    input_data.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\CObump\Han_20191015_CObumpmove\';
+    input_data.folderpath = 'D:\Lab\Data\StimPDs\Han_20191003_CObump_stimDuringTask\';
 
->>>>>>> ff068fa3d28917d9beb5af9784dce6464c3b6550
 %     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
-%     mapFileName = 'Z:\Basic_Sciences\Phys\L_MillerLab\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+    mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 %     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Pop_18E3\Array Map Files\6250-002085\SN 6250-002085.cmp';
     
-<<<<<<< HEAD
-    input_data.date = '20191003';
-=======
-    input_data.date = '20190924';
->>>>>>> ff068fa3d28917d9beb5af9784dce6464c3b6550
+    input_data.date = '20190923';
+
     input_data.array = 'arrayLeftS1';
     input_data.monkey = 'monkeyHan';
     input_data.ranBy = 'ranByJoe';
@@ -38,34 +31,45 @@
     params.trial_results = {'R'};
     params.extra_time = [1,2];
     params.include_ts = 0;
-    params.exclude_units = [1:255];
+    params.exclude_units = [255];
 
     move_onset_params.pre_move_thresh = 1000;
     move_onset_params.min_s = 3;
     move_onset_params.start_idx_offset = -10;
     move_onset_params.max_rt_offset = 400;
-    
+    td_all = [];
+    for i = 1:numel(file_name)
+        cds = commonDataStructure();
+        cds.file2cds(strcat(input_data.folderpath,file_name(i).name),input_data.array,input_data.monkey,input_data.ranBy,...
+            input_data.lab,input_data.mapFile,input_data.task,'recoverPreSync','ignoreJumps','ignoreFilecat');
 
-    cds = commonDataStructure();
-    cds.file2cds(strcat(input_data.folderpath,file_name(1).name),input_data.array,input_data.monkey,input_data.ranBy,...
-        input_data.lab,input_data.mapFile,input_data.task,'recoverPreSync','ignoreJumps','ignoreFilecat');
-    
-    
-%% REMOVE ID FROM UNITS and make trial data
-   
-    td_all = parseFileByTrial(cds,params);
-    td_all = stripSpikeSorting(td_all);
-    td_all = getSpeed(td_all);
-    td_all = removeBadTrials(td_all);
-%     td_all = getMoveOnset(td_all,move_onset_params);
-%     td_all = removeBadTrials(td_all);
-
-    if(td_all(1).bin_size < 0.01)
-        % set it to 50ms
-        td_all = binTD(td_all,ceil(0.05/td_all(1).bin_size));
+       
+        td_temp = parseFileByTrial(cds,params);
+        td_temp = stripSpikeSorting(td_temp);
+        td_temp = getSpeed(td_temp);
+    %     td_all = getMoveOnset(td_all,move_onset_params);
+    %     td_all = removeBadTrials(td_all);
+        td_all = [td_all,td_temp];
     end
+%     if(td_all(1).bin_size < 0.05)
+%         % set it to 50ms
+%         td_all = binTD(td_all,ceil(0.05/td_all(1).bin_size));
+%     end
     
-   
+        
+%% get correlation during movement epoch
+    corr_params = [];
+    corr_params.signals = {'LeftS1_spikes'};
+    td_move = trimTD(td_all,{'idx_goCueTime',0},{'idx_goCueTime',10});
+    td_move = softNormalize(td_move);
+
+%     avg_params = []; avg_params.conditions = 'all';
+%     [td_move_avg,cond_idx] = trialAverage(td_move,{'target_direction'});
+    td_move_mean_sub = subtractConditionMean(td_move);
+    
+    [rho,sort_idx] = pairwiseCorr(td_move_mean_sub,corr_params);
+
+
     
 %% get PDs
     

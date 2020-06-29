@@ -45,8 +45,6 @@ STIM_PARAMS.frequency = 200; % Hz
 num_tests = 100;
 total_spikes = zeros(num_tests,numel(currents),numel(CONSTANTS.distances));
 
-
-
 for t = 1:num_tests
     for c = 1:numel(currents)
         STIM_PARAMS.current = currents(c);

@@ -6,11 +6,11 @@
 <setting alwaysvectorfont="no"/>
 <setting verticaltext="up"/>
 </settings>
-<<<<<<< HEAD
-<grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="yes" altdistance="0.01" altunitdist="inch" altunit="inch"/>
+<<<<<<< HEAD:LIB/EAGLE/Sombeck_lib.l##
+<grid distance="0.05" unitdist="inch" unit="inch" style="lines" multiple="1" display="yes" altdistance="0.025" altunitdist="inch" altunit="inch"/>
 =======
-<grid distance="1" unitdist="mil" unit="mil" style="lines" multiple="1" display="yes" altdistance="5" altunitdist="mil" altunit="mil"/>
->>>>>>> a8e2d556e3ec991074ceec965e5430314c56a583
+<grid distance="50" unitdist="mil" unit="mil" style="lines" multiple="1" display="yes" altdistance="5" altunitdist="mil" altunit="mil"/>
+>>>>>>> a8e2d556e3ec991074ceec965e5430314c56a583:LIB/EAGLE/Sombeck_lib.l#2
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
 <layer number="16" name="Bottom" color="1" fill="1" visible="yes" active="yes"/>
@@ -733,44 +733,44 @@
 <wire x1="22.86" y1="2.54" x2="-1.27" y2="2.54" width="0.127" layer="21"/>
 <text x="-2.54" y="-1.27" size="1.27" layer="21">1</text>
 </package>
-<<<<<<< HEAD
+<<<<<<< HEAD:LIB/EAGLE/Sombeck_lib.l##
 =======
 <package name="OMNETICS-NANO-THROUGHHOLE">
-<pad name="P$1" x="0" y="0.762" drill="0.254" diameter="0.508"/>
-<pad name="P$2" x="0" y="0" drill="0.3302" diameter="0.4572"/>
-<pad name="P$3" x="0.635" y="0.762" drill="0.254" diameter="0.508"/>
+<pad name="P$1" x="0" y="0.635" drill="0.3302" diameter="0.4572"/>
+<pad name="P$2" x="0" y="0" drill="0.4572" diameter="0.3302"/>
+<pad name="P$3" x="0.635" y="0.635" drill="0.3302" diameter="0.4572"/>
 <pad name="P$4" x="0.635" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$5" x="1.27" y="0.762" drill="0.35" diameter="0.508"/>
+<pad name="P$5" x="1.27" y="0.635" drill="0.35" diameter="0.508"/>
 <pad name="P$6" x="1.27" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$7" x="1.905" y="0.762" drill="0.35" diameter="0.508"/>
+<pad name="P$7" x="1.905" y="0.635" drill="0.35" diameter="0.508"/>
 <pad name="P$8" x="1.905" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$9" x="2.54" y="0.762" drill="0.35" diameter="0.508"/>
+<pad name="P$9" x="2.54" y="0.635" drill="0.35" diameter="0.508"/>
 <pad name="P$10" x="2.54" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$11" x="3.175" y="0.762" drill="0.35" diameter="0.508"/>
+<pad name="P$11" x="3.175" y="0.635" drill="0.35" diameter="0.508"/>
 <pad name="P$12" x="3.175" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$13" x="3.81" y="0.762" drill="0.35" diameter="0.508"/>
+<pad name="P$13" x="3.81" y="0.635" drill="0.35" diameter="0.508"/>
 <pad name="P$14" x="3.81" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$15" x="4.445" y="0.762" drill="0.35" diameter="0.508"/>
+<pad name="P$15" x="4.445" y="0.635" drill="0.35" diameter="0.508"/>
 <pad name="P$16" x="4.445" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$17" x="5.08" y="0.762" drill="0.35" diameter="0.508"/>
+<pad name="P$17" x="5.08" y="0.635" drill="0.35" diameter="0.508"/>
 <pad name="P$18" x="5.08" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$19" x="5.715" y="0.762" drill="0.35" diameter="0.508"/>
+<pad name="P$19" x="5.715" y="0.635" drill="0.35" diameter="0.508"/>
 <pad name="P$20" x="5.715" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$21" x="6.35" y="0.762" drill="0.35" diameter="0.508"/>
+<pad name="P$21" x="6.35" y="0.635" drill="0.35" diameter="0.508"/>
 <pad name="P$22" x="6.35" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$23" x="6.985" y="0.762" drill="0.35" diameter="0.508"/>
+<pad name="P$23" x="6.985" y="0.635" drill="0.35" diameter="0.508"/>
 <pad name="P$24" x="6.985" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$25" x="7.62" y="0.762" drill="0.35" diameter="0.508"/>
+<pad name="P$25" x="7.62" y="0.635" drill="0.35" diameter="0.508"/>
 <pad name="P$26" x="7.62" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$27" x="8.255" y="0.762" drill="0.35" diameter="0.508"/>
+<pad name="P$27" x="8.255" y="0.635" drill="0.35" diameter="0.508"/>
 <pad name="P$28" x="8.255" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$29" x="8.89" y="0.762" drill="0.35" diameter="0.508"/>
+<pad name="P$29" x="8.89" y="0.635" drill="0.35" diameter="0.508"/>
 <pad name="P$30" x="8.89" y="0" drill="0.35" diameter="0.508"/>
-<pad name="P$31" x="9.525" y="0.762" drill="0.35" diameter="0.508"/>
+<pad name="P$31" x="9.525" y="0.635" drill="0.35" diameter="0.508"/>
 <pad name="P$32" x="9.525" y="0" drill="0.35" diameter="0.508"/>
-<pad name="REF33" x="10.16" y="0.762" drill="0.35" diameter="0.508"/>
+<pad name="REF33" x="10.16" y="0.635" drill="0.35" diameter="0.508"/>
 <pad name="GND34" x="10.16" y="0" drill="0.35" diameter="0.508"/>
-<pad name="GND0" x="-0.635" y="0.762" drill="0.254" diameter="0.508"/>
+<pad name="GND0" x="-0.635" y="0.635" drill="0.3302" diameter="0.4572"/>
 <pad name="REF0" x="-0.635" y="0" drill="0.3302" diameter="0.4572"/>
 <wire x1="-1.27" y1="1.27" x2="-1.27" y2="-0.635" width="0.127" layer="21"/>
 <wire x1="-1.27" y1="-0.635" x2="10.795" y2="-0.635" width="0.127" layer="21"/>
@@ -778,7 +778,7 @@
 <wire x1="10.795" y1="1.27" x2="-1.27" y2="1.27" width="0.127" layer="21"/>
 <text x="-1.905" y="0.635" size="0.635" layer="21">1</text>
 </package>
->>>>>>> a8e2d556e3ec991074ceec965e5430314c56a583
+>>>>>>> a8e2d556e3ec991074ceec965e5430314c56a583:LIB/EAGLE/Sombeck_lib.l#2
 </packages>
 <symbols>
 <symbol name="MIS-019-01-H-D">
@@ -1082,49 +1082,7 @@
 <wire x1="10.16" y1="-45.72" x2="-12.7" y2="-45.72" width="0.254" layer="94"/>
 <wire x1="-12.7" y1="-45.72" x2="-12.7" y2="45.72" width="0.254" layer="94"/>
 </symbol>
-<symbol name="FSTH-118-01-F-D">
-<pin name="P$1" x="-10.16" y="15.24" length="middle"/>
-<pin name="P$2" x="-10.16" y="12.7" length="middle"/>
-<pin name="P$3" x="-10.16" y="10.16" length="middle"/>
-<pin name="P$4" x="-10.16" y="7.62" length="middle"/>
-<pin name="P$5" x="-10.16" y="5.08" length="middle"/>
-<pin name="P$6" x="-10.16" y="2.54" length="middle"/>
-<pin name="P$7" x="-10.16" y="0" length="middle"/>
-<pin name="P$8" x="-10.16" y="-2.54" length="middle"/>
-<pin name="P$9" x="-10.16" y="-5.08" length="middle"/>
-<pin name="P$10" x="-10.16" y="-7.62" length="middle"/>
-<pin name="P$11" x="-10.16" y="-10.16" length="middle"/>
-<pin name="P$12" x="-10.16" y="-12.7" length="middle"/>
-<pin name="P$13" x="-10.16" y="-15.24" length="middle"/>
-<pin name="P$14" x="-10.16" y="-17.78" length="middle"/>
-<pin name="P$15" x="-10.16" y="-20.32" length="middle"/>
-<pin name="P$16" x="-10.16" y="-22.86" length="middle"/>
-<pin name="P$17" x="-10.16" y="-25.4" length="middle"/>
-<pin name="P$18" x="-10.16" y="-27.94" length="middle"/>
-<pin name="P$19" x="15.24" y="-27.94" length="middle" rot="R180"/>
-<pin name="P$20" x="15.24" y="-25.4" length="middle" rot="R180"/>
-<pin name="P$21" x="15.24" y="-22.86" length="middle" rot="R180"/>
-<pin name="P$22" x="15.24" y="-20.32" length="middle" rot="R180"/>
-<pin name="P$23" x="15.24" y="-17.78" length="middle" rot="R180"/>
-<pin name="P$24" x="15.24" y="-15.24" length="middle" rot="R180"/>
-<pin name="P$25" x="15.24" y="-12.7" length="middle" rot="R180"/>
-<pin name="P$26" x="15.24" y="-10.16" length="middle" rot="R180"/>
-<pin name="P$27" x="15.24" y="-7.62" length="middle" rot="R180"/>
-<pin name="P$28" x="15.24" y="-5.08" length="middle" rot="R180"/>
-<pin name="P$29" x="15.24" y="-2.54" length="middle" rot="R180"/>
-<pin name="P$30" x="15.24" y="0" length="middle" rot="R180"/>
-<pin name="P$31" x="15.24" y="2.54" length="middle" rot="R180"/>
-<pin name="P$32" x="15.24" y="5.08" length="middle" rot="R180"/>
-<pin name="P$33" x="15.24" y="7.62" length="middle" rot="R180"/>
-<pin name="P$34" x="15.24" y="10.16" length="middle" rot="R180"/>
-<pin name="P$35" x="15.24" y="12.7" length="middle" rot="R180"/>
-<pin name="P$36" x="15.24" y="15.24" length="middle" rot="R180"/>
-<wire x1="-7.62" y1="17.78" x2="12.7" y2="17.78" width="0.254" layer="94"/>
-<wire x1="12.7" y1="17.78" x2="12.7" y2="-30.48" width="0.254" layer="94"/>
-<wire x1="12.7" y1="-30.48" x2="-7.62" y2="-30.48" width="0.254" layer="94"/>
-<wire x1="-7.62" y1="-30.48" x2="-7.62" y2="17.78" width="0.254" layer="94"/>
-</symbol>
-<<<<<<< HEAD
+<<<<<<< HEAD:LIB/EAGLE/Sombeck_lib.l##
 <symbol name="FSTH">
 <pin name="P$1" x="-10.16" y="12.7" length="middle"/>
 <pin name="P$2" x="-10.16" y="10.16" length="middle"/>
@@ -1167,6 +1125,48 @@
 <wire x1="12.7" y1="-33.02" x2="12.7" y2="15.24" width="0.254" layer="94"/>
 <wire x1="12.7" y1="15.24" x2="-7.62" y2="15.24" width="0.254" layer="94"/>
 =======
+<symbol name="FSTH-118-01-F-D">
+<pin name="P$1" x="-10.16" y="15.24" length="middle"/>
+<pin name="P$2" x="-10.16" y="12.7" length="middle"/>
+<pin name="P$3" x="-10.16" y="10.16" length="middle"/>
+<pin name="P$4" x="-10.16" y="7.62" length="middle"/>
+<pin name="P$5" x="-10.16" y="5.08" length="middle"/>
+<pin name="P$6" x="-10.16" y="2.54" length="middle"/>
+<pin name="P$7" x="-10.16" y="0" length="middle"/>
+<pin name="P$8" x="-10.16" y="-2.54" length="middle"/>
+<pin name="P$9" x="-10.16" y="-5.08" length="middle"/>
+<pin name="P$10" x="-10.16" y="-7.62" length="middle"/>
+<pin name="P$11" x="-10.16" y="-10.16" length="middle"/>
+<pin name="P$12" x="-10.16" y="-12.7" length="middle"/>
+<pin name="P$13" x="-10.16" y="-15.24" length="middle"/>
+<pin name="P$14" x="-10.16" y="-17.78" length="middle"/>
+<pin name="P$15" x="-10.16" y="-20.32" length="middle"/>
+<pin name="P$16" x="-10.16" y="-22.86" length="middle"/>
+<pin name="P$17" x="-10.16" y="-25.4" length="middle"/>
+<pin name="P$18" x="-10.16" y="-27.94" length="middle"/>
+<pin name="P$19" x="15.24" y="-27.94" length="middle" rot="R180"/>
+<pin name="P$20" x="15.24" y="-25.4" length="middle" rot="R180"/>
+<pin name="P$21" x="15.24" y="-22.86" length="middle" rot="R180"/>
+<pin name="P$22" x="15.24" y="-20.32" length="middle" rot="R180"/>
+<pin name="P$23" x="15.24" y="-17.78" length="middle" rot="R180"/>
+<pin name="P$24" x="15.24" y="-15.24" length="middle" rot="R180"/>
+<pin name="P$25" x="15.24" y="-12.7" length="middle" rot="R180"/>
+<pin name="P$26" x="15.24" y="-10.16" length="middle" rot="R180"/>
+<pin name="P$27" x="15.24" y="-7.62" length="middle" rot="R180"/>
+<pin name="P$28" x="15.24" y="-5.08" length="middle" rot="R180"/>
+<pin name="P$29" x="15.24" y="-2.54" length="middle" rot="R180"/>
+<pin name="P$30" x="15.24" y="0" length="middle" rot="R180"/>
+<pin name="P$31" x="15.24" y="2.54" length="middle" rot="R180"/>
+<pin name="P$32" x="15.24" y="5.08" length="middle" rot="R180"/>
+<pin name="P$33" x="15.24" y="7.62" length="middle" rot="R180"/>
+<pin name="P$34" x="15.24" y="10.16" length="middle" rot="R180"/>
+<pin name="P$35" x="15.24" y="12.7" length="middle" rot="R180"/>
+<pin name="P$36" x="15.24" y="15.24" length="middle" rot="R180"/>
+<wire x1="-7.62" y1="17.78" x2="12.7" y2="17.78" width="0.254" layer="94"/>
+<wire x1="12.7" y1="17.78" x2="12.7" y2="-30.48" width="0.254" layer="94"/>
+<wire x1="12.7" y1="-30.48" x2="-7.62" y2="-30.48" width="0.254" layer="94"/>
+<wire x1="-7.62" y1="-30.48" x2="-7.62" y2="17.78" width="0.254" layer="94"/>
+</symbol>
 <symbol name="OMNETICS-NANO-THROUGHHOLE">
 <pin name="P$1" x="-12.7" y="-25.4" length="middle"/>
 <pin name="P$2" x="12.7" y="-25.4" length="middle" rot="R180"/>
@@ -1208,7 +1208,7 @@
 <wire x1="10.16" y1="17.78" x2="10.16" y2="-30.48" width="0.254" layer="94"/>
 <wire x1="10.16" y1="-30.48" x2="-10.16" y2="-30.48" width="0.254" layer="94"/>
 <wire x1="-10.16" y1="-30.48" x2="-10.16" y2="17.78" width="0.254" layer="94"/>
->>>>>>> a8e2d556e3ec991074ceec965e5430314c56a583
+>>>>>>> a8e2d556e3ec991074ceec965e5430314c56a583:LIB/EAGLE/Sombeck_lib.l#2
 </symbol>
 </symbols>
 <devicesets>
@@ -1685,8 +1685,6 @@
 </device>
 </devices>
 </deviceset>
-<<<<<<< HEAD
-=======
 <deviceset name="FSTH-118-01-F-D">
 <gates>
 <gate name="G$1" symbol="FSTH-118-01-F-D" x="-2.54" y="5.08"/>
@@ -1737,7 +1735,6 @@
 </device>
 </devices>
 </deviceset>
->>>>>>> a8e2d556e3ec991074ceec965e5430314c56a583
 </devicesets>
 </library>
 </drawing>

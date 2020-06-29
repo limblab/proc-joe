@@ -16,8 +16,9 @@
 
 %% plot rasters and psth for each condition and neuron
 
-    for arrIdx = 5%numel(arrayData)
-%     arrIdx = 1;
+    for arrIdx = 1:numel(arrayData)
+%     arrIdx = 7;
+
         % plot raster, and PSTH for the given unit above
         
     %     optsPlotFunc.BIN_SIZE = optsExtract.BIN_SIZE;
@@ -52,8 +53,8 @@
 % that for each neuron (on one plot probably)
 
     optsSpikesPlot.PRE_WINDOW = [-81,-5]/1000; % in s
-%     optsSpikesPlot.POST_WINDOW = [1,10]/1000; % in s, for amp plot
-    optsSpikesPlot.POST_WINDOW = [0,10]/1000; % in s, for latency plot
+    optsSpikesPlot.POST_WINDOW = [0,5]/1000; % in s, for amp plot
+%     optsSpikesPlot.POST_WINDOW = [1,5]/1000; % in s, for latency plot
     optsSpikesPlot.MAXIMIZE_RESPONSE_PROB = 0; % find maximum for each condition instead of using the window
 %     optsSpikesPlot.POST_WINDOW = [0.75,3; % 5uA
 %                                     0.75,3; % 10uA
@@ -125,7 +126,7 @@
 %     plot(mdl)
     
 %% compare response at two amplitudes
-    amps = [20,50];
+    amps = [25,50];
     data = [];
     for unit = 1:numel(spikesStruct)
         amp_1_idx = find(spikesStruct{unit}.amp == amps(1) & spikesStruct{unit}.keep_mask == 1);
@@ -141,6 +142,17 @@
     plot(data','k')
     subplot(1,2,2)
     histogram(diff(data'),-2:0.2:2);
+    
+%% find threshold (traditional 50% definition)
+    threshold = nan(numel(spikesStruct),1);
+    
+    for i_unit = 1:numel(spikesStruct)
+        percent_respond = cellfun(@mean,spikesStruct{i_unit}.num_spikes_post_stim);
+        if(~isempty(find(percent_respond >= 0.5)))
+            threshold(i_unit) = spikesStruct{i_unit}.amp(find(percent_respond >= 0.5,1,'first'));
+        end
+    end
+
 %% make spike time distribution plot, and % excitatory response at different amplitudes
     amps_plot = [5,10,15,20,25,30,40,50,100];
     spike_times_amp = cell(numel(amps_plot),1); % preallocate space  
@@ -176,7 +188,8 @@
 
             if(~isempty(amp_idx) && ~isempty(unit_param_idx))
                 num_total(a) = num_total(a) + 1;
-                if(any(spikesStruct{unit}.is_excitatory_p < 0.05) || 1==1) % use all neurons for now....
+                if(~isnan(threshold(unit)) && threshold(unit) < 100)
+%                 if(any(spikesStruct{unit}.is_excitatory_p < 0.05) || 1==1) % use all neurons for now....
                     bin_counts{a} = bin_counts{a} + histcounts(spikesStruct{unit}.spike_times_post_stim{amp_idx}*1000,bin_edges)/array_data_all{unit}.numStims(unit_param_idx(1));
                     spike_times_amp{a} = [spike_times_amp{a},spikesStruct{unit}.spike_times_post_stim{amp_idx}*1000];
                     num_responsive(a) = num_responsive(a) + 1;% (spikesStruct{unit}.is_excitatory_p(amp_idx) < 0.05);

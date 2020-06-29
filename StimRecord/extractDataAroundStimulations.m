@@ -77,8 +77,8 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
             stimInfo.chanSent = mat2cell(stimInfo.chanSent(:),ones(size(stimInfo.chanSent,1),1),ones(size(stimInfo.chanSent,2),1));
             stimInfo.waveSent = stimInfo.waveSent(stim_info_mask==1);
             
-            NUM_WAVEFORM_TYPES = 15;
-            WAVEFORM_NUMS = 1:1:15;
+            NUM_WAVEFORM_TYPES = 1;
+            WAVEFORM_NUMS = 1;
             NUM_CHANS = 1;
             CHAN_LIST = opts.STIM_ELECTRODE; % placeholder because this isn't given that info
         else

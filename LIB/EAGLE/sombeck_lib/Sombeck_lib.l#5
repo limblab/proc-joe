@@ -6,7 +6,11 @@
 <setting alwaysvectorfont="no"/>
 <setting verticaltext="up"/>
 </settings>
+<<<<<<< HEAD:LIB/EAGLE/sombeck_lib/Sombeck_lib.l#5
+<grid distance="0.05" unitdist="mm" unit="mm" style="lines" multiple="1" display="yes" altdistance="5" altunitdist="mil" altunit="mil"/>
+=======
 <grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="no" altdistance="0.01" altunitdist="inch" altunit="inch"/>
+>>>>>>> a8e2d556e3ec991074ceec965e5430314c56a583:LIB/EAGLE/Sombeck_lib.l#3
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
 <layer number="16" name="Bottom" color="1" fill="1" visible="yes" active="yes"/>
@@ -22,8 +26,8 @@
 <layer number="26" name="bNames" color="7" fill="1" visible="no" active="yes"/>
 <layer number="27" name="tValues" color="7" fill="1" visible="no" active="yes"/>
 <layer number="28" name="bValues" color="7" fill="1" visible="no" active="yes"/>
-<layer number="29" name="tStop" color="7" fill="3" visible="yes" active="yes"/>
-<layer number="30" name="bStop" color="7" fill="6" visible="yes" active="yes"/>
+<layer number="29" name="tStop" color="7" fill="3" visible="no" active="yes"/>
+<layer number="30" name="bStop" color="7" fill="6" visible="no" active="yes"/>
 <layer number="31" name="tCream" color="7" fill="4" visible="no" active="yes"/>
 <layer number="32" name="bCream" color="7" fill="5" visible="no" active="yes"/>
 <layer number="33" name="tFinish" color="6" fill="3" visible="no" active="yes"/>
@@ -611,6 +615,8 @@
 <pad name="P$1" x="0" y="0.0508" drill="0.45" diameter="0.8128" rot="R270"/>
 <smd name="P$2" x="0" y="-0.8382" dx="1.27" dy="0.762" layer="1" rot="R90"/>
 </package>
+<<<<<<< HEAD:LIB/EAGLE/sombeck_lib/Sombeck_lib.l#5
+=======
 <package name="MAX337_28SSOP">
 <smd name="P14" x="-3.475" y="-4.525" dx="1.62" dy="0.42" layer="1" rot="R180"/>
 <smd name="P13" x="-3.475" y="-3.875" dx="1.62" dy="0.42" layer="1"/>
@@ -772,6 +778,7 @@
 <wire x1="10.795" y1="1.27" x2="-1.27" y2="1.27" width="0.127" layer="21"/>
 <text x="-1.905" y="0.635" size="0.635" layer="21">1</text>
 </package>
+>>>>>>> a8e2d556e3ec991074ceec965e5430314c56a583:LIB/EAGLE/Sombeck_lib.l#3
 </packages>
 <symbols>
 <symbol name="MIS-019-01-H-D">
@@ -1002,6 +1009,8 @@
 <pin name="P$1" x="0" y="0" length="middle" rot="R180"/>
 <pin name="P$2" x="0" y="5.08" length="middle" rot="R180"/>
 </symbol>
+<<<<<<< HEAD:LIB/EAGLE/sombeck_lib/Sombeck_lib.l#5
+=======
 <symbol name="MAX337_28SSOP">
 <pin name="P1_V+" x="-11" y="14" length="middle"/>
 <pin name="P2_COMB" x="-11" y="11" length="middle"/>
@@ -1159,6 +1168,7 @@
 <wire x1="10.16" y1="-30.48" x2="-10.16" y2="-30.48" width="0.254" layer="94"/>
 <wire x1="-10.16" y1="-30.48" x2="-10.16" y2="17.78" width="0.254" layer="94"/>
 </symbol>
+>>>>>>> a8e2d556e3ec991074ceec965e5430314c56a583:LIB/EAGLE/Sombeck_lib.l#3
 </symbols>
 <devicesets>
 <deviceset name="MIS-019-01-H-D-EM2">
@@ -1502,6 +1512,8 @@
 </device>
 </devices>
 </deviceset>
+<<<<<<< HEAD:LIB/EAGLE/sombeck_lib/Sombeck_lib.l#5
+=======
 <deviceset name="MAX337">
 <gates>
 <gate name="G$1" symbol="MAX337_28SSOP" x="-10.16" y="2.54"/>
@@ -1684,6 +1696,7 @@
 </device>
 </devices>
 </deviceset>
+>>>>>>> a8e2d556e3ec991074ceec965e5430314c56a583:LIB/EAGLE/Sombeck_lib.l#3
 </devicesets>
 </library>
 </drawing>

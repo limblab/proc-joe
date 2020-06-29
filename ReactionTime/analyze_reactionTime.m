@@ -1,8 +1,12 @@
 %% script to process reaction time data 
 %% determine filename and input data
+<<<<<<< HEAD
+    inputData.folderpath = 'D:\Lab\Data\ReactionTime\Han_20180528_stim\';
+=======
     inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\Han_20190812_for2AFC\chan44\';
 %     inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\Duncan\Duncan_20181126_training\';
     
+>>>>>>> 6e5833412db31a843c694e62a1c4eee4588da310
 %     inputData.folderpath = 'D:\Lab\Data\ReactionTime\Han_20180427_training\';
     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 %     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\right S1 20180919\SN 6251-001804.cmp';
@@ -31,10 +35,15 @@
             % convert cds to trial data
             params.event_list = {'bumpStaircaseIdx';'tgtOnTime';'isBumpTrial';'bumpTime';'bumpMagnitude';'bumpDir';'isStimTrial';'stimCode';'tgtDir';'isVisualTrial'};
             params.trial_results = {'R','F'};
+<<<<<<< HEAD
+            params.extra_time = [1,2];
+            params.include_ts = 0;
+=======
             params.extra_time = [0.8,2];
 
             params.include_ts = 0;
             params.exclude_units = [0,255];
+>>>>>>> 6e5833412db31a843c694e62a1c4eee4588da310
             td_temp = parseFileByTrial(cds,params);
             td_temp = getGoCueTime(td_temp,cds);
             % append trial data into a single struct
@@ -116,12 +125,20 @@
     
     
 %% plot a set of reaches aligned to go cue with reaction time markers
+<<<<<<< HEAD
+    opts.MAX_PLOT = 20;
+    opts.WHICH_FIELD ='pos';
+    opts.WHICH_IDX = [2];
+    opts.BUMP_MAGS = [1.0]';
+    opts.YLIM = [];
+=======
 
     opts.MAX_PLOT = 10;
     opts.WHICH_FIELD = 'pos';
     opts.DIR = 90;
     
     opts.BUMP_MAGS = [0.3];
+>>>>>>> 6e5833412db31a843c694e62a1c4eee4588da310
     opts.STIM_CODES = [];
     opts.KEEP_ONLY_VISUAL_TRIALS = 0;
     opts.YLIM = [];
@@ -138,6 +155,13 @@
  
     td_reward_rt = td_reward(~isnan([td_reward.idx_movement_on]));
     opts.FOLDER_PATH = inputData.folderpath;
+<<<<<<< HEAD
+    opts.FIGURE_PREFIX = 'Han_20180528'; % no _ required
+    opts.BUMP_MAGS = [];
+    opts.STIM_CODES = [];
+    opts.STIM_PARAMS = [10,20,30,40,50,60,70,80,90,100];
+    opts.STIM_LABEL = 'Amp (\muA)';
+=======
     opts.FIGURE_PREFIX = 'Han_20181112'; % no _ required
     
 %     opts.BUMP_MAGS = [0.5:0.5:4.5];
@@ -158,6 +182,7 @@
 %     opts.STIM_PARAMS = [4,4,4,6,6,6,8,8,8,12,12,12,24,24,24] + repmat([-0.25,0,0.25],1,5);
 %     opts.STIM_X_LABEL = {'1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16'};
 %     opts.STIM_COLOR_IDX = [1,0,2,1,0,2,1,0,2,1,0,2,1,0,2,1,0,2];
+>>>>>>> 6e5833412db31a843c694e62a1c4eee4588da310
     
 %     opts.STIM_PARAMS = [1:1:16];
 %     opts.STIM_LABEL = 'Elec';
