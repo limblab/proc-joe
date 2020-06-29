@@ -1,6 +1,7 @@
 %% set initial parameters
 
-    input_data.folderpath = 'D:\Lab\Data\CObumpmove\Han_20200608\';
+    input_data.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\CObump\grill\';
+
 %     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 %     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Pop_18E3\Array Map Files\6250-002085\SN 6250-002085.cmp';
@@ -22,29 +23,31 @@
     
 %% make cds
     cd(input_data.folderpath)
-
+    td_all = [];
     file_name = dir('*nev*');
     
-    params.event_list = {'goCueTime';'bumpTime';'bumpDir'};
-    params.trial_results = {'R'};
-    params.extra_time = [1,2];
-    params.include_ts = 0;
-    params.exclude_units = [255];
+    for f = 1:numel(file_name)
+        params.event_list = {'goCueTime';'bumpTime';'bumpDir'};
+        params.trial_results = {'R'};
+        params.extra_time = [1,2];
+        params.include_ts = 0;
+        params.exclude_units = [255];
 
-    move_onset_params.pre_move_thresh = 1000;
-    move_onset_params.min_s = 3;
-    move_onset_params.start_idx_offset = 0;
-    move_onset_params.max_rt_offset = 400;
-    
+        move_onset_params.pre_move_thresh = 1000;
+        move_onset_params.min_s = 3;
+        move_onset_params.start_idx_offset = -10;
+        move_onset_params.max_rt_offset = 400;
 
-    cds = commonDataStructure();
-    cds.file2cds(strcat(input_data.folderpath,file_name(1).name),input_data.array,input_data.monkey,input_data.ranBy,...
-        input_data.lab,input_data.mapFileName,input_data.task,'recoverPreSync','ignoreJumps','ignoreFilecat');
-    
-    
-% REMOVE ID FROM UNITS and make trial data
+
+        cds = commonDataStructure();
+        cds.file2cds(strcat(input_data.folderpath,file_name(f).name),input_data.array,input_data.monkey,input_data.ranBy,...
+            input_data.lab,input_data.mapFile,input_data.task,'recoverPreSync','ignoreJumps','ignoreFilecat');
+
+        td_temp = parseFileByTrial(cds,params);
+        td_all = [td_all,td_temp];
+    end
+    %% REMOVE ID FROM UNITS and make trial data
    
-    td_all = parseFileByTrial(cds,params);
     td_all = stripSpikeSorting(td_all);
     td_all = getNorm(td_all,struct('signals',{'vel'}));
     td_all = removeBadTrials(td_all);
@@ -357,18 +360,42 @@
 %% convert patterns into wave_mappings and freq_all for code
 
     wave_mappings = {}; % chan_num, wave_freq_norm, wave_num
-    freq_all_norm = pattern_data.freqs/pattern_data.max_freq;
+    stim_norm_all = linspace(0,1,16); stim_norm_all = stim_norm_all(2:end);
     
     for i_patt = 1:numel(pattern_data.pattern)
-        wave_mappings{end+1} = [];
-        field_name = 'wave_num';
-        chan_ = pattern_data.pattern{i_patt}.chans(pattern_data.pattern{i_patt}.(field_name)>0);
-        wave_ = pattern_data.pattern{i_patt}.(field_name)(pattern_data.pattern{i_patt}.(field_name)>0);
-            
-        for i_wave = 1:numel(wave_)
-            wave_mappings{end}(i_wave,1) = chan_(i_wave);
-            wave_mappings{end}(i_wave,2) = freq_all_norm(wave_(i_wave));
-            wave_mappings{end}(i_wave,3) = wave_(i_wave);
+        wave_mappings{end+1} = [];        
+        wave_mappings_counter = 1;    
+        for i_chan = 1:numel(pattern_data.pattern{i_patt}.chans)
+            if(pattern_data.pattern{i_patt}.stim_norm(i_chan) > 0)
+                [~,wave_] = min(abs(pattern_data.pattern{i_patt}.stim_norm(i_chan) - stim_norm_all));
+                wave_mappings{end}(wave_mappings_counter,1) = pattern_data.pattern{i_patt}.chans(i_chan);
+                wave_mappings{end}(wave_mappings_counter,2) = stim_norm_all(wave_);
+                wave_mappings{end}(wave_mappings_counter,3) = wave_;
+                wave_mappings_counter = wave_mappings_counter + 1;
+            end
         end
         
     end 
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
