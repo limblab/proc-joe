@@ -375,6 +375,12 @@
     stim_params.train_length = 0.5; % s
     stim_array_data = makeStimArrayWrapper(pattern_data,stim_params);
 
+    % make stim_array which is formatted properly
+    stim_array = cell(numel(stim_array_data.stim_array),1);
+    for i_pattern = 1:numel(stim_array)
+        stim_array{i_pattern}.stim_pattern = stim_array_data.stim_array{i_pattern};
+        stim_array{i_pattern}.chans = stim_array_data.chans{i_pattern};
+    end
 
 %% plot mean IPI and list of IPIs with desired IPI for each electrode
     figure();

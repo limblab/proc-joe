@@ -33,7 +33,7 @@ function [best_stim_array] = makeStimArray(freqs,stim_params)
     % define useful variables
     best_loss = -1;
     best_stim_array = 0;
-    num_gens = 2000;
+    num_gens = 4000;
     num_stim_arrays = 100; % make it even please
     
     % initialize stim array that satisfy freqs
@@ -97,11 +97,14 @@ function [stim_array] = perturbStimArray(stim_array,loss_list)
         elec_idx = ceil(rand()*size(stim_array,2));
         if(pert_types(i_array) < 0.33) % swap a '1' and '0'
             one_idx = find(stim_array(i_array,elec_idx,:));
-            one_idx = one_idx(ceil(rand()*numel(one_idx)));
+            
             zero_idx = find(stim_array(i_array,elec_idx,:) == 0);
-            zero_idx = zero_idx(ceil(rand()*numel(zero_idx)));
-            stim_array(i_array,elec_idx,one_idx) = 0;
-            stim_array(i_array,elec_idx,zero_idx) = 1;            
+            if(~isempty(one_idx) && ~isempty(one_idx))
+                one_idx = one_idx(ceil(rand()*numel(one_idx)));
+                zero_idx = zero_idx(ceil(rand()*numel(zero_idx)));
+                stim_array(i_array,elec_idx,one_idx) = 0;
+                stim_array(i_array,elec_idx,zero_idx) = 1;  
+            end
         else % shift entire row by 1
             dir = round(rand())*2 - 1;
             stim_array(i_array,elec_idx,:) = circshift(stim_array(i_array,elec_idx,:),dir);
