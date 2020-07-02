@@ -145,10 +145,11 @@
     
 %% find threshold (traditional 50% definition)
     threshold = nan(numel(spikesStruct),1);
-    
+    counter = 0;
     for i_unit = 1:numel(spikesStruct)
         percent_respond = cellfun(@mean,spikesStruct{i_unit}.num_spikes_post_stim);
         if(~isempty(find(percent_respond >= 0.5)))
+            counter = counter + 1;
             threshold(i_unit) = spikesStruct{i_unit}.amp(find(percent_respond >= 0.5,1,'first'));
         end
     end

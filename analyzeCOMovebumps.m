@@ -300,7 +300,7 @@
         pattern_data.pattern{end+1} = nonbio_pattern;
     end
 
-% setup heatmap inputs
+%% plot heatmaps
     heatmap_input_data = [];
     heatmap_input_data.map_filename = input_data.mapFileName;
     heatmap_input_data.num_colors = 100;
@@ -320,13 +320,19 @@
   
 %% convert pattern data to stim_array for the cerestim
     stim_params = [];
-    stim_params.IPI = 3/1000; % s
+    stim_params.IPI = 2.5/1000; % s
     stim_params.max_freq = 330; % Hz
     stim_params.min_freq = 0; % Hz
     stim_params.train_length = 0.25; % s
     stim_array_data = makeStimArrayWrapper(pattern_data,stim_params);
-
-
+    % make stim_array which is formatted properly
+    stim_array = cell(numel(stim_array_data.stim_array),1);
+    for i_pattern = 1:numel(stim_array)
+        stim_array{i_pattern}.stim_pattern = stim_array_data.stim_array{i_pattern};
+        stim_array{i_pattern}.chans = stim_array_data.chans{i_pattern};
+    end
+    
+    
 %% plot mean IPI and list of IPIs with desired IPI for each electrode
     figure();
     for i_pattern = 1:numel(stim_array_data.stim_array)
