@@ -1,6 +1,6 @@
 %% set initial parameters
 
-    input_data.folderpath = 'D:\Lab\Data\StimPDs\Han_20191003_CObump_stimDuringTask\';
+    input_data.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\Han_stim_evoked_move\Han_20200629_330Hz_chan16\';
 
 %     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
@@ -27,8 +27,8 @@
 
     file_name = dir('*nev*');
     
-    params.event_list = {'goCueTime';'bumpTime'};
-    params.trial_results = {'R'};
+    params.event_list = {'goCueTime';'bumpTime';'stimTime';'stimCode'};
+    params.trial_results = {'R','A','I'};
     params.extra_time = [1,2];
     params.include_ts = 0;
     params.exclude_units = [255];
@@ -51,10 +51,10 @@
     %     td_all = removeBadTrials(td_all);
         td_all = [td_all,td_temp];
     end
-%     if(td_all(1).bin_size < 0.05)
-%         % set it to 50ms
-%         td_all = binTD(td_all,ceil(0.05/td_all(1).bin_size));
-%     end
+    if(td_all(1).bin_size < 0.05)
+        % set it to 50ms
+        td_all = binTD(td_all,ceil(0.01/td_all(1).bin_size));
+    end
     
         
 %% get correlation during movement epoch
@@ -106,9 +106,7 @@
     
     pd_move = getTDPDs(td_move,pd_params);
 
-    
-    
-    
+      
 %% visualize
 %% heatmap for preferred directions
 disp('start')
@@ -129,3 +127,66 @@ disp('start')
     optsPD.FIGURE_PREFIX = 'Han_20190924';
     
     [heatmapPD] = plotHeatmapsPD(td_all,pd_all,mapData,optsPD);
+    
+    
+    
+%% analyze movements during center hold caused by stim....
+    window = [-20,50];
+    td_stim = td_all(~isnan([td_all.idx_stimTime]) & [td_all.stimCode] == 2);
+    td_stim = trimTD(td_stim,{'idx_stimTime',window(1)},{'idx_stimTime',window(2)});
+    x_data = [window(1):1:window(2)]*td_stim(1).bin_size;
+    % get correction latency....
+    % find max speed within 600 ms from stim onset, then go backwards to
+    % get movement onset
+    move_on_idx = nan(numel(td_stim),1);
+    center_hold_speed = nan(numel(td_stim),1);
+    
+    for i_trial = 1:numel(td_stim)
+        [max_speed,max_speed_idx] = max(td_stim(i_trial).speed(td_stim(i_trial).idx_stimTime:end)); % relative to stim onset
+        center_hold_speed(i_trial) = mean(td_stim(i_trial).speed(td_stim(i_trial).idx_stimTime-2:td_stim(i_trial).idx_stimTime+2));
+        threshold = center_hold_speed(i_trial) + 0.1*(max_speed-center_hold_speed(i_trial));
+        
+        temp = find(td_stim(i_trial).speed(td_stim(i_trial).idx_stimTime:end) >= threshold,1,'first') - 1 + td_stim(i_trial).idx_stimTime - 1;
+        if(~isempty(temp))
+            move_on_idx(i_trial) = temp;
+        end
+    end
+    
+% make plots
+    f_pos=figure(); hold on
+    f_speed=figure(); hold on
+    
+    for i_trial = 1:numel(td_stim)
+        % pos plot
+        if(i_trial < 15)
+            figure(f_pos);
+            xlabel('X-pos (cm)');
+            ylabel('Y-pos (cm)');
+            plot(td_stim(i_trial).pos(1:td_stim(i_trial).idx_stimTime,1),td_stim(i_trial).pos(1:td_stim(i_trial).idx_stimTime,2),...
+                'color',getColorFromList(1,1))
+             plot(td_stim(i_trial).pos(td_stim(i_trial).idx_stimTime:end,1),td_stim(i_trial).pos(td_stim(i_trial).idx_stimTime:end,2),...
+                'color',getColorFromList(1,0))
+        end
+        %speed plot
+        if(center_hold_speed(i_trial) < 5)
+            figure(f_speed)
+
+            subplot(3,1,1); hold on
+            ylabel('X-vel (cm/s)');
+            plot(x_data,td_stim(i_trial).vel(:,1),'color',getColorFromList(1,1))
+%             plot(x_data(move_on_idx(i_trial)),td_stim(i_trial).vel(move_on_idx(i_trial),1),'marker','.','markersize',20,'color',getColorFromList(1,2));
+            
+            subplot(3,1,2); hold on
+            ylabel('Y-vel (cm/s)');
+            plot(x_data,td_stim(i_trial).vel(:,2),'color',getColorFromList(1,1))
+%             plot(x_data(move_on_idx(i_trial)),td_stim(i_trial).vel(move_on_idx(i_trial),2),'marker','.','markersize',20,'color',getColorFromList(1,2));
+
+            subplot(3,1,3); hold on
+            ylabel('Speed (cm/s)');
+            xlabel('Time after stimulation onset (s)');
+            plot(x_data,td_stim(i_trial).speed,'color',getColorFromList(1,1))
+%             plot(x_data(move_on_idx(i_trial)),td_stim(i_trial).speed(move_on_idx(i_trial),1),'marker','.','markersize',20,'color',getColorFromList(1,2));
+        end
+    end
+
+
