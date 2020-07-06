@@ -30,6 +30,9 @@
 %% Activation threshold
     activation_input_data.spike_window = [0,4]/1000;
     activation_input_data.remove_intrinsic = 1;
+    activation_input_data.sub_baseline = 1;
+    activation_input_data.amp_list = mdl_input_data.amp_list;
+    activation_input_data.threshold = 0.5;
     
     activation_input_data.is_model = 0;
     exp_threshold_data = getActivationThreshold(exp_array_data,activation_input_data);
