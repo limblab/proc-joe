@@ -1,12 +1,12 @@
 %% set file name and load file into cds
 
-    input_data.folderpath = 'C:\Users\jts3256\Desktop\Duncan_curl_field\RR\';
-    input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
-%     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+    input_data.folderpath = 'D:\Lab\Data\RingReporting\';
+%     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
+    input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 
-    input_data.date = '20190910';
+    input_data.date = '20190624';
     input_data.array = 'arrayLeftS1';
-    input_data.monkey = 'monkeyDuncan';
+    input_data.monkey = 'monkeyHan';
     input_data.ranBy = 'ranByJoe';
     input_data.lab = 6;
     input_data.task = 'taskRR';
@@ -41,7 +41,7 @@
         
         td_all = [td_all,td_temp];
     end
-    
+    td_all = removeBadTrials(td_all);
     input_data.tgt_width = mode([cds.trials.tgtWidth]);
     
 %% use sync to get stim times:
