@@ -10,6 +10,7 @@
     mdl_input_data.wave_length = 0.453; % ms
     mdl_input_data.stim_window = [-100,400]; % ms around stim
     mdl_input_data.get_IPIs = 1;
+    mdl_input_data.get_synapses = 0;
     
     % cell_id=6:10 %L23 PC, clones 1-5
     % cell_id=11:15 %L4 LBC, clones 1-5
@@ -26,9 +27,20 @@
     exp_array_data = exp_data.array_data;
     exp_array_data = adjustArrayDataSpikeTimes(exp_array_data, 0.453/1000); % stim pulse length
     exp_array_data = getBaselineFiringRate(exp_array_data,[-80,-5]/1000); % window relative to stim onset
+ 
     
+%% plot raster of example neuron
+
+    raster_input_data = [];
+    raster_input_data.x_lim = [-10,10]; % ms
+    
+    exp_idx = 5; %5, 13, 25
+%     plotModelExpRaster(exp_array_data{exp_idx},raster_input_data);
+    
+    mdl_idx = 160; % 186,191,198,199
+    plotModelExpRaster(mdl_array_data{mdl_idx},raster_input_data);
 %% Activation threshold
-    activation_input_data.spike_window = [0,4]/1000;
+    activation_input_data.spike_window = [0,5]/1000;
     activation_input_data.remove_intrinsic = 1;
     activation_input_data.sub_baseline = 1;
     activation_input_data.amp_list = mdl_input_data.amp_list;
@@ -45,22 +57,33 @@
 % boxplots for each cell type and diameter
     figure();
     subplot(2,2,1) % across cell types, for each diameter and experiment
+    data_all = [];
+    group_all = [];
     for i_diam = 1:numel(mdl_input_data.diam_list) % model data
-        boxplot_params = [];
-        boxplot_params.use_same_color_for_all = 1;
-        boxplot_params.master_color = getColorFromList(1,i_diam-1);
-        
-        data = mdl_threshold_data.thresholds(mdl_threshold_data.is_responsive & mdl_mask_data.diam == i_diam);
-        boxplot_wrapper(i_diam, data, boxplot_params);
+%         boxplot_params = [];
+%         boxplot_params.use_same_color_for_all = 1;
+%         boxplot_params.master_color = getColorFromList(1,i_diam-1);
+        mask = mdl_threshold_data.is_responsive & mdl_mask_data.diam == i_diam;
+        data_all(end+1:end+sum(mask)) = mdl_threshold_data.thresholds(mask);
+        group_all(end+1:end+sum(mask)) = i_diam;
+%         boxplot_wrapper(i_diam, data, boxplot_params);
     end
     % experimental data
-    boxplot_params = [];
-    boxplot_params.use_same_color_for_all = 1;
-    boxplot_params.master_color = 'k';
-
-    data = exp_threshold_data.thresholds(exp_threshold_data.is_responsive==1);
-    boxplot_wrapper(4, data, boxplot_params);
+%     boxplot_params = [];
+%     boxplot_params.use_same_color_for_all = 1;
+%     boxplot_params.master_color = 'k';
+    mask = exp_threshold_data.is_responsive == 1;
+    data_all(end+1:end+sum(mask)) = exp_threshold_data.thresholds(mask);
+    group_all(end+1:end+sum(mask)) = 4;
     
+    vs = violinplot(data_all,group_all)
+%     data = exp_threshold_data.thresholds(exp_threshold_data.is_responsive==1);
+%     boxplot_wrapper(4, data, boxplot_params);
+    
+    formatForLee(gcf); set(gca,'fontsize',14);
+    ylabel('Activation threshold (\muA)');
+   
+%%
     % plot percent responsive all cell types for each diameter
     subplot(2,2,2); hold on
     for i_diam = 1:numel(mdl_input_data.diam_list) % model data
@@ -74,6 +97,9 @@
     perc_resp = sum(exp_threshold_data.is_responsive)/numel(exp_threshold_data.is_responsive);
     b=bar(4, perc_resp);
     b.FaceColor = 'k';
+    
+    formatForLee(gcf); set(gca,'fontsize',14);
+    ylabel('% responsive');
     
     % boxplot for each cell type grouped by diameter
     subplot(2,2,3) 
@@ -96,6 +122,8 @@
         end
     end
     xlim([0,x_pos])
+    formatForLee(gcf); set(gca,'fontsize',14);
+    ylabel('Activation threshold (\muA)');
     
     % plot percent responsive for each cell type grouped by diameter
     subplot(2,2,4); hold on
@@ -115,7 +143,8 @@
         end
     end
     xlim([0,x_pos])
-    
+    formatForLee(gcf); set(gca,'fontsize',14);
+    ylabel('% responsive');
     
 %% Compare binned spike times after stim
     times_input_data.window = [0,8]/1000; % s

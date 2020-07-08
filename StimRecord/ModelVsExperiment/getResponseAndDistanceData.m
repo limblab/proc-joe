@@ -88,13 +88,24 @@ function [output_data] = getResponseAndDistanceData(array_data, input_data)
                 end
                 response_amp(end+1,1) = sum(spike_mask)/array_data{i_unit}.numStims(i_amp) - baseline_val;
                 
-                if(response_amp(end) > 1)
-                    disp('here');
-                end
             end
         end
     end
 
+    % remove dists of 0
+    if(~input_data.is_model)
+        dist_mask = dist_from_stim <=0;
+        response_amp(dist_mask) = [];
+        dist_from_stim(dist_mask) = [];
+        monkey(dist_mask) = [];
+        amp(dist_mask) = [];
+        unit_id(dist_mask) = [];
+        chan_rec(dist_mask) = [];
+        chan_stim(dist_mask) = [];
+    end
+    
+    
+    
     % package outputs
     output_data.response_amp = response_amp;
     output_data.dist_from_stim = dist_from_stim;
