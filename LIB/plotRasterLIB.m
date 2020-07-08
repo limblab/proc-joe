@@ -91,7 +91,7 @@ function [ figHandle ] = plotRasterLIB(xData,yData,optsPlotInput,optsSaveInput)
         for idx = 1:numel(optsPlot.DIVIDING_LINES)
             hold on
             yVal = optsPlot.DIVIDING_LINES(idx);
-            plot([-10000,10000],[yVal, yVal],'-','Color',optsPlot.DIVIDING_LINES_COLORS{idx},'linewidth',2);
+            plot([-10000,10000],[yVal, yVal],'-','Color',optsPlot.DIVIDING_LINES_COLORS{idx},'linewidth',1);
         end
     end
     
@@ -170,9 +170,9 @@ function [optsPlot] = configureOptionsPlot(optsPlotInput,xData,yData)
     optsPlot.X_TICK_LABEL = '';
     optsPlot.Y_TICK_LABEL = '';
     optsPlot.LINE_STYLE = '';
-    optsPlot.LINE_LENGTH = 0.95;
+    optsPlot.LINE_LENGTH = 1;
     optsPlot.TITLE = '';
-    optsPlot.LINE_WIDTH = 1.5;
+    optsPlot.LINE_WIDTH = 2;
     optsPlot.MARKER_STYLE = '.';
     optsPlot.MARKER_COLOR = 'k';
     optsPlot.MARKER_SIZE = 3;
