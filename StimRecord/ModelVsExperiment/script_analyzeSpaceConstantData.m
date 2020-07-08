@@ -20,6 +20,7 @@
     [mdl_data_all,mdl_syn_array_data,mdl_syn_mask_data] = getModelStimChannelData(mdl_input_data);    
     mdl_input_data.get_synapses = 0;
     [mdl_data_all,mdl_array_data,mdl_mask_data] = getModelStimChannelData(mdl_input_data);    
+    mdl_cell_type_prop = getModelCellTypeProportions();
     
 %% get experiment data -- space constant
     input_data.home_computer = 1;
