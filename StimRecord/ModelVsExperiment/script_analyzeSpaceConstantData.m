@@ -47,9 +47,9 @@
     bin_centers = bin_edges(1:end-1) + mode(diff(bin_edges))/2;
     [~,~,exp_bin_idx] = histcounts(exp_resp_data.dist_from_stim,bin_edges);
     [~,~,mdl_bin_idx] = histcounts(mdl_resp_data.dist_from_stim,bin_edges);
-    fit_bin_min = 375;
+    fit_bin_min = 0;
     
-    mdl_diam = 3; % 2 is monkey diameter
+    mdl_diam = 2; % 2 is monkey diameter
     
     figure(); hold on;
     % experiment and model activations across all neurons/cell types/clones
@@ -74,7 +74,7 @@
             linestyle = ':';
         end
         unique_amps = unique(resp_data.amp);
-        for i_amp = [1,2,3]%1:2:numel(unique_amps)
+        for i_amp = 1%:2:numel(unique_amps)
             mask = resp_data.amp == unique_amps(i_amp) & resp_data.dist_from_stim > 0 & type_mask;
             resp_amp = []; bin_val = [];
             for i_bin = 1:numel(bin_centers)
@@ -101,7 +101,7 @@
 
     space_constant_data = zeros(numel(mdl_input_data.diam_list),numel(mdl_input_data.cell_id_list),...
         mdl_input_data.num_clones,numel(mdl_input_data.amp_list));
-    
+    rsquare_data = zeros(size(space_constant_data));
     for i_diam = 1:numel(mdl_input_data.diam_list)
         for i_cell = 1:numel(mdl_input_data.cell_id_list)
             for i_clone = 1:mdl_input_data.num_clones
@@ -113,13 +113,13 @@
                     
                     [space_constant(i_diam,i_cell,i_clone,i_amp),fit_data] = ...
                         getSpaceConstant(mdl_resp_data.response_amp(mask),mdl_resp_data.dist_from_stim(mask),bin_edges);
+                    rsquare_data(i_diam,i_cell,i_clone,i_amp) = fit_data.gof.rsquare;
                 end
             end
         end
     end
 
 %% plot space constants
-
     figure();
     for i_diam = 1:size(space_constant,1)
         subplot(1,3,i_diam); hold on;
