@@ -18,7 +18,7 @@ function [space_constant, rsquare] = getSpaceConstant(resp, dist, dist_bin_edges
     % fit data
     try
         [fit_data.f,fit_data.gof] = fit(bin_dist,bin_resp,...
-            'a*exp(-x/b)+c','Lower',[0,0,-0.4],'Upper',[1,10000,0.4],'StartPoint',[0.03,-0.005,0]);
+            'a*exp(-x/b)+c','Lower',[0,0,-0.4],'Upper',[1,7500,1],'StartPoint',[0.5,1000,0]);
 
         % get space constant
         space_constant = fit_data.f.b;
