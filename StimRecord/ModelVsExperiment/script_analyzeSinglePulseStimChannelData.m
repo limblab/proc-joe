@@ -60,25 +60,26 @@
     data_all = [];
     group_all = [];
     for i_diam = 1:numel(mdl_input_data.diam_list) % model data
-%         boxplot_params = [];
-%         boxplot_params.use_same_color_for_all = 1;
-%         boxplot_params.master_color = getColorFromList(1,i_diam-1);
+        boxplot_params = [];
+        boxplot_params.use_same_color_for_all = 1;
+        boxplot_params.master_color = getColorFromList(1,i_diam-1);
         mask = mdl_threshold_data.is_responsive & mdl_mask_data.diam == i_diam;
-        data_all(end+1:end+sum(mask)) = mdl_threshold_data.thresholds(mask);
-        group_all(end+1:end+sum(mask)) = i_diam;
-%         boxplot_wrapper(i_diam, data, boxplot_params);
+        data = mdl_threshold_data.thresholds(mask);
+%         data_all(end+1:end+sum(mask)) = mdl_threshold_data.thresholds(mask);
+%         group_all(end+1:end+sum(mask)) = i_diam;
+        boxplot_wrapper(i_diam, data, boxplot_params);
     end
     % experimental data
-%     boxplot_params = [];
-%     boxplot_params.use_same_color_for_all = 1;
-%     boxplot_params.master_color = 'k';
-    mask = exp_threshold_data.is_responsive == 1;
-    data_all(end+1:end+sum(mask)) = exp_threshold_data.thresholds(mask);
-    group_all(end+1:end+sum(mask)) = 4;
-    
-    vs = violinplot(data_all,group_all)
-%     data = exp_threshold_data.thresholds(exp_threshold_data.is_responsive==1);
-%     boxplot_wrapper(4, data, boxplot_params);
+    boxplot_params = [];
+    boxplot_params.use_same_color_for_all = 1;
+    boxplot_params.master_color = 'k';
+%     mask = exp_threshold_data.is_responsive == 1;
+%     data_all(end+1:end+sum(mask)) = exp_threshold_data.thresholds(mask);
+%     group_all(end+1:end+sum(mask)) = 4;
+%     
+%     vs = violinplot(data_all,group_all)
+    data = exp_threshold_data.thresholds(exp_threshold_data.is_responsive==1);
+    boxplot_wrapper(4, data, boxplot_params);
     
     formatForLee(gcf); set(gca,'fontsize',14);
     ylabel('Activation threshold (\muA)');

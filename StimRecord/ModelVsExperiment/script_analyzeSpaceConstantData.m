@@ -1,6 +1,6 @@
 % get model data -- space constant DONT RUN, LOAD .MAT FILE INSTAED
     mdl_input_data = [];
-    mdl_input_data.folderpath = 'C:\Users\Joseph Sombeck\Box\Miller-Grill_S1-stim\ModelData\SpaceConstant\';
+    mdl_input_data.folderpath = 'C:\Users\Joseph\Box\Miller-Grill_S1-stim\ModelData\SpaceConstant\';
     mdl_input_data.diam_list = [1,2,3];
     mdl_input_data.amp_list = [15,30,50,100];
     mdl_input_data.get_axon_dendrite_locs = 0;
@@ -22,7 +22,7 @@
     [mdl_data_all,mdl_array_data,mdl_mask_data] = getModelStimChannelData(mdl_input_data);    
     
 %% get experiment data -- space constant
-    input_data.home_computer = 1;
+    input_data.home_computer = 0;
     exp_array_data = getExperimentSpaceConstantData(input_data);
     exp_array_data = adjustArrayDataSpikeTimes(exp_array_data, 0.453/1000); % stim pulse length
     exp_array_data = getBaselineFiringRate(exp_array_data,[-25,-5]/1000); % window relative to stim onset
@@ -32,7 +32,6 @@
     resp_input_data = []; 
     resp_input_data.home_computer = input_data.home_computer;
     resp_input_data.monkey_list = {'Han','Duncan'};
-    
     
     resp_input_data.sub_baseline = 1; % doesn't apply to model
     
@@ -66,8 +65,7 @@
     
     mdl_diam = 2; % 2 is monkey diameter
     
-    
-    figure('Position',[2097 497 1640 420]); hold on;
+    figure(); hold on;
     % experiment and model activations across all neurons/cell types/clones
     % (one diameter for model)
     fits = {}; gofs = {};
@@ -84,14 +82,14 @@
         elseif(i_type == 2) % model, no synapses
             resp_data = mdl_resp_data;
             bin_idx = mdl_bin_idx;
-            type_mask = mdl_resp_data.diam == mdl_diam;
+            type_mask = mdl_resp_data.diam == mdl_diam & mdl_resp_data.cell_id == 11;
             marker = 's';
             markersize = 9;
             linestyle = '-';
         else % model synapses
             resp_data = mdl_syn_resp_data;
             bin_idx = mdl_syn_bin_idx;
-            type_mask = mdl_syn_resp_data.diam == mdl_diam;
+            type_mask = mdl_syn_resp_data.diam == mdl_diam & mdl_syn_resp_data.cell_id==11;
             marker = 'o';
             markersize = 9;
             linestyle = '-';
@@ -149,8 +147,8 @@
             end
             
             % plot data for cell id
-            plot(mdl_input_data.amp_list,squeeze(num_spikes(i_cell_id,:,1)),'-','color',getColorFromList(1,i_cell_id-1),'linewidth',2)
-            plot(mdl_input_data.amp_list,squeeze(num_spikes(i_cell_id,:,2)),'--','color',getColorFromList(1,i_cell_id-1),'linewidth',2)
+            plot(mdl_input_data.amp_list,squeeze(num_spikes(i_cell_id,:,1)),'-','color',getColorFromList(1,i_cell_id-1),'linewidth',1.5)
+            plot(mdl_input_data.amp_list,squeeze(num_spikes(i_cell_id,:,2)),'--','color',getColorFromList(1,i_cell_id-1),'linewidth',3)
         end
         
     end
@@ -192,10 +190,8 @@
                 end
             end
         end
-    end
-% plot space constants
-    
-    % get experiment space constant data
+    end    
+% get experiment space constant data
     % go through each unique channel and monkey combo and get a space constant
     unique_chan_monk = unique([exp_resp_data.monkey, exp_resp_data.chan_stim],'rows');
     unique_amps = unique(exp_resp_data.amp);
@@ -213,6 +209,8 @@
     
     
 %% plot space constants -- model at each diameter (with and without synapses) and experiment on one plot
+    plot_violin = 0; % else boxplot
+    min_rsquare = 0.3;
     
     figure();
     ax_list = [];
@@ -225,25 +223,61 @@
         
         for i_type = 1:3
             num_data = size(mdl_space_constant_data,2)*size(mdl_space_constant_data,3);
-            data_all(end+1:end+num_data,1) = reshape(mdl_space_constant_data(i_type,:,:,i_amp,1),num_data,1); % no synapses
-            rsquare_all(end+1:end+num_data,1) = reshape(mdl_space_constant_rsquare(i_type,:,:,i_amp,1),num_data,1);
-            group_all(end+1:end+num_data,1) = (2*i_type - 1)*ones(num_data,1);
-            
-            data_all(end+1:end+num_data,1) = reshape(mdl_space_constant_data(i_type,:,:,i_amp,2),num_data,1); % synapses
-            group_all(end+1:end+num_data,1) = (2*i_type)*ones(num_data,1);
-            rsquare_all(end+1:end+num_data,1) = reshape(mdl_space_constant_rsquare(i_type,:,:,i_amp,2),num_data,1);
+            if(plot_violin)
+                data_all(end+1:end+num_data,1) = reshape(mdl_space_constant_data(i_type,:,:,i_amp,1),num_data,1); % no synapses
+                rsquare_all(end+1:end+num_data,1) = reshape(mdl_space_constant_rsquare(i_type,:,:,i_amp,1),num_data,1);
+                group_all(end+1:end+num_data,1) = (2*i_type - 1)*ones(num_data,1);
+
+                data_all(end+1:end+num_data,1) = reshape(mdl_space_constant_data(i_type,:,:,i_amp,2),num_data,1); % synapses
+                group_all(end+1:end+num_data,1) = (2*i_type)*ones(num_data,1);
+                rsquare_all(end+1:end+num_data,1) = reshape(mdl_space_constant_rsquare(i_type,:,:,i_amp,2),num_data,1);
+            else % boxplot
+                boxplot_params = [];
+                boxplot_params.use_same_color_for_all = 1; % omits median color
+                boxplot_params.master_color = getColorFromList(1,1);
+                boxplot_params.median_color = 'k';
+                boxplot_params.box_width = 0.25;
+        
+                % no synapse
+                data = reshape(mdl_space_constant_data(i_type,:,:,i_amp,1),num_data,1);
+                rsquare = reshape(mdl_space_constant_rsquare(i_type,:,:,i_amp,1),num_data,1);
+                
+                boxplot_wrapper(i_type-0.15,data(rsquare > min_rsquare),boxplot_params);
+                
+                % synapse
+                boxplot_params.master_color = getColorFromList(1,0);
+                data = reshape(mdl_space_constant_data(i_type,:,:,i_amp,2),num_data,1);
+                rsquare = reshape(mdl_space_constant_rsquare(i_type,:,:,i_amp,2),num_data,1);
+                
+                boxplot_wrapper(i_type+0.15,data(rsquare>min_rsquare),boxplot_params);
+            end
         end
         
         % experiment
-        num_data = size(exp_space_constant_data,1);
-        data_all(end+1:end+num_data,1) = exp_space_constant_data(:,i_amp);
-        rsquare_all(end+1:end+num_data,1) = exp_space_constant_rsquare(:,i_amp);
-        group_all(end+1:end+num_data,1) = 7;
+        if(plot_violin)
+            num_data = size(exp_space_constant_data,1);
+            data_all(end+1:end+num_data,1) = exp_space_constant_data(:,i_amp);
+            rsquare_all(end+1:end+num_data,1) = exp_space_constant_rsquare(:,i_amp);
+            group_all(end+1:end+num_data,1) = 7;
+            
+            violin_plot(data_all,group_all);
+        else
+            boxplot_params = [];
+            boxplot_params.use_same_color_for_all = 1; % omits median color
+            boxplot_params.master_color = 'k';
+            boxplot_params.median_color = 'k';
+            boxplot_params.box_width = 0.25;
+            
+            boxplot_wrapper(4, exp_space_constant_data(exp_space_constant_rsquare(:,i_amp) > min_rsquare,i_amp),boxplot_params);
+        end
         
-        
-        % rsquare_mask
-        rsquare_mask = rsquare_all > 0.25 & data_all < 10000;
-        boxplot(data_all(rsquare_mask),group_all(rsquare_mask));
+        % format plot
+        formatForLee(gcf);
+        set(gca,'fontsize',14);
+        xlim([0.5,4.5])
+        if(i_amp == 1)
+            ylabel('Space Constant (\mum)');
+        end
     end
 
     linkaxes(ax_list,'xy');

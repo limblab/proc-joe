@@ -26,6 +26,17 @@ function [ color_out ] = getColorFromList( list_idx,color_idx )
                         0.1906    0.4071    0.5561
                         0.2080    0.7187    0.4729
                         0.9932    0.9062    0.1439];
+                    
+        case 7 % same as case 1, but lighter
+            colors_all = ([228,26,28;55,126,184;77,175,74;152,78,163;255,127,0;166,86,40;247,129,191;153,153,153;0,0,0]/255);
+            colors_all = colors_all + (1-colors_all)*1/4; 
+            colors_all(colors_all < 0) = 0;
+            colors_all(colors_all > 1) = 1;
+            
+        case 8 % same as case 1, but darker
+            colors_all = ([228,26,28;55,126,184;77,175,74;152,78,163;255,127,0;166,86,40;247,129,191;153,153,153;0,0,0]/255);
+            colors_all = colors_all*5/8; 
+            colors_all(colors_all < 0) = 0;
     end
     color_out = colors_all(mod(color_idx,size(colors_all,1))+1,:);
     if(color_idx >= size(colors_all,1))

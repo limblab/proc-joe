@@ -95,7 +95,7 @@ function [params] = setupParams(input_params)
     end
     
     if(params.use_same_color_for_all == 1)
-        params.median_color = params.master_color;
+        
         params.box_color = params.master_color;
         params.whisker_color = params.master_color;
         params.outlier_color = params.master_color;
