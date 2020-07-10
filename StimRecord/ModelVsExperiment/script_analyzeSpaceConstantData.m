@@ -1,12 +1,12 @@
 % get model data -- space constant DONT RUN, LOAD .MAT FILE INSTAED
     mdl_input_data = [];
-    mdl_input_data.folderpath = 'C:\Users\Joseph\Box\Miller-Grill_S1-stim\ModelData\SpaceConstant\';
+    mdl_input_data.folderpath = 'C:\Users\Joseph Sombeck\Box\Miller-Grill_S1-stim\ModelData\SpaceConstant\';
     mdl_input_data.diam_list = [1,2,3];
     mdl_input_data.amp_list = [15,30,50,100];
     mdl_input_data.get_axon_dendrite_locs = 0;
     mdl_input_data.cell_id_list = [1,6,11,16,21];
     mdl_input_data.num_clones = 5;
-    mdl_input_data.stim_times = (201) - 0.453; % ms
+    mdl_input_data.stim_times = (201); % ms
     mdl_input_data.wave_length = 0.453; % ms
     mdl_input_data.stim_window = [-100,400]; % ms around stim
     mdl_input_data.get_IPIs = 0;
@@ -18,12 +18,14 @@
     
     mdl_input_data.get_synapses = 1;
     [mdl_data_all,mdl_syn_array_data,mdl_syn_mask_data] = getModelStimChannelData(mdl_input_data);    
+    
     mdl_input_data.get_synapses = 0;
-    [mdl_data_all,mdl_array_data,mdl_mask_data] = getModelStimChannelData(mdl_input_data);    
+    [mdl_data_all,mdl_array_data,mdl_mask_data] = getModelStimChannelData(mdl_input_data);  
+    
     mdl_cell_type_prop = getModelCellTypeProportions();
     
 %% get experiment data -- space constant
-    input_data.home_computer = 0;
+    input_data.home_computer = 1;
     exp_array_data = getExperimentSpaceConstantData(input_data);
     exp_array_data = adjustArrayDataSpikeTimes(exp_array_data, 0.453/1000); % stim pulse length
     exp_array_data = getBaselineFiringRate(exp_array_data,[-25,-5]/1000); % window relative to stim onset
@@ -37,15 +39,15 @@
     resp_input_data.sub_baseline = 1; % doesn't apply to model
     
     resp_input_data.is_model = 0;
-    resp_input_data.spike_window = [1,5]/1000; % s
+    resp_input_data.spike_window = [1,50]/1000; % s
     [exp_resp_data] = getResponseAndDistanceData(exp_array_data, resp_input_data);
 
     resp_input_data.is_model = 1;
-    resp_input_data.spike_window = [0,5]/1000; % s
+    resp_input_data.spike_window = [0,50]/1000; % s
     [mdl_resp_data] = getResponseAndDistanceData(mdl_array_data, resp_input_data);
 
     resp_input_data.is_model = 1;
-    resp_input_data.spike_window = [0,5]/1000; % s
+    resp_input_data.spike_window = [0,50]/1000; % s
     [mdl_syn_resp_data] = getResponseAndDistanceData(mdl_syn_array_data, resp_input_data);
     
     % adjust response amplitude because there's no intrinsic activity
@@ -83,14 +85,14 @@
         elseif(i_type == 2) % model, no synapses
             resp_data = mdl_resp_data;
             bin_idx = mdl_bin_idx;
-            type_mask = mdl_resp_data.diam == mdl_diam & mdl_resp_data.cell_id == 11;
+            type_mask = mdl_resp_data.diam == mdl_diam;
             marker = 's';
             markersize = 9;
             linestyle = '-';
         else % model synapses
             resp_data = mdl_syn_resp_data;
             bin_idx = mdl_syn_bin_idx;
-            type_mask = mdl_syn_resp_data.diam == mdl_diam & mdl_syn_resp_data.cell_id==11;
+            type_mask = mdl_syn_resp_data.diam == mdl_diam;
             marker = 'o';
             markersize = 9;
             linestyle = '-';
@@ -157,7 +159,43 @@
     linkaxes(ax_list,'xy');
     
     
-
+%% plot latency of evoked spikes in model with and without synapses
+    bin_edges = 0:0.1:50; % in ms, convert latency data to ms in for loop
+    bin_centers = bin_edges(1:end-1) + mode(diff(bin_edges))/2;
+    
+    figure();
+    diam = 2;
+    for i_amp = 1:numel(mdl_input_data.amp_list)
+        subplot(1,4,i_amp); hold on;
+        
+        for i_type = 1%:3
+            if(i_type == 1)
+                data = exp_resp_data;
+                amp_list = [15,30,60,100];
+                lat_mask = ones(size(exp_resp_data.latency));
+                type_mask = ones(size(exp_resp_data.response_amp));
+                color_use = 'k';
+            elseif(i_type == 2)
+                data = mdl_resp_data;
+                amp_list = mdl_input_data.amp_list;
+                lat_mask = mdl_resp_data.latency_diam == diam;
+                type_mask = mdl_resp_data.diam == diam;
+                color_use = getColorFromList(1,1);
+            else
+                data = mdl_syn_resp_data;
+                amp_list = mdl_input_data.amp_list;
+                lat_mask = mdl_syn_resp_data.latency_diam == diam;
+                type_mask = mdl_syn_resp_data.diam == diam;
+                color_use = getColorFromList(1,0);
+            end
+            
+            lat_data = 1000*data.latency(data.latency_amp == i_amp & lat_mask);
+            num_cells = sum(data.amp == amp_list(i_amp) & type_mask);
+            bin_data = histcounts(lat_data,bin_edges)/num_cells/mean(data.latency_num_stims(data.latency_amp == i_amp & lat_mask));
+            plot(bin_centers,bin_data,'color',color_use,'linewidth',2);
+        end
+        
+    end
     
 %% compute space constants for each condition in model and experiment
     max_dist = 1000*ceil(max([exp_resp_data.dist_from_stim; mdl_resp_data.dist_from_stim])/1000);

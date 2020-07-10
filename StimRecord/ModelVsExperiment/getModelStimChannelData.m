@@ -142,7 +142,7 @@ function [mdl_data_all, array_data, mask_data] = getModelStimChannelData(input_d
                     array_data{cell_counter}.loc = mdl_data_all(amp_idx(1)).soma(i_soma).coord;
                     array_data{cell_counter}.waveform_list = 1:1:numel(amp_idx);
 
-                    array_data{cell_counter}.numStims = numel(input_data.stim_times)+zeros(numel(amp_idx),1);
+                    array_data{cell_counter}.numStims = numel(input_data.stim_times)+zeros(1,numel(amp_idx));
                     array_data{cell_counter}.diam = input_data.diam_list(i_diam);
                     array_data{cell_counter}.cell_id = input_data.cell_id_list(i_cell_id);
                     array_data{cell_counter}.clone_num = i_clone;

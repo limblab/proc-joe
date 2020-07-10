@@ -8,7 +8,8 @@ function [output_data] = getResponseAndDistanceData(array_data, input_data)
 % and a bunch of meta data to facilitate data analysis
 
     % setup data fields
-    response_amp = [];
+    response_amp = []; 
+    latency = []; latency_amp = []; latency_diam = []; latency_num_stims =[];
     dist_from_stim = [];
     monkey = []; % first letter of monkey's name, model = 'M';
     amp = [];
@@ -86,8 +87,16 @@ function [output_data] = getResponseAndDistanceData(array_data, input_data)
                 if(input_data.is_model && sum(spike_mask) > 1)
                     spike_mask(2:end) = 0; % remove doublets
                 end
-                response_amp(end+1,1) = sum(spike_mask)/array_data{i_unit}.numStims(i_amp) - baseline_val;
+                response_amp(end+1,1) = sum(spike_mask)/array_data{i_unit}.numStims(i_chan,i_amp) - baseline_val;
                 
+                if(sum(spike_mask) > 0)
+                    latency(end+1:end+sum(spike_mask))= array_data{i_unit}.spikeTrialTimes{i_chan,i_amp}(spike_mask);
+                    latency_amp(end+1:end+sum(spike_mask)) = i_amp;
+                    latency_num_stims(end+1:end+sum(spike_mask)) = array_data{i_unit}.numStims(i_chan,i_amp);
+                    if(input_data.is_model)
+                        latency_diam(end+1:end+sum(spike_mask)) = array_data{i_unit}.diam;
+                    end
+                end
             end
         end
     end
@@ -118,4 +127,9 @@ function [output_data] = getResponseAndDistanceData(array_data, input_data)
     output_data.clone_num = clone_num;
     output_data.diam = diam;
     output_data.is_model = input_data.is_model;
+    
+    output_data.latency = latency;
+    output_data.latency_amp = latency_amp;
+    output_data.latency_diam = latency_diam;
+    output_data.latency_num_stims = latency_num_stims;
 end

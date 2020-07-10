@@ -33,12 +33,16 @@
 
     raster_input_data = [];
     raster_input_data.x_lim = [-10,10]; % ms
+    raster_input_data.amp_list = mdl_input_data.amp_list;
+    raster_input_data.marker_style = '.'; % line is the correct way, but much slower
     
-    exp_idx = 5; %5, 13, 25
-%     plotModelExpRaster(exp_array_data{exp_idx},raster_input_data);
+    exp_idx = 4; %5, 13, 25
+    raster_input_data.is_model = 0;
+    plotModelExpRaster(exp_array_data{exp_idx},raster_input_data);
     
-    mdl_idx = 160; % 186,191,198,199
-    plotModelExpRaster(mdl_array_data{mdl_idx},raster_input_data);
+%     mdl_idx = 160; % 186,191,198,199
+%     raster_input_data.is_model = 1;
+%     plotModelExpRaster(mdl_array_data{mdl_idx},raster_input_data);
 %% Activation threshold
     activation_input_data.spike_window = [0,5]/1000;
     activation_input_data.remove_intrinsic = 1;
