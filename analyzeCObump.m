@@ -1,16 +1,16 @@
 %% set initial parameters
 
-    input_data.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\Han_stim_evoked_move\Han_20200629_330Hz_chan16\';
+    input_data.folderpath = 'D:\Lab\Data\CObumpmove\duncan\';
 
-%     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
-    mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+    mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
+%     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 %     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Pop_18E3\Array Map Files\6250-002085\SN 6250-002085.cmp';
     
-    input_data.date = '20190923';
+    input_data.date = '20190515';
 
     input_data.array = 'arrayLeftS1';
-    input_data.monkey = 'monkeyHan';
-    input_data.ranBy = 'ranByJoe';
+    input_data.monkey = 'monkeyDuncan';
+    input_data.ranBy = 'ranByKyle';
     input_data.lab = 6;
     input_data.mapFile = strcat('mapFile',mapFileName);
     input_data.task = 'taskCObump';
@@ -28,33 +28,36 @@
     file_name = dir('*nev*');
     
     params.event_list = {'goCueTime';'bumpTime';'stimTime';'stimCode'};
-    params.trial_results = {'R','A','I'};
+    params.trial_results = {'R'};
     params.extra_time = [1,2];
-    params.include_ts = 0;
-    params.exclude_units = [255];
+    params.include_ts = 1;
+    params.exclude_units = [0,255];
 
     move_onset_params.pre_move_thresh = 1000;
     move_onset_params.min_s = 3;
     move_onset_params.start_idx_offset = -10;
     move_onset_params.max_rt_offset = 400;
+    
     td_all = [];
-    for i = 1:numel(file_name)
+    for i = 1%:numel(file_name)
         cds = commonDataStructure();
         cds.file2cds(strcat(input_data.folderpath,file_name(i).name),input_data.array,input_data.monkey,input_data.ranBy,...
             input_data.lab,input_data.mapFile,input_data.task,'recoverPreSync','ignoreJumps','ignoreFilecat');
-
        
         td_temp = parseFileByTrial(cds,params);
-        td_temp = stripSpikeSorting(td_temp);
+%         td_temp = stripSpikeSorting(td_temp);
         td_temp = getSpeed(td_temp);
-    %     td_all = getMoveOnset(td_all,move_onset_params);
-    %     td_all = removeBadTrials(td_all);
+        td_temp = getNorm(td_temp,'vel');
+        td_temp = getMoveOnsetAndPeak(td_temp);
+        
         td_all = [td_all,td_temp];
     end
-    if(td_all(1).bin_size < 0.05)
-        % set it to 50ms
-        td_all = binTD(td_all,ceil(0.01/td_all(1).bin_size));
-    end
+    
+    td_all = removeBadTrials(td_all);
+%     if(td_all(1).bin_size < 0.05)
+%         % set it to 50ms
+%         td_all = binTD(td_all,ceil(0.01/td_all(1).bin_size));
+%     end
     
         
 %% get correlation during movement epoch
@@ -127,12 +130,82 @@ disp('start')
     optsPD.FIGURE_PREFIX = 'Han_20190924';
     
     [heatmapPD] = plotHeatmapsPD(td_all,pd_all,mapData,optsPD);
+
     
+%% raster plots for each direction for a neuron
+    td = td_all(isnan([td_all.idx_bumpTime]) & [td_all.result] == 'R');
+    window_plot = [-0.5,0.75]; % s 
+    window_pd = [0.,0.125]; % s
+% for unit_idx = 1:72
+    unit_idx = 40; % 1,5,32,33,39,40,58,62 looks good for Duncan's file
+    try
+        optsPlot = []; optsSave = [];
+        optsPlot.MAKE_FIGURE = 0;
+        optsPlot.MARKER_STYLE = 'line';
+        optsPlot.LINE_WIDTH = 1;
+        
+        unique_tgt_dirs = unique([td.target_direction]);
+        tgt_dir_mean_fr = [];
+        tgt_dir_std_fr = [];
+        trial_fr_all = [];
+        trial_tgt_dir_all = [];
+        subplot_map = [6,3,2,1,4,7,8,9];
+        figure('Position',[680 237 1081 741]);
+        for i_tgt = 1:numel(unique_tgt_dirs)
+            subplot(3,3,subplot_map(i_tgt)); hold on
+            x_data = [];
+            y_data = [];
+            trial_fr = [];
+            td_dir = td([td.target_direction] == unique_tgt_dirs(i_tgt));
+
+            for i_trial = 1:numel(td_dir)
+                % td_dir spike times are relative to trial onset
+                spike_times_movement_on = td_dir(i_trial).LeftS1_ts{unit_idx} - ...
+                    (td_dir(i_trial).idx_movement_on-td_dir(i_trial).idx_startTime)*td_dir(i_trial).bin_size;
+
+                spike_mask = spike_times_movement_on >= window_plot(1) & spike_times_movement_on <= window_plot(2);
+
+                x_data(end+1:end+sum(spike_mask)) = spike_times_movement_on(spike_mask);
+                y_data(end+1:end+sum(spike_mask)) = i_trial;
+                
+                fr_mask = spike_times_movement_on >= window_pd(1) & spike_times_movement_on <= window_pd(2);
+                trial_fr(i_trial) = sum(fr_mask)/diff(window_pd);
+                trial_fr_all(end+1) = trial_fr(i_trial);
+                trial_tgt_dir_all(end+1) = unique_tgt_dirs(i_tgt);
+            end
+
+            tgt_dir_mean_fr(i_tgt) = mean(trial_fr);
+            tgt_dir_std_fr(i_tgt) = std(trial_fr);
+            
+            plotRasterLIB(x_data,y_data,optsPlot,optsSave);
+        end
+    catch
+    end
+% end
+
+%% fit tuning curve and plot
+
+    cos_fit = fit(unique_tgt_dirs',tgt_dir_mean_fr','a*cos(x - b) + c','StartPoint',[15,0,15]);
+    cos_x_data = linspace(-0.3927,2*pi-0.3927,1000);
     
+    figure
+    errorbar(unique_tgt_dirs*180/pi,tgt_dir_mean_fr,tgt_dir_std_fr,'k.','markersize',20)
+    hold on
+    plot(cos_x_data*180/pi,feval(cos_fit,cos_x_data),'k--')
+    
+    conf_vals = confint(cos_fit);
+    plot(conf_vals(:,2)*180/pi + 360,[45,45],'k','linewidth',2)
+    
+    formatForLee(gcf)
+    xlabel('Target direction (deg)');
+    ylabel('Firing rate (Hz)');
+    set(gca,'fontsize',14);
+    
+    xlim([-0.3927*180/pi,(2*pi-0.3927)*180/pi])
     
 %% analyze movements during center hold caused by stim....
-    window = [-20,50];
-    td_stim = td_all(~isnan([td_all.idx_stimTime]) & [td_all.stimCode] == 2);
+    window = [-20,100];
+    td_stim = td_all(~isnan([td_all.idx_stimTime]) & [td_all.stimCode] >= 4);
     td_stim = trimTD(td_stim,{'idx_stimTime',window(1)},{'idx_stimTime',window(2)});
     x_data = [window(1):1:window(2)]*td_stim(1).bin_size;
     % get correction latency....
@@ -141,6 +214,8 @@ disp('start')
     move_on_idx = nan(numel(td_stim),1);
     center_hold_speed = nan(numel(td_stim),1);
     
+    color_idx = 1;
+    figure();
     for i_trial = 1:numel(td_stim)
         [max_speed,max_speed_idx] = max(td_stim(i_trial).speed(td_stim(i_trial).idx_stimTime:end)); % relative to stim onset
         center_hold_speed(i_trial) = mean(td_stim(i_trial).speed(td_stim(i_trial).idx_stimTime-2:td_stim(i_trial).idx_stimTime+2));
@@ -157,7 +232,7 @@ disp('start')
     f_speed=figure(); hold on
     
     for i_trial = 1:numel(td_stim)
-        % pos plot
+%         % pos plot
         if(i_trial < 15)
             figure(f_pos);
             xlabel('X-pos (cm)');
@@ -173,18 +248,19 @@ disp('start')
 
             subplot(3,1,1); hold on
             ylabel('X-vel (cm/s)');
-            plot(x_data,td_stim(i_trial).vel(:,1),'color',getColorFromList(1,1))
+            plot(x_data,td_stim(i_trial).vel(:,1),'color',getColorFromList(1,color_idx))
 %             plot(x_data(move_on_idx(i_trial)),td_stim(i_trial).vel(move_on_idx(i_trial),1),'marker','.','markersize',20,'color',getColorFromList(1,2));
             
             subplot(3,1,2); hold on
             ylabel('Y-vel (cm/s)');
-            plot(x_data,td_stim(i_trial).vel(:,2),'color',getColorFromList(1,1))
+            plot(x_data,td_stim(i_trial).vel(:,2),'color',getColorFromList(1,color_idx))
 %             plot(x_data(move_on_idx(i_trial)),td_stim(i_trial).vel(move_on_idx(i_trial),2),'marker','.','markersize',20,'color',getColorFromList(1,2));
 
             subplot(3,1,3); hold on
+        hold on;
             ylabel('Speed (cm/s)');
             xlabel('Time after stimulation onset (s)');
-            plot(x_data,td_stim(i_trial).speed,'color',getColorFromList(1,1))
+            plot(x_data,td_stim(i_trial).speed,'color',getColorFromList(1,color_idx))
 %             plot(x_data(move_on_idx(i_trial)),td_stim(i_trial).speed(move_on_idx(i_trial),1),'marker','.','markersize',20,'color',getColorFromList(1,2));
         end
     end
