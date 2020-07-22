@@ -1,6 +1,6 @@
 % get model data -- stim channel response
     mdl_input_data = [];
-    mdl_input_data.folderpath = 'C:\Users\Joseph Sombeck\Box\Miller-Grill_S1-stim\ModelData\StimChannelResponse\with_Intrinsic_Activity\';
+    mdl_input_data.folderpath = 'C:\Users\Joseph\Box\Miller-Grill_S1-stim\ModelData\StimChannelResponse\with_Intrinsic_Activity\';
     mdl_input_data.diam_list = [1,2,3];
     mdl_input_data.amp_list = [5,10,15,20,25,30,40,50,100];
     mdl_input_data.get_axon_dendrite_locs = 0;
@@ -22,7 +22,7 @@
     
     
 %% get experimental data -- stim channel response
-    exp_input_data.home_computer = 1;
+    exp_input_data.home_computer = 0;
     [exp_data] = getExperimentStimChannelData(exp_input_data);
     exp_array_data = exp_data.array_data;
     exp_array_data = adjustArrayDataSpikeTimes(exp_array_data, 0.453/1000); % stim pulse length
@@ -43,6 +43,10 @@
 %     mdl_idx = 160; % 186,191,198,199
 %     raster_input_data.is_model = 1;
 %     plotModelExpRaster(mdl_array_data{mdl_idx},raster_input_data);
+
+
+
+
 %% Activation threshold
     activation_input_data.spike_window = [0,5]/1000;
     activation_input_data.remove_intrinsic = 1;
@@ -88,8 +92,8 @@
     formatForLee(gcf); set(gca,'fontsize',14);
     ylabel('Activation threshold (\muA)');
    
-%%
-    % plot percent responsive all cell types for each diameter
+%plot percent responsive all cell types for each diameter
+    
     subplot(2,2,2); hold on
     for i_diam = 1:numel(mdl_input_data.diam_list) % model data
         keep_mask = mdl_mask_data.diam == mdl_input_data.diam_list(i_diam);
@@ -168,5 +172,9 @@
     bin_plot_params.exp_windows = [0,2;0,8;2,8]/1000; % s
     figs = plotBinnedSpikeTimes(mdl_bin_data,exp_bin_data,bin_plot_params);
 
+
+%% compare latency and variance-timing of evoked activity across amplitudes for each neuron
+    
+    exp_latency_data = getEvokedSpikeLatencyData(exp_array_data,latency_input_data);
 
 
