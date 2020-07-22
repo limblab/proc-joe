@@ -37,6 +37,7 @@
     resp_input_data.monkey_list = {'Han','Duncan'};
     
     resp_input_data.sub_baseline = 1; % doesn't apply to model
+    resp_input_data.max_lat_distance = 200; % max distance to count latency of a spike
     
     resp_input_data.is_model = 0;
     resp_input_data.spike_window = [1,5]/1000; % s
@@ -53,6 +54,13 @@
     % adjust response amplitude because there's no intrinsic activity
     mdl_syn_resp_data.response_amp = mdl_syn_resp_data.response_amp*0.5;
     mdl_resp_data.response_amp = mdl_resp_data.response_amp*0.5;
+    
+    % get experiment mean baseline FR
+    exp_baseline_fr = 0;
+    for i_unit = 1:numel(exp_array_data)
+        exp_baseline_fr = exp_baseline_fr + exp_array_data{i_unit}.baseline_fr;
+    end
+    exp_baseline_fr = exp_baseline_fr/numel(exp_array_data);
     
 %% plot response vs distance -- use bins for experiment and model, model + synapses
 % across all neurons for experiment
@@ -160,43 +168,53 @@
     
     
 %% plot latency of evoked spikes in model with and without synapses
-    bin_edges = 0:0.1:50; % in ms, convert latency data to ms in for loop
+    bin_edges = 0:0.25:5; % in ms, convert latency data to ms in for loop
     bin_centers = bin_edges(1:end-1) + mode(diff(bin_edges))/2;
     
     figure();
     diam = 2;
+    ax_list = [];
     for i_amp = 1:numel(mdl_input_data.amp_list)
-        subplot(1,4,i_amp); hold on;
+        ax_list(end+1) = subplot(1,4,i_amp); hold on;
         
-        for i_type = 1%:3
+        for i_type = 1:3
             if(i_type == 1)
                 data = exp_resp_data;
                 amp_list = [15,30,60,100];
                 lat_mask = ones(size(exp_resp_data.latency));
                 type_mask = ones(size(exp_resp_data.response_amp));
+                temp_baseline_fr = exp_baseline_fr;
                 color_use = 'k';
             elseif(i_type == 2)
                 data = mdl_resp_data;
                 amp_list = mdl_input_data.amp_list;
                 lat_mask = mdl_resp_data.latency_diam == diam;
                 type_mask = mdl_resp_data.diam == diam;
+                temp_baseline_fr = 0;
                 color_use = getColorFromList(1,1);
             else
                 data = mdl_syn_resp_data;
                 amp_list = mdl_input_data.amp_list;
                 lat_mask = mdl_syn_resp_data.latency_diam == diam;
                 type_mask = mdl_syn_resp_data.diam == diam;
+                temp_baseline_fr = 0;
                 color_use = getColorFromList(1,0);
             end
             
             lat_data = 1000*data.latency(data.latency_amp == i_amp & lat_mask);
-            num_cells = sum(data.amp == amp_list(i_amp) & type_mask);
+            num_cells = sum(data.amp == amp_list(i_amp) & data.dist_from_stim < resp_input_data.max_lat_distance & type_mask);
             bin_data = histcounts(lat_data,bin_edges)/num_cells/mean(data.latency_num_stims(data.latency_amp == i_amp & lat_mask));
+            bin_data = bin_data - temp_baseline_fr*mode(diff(bin_edges))/1000;
             plot(bin_centers,bin_data,'color',color_use,'linewidth',2);
         end
         
+        formatForLee(gcf);
+        set(gca,'fontsize',14);
+        xlabel('Time after stim offset (ms)');
+        ylabel('Num spikes per cell per stim');
     end
     
+    linkaxes(ax_list,'xy');
 %% compute space constants for each condition in model and experiment
 %     max_dist = 1000*ceil(max([exp_resp_data.dist_from_stim; mdl_resp_data.dist_from_stim])/1000);
     max_dist = 2000;

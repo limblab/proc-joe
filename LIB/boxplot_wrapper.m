@@ -24,8 +24,7 @@ function [  ] = boxplot_wrapper(x,data,input_data)
     end
     
     if(~params.use_log_x_scale)
-        % plot median line
-        plot(x+params.box_width.*[-0.5,0.5],plot_data.median + [0,0],'color', params.median_color,'linewidth',params.linewidth,'linestyle',params.median_linestyle);
+        
 
         % plot box
         plot(x+params.box_width.*[-0.5,0.5],plot_data.inter_quart(2) + [0,0],'color', params.box_color,'linewidth',params.linewidth,'linestyle',params.box_linestyle);
@@ -39,10 +38,10 @@ function [  ] = boxplot_wrapper(x,data,input_data)
         plot(x+params.whisker_width*[-0.5,0.5],plot_data.whisker_pos(2)+[0,0],'color',params.whisker_color,'linewidth',params.linewidth,'linestyle',params.whisker_linestyle);
         plot(x+params.whisker_width*[-0.5,0.5],plot_data.whisker_pos(1)+[0,0],'color',params.whisker_color,'linewidth',params.linewidth,'linestyle',params.whisker_linestyle);
 
-    
-    elseif(params.use_log_x_scale)
         % plot median line
-        plot(x*[1./params.box_width,params.box_width],plot_data.median + [0,0],'color', params.median_color,'linewidth',params.linewidth,'linestyle',params.median_linestyle);
+        plot(x+params.box_width.*[-0.5,0.5],plot_data.median + [0,0],'color', params.median_color,'linewidth',params.linewidth,'linestyle',params.median_linestyle);
+    elseif(params.use_log_x_scale)
+       
 
         % plot box
         plot(x*[1./params.box_width,params.box_width],plot_data.inter_quart(2) + [0,0],'color', params.box_color,'linewidth',params.linewidth,'linestyle',params.box_linestyle);
@@ -54,7 +53,10 @@ function [  ] = boxplot_wrapper(x,data,input_data)
         plot(x+[0,0],[plot_data.inter_quart(2),plot_data.whisker_pos(2)],'color',params.whisker_color,'linewidth',params.linewidth,'linestyle',params.whisker_linestyle);
         plot(x+[0,0],[plot_data.inter_quart(1),plot_data.whisker_pos(1)],'color',params.whisker_color,'linewidth',params.linewidth,'linestyle',params.whisker_linestyle);
         plot(x*[1./params.whisker_width,params.whisker_width],plot_data.whisker_pos(2)+[0,0],'color',params.whisker_color,'linewidth',params.linewidth,'linestyle',params.whisker_linestyle);
-        plot(x*[1./params.whisker_width,params.whisker_width],plot_data.whisker_pos(1)+[0,0],'color',params.whisker_color,'linewidth',params.linewidth,'linestyle',params.whisker_linestyle);        
+        plot(x*[1./params.whisker_width,params.whisker_width],plot_data.whisker_pos(1)+[0,0],'color',params.whisker_color,'linewidth',params.linewidth,'linestyle',params.whisker_linestyle);     
+        
+        % plot median line
+        plot(x*[1./params.box_width,params.box_width],plot_data.median + [0,0],'color', params.median_color,'linewidth',params.linewidth,'linestyle',params.median_linestyle);
     end
     
 end

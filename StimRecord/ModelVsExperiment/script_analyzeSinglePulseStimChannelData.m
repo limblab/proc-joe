@@ -36,7 +36,7 @@
     raster_input_data.amp_list = mdl_input_data.amp_list;
     raster_input_data.marker_style = '.'; % line is the correct way, but much slower
     
-    exp_idx = 4; %5, 13, 25
+    exp_idx = 5; %4, 5, 13, 25
     raster_input_data.is_model = 0;
     plotModelExpRaster(exp_array_data{exp_idx},raster_input_data);
     
@@ -92,8 +92,8 @@
     formatForLee(gcf); set(gca,'fontsize',14);
     ylabel('Activation threshold (\muA)');
    
-%plot percent responsive all cell types for each diameter
-    
+
+    % plot percent responsive all cell types for each diameter
     subplot(2,2,2); hold on
     for i_diam = 1:numel(mdl_input_data.diam_list) % model data
         keep_mask = mdl_mask_data.diam == mdl_input_data.diam_list(i_diam);
@@ -173,8 +173,91 @@
     figs = plotBinnedSpikeTimes(mdl_bin_data,exp_bin_data,bin_plot_params);
 
 
-%% compare latency and variance-timing of evoked activity across amplitudes for each neuron
+%% magnitude and latency of volleys
+    lat_input_data.amp_list = [5,10,15,20,25,30,40,50,100];
+    lat_input_data.peak_window = [0,10]/1000; % s
+    lat_input_data.bin_size = 0.2/1000; % s
     
-    exp_latency_data = getEvokedSpikeLatencyData(exp_array_data,latency_input_data);
+    lat_input_data.use_gauss_filter = 1;
+    lat_input_data.dt = 0.0001;
+    lat_input_data.kernel_SD = 0.0002;
+    
+    lat_input_data.is_model = 0;
+    exp_latency_data = getLatencyOfPeaks(exp_array_data,lat_input_data);
+    
+    lat_input_data.is_model = 1;
+    mdl_latency_data = getLatencyOfPeaks(mdl_array_data,lat_input_data);
+    
+%% plots...
 
+    % change in latency of first peak vs. amplitude
+        % change in latency relative to peak at lowest amplitude for each
+        % unit
+    boxplot_params = [];
+    boxplot_params.use_same_color_for_all = 1; % omits median color
+    
+    boxplot_params.median_color = 'k';
+    boxplot_params.box_width = 1;
+    
+    figure();
+    for i_type = 1:2
+        if(i_type == 1)
+            lat_data = exp_latency_data;
+            boxplot_params.master_color = 'k';
+            offset = boxplot_params.box_width;
+        else
+            lat_data = mdl_latency_data;
+            boxplot_params.master_color = getColorFromList(1,1);
+            offset = -boxplot_params.box_width;
+        end
+        
+        for i_amp = 1:numel(lat_input_data.amp_list)
+            data_mask = lat_data.delta_amp == lat_input_data.amp_list(i_amp);
 
+            if(sum(data_mask) > 2)
+                boxplot_wrapper(lat_input_data.amp_list(i_amp)+offset,lat_data.delta_lat(data_mask),boxplot_params);
+            end
+        end
+    end
+    
+% density plots showing latency vs. standard dev of spikes
+    bin_size = 0.1; % ms
+    x_edges = [0:bin_size:10]/1000;
+    y_edges = [0:bin_size:10]/1000;
+    figure();
+    subplot(1,2,1)
+    % latency (or peak num) vs. width
+    densityplot(exp_latency_data.lat_list,exp_latency_data.std_list,'edges',{x_edges,y_edges})
+    
+    subplot(1,2,2)
+    densityplot(mdl_latency_data.lat_list,mdl_latency_data.std_list,'edges',{x_edges,y_edges})
+% num peaks vs amplitude
+
+    boxplot_params = [];
+    boxplot_params.use_same_color_for_all = 1; % omits median color
+    
+    boxplot_params.median_color = 'k';
+    boxplot_params.box_width = 1;
+    
+    figure();
+    for i_type = 1:2
+        if(i_type == 1)
+            lat_data = exp_latency_data;
+            boxplot_params.master_color = 'k';
+            offset = boxplot_params.box_width;
+        else
+            lat_data = mdl_latency_data;
+            boxplot_params.master_color = getColorFromList(1,1);
+            offset = -boxplot_params.box_width;
+        end
+        
+        for i_amp = 1:numel(lat_input_data.amp_list)
+            data_mask = lat_data.num_peaks_amp(:,2) == lat_input_data.amp_list(i_amp);
+
+            if(sum(data_mask) > 2)
+                boxplot_wrapper(lat_input_data.amp_list(i_amp)+offset,lat_data.num_peaks_amp(data_mask,1),boxplot_params);
+            end
+        end
+    end
+    
+    
