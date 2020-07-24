@@ -1,7 +1,7 @@
 %% combine array data's that exist within a folder structure
 
     single_pulse = 0;
-    home_computer = 1;
+    home_computer = 0;
     include_non_stim_data = 0;
 
     if(single_pulse && home_computer)

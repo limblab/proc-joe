@@ -1,6 +1,6 @@
 % get model data -- space constant DONT RUN, LOAD .MAT FILE INSTAED
     mdl_input_data = [];
-    mdl_input_data.folderpath = 'C:\Users\Joseph Sombeck\Box\Miller-Grill_S1-stim\ModelData\SpaceConstant\';
+    mdl_input_data.folderpath = 'C:\Users\Joseph\Box\Miller-Grill_S1-stim\ModelData\SpaceConstant\';
     mdl_input_data.diam_list = [1,2,3];
     mdl_input_data.amp_list = [15,30,50,100];
     mdl_input_data.get_axon_dendrite_locs = 0;
@@ -17,20 +17,27 @@
     % cell_id=21:25 %L6 PC, clones 1-5
     
     mdl_input_data.get_synapses = 1;
-    [mdl_data_all,mdl_syn_array_data,mdl_syn_mask_data] = getModelStimChannelData(mdl_input_data);    
+    [mdl_data_all,mdl_syn_array_data_all,mdl_syn_mask_data_all] = getModelStimChannelData(mdl_input_data);    
+    mdl_syn_array_data = mdl_syn_array_data_all; mdl_syn_mask_data = mdl_syn_mask_data_all;
     
     mdl_input_data.get_synapses = 0;
-    [mdl_data_all,mdl_array_data,mdl_mask_data] = getModelStimChannelData(mdl_input_data);  
+    [mdl_data_all,mdl_array_data_all,mdl_mask_data_all] = getModelStimChannelData(mdl_input_data);  
+    mdl_array_data = mdl_array_data_all; mdl_mask_data = mdl_mask_data_all;
     
     mdl_cell_type_prop = getModelCellTypeProportions();
     
 %% get experiment data -- space constant
-    input_data.home_computer = 1;
+    input_data.home_computer = 0;
     exp_array_data = getExperimentSpaceConstantData(input_data);
     exp_array_data = adjustArrayDataSpikeTimes(exp_array_data, 0.453/1000); % stim pulse length
     exp_array_data = getBaselineFiringRate(exp_array_data,[-25,-5]/1000); % window relative to stim onset
     
 
+%% resample neurons based on proportions observed in rat cortex
+%     num_sample = 200;
+    [mdl_array_data,mdl_mask_data] = resampleModelData(mdl_array_data_all,mdl_mask_data_all);
+    
+    
 %% get response data for both model and experiment
     resp_input_data = []; 
     resp_input_data.home_computer = input_data.home_computer;
@@ -74,7 +81,7 @@
     [~,~,mdl_syn_bin_idx] = histcounts(mdl_syn_resp_data.dist_from_stim,bin_edges);
     fit_bin_min = 0;
     
-    mdl_diam = 2; % 2 is monkey diameter
+    mdl_diam = 3; % 2 is monkey diameter
     
     figure(); hold on;
     % experiment and model activations across all neurons/cell types/clones
@@ -93,14 +100,14 @@
         elseif(i_type == 2) % model, no synapses
             resp_data = mdl_resp_data;
             bin_idx = mdl_bin_idx;
-            type_mask = mdl_resp_data.diam == mdl_diam;
+            type_mask = mdl_resp_data.diam == mdl_diam & mdl_resp_data.cell_id == 21;
             marker = 's';
             markersize = 9;
             linestyle = '-';
         else % model synapses
             resp_data = mdl_syn_resp_data;
             bin_idx = mdl_syn_bin_idx;
-            type_mask = mdl_syn_resp_data.diam == mdl_diam;
+            type_mask = mdl_syn_resp_data.diam == mdl_diam & mdl_syn_resp_data.cell_id == 21;
             marker = 'o';
             markersize = 9;
             linestyle = '-';
@@ -216,9 +223,10 @@
     
     linkaxes(ax_list,'xy');
 %% compute space constants for each condition in model and experiment
-    max_dist = 1000*ceil(max([exp_resp_data.dist_from_stim; mdl_resp_data.dist_from_stim])/1000);
-    bin_size = 100; % um
-    bin_edges = 0:bin_size:max_dist;
+%     max_dist = 1000*ceil(max([exp_resp_data.dist_from_stim; mdl_resp_data.dist_from_stim])/1000);
+    max_dist = 2000;
+    bin_size = 200; % um
+    bin_edges = 200:bin_size:max_dist;
 
     mdl_space_constant_data = zeros(numel(mdl_input_data.diam_list),numel(mdl_input_data.cell_id_list),...
         mdl_input_data.num_clones,numel(mdl_input_data.amp_list),2); % with and without synapses
@@ -267,7 +275,7 @@
     
 %% plot space constants -- model at each diameter (with and without synapses) and experiment on one plot
     plot_violin = 0; % else boxplot
-    min_rsquare = 0.3;
+    min_rsquare = 0.1;
     
     figure();
     ax_list = [];
