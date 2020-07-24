@@ -134,15 +134,18 @@ disp('start')
     
 %% raster plots for each direction for a neuron
     td = td_all(isnan([td_all.idx_bumpTime]) & [td_all.result] == 'R');
-    window_plot = [-0.5,0.75]; % s 
+    window_plot = [-0.5,0.5]; % s 
     window_pd = [0.,0.125]; % s
+    speed_data = []; mean_speed_data = [];
+    speed_x_data = window_plot(1):td(1).bin_size:window_plot(2);
+    ax_list = [];
 % for unit_idx = 1:72
     unit_idx = 40; % 1,5,32,33,39,40,58,62 looks good for Duncan's file
     try
         optsPlot = []; optsSave = [];
         optsPlot.MAKE_FIGURE = 0;
         optsPlot.MARKER_STYLE = 'line';
-        optsPlot.LINE_WIDTH = 1;
+        optsPlot.LINE_WIDTH = 0.8;
         
         unique_tgt_dirs = unique([td.target_direction]);
         tgt_dir_mean_fr = [];
@@ -150,9 +153,10 @@ disp('start')
         trial_fr_all = [];
         trial_tgt_dir_all = [];
         subplot_map = [6,3,2,1,4,7,8,9];
-        figure('Position',[680 237 1081 741]);
+        f_raster = figure('Position',[680 237 1081 741]);
+        f_speed = figure('Position',[680 237 1081 741]);
         for i_tgt = 1:numel(unique_tgt_dirs)
-            subplot(3,3,subplot_map(i_tgt)); hold on
+            
             x_data = [];
             y_data = [];
             trial_fr = [];
@@ -172,17 +176,32 @@ disp('start')
                 trial_fr(i_trial) = sum(fr_mask)/diff(window_pd);
                 trial_fr_all(end+1) = trial_fr(i_trial);
                 trial_tgt_dir_all(end+1) = unique_tgt_dirs(i_tgt);
+                
+                % also want to collect speed data
+                idx_speed = td_dir(i_trial).idx_movement_on + ceil(window_plot/td_dir(1).bin_size); 
+                speed_data(end+1,:) = td_dir(i_trial).speed(idx_speed(1):idx_speed(2));
+                
             end
 
+            mean_speed_data(i_tgt,:) = mean(speed_data,1);
+            
             tgt_dir_mean_fr(i_tgt) = mean(trial_fr);
             tgt_dir_std_fr(i_tgt) = std(trial_fr);
             
+            figure(f_raster)
+            subplot(3,3,subplot_map(i_tgt)); hold on
             plotRasterLIB(x_data,y_data,optsPlot,optsSave);
+            
+            figure(f_speed);
+            ax_list(end+1) = subplot(3,3,subplot_map(i_tgt)); hold on
+            plot(speed_x_data,mean_speed_data(i_tgt,:))
+            xlim(window_plot)
         end
     catch
     end
 % end
 
+    linkaxes(ax_list,'xy');
 %% fit tuning curve and plot
 
     cos_fit = fit(unique_tgt_dirs',tgt_dir_mean_fr','a*cos(x - b) + c','StartPoint',[15,0,15]);
