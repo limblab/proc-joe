@@ -148,7 +148,7 @@
     
 %% count spikes in window after each stimulation, plot those values
     baseline_window = [-80,-5]; % in ms
-    window = [0,9]; % in ms
+    window = [1,6]; % in ms
     post_stim_fr = nan(numel(array_data),8,2);
     stim_firing_rate = nan(numel(array_data),8,2);
     baseline_firing_rate = nan(numel(array_data),8,1);
@@ -209,11 +209,11 @@
             'marker',markers{m},'color',getColorFromList(5,0),'markerfacecolor',getColorFromList(5,0),'markersize',marker_size(m));
         
         % 20 ms
-        plot(post_stim_fr(keep_mask,7,1),post_stim_fr(keep_mask,8,2),'linestyle','none',...
+        plot(post_stim_fr(keep_mask,8,1),post_stim_fr(keep_mask,8,2),'linestyle','none',...
             'marker',markers{m},'color',getColorFromList(5,2),'markerfacecolor',getColorFromList(5,2),'markersize',marker_size(m));
         
         % 10 ms
-        plot(post_stim_fr(keep_mask,8,1),post_stim_fr(keep_mask,7,2),'linestyle','none',...
+        plot(post_stim_fr(keep_mask,7,1),post_stim_fr(keep_mask,7,2),'linestyle','none',...
             'marker',markers{m},'color',getColorFromList(5,3),'markerfacecolor',getColorFromList(5,3),'markersize',marker_size(m));
         
     end
@@ -228,9 +228,30 @@
     formatForLee(gcf);
     set(gca,'fontsize',14);
 %     xlim([-20,150]); ylim([-20,150])
-    xlim([-0.2,1.2]); ylim([-0.2,1.2]);
+%     xlim([-0.2,1.2]); ylim([-0.2,1.2]);
 
+    
+%% plot histogram comparing response to single pulse to response to second pulse for different IPIs
+    % ratio to compare
+    
+    % 10 ms, 20 ms, 200 ms IPI
+    ratios = [(post_stim_fr(:,7,2)./post_stim_fr(:,1,1)),...
+        (post_stim_fr(:,8,2)./post_stim_fr(:,1,1)),...
+        (post_stim_fr(:,6,2)./post_stim_fr(:,1,1))];
 
+    ratios(any(isnan(ratios),2) | any(ratios < 0,2),:) = [];
+
+    boxplot_params = [];
+    boxplot_params.use_same_color_for_all = 1; % omits median color
+    
+    boxplot_params.median_color = 'k';
+    boxplot_params.box_width = 0.5;
+    
+    figure()
+    for i=1:size(ratios,2)
+        boxplot_wrapper(i,ratios(:,i),boxplot_params);
+    end
+    
 %% look at duration of inhibition after second pulse compared to the single pulse case
     optsInhibPlot = [];
     optsInhibPlot.PRE_WINDOW = [-80,-5]; % ms

@@ -261,7 +261,7 @@
     marker_size = [22,8];
     
     post_window = [0,5]; % in ms
-    num_pulses = 41;
+    num_pulses = 11;
     use_time_for_fit = 1;
     baseline_window = [-80,-5]; % in ms
     slope_window = [10,190]; % in ms

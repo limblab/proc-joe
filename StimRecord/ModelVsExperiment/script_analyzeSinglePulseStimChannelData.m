@@ -44,6 +44,7 @@
 %     raster_input_data.is_model = 1;
 %     plotModelExpRaster(mdl_array_data{mdl_idx},raster_input_data);
 
+%% resample neurons based on proportions observed in rat cortex
 
 
 
