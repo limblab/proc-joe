@@ -17,10 +17,12 @@
     % cell_id=21:25 %L6 PC, clones 1-5
     
     mdl_input_data.get_synapses = 1;
-    [mdl_data_all,mdl_syn_array_data,mdl_syn_mask_data] = getModelStimChannelData(mdl_input_data);    
+    [mdl_data_all,mdl_syn_array_data_all,mdl_syn_mask_data_all] = getModelStimChannelData(mdl_input_data);    
+    mdl_syn_array_data = mdl_syn_array_data_all; mdl_syn_mask_data = mdl_syn_mask_data_all;
     
     mdl_input_data.get_synapses = 0;
-    [mdl_data_all,mdl_array_data,mdl_mask_data] = getModelStimChannelData(mdl_input_data);  
+    [mdl_data_all,mdl_array_data_all,mdl_mask_data_all] = getModelStimChannelData(mdl_input_data);  
+    mdl_array_data = mdl_array_data_all; mdl_mask_data = mdl_mask_data_all;
     
     mdl_cell_type_prop = getModelCellTypeProportions();
     
@@ -31,6 +33,11 @@
     exp_array_data = getBaselineFiringRate(exp_array_data,[-25,-5]/1000); % window relative to stim onset
     
 
+%% resample neurons based on proportions observed in rat cortex
+%     num_sample = 200;
+    [mdl_array_data,mdl_mask_data] = resampleModelData(mdl_array_data_all,mdl_mask_data_all);
+    
+    
 %% get response data for both model and experiment
     resp_input_data = []; 
     resp_input_data.home_computer = input_data.home_computer;

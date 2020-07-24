@@ -17,7 +17,9 @@
     % cell_id=16:20 %L5 PC, clones 1-5
     % cell_id=21:25 %L6 PC, clones 1-5
 
-    [mdl_data_all,mdl_array_data,mdl_mask_data] = getModelStimChannelData(mdl_input_data);
+    [mdl_data_all,mdl_array_data_all,mdl_mask_data_all] = getModelStimChannelData(mdl_input_data);
+    mdl_array_data = mdl_array_data_all; mdl_mask_data = mdl_mask_data_all; % use same proportion of cells as default, can resample below
+    
     mdl_dists = getModelDistances(mdl_array_data);
     
     
@@ -45,8 +47,9 @@
 %     plotModelExpRaster(mdl_array_data{mdl_idx},raster_input_data);
 
 %% resample neurons based on proportions observed in rat cortex
-
-
+%     num_sample = 200;
+    [mdl_array_data,mdl_mask_data] = resampleModelData(mdl_array_data_all,mdl_mask_data_all);
+    
 
 %% Activation threshold
     activation_input_data.spike_window = [0,5]/1000;
@@ -92,7 +95,7 @@
     
     formatForLee(gcf); set(gca,'fontsize',14);
     ylabel('Activation threshold (\muA)');
-   
+%
 
     % plot percent responsive all cell types for each diameter
     subplot(2,2,2); hold on
