@@ -9,7 +9,7 @@ for i_unit = 1:numel(exp_array_data)
 end
 
 
-%% compute inhibition duration and plot across amplitudes
+%% compute inhibition duration and plot across train frequencies
 
     inhib_input_data = [];
     inhib_input_data.pre_window = [-80,-15]/1000; % s 
@@ -21,8 +21,7 @@ end
     inhib_input_data.blank_time = [-5,10]/1000; % s
     
     inhib_input_data.num_consec_bins = 2;
-    inhib_input_data.IPI_list = [-1,200,10,20];
-    inhib_input_data.cond_list = [1,6,6,7,8]; % single, 200 ms (first pulse), 200 ms (second pulse), 10 ms, 20 ms
+    inhib_input_data.cond_list = [1,2,3,4,5]; % single, 180Hz, 90 Hz, 50Hz, 20 Hz
     
     
     exp_inhib_data = getInhibitionDurationDoublePulseWrapper(exp_array_data,inhib_input_data);
@@ -43,8 +42,8 @@ end
 %% plot rasters
 
     raster_input_data = [];
-    raster_input_data.x_lim = [-100,150]; % ms
-    raster_input_data.cond_list = [1,6,8,7]; % single, 200 ms, 20ms, 10ms IPI
+    raster_input_data.x_lim = [-100,350]; % ms
+    raster_input_data.cond_list = [1,2,3,4,5]; % single, 200 ms, 20ms, 10ms IPI
     raster_input_data.marker_style = '.'; % line is the correct way, but much slower
     
     for exp_idx = 1:5%numel(exp_array_data) %
@@ -56,7 +55,7 @@ end
     
 %% sanity check code
 figure(); hold on
-idx = 20;
+idx = 2;
 
 for i=1:size(exp_inhib_data.inhib_dur,2)
     x_data = inhib_input_data.bin_window(1):inhib_input_data.bin_size:inhib_input_data.bin_window(2);

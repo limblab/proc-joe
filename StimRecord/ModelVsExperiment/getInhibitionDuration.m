@@ -25,6 +25,27 @@ function [output_data] = getInhibitionDuration(array_data,cond_idx,input_data)
         array_data_rebin.binCounts{i_amp} = histcounts(spike_trial_times,bin_edges);
     end
     
+    % get threshold based on pre_window over all conditions (sets same
+    % threshold for each condition)
+    threshold_all = 0;
+    for i_cond = 1:numel(array_data_rebin.binCounts)
+        PSTH = array_data_rebin.binCounts{1,i_cond};
+        % smooth with running average of N kernel_length bins
+        filtered_PSTH = movmean(PSTH,[input_data.kernel_length,0]);
+
+        % compute spontaneous firing rate
+        pre_window_idx = [find(array_data_rebin.binEdges{1,i_cond} >= input_data.pre_window(1),1,'first'),...
+            find(array_data_rebin.binEdges{1,i_cond} >= input_data.pre_window(2),1,'first')];
+        spont_fr = mean(filtered_PSTH(pre_window_idx(1):pre_window_idx(2)));
+        spont_std = std(filtered_PSTH(pre_window_idx(1):pre_window_idx(2)));
+
+        % set threshold based on spont_fr
+        threshold_all = threshold_all + spont_fr*0.75;
+    end
+    cond_mask = array_data_rebin.numStims > 0;
+    threshold = threshold_all/sum(cond_mask); % take mean across conditions
+    % get inhibition duration for this condition
+    
     PSTH = array_data_rebin.binCounts{1,cond_idx};
 
     % blank period with mean from baseline
@@ -40,13 +61,6 @@ function [output_data] = getInhibitionDuration(array_data,cond_idx,input_data)
 
     % smooth with running average of N kernel_length bins
     filtered_PSTH = movmean(PSTH,[input_data.kernel_length,0]);
-
-%         % compute spontaneous firing rate
-    spont_fr = mean(filtered_PSTH(pre_window_idx(1):pre_window_idx(2)));
-    spont_std = std(filtered_PSTH(pre_window_idx(1):pre_window_idx(2)));
-%         
-%         % set threshold based on spont_fr
-    threshold = spont_fr*0.75;
 
      % if firing rate undershoots thresh, define duration as the time
     % between this point and when the FR comes back above thresh. 
@@ -72,6 +86,7 @@ function [output_data] = getInhibitionDuration(array_data,cond_idx,input_data)
     output_data.is_inhib = is_inhib;
     output_data.inhib_dur = inhib_dur;
     output_data.PSTH = PSTH;
+    output_data.threshold = threshold;
 end
 
 

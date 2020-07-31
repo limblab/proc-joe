@@ -39,8 +39,8 @@
     raster_input_data.marker_style = '.'; % line is the correct way, but much slower
     
     for exp_idx = 1:30 %4, 5, 13, 25
-    raster_input_data.is_model = 0;
-    plotModelExpRaster(exp_array_data{exp_idx},raster_input_data);
+        raster_input_data.is_model = 0;
+        plotModelExpRaster(exp_array_data{exp_idx},raster_input_data);
     end
 %     mdl_idx = 160; % 186,191,198,199
 %     raster_input_data.is_model = 1;
