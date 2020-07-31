@@ -1,7 +1,7 @@
 %% combine array data's that exist within a folder structure
 
     single_pulse = 0;
-    home_computer = 0;
+    home_computer = 1;
     include_non_stim_data = 0;
 
     if(single_pulse && home_computer)
@@ -22,11 +22,12 @@
         highest_folderpath{2} = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\StimRecData\SinglePulseStimChan\Han\';
         search_word = 'arrayData';
     else 
-        if(home_computer)
+        if(~home_computer)
             highest_folderpath{1} = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\StimRecData\Duncan\DblPulse_trains\';
             highest_folderpath{2} = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\StimRecData\Han\DblPulse_trains\all_processed\';
         else
-            
+            highest_folderpath{1} = 'D:\Lab\Data\StimArtifact\DblPulseData\Duncan\';
+            highest_folderpath{2} = 'D:\Lab\Data\StimArtifact\DblPulseData\Han\';
         end
         search_word = 'arrayData';
     end

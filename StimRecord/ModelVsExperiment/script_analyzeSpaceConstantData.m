@@ -1,6 +1,6 @@
 % get model data -- space constant DONT RUN, LOAD .MAT FILE INSTAED
     mdl_input_data = [];
-    mdl_input_data.folderpath = 'C:\Users\Joseph\Box\Miller-Grill_S1-stim\ModelData\SpaceConstant\';
+    mdl_input_data.folderpath = 'C:\Users\Joseph Sombeck\Box\Miller-Grill_S1-stim\ModelData\SpaceConstant\';
     mdl_input_data.diam_list = [1,2,3];
     mdl_input_data.amp_list = [15,30,50,100];
     mdl_input_data.get_axon_dendrite_locs = 0;
@@ -23,11 +23,9 @@
     mdl_input_data.get_synapses = 0;
     [mdl_data_all,mdl_array_data_all,mdl_mask_data_all] = getModelStimChannelData(mdl_input_data);  
     mdl_array_data = mdl_array_data_all; mdl_mask_data = mdl_mask_data_all;
-    
-    mdl_cell_type_prop = getModelCellTypeProportions();
-    
+        
 %% get experiment data -- space constant
-    input_data.home_computer = 0;
+    input_data.home_computer = 1;
     exp_array_data = getExperimentSpaceConstantData(input_data);
     exp_array_data = adjustArrayDataSpikeTimes(exp_array_data, 0.453/1000); % stim pulse length
     exp_array_data = getBaselineFiringRate(exp_array_data,[-25,-5]/1000); % window relative to stim onset
@@ -36,7 +34,7 @@
 %% resample neurons based on proportions observed in rat cortex
 %     num_sample = 200;
     [mdl_array_data,mdl_mask_data] = resampleModelData(mdl_array_data_all,mdl_mask_data_all);
-    
+    [mdl_syn_array_data,mdl_syn_mask_data] = resampleModelData(mdl_syn_array_data_all,mdl_syn_mask_data_all);
     
 %% get response data for both model and experiment
     resp_input_data = []; 
@@ -142,36 +140,8 @@
     linkaxes(ax_list,'xy');
     ylim([-0.05,0.5])
     
-    xlim([0,3000])
+    xlim([0,4500])
     
-    
-%% compare number of evoked spikes in model with and without synapses
-
-    % 1 plot per diameter, 4 amplitudes and each cell type per plot
-    figure();
-    ax_list = [];
-    for i_diam = 1:numel(mdl_input_data.diam_list)
-        ax_list(i_diam) = subplot(1,3,i_diam); hold on;
-        num_spikes = nan(numel(mdl_input_data.cell_id_list), numel(mdl_input_data.amp_list),2); % no synapses, synapses
-        for i_cell_id = 1:numel(mdl_input_data.cell_id_list)
-            for i_amp = 1:numel(mdl_input_data.amp_list)
-                mask = mdl_resp_data.diam == mdl_input_data.diam_list(i_diam) & mdl_resp_data.amp == mdl_input_data.amp_list(i_amp) & ...
-                    mdl_resp_data.cell_id == mdl_input_data.cell_id_list(i_cell_id);
-                num_spikes(i_cell_id,i_amp,1) = sum(mdl_resp_data.response_amp(mask));
-                
-                mask = mdl_syn_resp_data.diam == mdl_input_data.diam_list(i_diam) & mdl_syn_resp_data.amp == mdl_input_data.amp_list(i_amp) & ...
-                    mdl_syn_resp_data.cell_id == mdl_input_data.cell_id_list(i_cell_id);
-                num_spikes(i_cell_id,i_amp,2) = sum(mdl_syn_resp_data.response_amp(mask));
-            end
-            
-            % plot data for cell id
-            plot(mdl_input_data.amp_list,squeeze(num_spikes(i_cell_id,:,1)),'-','color',getColorFromList(1,i_cell_id-1),'linewidth',1.5)
-            plot(mdl_input_data.amp_list,squeeze(num_spikes(i_cell_id,:,2)),'--','color',getColorFromList(1,i_cell_id-1),'linewidth',3)
-        end
-        
-    end
-
-    linkaxes(ax_list,'xy');
     
     
 %% plot latency of evoked spikes in model with and without synapses

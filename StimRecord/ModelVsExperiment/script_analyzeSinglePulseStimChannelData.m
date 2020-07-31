@@ -1,6 +1,6 @@
 % get model data -- stim channel response
     mdl_input_data = [];
-    mdl_input_data.folderpath = 'C:\Users\Joseph\Box\Miller-Grill_S1-stim\ModelData\StimChannelResponse\with_Intrinsic_Activity\';
+    mdl_input_data.folderpath = 'C:\Users\Joseph Sombeck\Box\Miller-Grill_S1-stim\ModelData\StimChannelResponse\with_Intrinsic_Activity\';
     mdl_input_data.diam_list = [1,2,3];
     mdl_input_data.amp_list = [5,10,15,20,25,30,40,50,100];
     mdl_input_data.get_axon_dendrite_locs = 0;
@@ -24,7 +24,7 @@
     
     
 %% get experimental data -- stim channel response
-    exp_input_data.home_computer = 0;
+    exp_input_data.home_computer = 1;
     [exp_data] = getExperimentStimChannelData(exp_input_data);
     exp_array_data = exp_data.array_data;
     exp_array_data = adjustArrayDataSpikeTimes(exp_array_data, 0.453/1000); % stim pulse length
@@ -34,14 +34,14 @@
 %% plot raster of example neuron
 
     raster_input_data = [];
-    raster_input_data.x_lim = [-10,10]; % ms
+    raster_input_data.x_lim = [-50,150]; % ms
     raster_input_data.amp_list = mdl_input_data.amp_list;
     raster_input_data.marker_style = '.'; % line is the correct way, but much slower
     
-    exp_idx = 5; %4, 5, 13, 25
+    for exp_idx = 1:30 %4, 5, 13, 25
     raster_input_data.is_model = 0;
     plotModelExpRaster(exp_array_data{exp_idx},raster_input_data);
-    
+    end
 %     mdl_idx = 160; % 186,191,198,199
 %     raster_input_data.is_model = 1;
 %     plotModelExpRaster(mdl_array_data{mdl_idx},raster_input_data);
@@ -192,7 +192,7 @@
     lat_input_data.is_model = 1;
     mdl_latency_data = getLatencyOfPeaks(mdl_array_data,lat_input_data);
     
-%% plots...
+% plots...
 
     % change in latency of first peak vs. amplitude
         % change in latency relative to peak at lowest amplitude for each
@@ -265,3 +265,56 @@
     end
     
     
+
+    
+%% compute inhibition duration and plot across amplitudes
+
+    inhib_input_data = [];
+    inhib_input_data.pre_window = [-80,-5]/1000; % s 
+    inhib_input_data.post_window = [0,220]/1000; % s
+    inhib_input_data.bin_window = [inhib_input_data.pre_window(1),inhib_input_data.post_window(2)+10/1000];
+    inhib_input_data.max_time_start = 40/1000; % s
+    inhib_input_data.bin_size = 5/1000; % s
+    inhib_input_data.kernel_length = 2;
+    inhib_input_data.blank_time = [0,10]/1000; % s
+    
+    inhib_input_data.num_consec_bins = 2;
+    inhib_input_data.amp_list = [5,10,15,20,25,30,40,50,100];
+    
+    
+    exp_inhib_data = getInhibitionDurationAmpWrapper(exp_array_data,inhib_input_data);
+
+    % plot percent of cells that have inhibition, and duration at each
+    % amplitude
+    
+    figure('Position',[680 558 942 420]);
+    subplot(1,2,1)
+    
+    for i_amp = 1:numel(inhib_input_data.amp_list)
+        boxplot_params = [];
+        boxplot_params.use_same_color_for_all = 1;
+        boxplot_params.master_color = getColorFromList(1,1);
+        boxplot_params.box_width = 2.4;
+        
+        data = exp_inhib_data.inhib_dur(:,i_amp);
+        data(isnan(data)) = [];
+        
+        boxplot_wrapper(inhib_input_data.amp_list(i_amp), data, boxplot_params);
+        
+    end
+    % format
+    formatForLee(gcf)
+    set(gca,'fontsize',14)
+    ylabel('Inhib dur (s)');
+    xlabel('Amp (\muA)');
+    
+    subplot(1,2,2) % percent inhib
+    percent_inhib = sum(~isnan(exp_inhib_data.inhib_dur),1)/size(exp_inhib_data.inhib_dur,1);
+    plot(inhib_input_data.amp_list,percent_inhib,'color',getColorFromList(1,1),'linewidth',1.5,'marker','.','markersize',14)
+    
+    % format
+    ylim([0,1])
+    formatForLee(gcf)
+    set(gca,'fontsize',14)
+    ylabel('Fraction cells with inhib response (s)');
+    xlabel('Amp (\muA)');
