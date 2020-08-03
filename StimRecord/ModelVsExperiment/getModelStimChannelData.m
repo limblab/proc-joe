@@ -35,8 +35,15 @@ function [mdl_data_all, array_data, mask_data] = getModelStimChannelData(input_d
                     data_path = [coord_data.folderpath, 'Diam',num2str(coord_data.diam),'_',num2str(coord_data.amp),'uA\'];
                     cd(data_path);
                     location_data = getTrueCoordinates(coord_data);
-                    load(['data_soma',num2str(coord_data.cell_id + coord_data.clone_id - 1)]);
                     
+                    data_soma = [];
+                    try
+                        if(input_data.get_synapses)
+                            load(['data_soma',num2str(coord_data.cell_id + coord_data.clone_id - 1),'_syn']);
+                        else
+                            load(['data_soma',num2str(coord_data.cell_id + coord_data.clone_id - 1)]);
+                        end
+                    end
                     if(exist('PoissonNoise.mat') > 0)
                         load('PoissonNoise.mat');
                         had_noise_file = 1;
@@ -86,7 +93,7 @@ function [mdl_data_all, array_data, mask_data] = getModelStimChannelData(input_d
             for i_clone = 1:input_data.num_clones
                 amp_idx = find(diam_all == input_data.diam_list(i_diam) & cell_id_all == input_data.cell_id_list(i_cell_id) & clone_all == i_clone);
                 % for each cell, then go through amplitudes
-                for i_soma = 1:numel(mdl_data_all(amp_idx(1)).soma)
+                for i_soma = 1:numel(mdl_data_all(amp_idx(1)).spike_data)
                     % setup masks which may be useful later
                     mask_data.diam(cell_counter,1) = input_data.diam_list(i_diam);
                     mask_data.cell_id(cell_counter,1) = input_data.cell_id_list(i_cell_id);
@@ -135,7 +142,7 @@ function [mdl_data_all, array_data, mask_data] = getModelStimChannelData(input_d
                     array_data{cell_counter}.loc = mdl_data_all(amp_idx(1)).soma(i_soma).coord;
                     array_data{cell_counter}.waveform_list = 1:1:numel(amp_idx);
 
-                    array_data{cell_counter}.numStims = numel(input_data.stim_times)+zeros(numel(amp_idx),1);
+                    array_data{cell_counter}.numStims = numel(input_data.stim_times)+zeros(1,numel(amp_idx));
                     array_data{cell_counter}.diam = input_data.diam_list(i_diam);
                     array_data{cell_counter}.cell_id = input_data.cell_id_list(i_cell_id);
                     array_data{cell_counter}.clone_num = i_clone;

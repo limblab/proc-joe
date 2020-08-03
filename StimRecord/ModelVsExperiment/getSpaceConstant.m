@@ -1,8 +1,7 @@
-function [space_constant, fit_data] = getSpaceConstant(resp, dist, dist_bin_edges)
+function [space_constant, rsquare] = getSpaceConstant(resp, dist, dist_bin_edges)
     % define outputs
     space_constant = [];
-    fit_data = [];
-
+    rsquare = [];
     
     % bin data
     [bin_dist,~,bin_idx] = histcounts(dist,dist_bin_edges);
@@ -17,14 +16,16 @@ function [space_constant, fit_data] = getSpaceConstant(resp, dist, dist_bin_edge
     end
             
     % fit data
-    [fit_data.f,fit_data.gof] = fit(bin_dist,bin_resp,...
-        'a*exp(-x/b)+c','Lower',[0,0,-0.4],'Upper',[5,10000,0.4],'StartPoint',[0.03,-0.005,0]);
+    try
+        [fit_data.f,fit_data.gof] = fit(bin_dist,bin_resp,...
+            'a*exp(-x/b)+c','Lower',[0,0,-0.4],'Upper',[1,7500,1],'StartPoint',[0.5,1000,0]);
 
-    % get space constant
-    if(fit_data.gof.rsquare > 0.1)
+        % get space constant
         space_constant = fit_data.f.b;
-    else
+        rsquare = fit_data.gof.rsquare;
+    catch
         space_constant = nan;
+        rsquare = nan;
     end
     
 end

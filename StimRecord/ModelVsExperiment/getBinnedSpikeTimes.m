@@ -30,7 +30,7 @@ function [output_data] = getBinnedSpikeTimes(array_data,input_data)
                     sub_val = array_data{i_unit}.baseline_fr*input_data.bin_size;
                 end
                 
-                bin_data(amp_idx).binned_data(end+1,:) = histcounts(array_data{i_unit}.spikeTrialTimes{amp_idx}(spike_mask),bin_edges)/array_data{i_unit}.numStims(amp_idx) - sub_val; % in # spikes per bin per stim
+                bin_data(amp_idx).binned_data(end+1,:) = histcounts(array_data{i_unit}.spikeTrialTimes{1,amp_idx}(spike_mask),bin_edges)/array_data{i_unit}.numStims(amp_idx) - sub_val; % in # spikes per bin per stim
                 
                 if(input_data.is_model)
                     bin_data(amp_idx).diam_list(end+1,:) = array_data{i_unit}.diam;
