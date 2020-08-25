@@ -2,11 +2,11 @@
 
 
 %% determine filename and input data
-    input_data.folderpath = 'D:\Lab\Data\BumpDirection\Han_20200813_training\';
+    input_data.folderpath = 'D:\Lab\Data\BumpDirection\Han_20200820_cobump\';
 %     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 
-    input_data.task='taskBD';
+    input_data.task='taskCObump';
     input_data.ranBy='ranByJoseph'; 
     input_data.array1='arrayLeftS1'; 
     input_data.monkey='monkeyHan';
@@ -25,23 +25,35 @@
     
   % covert to td
     params.event_list = {'goCueTime';'bumpTime';'bumpDir';'bumpMagnitude';'stimTime';'stimCode';'numTargets';'isTrainingTrial';'correctAngle'};
-    params.trial_results = {'R','A','F'};
+    params.trial_results = {'R'};
     params.extra_time = [1,2];
-    params.include_ts = 0;
+    params.include_ts = 1;
     params.exclude_units = [255];
     
     params.remove_nan_idx = true;
-    params.nan_idx_names = {'idx_goCueTime','idx_startTime','idx_endTime'};
+    params.nan_idx_names = {'idx_goCueTime','idx_startTime','idx_endTime','idx_movement_on'};
     td = parseFileByTrial(cds,params);
     td = getNorm(td,{'vel'});
     td = stripSpikeSorting(td);
-    td = removeBadTrials(td,params);
 
     params.start_idx = 'idx_goCueTime';
     params.end_idx = 'idx_endTime';
     td = getMoveOnsetAndPeak(td,params);
-    [td] = removeBadNeurons(td,params);
-   
+    td = removeBadTrials(td,params);
+
+    % remove training trials and remove aborted trials where a go cue was not provided
+%     td = td([td.isTrainingTrial] == 0);
+ 
+%     for i_trial = 1:numel(td)
+%         % adjust bump direction to reflect true bump direction -- it comes out
+%         % relative to target axis
+%         td(i_trial).bumpDir = td(i_trial).bumpDir + td(i_trial).target_direction*180/pi;
+%         % adjust bump directions to be [0,360)
+%         while(td(i_trial).bumpDir >= 360)
+%             td(i_trial).bumpDir = td(i_trial).bumpDir - 360;
+%         end
+%     end
+    
     % get trials with center hold bumps only
     td_bump_all = td([td.idx_goCueTime] > [td.idx_bumpTime] & [td.bumpMagnitude] > 0);
     
@@ -49,19 +61,97 @@
         td_bump_all(tr).bumpDir = mod(td_bump_all(tr).bumpDir,360);
     end
     
-    params.nan_idx_names = {'idx_goCueTime','idx_startTime','idx_endTime','idx_movement_on'};
-    td_bump_all = removeBadTrials(td_bump_all,params);
-    td_move_all = td_bump_all; % td(isnan([td.idx_bumpTime]) | [td.idx_goCueTime] > [td.idx_bumpTime]);
+    td_move_all = td(isnan([td.idx_bumpTime]) | [td.idx_goCueTime] > [td.idx_bumpTime]);
+    
     chan_list_all = td(1).LeftS1_unit_guide(:,1);
+%% remove channels not on chan_list from trial data
+
+    keep_mask = ones(size(td_bump_all(1).LeftS1_unit_guide,1),1);
+    for i_unit = 1:numel(keep_mask)
+        keep_mask(i_unit) = sum(chan_list == td_bump_all(1).LeftS1_unit_guide(i_unit,1)) > 0;
+    end
+
+    for i_trial = 1:numel(td_bump_all)
+        td_bump_all(i_trial).LeftS1_spikes = td_bump_all(i_trial).LeftS1_spikes(:,keep_mask==1);
+        td_bump_all(i_trial).LeftS1_unit_guide = td_bump_all(i_trial).LeftS1_unit_guide(keep_mask == 1,:);
+    end
+    
+    keep_mask = ones(size(td_move_all(1).LeftS1_unit_guide,1),1);
+    for i_unit = 1:numel(keep_mask)
+        keep_mask(i_unit) = sum(chan_list == td_move_all(1).LeftS1_unit_guide(i_unit,1)) > 0;
+    end
+    for i_trial = 1:numel(td_move_all)
+        td_move_all(i_trial).LeftS1_spikes = td_move_all(i_trial).LeftS1_spikes(:,keep_mask==1);
+        td_move_all(i_trial).LeftS1_unit_guide = td_move_all(i_trial).LeftS1_unit_guide(keep_mask == 1,:);
+    end
+
+    chan_list_all = td_bump_all(1).LeftS1_unit_guide(:,1);
+ %% plot raster (or PSTH) during bumps in each direction
+ 
+    desired_chan = 14;
+    i_unit = find(td_bump_all(1).LeftS1_unit_guide(:,1) == desired_chan);
+%     i_unit = 49;
+    window_ms = [-250,500];
+    window_idx = (window_ms/1000)/td_bump_all(1).bin_size;
+        
+    bump_dirs = unique([td_bump_all.bumpDir]);
+%     for i_unit = 1:numel(td_bump_all(1).LeftS1_ts)
+        figure('Position',[680 120 560 858]); hold on;
+        for i_dir = 1:numel(bump_dirs)
+            x_data = []; y_data = [];
+            trial_counter = 1;
+            td_bump_dir = td_bump_all([td_bump_all.bumpDir] == bump_dirs(i_dir));
+            
+            for i_trial = 1:numel(td_bump_dir)
+                spike_data = td_bump_dir(i_trial).LeftS1_ts{i_unit} - (td_bump_dir(i_trial).idx_bumpTime - td_bump_dir(i_trial).idx_startTime)*td_bump_dir(i_trial).bin_size;
+                spike_mask = spike_data > window_ms(1)/1000 & spike_data < window_ms(2)/1000;
+                y_data(end+1:end+sum(spike_mask)) = i_trial;
+                x_data(end+1:end+sum(spike_mask)) = spike_data(spike_mask);
+            end
+            subplot(8,1,i_dir)
+            plot(x_data,y_data,'k.','markersize',2)
+            ylim([0,i_trial])
+            xlim(window_ms/1000)
+        end
+%     end
     
     
+%% plot psth for movement around movement onset
+    move_window_ms = [-500,1000];
+    move_window_idx = (move_window_ms/1000)/td_bump_all(1).bin_size;
+    td_move = trimTD(td_move_all,{'idx_movement_on',move_window_idx(1)},{'idx_movement_on',move_window_idx(2)});
+
+    td_move = binTD(td_move,20);
+    
+    move_dirs = unique([td_move.target_direction]);
+    for i_unit = 1:size(td_move(1).LeftS1_spikes,1)
+        figure('Position',[680 120 560 858]);
+        ax_list = [];
+        for i_dir = 1:numel(move_dirs)
+            trial_mask = isEqual([td_move.target_direction], move_dirs(i_dir));
+            td_move_dir = td_move(trial_mask==1);
+            td_move_avg = trialAverage(td_move_dir);
+            idx_move = td_move_avg(1).idx_movement_on;
+            
+            ax_list(end+1) = subplot(8,1,i_dir);
+            plot((0:size(td_move_avg(1).LeftS1_spikes,1)-1) - idx_move, td_move_avg(1).LeftS1_spikes(:,i_unit))
+        end
+        linkaxes(ax_list,'xy');
+        xlim([-idx_move,size(td_move_avg(1).LeftS1_spikes,1)-1-idx_move]);
+    end
     
 %% get PD for each neuron and mean FR during bumps in all tested directions
-    window_ms = [-25,120];
-    window_idx = (window_ms/1000)/td_bump_all(1).bin_size;
+    bump_window_ms = [-500,200];
+    bump_delay_ms = 80; % delay before counting spikes post bump
     
-    td_bump = trimTD(td_bump_all,{'idx_bumpTime',window_idx(1)},{'idx_bumpTime',window_idx(2)});
-    td_move = trimTD(td_move_all,{'idx_movement_on',window_idx(1)},{'idx_movement_on',window_idx(2)});
+    delay_offset = floor(bump_delay_ms/td_bump_all(1).bin_size/1000);
+    bump_window_idx = (bump_window_ms/1000)/td_bump_all(1).bin_size;
+    
+    td_bump = trimTD(td_bump_all,{'idx_bumpTime',bump_window_idx(1)},{'idx_bumpTime',bump_window_idx(2)});
+    
+    move_window_ms = [-100,250];
+    move_window_idx = (move_window_ms/1000)/td_bump_all(1).bin_size;
+    td_move = trimTD(td_move_all,{'idx_movement_on',move_window_idx(1)},{'idx_movement_on',move_window_idx(2)});
     
     % get PDs
     pd_params = [];
@@ -72,27 +162,32 @@
     
     pd_bump = getTDPDs(td_bump,pd_params);
     pd_move = getTDPDs(td_move,pd_params);
-    
+ %   
     % get mean FR during bump for each dir
     bump_dirs = unique([td_bump.bumpDir]);
     num_units = size(chan_list_all,1);
     mean_fr_bump = zeros(numel(bump_dirs),num_units);
+    mean_fr_move = zeros(size(mean_fr_bump));
     mean_fr_baseline = zeros(size(mean_fr_bump));
     std_fr_baseline = zeros(size(mean_fr_bump));
     z_score_all = zeros(size(mean_fr_bump));
     
-    
     for i_bump = 1:numel(bump_dirs)
         trial_mask = isEqual(round([td_bump.bumpDir]), bump_dirs(i_bump));
         td_bump_dir = td_bump(trial_mask==1);
-        td_avg = trialAverage(td_bump_dir);
-        idx_bump = td_avg(1).idx_bumpTime;
+        trial_mask = isEqual(round([td_move.target_direction]*180/pi), bump_dirs(i_bump));
+        td_move_dir = td_move(trial_mask==1);
+        td_bump_avg = trialAverage(td_bump_dir);
+        td_move_avg = trialAverage(td_move_dir);
+        idx_bump = td_bump_avg(1).idx_bumpTime;
+        idx_move = td_move_avg(1).idx_movement_on;
         
-        mean_fr_bump(i_bump,:) = mean(td_avg(1).LeftS1_spikes(idx_bump:end,:));
-        mean_fr_baseline(i_bump,:) = mean(td_avg(1).LeftS1_spikes(1:idx_bump-1,:));
+        mean_fr_move(i_bump,:) = mean(td_move_avg(1).LeftS1_spikes(idx_move:end))/td_move_avg(1).bin_size;
+        mean_fr_bump(i_bump,:) = mean(td_bump_avg(1).LeftS1_spikes(idx_bump+delay_offset:end,:))/td_bump_avg(1).bin_size;
+        mean_fr_baseline(i_bump,:) = mean(td_bump_avg(1).LeftS1_spikes(1:idx_bump-10,:))/td_bump_avg(1).bin_size;
         fr_temp = zeros(numel(td_bump_dir),num_units);
         for i_trial = 1:numel(td_bump_dir)
-            fr_temp(i_trial,:) = mean(td_bump_dir(i_trial).LeftS1_spikes(1:idx_bump-1,:));
+            fr_temp(i_trial,:) = mean(td_bump_dir(i_trial).LeftS1_spikes(1:idx_bump-10,:))/td_bump_avg(1).bin_size;
         end
         std_fr_baseline(i_bump,:) = std(fr_temp);
     end
@@ -102,8 +197,10 @@
     
     % get mean angle from z_score data
     mean_fr_ang = zeros(num_units,1);
+    max_fr_ang = zeros(num_units,1);
     for i_unit = 1:num_units
         mean_fr_ang(i_unit) = circ_mean(bump_dirs'*pi/180,z_score_all(:,i_unit));
+        [~,max_fr_ang(i_unit)] = max(z_score_all(:,i_unit));
     end
     
     % plot move and bump PDs against each other. Plot mod depth for both
@@ -114,20 +211,36 @@
     plot(pd_move.velModdepth,pd_bump.velModdepth,'.')
     subplot(1,3,3)
     plot(pd_bump.velPD,mean_fr_ang,'.')
+
     
+%% plot z-score for each bump dir for each unit
+    for i = 1:size(z_score_all,2)
+        figure();
+        plot(z_score_all(:,i))
+    end
+    
+
+
 %% downsample electrodes to get a uniform distribution of electrodes? 
     % probability of selecting an electrode based on number of electrodes
     % with similar PDs or mean_ang around
     % determine probability by using a circular normal distribution (von
     % mises)
     use_pd = 0;
-    percent_elec_keep = 0.50;
+    percent_elec_keep = 0.6;
+    n_groups = 1;
+    min_z_score_to_include = 2.0;
     
     if(use_pd)
         data_all = pd_bump.velPD;
     else
         data_all = mean_fr_ang;
     end
+    
+    include_elec = any(z_score_all > min_z_score_to_include);
+    z_score_all_include = z_score_all(:,include_elec);
+    data_all = data_all(include_elec);
+    chan_list_all_include = chan_list_all(include_elec);
     
     prob_list = zeros(size(data_all));
     num_elec_keep = ceil(numel(prob_list)*percent_elec_keep);
@@ -150,11 +263,11 @@
         polarplot([0,data(i_elec)],[0,1]); hold on
     end
     
-    chan_list = chan_list_all(sample_idx);
-    z_score = z_score_all(:,sample_idx);
+    chan_list = chan_list_all_include(sample_idx);
+    z_score = z_score_all_include(:,sample_idx);
 % sample electrodes based on PDs or mean_fr_ang
     
-    n_groups = 1;
+    
     sample_data = stratifySamplePDs(data,n_groups);
     
 %  plot PD around a polar plot, color = repetition idx
@@ -207,11 +320,14 @@
 
     
 %% build patterns
-    constant_scramble = 1;
-    tgt_dirs = [0,90,180,270]*pi/180;
+    constant_scramble = 0;
+    tgt_dirs = (45+[0,90,180,270])*pi/180;
     group_idx = 1;
-    min_z_score = 0.5;
-    max_z_score = 3;
+    min_z_score = 0;
+    max_z_score = 1;
+        
+    min_stim_norm = 0.1; max_stim_norm = 1;
+    
     num_scrambles = 100000;
     min_MSD_percentile = 75; % percent
     
@@ -228,6 +344,9 @@
     heatmap_input_data.map_filename = input_data.mapFileName;
     heatmap_input_data.num_colors = 100;
     heatmap_input_data.base_color = [153,51,255]/256; % max stim value is this color
+    
+    % normalize z_score for each neuron
+    z_score_norm = 1.5*(z_score - min(z_score))./(max(z_score) - min(z_score)) - 0.5;
     
     % make pattern_data, biomimetic patterns first
     if(use_pd)
@@ -247,12 +366,22 @@
         for i_tgt = 1:numel(tgt_dirs)
             % get idx in z_score
             [~,z_score_idx] = min(abs(circ_dist(tgt_dirs(i_tgt),bump_dirs*pi/180)));
-            z_score_proj = z_score(z_score_idx,sample_data.groups(:,group_idx))';
+            z_score_proj = z_score_norm(z_score_idx,sample_data.groups(:,group_idx))';
             z_score_proj(z_score_proj < min_z_score) = 0;
             % set 0-1 for stim_norm
-            stim_norm = (z_score_proj - min_z_score)/(max_z_score - min_z_score);
+            stim_norm = z_score_proj; %(z_score_proj - min_z_score)/(max_z_score - min_z_score);
             stim_norm(stim_norm < 0) = 0;
-            stim_norm(stim_norm > 1) = 1;
+            stim_norm(stim_norm < min_stim_norm & stim_norm > 0) = min_stim_norm;
+            stim_norm(stim_norm > max_stim_norm) = max_stim_norm;
+            
+            if(sum(stim_norm >0) > 16)
+                % remove electrodes
+                num_remove = sum(stim_norm>0) - 16;
+                non_zero_idx = find(stim_norm>0);
+                [~,make_zero] = datasample(non_zero_idx,num_remove,'Replace',false);
+                stim_norm(non_zero_idx(make_zero)) = 0;
+                disp(num_remove);
+            end
             
             pattern_data.pred_dirs(end+1) = tgt_dirs(i_tgt);
             bio_pattern = []; 
@@ -371,6 +500,7 @@
         predicted_dir_mag(i_pattern,3) = sum(pattern_data.pattern{i_pattern}.stim_norm.*cos(data(sample_data.groups(:,group_idx))-predicted_dir_mag(i_pattern,1)));
     end
     
+    disp(num_stim_chans)
     disp(total_stim)
     disp(predicted_dir_mag)
     
@@ -410,5 +540,34 @@
         end
     end
 
+    
+%% convert pattern data to wave_mappings
+% wave_mapping{code}(1) = channel, wave_mapping{code}(2) = desired normalized stim frew,
+% wave_mapping{code}(3) = freq code for cerestim (1-15)
 
+    num_freqs = 15;
+    freq_all = linspace(0,1,num_freqs+1); freq_all = freq_all(2:end);
+    wave_mappings = {};
+    
+    
+    for i_patt = 1:numel(pattern_data.pattern)
+        keep_mask = pattern_data.pattern{i_patt}.stim_norm > 0;
+        stim_norm = pattern_data.pattern{i_patt}.stim_norm(keep_mask);
+        chans = pattern_data.pattern{i_patt}.chans(keep_mask);
+        
+        % round stim_norm to values in freq_all
+        stim_norm_adj = zeros(numel(stim_norm),1);
+        freq_code = zeros(numel(stim_norm),1);
+        
+        for i_chan = 1:numel(stim_norm_adj)
+            [~,min_idx] = min(abs(stim_norm(i_chan) - freq_all)); 
+            stim_norm_adj(i_chan) = freq_all(min_idx);
+            freq_code(i_chan) = min_idx;
+        end
+        
+        wave_mappings{i_patt} = [chans,stim_norm,freq_code];
+        
+    end
+
+    
     

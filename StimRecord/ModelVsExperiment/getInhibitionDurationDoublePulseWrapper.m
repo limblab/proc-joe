@@ -30,8 +30,8 @@ function [output_data] = getInhibitionDurationDoubplePulseWrapper(array_data,inp
                 % update post window and blank time to look at last pulse
                 % in sequence
 %                 if(i_cond ~= find(input_data.cond_list == 6,1,'first'))
-                    input_data.post_window = input_data.post_window + array_data{i_unit}.PULSE_TIMES{cond_idx}{1}(end);
-                    input_data.blank_time = input_data.blank_time + array_data{i_unit}.PULSE_TIMES{cond_idx}{1}(end);
+                    input_data.post_window = input_data.post_window + array_data{i_unit}.PULSE_TIMES{cond_idx}{4}(end);
+                    input_data.blank_time = input_data.blank_time + array_data{i_unit}.PULSE_TIMES{cond_idx}{4}(end);
 %                 end
                 
                 temp_inhib_data = getInhibitionDuration(array_data{i_unit},cond_idx,input_data);

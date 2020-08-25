@@ -206,15 +206,15 @@
         
 
 %% plot PSTH for each condition
-    for u = 8%numel(array_data)
+    for u = 1:numel(array_data)
         input_data.amp_freq = 1;
 %         array_data{u}.monkey = 'Han';
 %         array_data{u}.num_stims = array_data{u}.numStims;
 %       input_data_all{u}.window = [min(array_data{unit_idx}.binEdges{1}),max(array_data{unit_idx}.binEdges{1})];
-        input_data.window = [-5,20];
+        input_data.window = [-1500,15000];
         input_data.unit_idx = u;
 %         input_data.chan_rec = num2str(array_data{u}.CHAN_LIST);%{1};
-        input_data.num_cols = 4;
+        input_data.num_cols = 3;
         input_data.account_for_artifact = 0;
         plotPSTHArrayData(array_data,input_data);
 %         f=figure(1);
@@ -587,32 +587,6 @@
     hold on
     
     plot(freqs_plot, num_units_inhib./num_units_total);
-
-%% look at rebound excitation
-% size, peak time, onset, duration
-% size = integrate above baseline for the duration
-% peak time = peak if it exists
-% duration = time from onset to offset
-
-    rebound_input_data.post_stim_window = [10,200];
-    rebound_input_data.baseline_window = [-80,-20];
-    rebound_input_data.threshold_mult = 2;
-    rebound_input_data.num_bins_above_thresh = 3;
-    rebound_input_data.bin_size = 10;
-    
-    
-    for u = 9:numel(array_data)
-        reboundExcitation{u} = getReboundExcitationStats(array_data{u},rebound_input_data);
-    
-    end
-
-
-    % plot % rebound excitation
-    
-    
-    
-    % report duration of rebound excitation
-    
 
     
     
