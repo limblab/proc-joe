@@ -12,9 +12,12 @@ function [ trial_data, lfp_data ] = preProcessLFP(cds, trial_data, input_data )
         reg_coeff = common_average\lfp_data_pre;
         
         lfp_data = lfp_data_pre - common_average*reg_coeff;
+        
     else
         lfp_data = lfp_data_pre;
     end
+    lfp_t = cds.lfp.t;
+    lfp_is_baseline = zeros(size(lfp_data,1),1);
     
     % FFT with window length provided, compute power in bands for each
     % channel, store power. Do this for each trial in trial data
@@ -46,6 +49,11 @@ function [ trial_data, lfp_data ] = preProcessLFP(cds, trial_data, input_data )
         
         % store power_data into trial_data
         trial_data(i_trial).lfp_data = power_data;
+        
+        % get baseline flag based on trial data
+        
+        
+        
     end
     
     
