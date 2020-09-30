@@ -1,13 +1,13 @@
 %% set file names 
 
-    inputData.folderpath = 'D:\Lab\Data\StimPDs\Han_20191003_CObump_stimDuringTask\';
+    inputData.folderpath = 'D:\Lab\Data\ReactionTime\Han_20180808_FCreactTime_record\';
     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 %     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
 
 
     folderpath = inputData.folderpath; % rest of code uses folderpath currently...may have switched this, not 100% certain
 
-    inputData.task='taskCObump';
+    inputData.task='taskRT';
     inputData.ranBy='ranByJoseph'; 
     inputData.array1='arrayLeftS1'; 
     inputData.monkey='monkeyHan';
@@ -23,14 +23,14 @@
     tic
 
     optsExtract.STIMULI_RESPONSE = 'all';
-    optsExtract.STIMULATIONS_PER_TRAIN = 10;
+    optsExtract.STIMULATIONS_PER_TRAIN = 1;
     optsExtract.STIMULATION_BATCH_SIZE = 1000;
     optsExtract.DOWNSAMPLE_STIM_TIMES = 0;
     
     optsExtract.NUM_WAVEFORM_TYPES = 1;
     
     optsExtract.USE_STIM_CODE = 1;
-    optsExtract.STIM_ELECTRODE = {25};
+    optsExtract.STIM_ELECTRODE = {15,42,44,48,50};
     optsExtract.CHAN_LIST = {};
 
     optsExtract.PRE_TIME = 200/1000; % made negative in the function
@@ -50,7 +50,7 @@
     
 %% pick a unit (index in array data)
 % plot raster, and PSTH for the given unit above
-for arrIdx = 11:numel(arrayData)
+for arrIdx = 1:5%numel(arrayData)
 % arrIdx = 13;
     % plot raster, and PSTH for the given unit above
 
@@ -61,8 +61,8 @@ for arrIdx = 11:numel(arrayData)
     optsPlotFunc.FIGURE_PREFIX = 'Han_20190923';
 
 
-    optsPlotFunc.PRE_TIME = 50/1000;
-    optsPlotFunc.POST_TIME = 250/1000;
+    optsPlotFunc.PRE_TIME = 150/1000;
+    optsPlotFunc.POST_TIME = 350/1000;
 
     optsPlotFunc.SORT_DATA = '';
 

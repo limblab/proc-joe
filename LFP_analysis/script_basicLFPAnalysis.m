@@ -63,13 +63,11 @@
     % calculate power in frequency bands 
     input_data.subtract_common_average = 1;
     input_data.FFT_length = 256; % in ms
-    input_data.power_bands = [30,90];
+    input_data.power_bands = [15,30];
     
     [td_lfp, lfp_data] = preProcessLFP(cds, td_all ,input_data);
     
-
-
-   
+ 
 %% plot power data and neural firing during reaches
     plot_data = 1;
     power_colors = inferno(size(input_data.power_bands,1)+1);

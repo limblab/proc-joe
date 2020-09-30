@@ -13,12 +13,22 @@ function [td] = getGoCueTime(td,cds)
     
     visualSyncIdx = [];
     visualSyncName = '';
-    %look for ainp16 for stim sync
+    %look for ainp16 for stim sync or videosync....
     for j=1:numel(cds.analog)
         stimSyncIdx=find(strcmp(cds.analog{j}.Properties.VariableNames,'ainp16'));
         if ~isempty(stimSyncIdx)
             stimSyncIdx=j;
             stimSyncName='ainp16';
+        end
+    end
+    
+    if(isempty(stimSyncIdx))
+        for j=1:numel(cds.analog)
+            stimSyncIdx=find(strcmp(cds.analog{j}.Properties.VariableNames,'videosync'));
+            if ~isempty(stimSyncIdx)
+                stimSyncIdx=j;
+                stimSyncName='videosync';
+            end
         end
     end
     

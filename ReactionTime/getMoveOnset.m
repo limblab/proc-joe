@@ -33,7 +33,7 @@ function trial_data = getMoveOnset(trial_data,params)
 which_method  =  'peak';
 min_s        =  0.3;
 s_thresh      =  7;
-peak_idx_offset = [0,1000];
+peak_idx_offset = [100,1200];
 start_idx_offset = 0;
 max_rt_offset = 400;
 which_field = 'speed';
@@ -58,7 +58,7 @@ if nargin > 1, assignParams(who,params); end % overwrite defaults
 % some pre-processing
 td = getSpeed(trial_data);
 
-
+thresh_all = -1;
 if(be_aggressive) % find a threshold based on all trials
     s_all = [];
     if(threshold_acc <= 0)
@@ -66,6 +66,9 @@ if(be_aggressive) % find a threshold based on all trials
             if(isfield(td(trial),'target_direction') && strcmpi(which_field,'speed')~=1)
                 % project (which_field) onto the target axis
                 s_all = [s_all;sum(td(trial).(which_field)(td(trial).idx_tgtOnTime+35:td(trial).(start_idx),:)*[cos(td(trial).target_direction*pi/180);sin(td(trial).target_direction*pi/180)],2)];
+            elseif(isfield(td(trial),'tgtAngle') && strcmpi(which_field,'speed')~=1)
+                % project (which_field) onto the target axis
+                s_all = [s_all;sum(td(trial).(which_field)(td(trial).idx_tgtOnTime+35:td(trial).(start_idx),:)*[cos(td(trial).tgtAngle*pi/180);sin(td(trial).tgtAngle*pi/180)],2)];
             else
                 s_all = [s_all;td(trial).(which_field)(td(trial).idx_tgtOnTime+35:td(trial).(start_idx),1)];
             end
@@ -90,6 +93,9 @@ for trial = 1:length(trial_data)
     if(isfield(td(trial),'target_direction') && strcmpi(which_field,'speed')~=1)
 %         project (which_field) onto the target axis
         s = sum(td(trial).(which_field)*[cos(td(trial).target_direction/180*pi);sin(td(trial).target_direction/180*pi)],2);
+    elseif(isfield(td(trial),'tgtAngle') && strcmpi(which_field,'speed')~=1)
+%         project (which_field) onto the target axis
+        s = sum(td(trial).(which_field)*[cos(td(trial).tgtAngle/180*pi);sin(td(trial).tgtAngle/180*pi)],2);
     else
         s = td(trial).(which_field)(:,1);
 %         s = sqrt(sum(td(trial).(which_field).^2,2));
@@ -102,7 +108,7 @@ for trial = 1:length(trial_data)
     % find the time bins where the monkey may be moving
     move_inds = false(size(s));
 
-    move_inds(td(trial).(start_idx)+start_idx_offset-3:td(trial).(end_idx)) = true;
+    move_inds(td(trial).(start_idx)+start_idx_offset-3:td(trial).(end_idx)+200) = true;
     
     [on_idx] = deal(NaN);
     
@@ -110,19 +116,20 @@ for trial = 1:length(trial_data)
     flag_move = 0;
     if(sum(s(max(1,td(trial).(start_idx)-30):td(trial).(start_idx)) > pre_move_thresh) > 2)
         flag_move = 1;
-        on_idx = [];
+        on_idx = nan;
     end
     if ~flag_move && strcmpi(which_method,'peak')
         ds = [0; diff(s)];
         peaks = [ds(1:end-1)>0 & ds(2:end)<0; 0];
         mvt_peaks = find(peaks & (1:length(peaks))' > td(trial).(start_idx)+peak_idx_offset(1) & ...
             (1:length(peaks))' < td(trial).(start_idx)+peak_idx_offset(2) & s > min_s & move_inds);
-
+        
         if ~isempty(mvt_peaks)
             [~,mvt_peak] = max(s(mvt_peaks));
-%             mvt_peak = 1;
             mvt_peak = mvt_peaks(mvt_peak);
-            if(threshold_acc > 0)
+            if(thresh_all > 0)
+                thresh = thresh_all;
+            elseif(threshold_acc > 0)
                 thresh = threshold_acc;
             elseif(~be_aggressive)
                 thresh = s(mvt_peak)*threshold_mult; % default threshold is half max acceleration peak
@@ -148,12 +155,7 @@ for trial = 1:length(trial_data)
     
     if isempty(on_idx) || isnan(on_idx)
 %         on_idx = find(s > s_thresh & move_inds,1,'first');
-        if isempty(on_idx) % usually means it never crosses threshold
-            on_idx = NaN;
-        end
-        if(~isnan(td(trial).target_direction))
-            warning('Could not identify movement onset');
-        end
+        on_idx = NaN;
     end
     trial_data(trial).(['idx_' onset_name]) = on_idx;
 

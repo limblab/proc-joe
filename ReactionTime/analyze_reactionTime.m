@@ -1,12 +1,7 @@
 %% script to process reaction time data 
 %% determine filename and input data
-<<<<<<< HEAD
-    inputData.folderpath = 'D:\Lab\Data\ReactionTime\Han_20180528_stim\';
-=======
-    inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\Han_20190812_for2AFC\chan44\';
-%     inputData.folderpath = 'C:\Users\Joseph\Desktop\Lab\Data\ReactionTime\Duncan\Duncan_20181126_training\';
+    inputData.folderpath = 'D:\Lab\Data\ReactionTime\Han_20200929_FCreactTime_blocking\';
     
->>>>>>> 6e5833412db31a843c694e62a1c4eee4588da310
 %     inputData.folderpath = 'D:\Lab\Data\ReactionTime\Han_20180427_training\';
     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 %     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\right S1 20180919\SN 6251-001804.cmp';
@@ -25,7 +20,7 @@
 %% load in cds and extract data
     td_all = [];
     num_trials = 0;
-    for fileNumber = 1%:numel(fileList)
+    for fileNumber = 1:numel(fileList)
         cds = commonDataStructure();
         cds.file2cds([inputData.folderpath fileList(fileNumber).name],inputData.task,inputData.ranBy,...
             inputData.monkey,inputData.labnum,inputData.array1,inputData.mapFileName);
@@ -35,15 +30,10 @@
             % convert cds to trial data
             params.event_list = {'bumpStaircaseIdx';'tgtOnTime';'isBumpTrial';'bumpTime';'bumpMagnitude';'bumpDir';'isStimTrial';'stimCode';'tgtDir';'isVisualTrial'};
             params.trial_results = {'R','F'};
-<<<<<<< HEAD
             params.extra_time = [1,2];
             params.include_ts = 0;
-=======
-            params.extra_time = [0.8,2];
 
-            params.include_ts = 0;
             params.exclude_units = [0,255];
->>>>>>> 6e5833412db31a843c694e62a1c4eee4588da310
             td_temp = parseFileByTrial(cds,params);
             td_temp = getGoCueTime(td_temp,cds);
             % append trial data into a single struct
@@ -62,11 +52,11 @@
         % get master list of units
         master_list = [-1,-1];
         for trial = 1:length(td_all)
-            for unit = 1:size(td_all(trial).LeftS1_unit_guide,1)
+            for i_unit = 1:size(td_all(trial).LeftS1_unit_guide,1)
                 % check if unit is in master_list
-                master_idx = find(master_list(:,1)==td_all(trial).LeftS1_unit_guide(unit,1));
-                if(isempty(master_idx) || (~isempty(master_idx) && sum(master_list(master_idx,2) == td_all(trial).LeftS1_unit_guide(unit,2))==0))
-                    master_list(end+1,:) = td_all(trial).LeftS1_unit_guide(unit,:);
+                master_idx = find(master_list(:,1)==td_all(trial).LeftS1_unit_guide(i_unit,1));
+                if(isempty(master_idx) || (~isempty(master_idx) && sum(master_list(master_idx,2) == td_all(trial).LeftS1_unit_guide(i_unit,2))==0))
+                    master_list(end+1,:) = td_all(trial).LeftS1_unit_guide(i_unit,:);
                 end
             end
         end
@@ -75,9 +65,9 @@
         for trial = 1:length(td_all)
             temp_spikes = zeros(size(td_all(trial).LeftS1_spikes,1),size(master_list,1));
             temp_ts = cell(size(master_list,1),1);
-            for unit = 1:size(td_all(trial).LeftS1_unit_guide,1)
-                master_idx = find(sum(master_list == td_all(trial).LeftS1_unit_guide(unit,:),2) == 2);
-                temp_spikes(:,master_idx) = td_all(trial).LeftS1_spikes(:,unit);
+            for i_unit = 1:size(td_all(trial).LeftS1_unit_guide,1)
+                master_idx = find(sum(master_list == td_all(trial).LeftS1_unit_guide(i_unit,:),2) == 2);
+                temp_spikes(:,master_idx) = td_all(trial).LeftS1_spikes(:,i_unit);
     %             temp_ts{master_idx} = td_all(trial).LeftS1_ts{unit};
             end
             td_all(trial).LeftS1_unit_guide = master_list;
@@ -90,17 +80,18 @@
 %% separate out trials with results and go cue's
     [~, td_reward] = getTDidx(td_all, 'result', 'r');
     td_reward = td_reward(~isnan([td_reward.idx_goCueTime]));
+    td_reward = getSpeed(td_reward);
     
     % get movement onset
     params.field_idx = 1;
     params.start_idx_offset = 100;
     params.be_aggressive = 1;
-    params.which_field = 'acc';
+    params.which_field = 'speed';
 
     % Han's parameters
-    params.threshold_acc = 35; % absolute threshold on acceleration, using this instead of threshold_mult
+    params.threshold_acc = -1; % absolute threshold on acceleration, using this instead of threshold_mult
     params.min_s = 1;
-    params.pre_move_thresh = 50;
+    params.pre_move_thresh = 1;
 
 %     Duncan's parameters
 %     params.threshold_acc = 35;
@@ -125,20 +116,11 @@
     
     
 %% plot a set of reaches aligned to go cue with reaction time markers
-<<<<<<< HEAD
-    opts.MAX_PLOT = 20;
-    opts.WHICH_FIELD ='pos';
-    opts.WHICH_IDX = [2];
-    opts.BUMP_MAGS = [1.0]';
-    opts.YLIM = [];
-=======
-
-    opts.MAX_PLOT = 10;
-    opts.WHICH_FIELD = 'pos';
+    opts.MAX_PLOT = 30;
+    opts.WHICH_FIELD = 'speed';
     opts.DIR = 90;
     
-    opts.BUMP_MAGS = [0.3];
->>>>>>> 6e5833412db31a843c694e62a1c4eee4588da310
+    opts.BUMP_MAGS = [];
     opts.STIM_CODES = [];
     opts.KEEP_ONLY_VISUAL_TRIALS = 0;
     opts.YLIM = [];
@@ -154,20 +136,15 @@
     opts.SAVE_FIGURES = 0;
  
     td_reward_rt = td_reward(~isnan([td_reward.idx_movement_on]));
+
     opts.FOLDER_PATH = inputData.folderpath;
-<<<<<<< HEAD
-    opts.FIGURE_PREFIX = 'Han_20180528'; % no _ required
-    opts.BUMP_MAGS = [];
-    opts.STIM_CODES = [];
-    opts.STIM_PARAMS = [10,20,30,40,50,60,70,80,90,100];
-    opts.STIM_LABEL = 'Amp (\muA)';
-=======
-    opts.FIGURE_PREFIX = 'Han_20181112'; % no _ required
+
+    opts.FIGURE_PREFIX = 'Han'; % no _ required
     
 %     opts.BUMP_MAGS = [0.5:0.5:4.5];
-    opts.STIM_CODES = [1,2,3,4,5,6];
-    opts.STIM_LABEL = 'Amplitude (\muA)';
-    opts.STIM_PARAMS = [50:10:100];    
+    opts.STIM_CODES = [0,1];
+    opts.STIM_LABEL = 'Channel';
+    opts.STIM_PARAMS = [1,2];    
 %     opts.STIM_X_LABEL = {'10','15','20','25','30','35'};
 %     opts.STIM_PARAMS = [5:5:35];
 %     opts.STIM_LABEL = 'Frequency (Hz)';
@@ -182,13 +159,12 @@
 %     opts.STIM_PARAMS = [4,4,4,6,6,6,8,8,8,12,12,12,24,24,24] + repmat([-0.25,0,0.25],1,5);
 %     opts.STIM_X_LABEL = {'1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16'};
 %     opts.STIM_COLOR_IDX = [1,0,2,1,0,2,1,0,2,1,0,2,1,0,2,1,0,2];
->>>>>>> 6e5833412db31a843c694e62a1c4eee4588da310
     
 %     opts.STIM_PARAMS = [1:1:16];
 %     opts.STIM_LABEL = 'Elec';
 %     opts.COLOR_LIST = 2;
 %     opts.STIM_LABEL = 'Bump Mag';
-    opts.FIT = 	1;
+    opts.FIT = 	0;
     opts.PLOT_BUMP = 0;
     opts.PLOT_STIM = 1;
     
@@ -222,11 +198,116 @@
     
     
     
+%% analyze blocking experiment
+    % get single and together (combined) trial datas
+    offset = 0.025;
+    single_cue_idx = [1:78,160:213];
     
     
+    td_single = td_reward(single_cue_idx);
+    td_combined = td_reward(setdiff([1:numel(td_reward)],single_cue_idx));
     
+    td_single = td_single(~isnan([td_single.idx_movement_on]));
+    td_combined = td_combined(~isnan([td_combined.idx_movement_on]));
+    td_reward_rt = td_reward(~isnan([td_reward.idx_movement_on]));
     
+    % get rt and code data
+    rt_single = ([td_single.idx_movement_on] - [td_single.idx_goCueTime])*td_single(1).bin_size;
+    rt_combined = ([td_combined.idx_movement_on] - [td_combined.idx_goCueTime])*td_combined(1).bin_size;
+    rt_all = ([td_reward_rt.idx_movement_on] - [td_reward_rt.idx_goCueTime])*td_reward(1).bin_size;
     
+    codes_single = [td_single.stimCode];
+    codes_combined = [td_combined.stimCode];
+    codes_all = [td_reward_rt.stimCode];
+    
+    unique_codes = unique(codes_single);
+    
+    % plot mean and std dev RT for each cue during single and combined
+    % blocks
+    figure(); hold on;
+    for i_code = 1:numel(unique_codes)  
+        % plot single
+        scatter(unique_codes(i_code)-offset*ones(sum(codes_single==unique_codes(i_code)),1),rt_single(codes_single==unique_codes(i_code)),24,'markerfacecolor','k','markeredgecolor','none');
+        alpha(0.3);
+        x1=errorbar(unique_codes(i_code)-offset,mean(rt_single(codes_single==unique_codes(i_code))),std(rt_single(codes_single==unique_codes(i_code))),'k.','markersize',30,'linewidth',1);
+        
+        % plot combined
+        scatter(unique_codes(i_code)+offset*ones(sum(codes_combined==unique_codes(i_code)),1),rt_combined(codes_combined==unique_codes(i_code)),24,'markerfacecolor','r','markeredgecolor','none');
+        alpha(0.3);
+        x2=errorbar(unique_codes(i_code)+offset,mean(rt_combined(codes_combined==unique_codes(i_code))),std(rt_combined(codes_combined==unique_codes(i_code))),'r.','markersize',30,'linewidth',1);
+    end
+    l=legend([x1,x2],'Alone','Together');
+    set(l,'location','best');
+    formatForLee(gcf);
+    set(gca,'fontsize',14)
+    xlabel('Code');
+    ylabel('RT (s)');
+    
+    % plot RT for each cue throughout session, color each cue
+    figure(); hold on;
+    for i_code = 1:numel(unique_codes)
+        trial_idx = find(codes_all == unique_codes(i_code));
+        plot(trial_idx,rt_all(trial_idx),'.','color',getColorFromList(1,2+i_code),'markersize',20);
+    end
+    l=legend('Code 1','Code 2');
+    set(l,'location','best');
+    formatForLee(gcf);
+    set(gca,'fontsize',14)
+    xlabel('Trial');
+    ylabel('RT (s)');
+        
+    
+    % plot RT at beginning and end of block
+    num_trials = 25;
+    figure(); hold on;
+    for i_code = 1:numel(unique_codes)
+        % single
+        code_mask = codes_single==unique_codes(i_code);
+            % beginning of block
+            beg_idx = find(code_mask,num_trials,'first');
+            beg_mask = 1:1:beg_idx(end);
+            rt = rt_single(code_mask(1:beg_idx(end)) & beg_mask);
+            errorbar(i_code-1.5*offset,mean(rt),std(rt),'k.');
+            
+            % end of block
+            end_idx = find(code_mask,num_trials,'last');
+            end_mask = numel(code_mask):-1:end_idx(1);
+            rt = rt_single(code_mask(end_idx(1):end) & end_mask);
+            errorbar(i_code-.5*offset,mean(rt),std(rt),'k.');
+        % combined
+        code_mask = codes_combined==unique_codes(i_code);
+            % beginning of block
+            beg_idx = find(code_mask,num_trials,'first');
+            beg_mask = 1:1:beg_idx(end);
+            rt = rt_combined(code_mask(1:beg_idx(end)) & beg_mask);
+            errorbar(i_code+.5*offset,mean(rt),std(rt),'k.');
+            
+            % end of block
+            end_idx = find(code_mask,num_trials,'last');
+            end_mask = numel(code_mask):-1:end_idx(1);
+            rt = rt_combined(code_mask(end_idx(1):end) & end_mask);
+            errorbar(i_code+1.5*offset,mean(rt),std(rt),'k.');
+    end
+        
+    % for each cue during combined block, plot RT on repetitive trials vs.
+    % alternating (preceding cue is the same or different)
+    cue_repeats = [0,diff(codes_combined)==0]; % want second cue in sequence
+    cue_changes = [0,diff(codes_combined)~=0];
+     
+    figure(); hold on
+    for i_code = 1:numel(unique_codes)
+        code_mask = codes_combined == unique_codes(i_code);
+        % repeats
+        x1=errorbar(unique_codes(i_code)-offset, mean(rt_combined(cue_repeats & code_mask)), std(rt_combined(cue_repeats & code_mask)),...
+            'color',getColorFromList(1,0),'marker','.','markersize',20);
+        % changes
+        x2=errorbar(unique_codes(i_code)+offset, mean(rt_combined(cue_changes & code_mask)), std(rt_combined(cue_changes & code_mask)),...
+            'color',getColorFromList(1,1),'marker','.','markersize',20);
+    end
+    l=legend([x1,x2],'repeats','changes');
+    set(l,'location','best');
+    xlabel('Code');
+    ylabel('RT (s)');
     
 %% get electrodes stimulated on each trial -- this is for the random elecs experiments
 % need to feed in the data matrix, EL_all (list of electrodes),
@@ -308,173 +389,200 @@
     
       
 %% plot rasters
+% plot psth
     opts = [];
     opts.X_LIMITS = [-0.3,0.5];
     opts.EXTRA_TIME = params.extra_time;
-    opts.PLOT_RASTER = 0;
-    opts.PLOT_PSTH = 1;
+    opts.PLOT_RASTER = 1;
+    opts.PLOT_PSTH = 0;
     opts.PLOT_BUMP = 0;
     opts.PLOT_STIM = 1;
     plotRasterPSTHRT(td_reward,opts);
     
-% plot rasters
-    opts = [];
-    opts.X_LIMITS = [-0.3,0.5];
-    opts.EXTRA_TIME = params.extra_time;
-    opts.PLOT_RASTER = 0;
-    opts.PLOT_PSTH = 1;
-    opts.PLOT_BUMP = 0;
-    opts.PLOT_STIM = 1;
-    plotRasterPSTHRT(td_reward,opts);
-    
-% plot # spikes vs rt for each trial
+%% get number of spikes per trial and rt for each code
     td_reward_rt = td_reward(~isnan([td_reward.idx_movement_on]));
     td_reward_rt_stim = td_reward_rt(isnan([td_reward_rt.idx_bumpTime]));
-%     output_data = plotSpikesRT(td_reward_rt_stim,opts);
-    output_data = cell(size(td_reward_rt_stim(1).LeftS1_spikes,2),1);
-    rsquares = [];
-
-    opts.TAU = 1000000;
+    spike_window_t = [0,0.1]; % s, relative to stim onset
+    baseline_window_t = [-0.4,-0.1]; % s, relative to stim onset
     
-    for s = 1:size(td_reward_rt_stim(1).LeftS1_spikes,2)
-        opts.STIM = 1;
-        opts.SPIKE_LIST = s;
-        opts.MAKE_PLOTS = 0;
-        output_data{s} = plotSpikesRT(td_reward_rt_stim,opts);
-%         stats = [output_data{s}.fits.stats];
-        rsquares(s,:) = output_data{s}.corr_all_codes;
-    end
-    [~,sortIdx] = sort(rsquares,'ascend');
-%
-corr_all = [];
-for max_idx = 1
-    opts.SPIKE_LIST = [];
-
-    opts.TAU = 1000000;
-    opts.STIM = 1;
-    opts.STIM_CODES = [];
-    opts.MAKE_PLOTS = 1;
-    corr_data = plotSpikesRT(td_reward_rt_stim,opts);
-    corr_all(max_idx) = corr_data.corr_all_codes;
-end
-% do a linear regression to predict reaction time from neural data
-    td_reward_rt_stim = td_reward_rt(isnan([td_reward_rt.idx_bumpTime]));
+    % pre-allocate arrays, variables
+    code_list = nan(size(td_reward_rt_stim));
+    rt_list = nan(size(td_reward_rt_stim)); 
+    chan_list = td_reward_rt_stim(1).LeftS1_unit_guide(:,1);
+    num_spikes = nan(size(td_reward_rt_stim(1).LeftS1_spikes,2),size(td_reward_rt_stim,2)); % trials x unit
+    baseline_spikes = nan(size(td_reward_rt_stim(1).LeftS1_spikes,2),1);
     
-    opts.SPIKE_LIST = [sortIdx(1:6)];
-    opts.BIN_SIZE = 5;
-    opts.WINDOW = [0,9];
-    num_train = 100;
-    train_temp = randperm(numel(td_reward_rt_stim));
-    opts.TRAIN_IDX = train_temp(1:num_train);
-    pred_data = predictRT(td_reward_rt_stim,opts);
-%     pred_data.y_manual = -0.0035*(sum(pred_data.x(:,2:end),2)) + 0.32;
-    test_idx = setdiff(1:numel(td_reward_rt_stim),opts.TRAIN_IDX);
+    spike_window_idx = floor(spike_window_t/td_reward_rt_stim(1).bin_size);
+    baseline_window_idx = floor(baseline_window_t/td_reward_rt_stim(1).bin_size);
+    correction_factor = diff(spike_window_t)/diff(baseline_window_t);
     
-    figure();
-    plot(pred_data.y_true(opts.TRAIN_IDX),pred_data.y_pred(opts.TRAIN_IDX),'k.','markersize',12)
-    hold on
-    plot(0.01*[15:35],0.01*[15:35],'k--')
-    plot(pred_data.y_true(test_idx),pred_data.y_pred(test_idx),'r.','markersize',12)
-    sse = sum((pred_data.y_true - pred_data.y_pred).^2)
-    
-    
-% fitlm with stim code
-p_vals = [];
-mdl_rsquare = [];
-for max_idx = 4
-    opts.SPIKE_LIST = [sortIdx(1:max_idx)]; % 7 16 6 12 9 4 15 17
-    opts.TAU = 0.2;
-    opts.STIM_CODES = [];
-    opts.MAKE_PLOTS = 0;
-    corr_data = plotSpikesRT(td_reward_rt_stim,opts);
-
-    rt = corr_data.rt; num_spikes = corr_data.num_spikes; code = corr_data.code;
-    rt_adj = rt;
-    code_unique = unique(code);
-    mean_rt = zeros(numel(code_unique),1);
-    for c = 1:numel(code_unique)
-        mean_rt(c) = mean(rt(code == code_unique(c)));
-        rt_adj(code == code_unique(c)) = rt_adj(code == code_unique(c)) - mean_rt(c);
+    for i_trial = 1:numel(td_reward_rt_stim)
+        % get code
+        code_list(i_trial) = td_reward_rt_stim(i_trial).stimCode;
+        % get rt
+        rt_list(i_trial) = (td_reward_rt_stim(i_trial).idx_movement_on - td_reward_rt_stim(i_trial).idx_goCueTime)*td_reward_rt_stim(i_trial).bin_size;
+        % get num spikes in window
+        idx_go_cue = td_reward_rt_stim(i_trial).idx_goCueTime;
+        num_spikes(:,i_trial) = sum(td_reward_rt_stim(i_trial).LeftS1_spikes(idx_go_cue+spike_window_idx(1):idx_go_cue+spike_window_idx(2),:));
+        % get baseline spike count (based on stim window size)
+        baseline_spikes(:,i_trial) = correction_factor*sum(td_reward_rt_stim(i_trial).LeftS1_spikes(idx_go_cue+baseline_window_idx(1):idx_go_cue+baseline_window_idx(2),:));
     end
     
-    tbl = table(rt,rt_adj,num_spikes,code);
+    spikes_above_baseline = num_spikes - baseline_spikes;
+    stim_codes = unique(code_list);
     
-    mdl_adj = fitlm(tbl,'rt_adj ~ num_spikes');
-    mdl = fitlm(tbl,'rt ~ num_spikes + code');
+%% plot # spikes per trial vs rt for each code
     
-    p_vals(end+1,:) = [mdl.Coefficients.pValue(2), mdl_adj.Coefficients.pValue(2)];
-    mdl_rsquare(end+1,:) = [mdl.Rsquared.Ordinary, mdl_adj.Rsquared.Ordinary];
-end
-
-% pick units based on distance from stimulated electrode
-stim_elec = 20;
-map_data = loadMapFile(inputData.mapFileName(8:end));
-stim_elec_idx = find(map_data.chan == stim_elec);
-stim_elec_pos = [map_data.row(stim_elec_idx), map_data.col(stim_elec_idx)];
-
-unit_pos = [];
-for unit_idx = 1:size(td_reward_rt_stim(1).LeftS1_unit_guide,1)
-    map_data_idx = find(map_data.chan == td_reward_rt_stim(1).LeftS1_unit_guide(unit_idx,1));
-    unit_pos(unit_idx,:) = [map_data.row(map_data_idx),map_data.col(map_data_idx)];
-end
-
-d = sqrt(sum((unit_pos-stim_elec_pos).^2,2));
-[~,sortIdx] = sort(d,'ascend');
-% count # of spikes for each condition
-
-stim_codes = unique(data_stim.code);
-% bump_codes = unique(data_bump.code);
-
-num_spikes_all = [];
-labels = {};
-
-for s = 1:numel(stim_codes)
-    data_stim_mask = data_stim.code == stim_codes(s);
-    num_spikes_all = [num_spikes_all; data_stim.num_spikes(data_stim_mask)];
-    cueInfo_idx = find([data.cueInfo.stimCode] == stim_codes(s) & [data.cueInfo.bumpMag] == 0);
-    data.cueInfo(cueInfo_idx).num_spikes = data_stim.num_spikes(data_stim_mask);
-    for i = 1:sum(data_stim_mask)
-        labels{end+1,1} = ['stim-',num2str(s)];
+    for i_code = 1:numel(stim_codes)
+        figure();
+        code_mask = code_list == stim_codes(i_code);
+        plot(rt_list(code_mask==1),sum(spikes_above_baseline(:,code_mask==1)),'.')
     end
-end
-
-% count # of spikes for each condition
-
-stim_codes = unique(data_stim.code);
-% bump_codes = unique(data_bump.code);
-
-num_spikes_all = [];
-labels = {};
-
-for s = 1:numel(stim_codes)
-    data_stim_mask = data_stim.code == stim_codes(s);
-    num_spikes_all = [num_spikes_all; data_stim.num_spikes(data_stim_mask)];
-    cueInfo_idx = find([data.cueInfo.stimCode] == stim_codes(s) & [data.cueInfo.bumpMag] == 0);
-    data.cueInfo(cueInfo_idx).num_spikes = data_stim.num_spikes(data_stim_mask);
-    for i = 1:sum(data_stim_mask)
-        labels{end+1,1} = ['stim-',num2str(s)];
+    
+    
+    
+%% plot mean # spikes vs mean rt for each code
+    
+    figure(); hold on;
+    mean_rts = [];
+    mean_spikes = [];
+    
+    for i_code = 1:numel(stim_codes)
+        code_mask = code_list == stim_codes(i_code);
+        plot(mean(rt_list(code_mask==1)),mean(sum(spikes_above_baseline(:,code_mask==1))),'k.','markersize',20)
+        mean_rts(i_code) = mean(rt_list(code_mask==1));
+        mean_spikes(i_code) = mean(sum(spikes_above_baseline(:,code_mask==1)));
     end
-end
+    
+    
+    
+%% plot heatmap showing stim elec location and recorded FR
+    map_data = loadMapFile(inputData.mapFileName(8:end));
+%     stim_elec_list = [15,42,44,48,50];
+    stim_elec_list = [62];
+    
+    for i_code=1:numel(stim_codes)
+        figure();
+        code_mask = code_list == stim_codes(i_code);
+        val_plot = mean(spikes_above_baseline(:,code_mask==1)');
+        val_plot(val_plot<0) = 0;
+        val_plot = val_plot/max(val_plot);
+        
+        for i_unit = 1:numel(chan_list) % chan_list defined in the get FR portion
+            map_idx = find(chan_list(i_unit) == map_data.chan);
+            
+            color_to_use = (val_plot(i_unit))*[1,0,0];
+            rectangle('Position',[map_data.row(map_idx),map_data.col(map_idx),1,1],'FaceColor',color_to_use, 'EdgeColor','none');
+            hold on
+        end
+        % plot stim chan
+        map_idx = find(stim_elec_list==map_data.chan);
+        rectangle('Position',[map_data.row(map_idx),map_data.col(map_idx),1,1],'FaceColor','none','EdgeColor','m');
+        
+        plot([1,11,11,1,1],[1,1,11,11,1],'k','linewidth',1.5)
+        
+        set(gca,'visible','off')
+        xlim([1,11])
+        ylim([1,11])
+        axis square
+    end
+    
 
-% for b = 5:numel(bump_codes)
-%     data_bump_mask = data_bump.code == bump_codes(b);
-%     num_spikes_all = [num_spikes_all; data_bump.num_spikes(data_bump_mask)];
-%     for i = 1:sum(data_bump_mask)
-%         labels{end+1,1} = ['bump-',num2str(b)];
-%     end
-% end
-
-figure();
-boxplot(num_spikes_all,labels)
-
-
-%%
-% figure();
-for i = 1:7
-    plot(mean(data.cueInfo(i).rt),mean(data.cueInfo(i).num_spikes),'.','color',c,'markersize',12);
-    hold on
-end
 
 
     
+    
+    
+ %% get number of spikes per trial and result
+    td_detect = td_all([td_all.result] == 'R' | [td_all.result] == 'F');
+    td_detect = td_detect(~isnan([td_detect.idx_goCueTime]));
+ 
+    spike_window_t = [0,0.1]; % s, relative to stim onset
+    baseline_window_t = [-0.4,-0.1]; % s, relative to stim onset
+    
+    % pre-allocate arrays, variables
+    code_list = nan(size(td_detect));
+    is_detect_list = nan(size(td_detect)); 
+    chan_list = td_detect(1).LeftS1_unit_guide(:,1);
+    num_spikes = nan(size(td_detect(1).LeftS1_spikes,2),size(td_detect,2)); % trials x unit
+    baseline_spikes = nan(size(td_detect(1).LeftS1_spikes,2),1);
+    
+    spike_window_idx = floor(spike_window_t/td_detect(1).bin_size);
+    baseline_window_idx = floor(baseline_window_t/td_detect(1).bin_size);
+    correction_factor = diff(spike_window_t)/diff(baseline_window_t);
+    
+    for i_trial = 1:numel(td_detect)
+        % get code
+        code_list(i_trial) = td_detect(i_trial).stimCode;
+        % get rt
+        is_detect_list(i_trial) = td_detect(i_trial).result == 'R';
+        % get num spikes in windowtd_detect(i_trial)
+        idx_go_cue = td_detect(i_trial).idx_goCueTime;
+        num_spikes(:,i_trial) = sum(td_detect(i_trial).LeftS1_spikes(idx_go_cue+spike_window_idx(1):idx_go_cue+spike_window_idx(2),:));
+        % get baseline spike count (based on stim window size)
+        baseline_spikes(:,i_trial) = correction_factor*sum(td_detect(i_trial).LeftS1_spikes(idx_go_cue+baseline_window_idx(1):idx_go_cue+baseline_window_idx(2),:));
+    end
+    
+    spikes_above_baseline = num_spikes - baseline_spikes;
+    stim_codes = unique(code_list);
+    stim_codes(isnan(stim_codes)) = [];
+%% plot num spikes for each code with whether the trial was detected or not -- use neighborhood around stim elec
+    % get distance mask first
+    stim_elec = 62;
+    neigh_dist = 500; % um
+    
+    
+    distance_mask = ones(size(chan_list));
+    map_data = loadMapFile(inputData.mapFileName(8:end));
+    stim_chan_idx = find(map_data.chan == stim_elec);
+    stim_chan_pos = [map_data.row(stim_chan_idx),map_data.col(stim_chan_idx)];
+    
+    for i_chan = 1:numel(chan_list)
+        chan_idx = find(map_data.chan == chan_list(i_chan));
+        chan_pos = [map_data.row(chan_idx),map_data.col(chan_idx)];
+        distance_mask(i_chan) = 400*sqrt(sum((stim_chan_pos-chan_pos).^2)) < neigh_dist;
+    end
+    
+    
+    % plot sum of spikes for neurons within distance
+    figure(); hold on;
+    for i_code = 1:numel(stim_codes)
+        code_mask = code_list == stim_codes(i_code);
+        detected_mask = is_detect_list == 1;
+        
+        % plot undetected trials
+        if(sum(code_mask & ~detected_mask) > 0)
+            plot(i_code-0.1,sum(spikes_above_baseline(distance_mask==1,code_mask & ~detected_mask),1),'r.','markersize',10)
+        end
+        % plot detected trials
+        if(sum(code_mask & detected_mask) > 0)
+            plot(i_code+0.1,sum(spikes_above_baseline(distance_mask==1,code_mask & detected_mask),1),'b.','markersize',10)
+        end
+    end
+
+ %% classifier to predict result
+    code = 2;
+    code_mask = code_list == code;
+    
+    results = is_detect_list(code_mask)';
+    spikes = spikes_above_baseline(:,code_mask)';
+        
+    % K-fold cross val 
+    cv = cvpartition(numel(results),'KFold',numel(results));
+    
+    mdl = fitcdiscr(spikes,results,'CVPartition',cv);
+    pred = nan(cv.NumObservations,1);
+    
+    for i_set = 1:cv.NumTestSets
+        % get testing dataset predictions
+        test_mask = test(cv,i_set);
+        
+        pred(test_mask==1) = predict(mdl.Trained{i_set},spikes(test_mask==1,:));
+    end
+
+    percent_correct = sum(pred == results)/numel(results)
+    sum(results==1)/numel(results)
+    
+    
+ 
     
