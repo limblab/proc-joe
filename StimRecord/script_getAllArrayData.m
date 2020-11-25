@@ -1,7 +1,7 @@
 %% combine array data's that exist within a folder structure
 
-    single_pulse = 0;
-    home_computer = 0;
+    single_pulse = 1;
+    home_computer = 1;
     include_non_stim_data = 0;
 
     if(single_pulse && home_computer)
@@ -9,10 +9,14 @@
         highest_folderpath{2} = 'D:\Lab\Data\StimArtifact\singlePulseModelExperiment\data\stim_rec_single_pulse_data\Han\';
         search_word = 'arrayData';
    elseif(~single_pulse && include_non_stim_data)
+        if(~home_computer)
 %         highest_folderpath{1} = 'E:\Data\Joseph\long_trains_array_data\amp_freq\pulse_times\';
 %         highest_folderpath{1} = 'E:\Data\Joseph\long_trains_array_data\intermittent_130Hz\pulse_times\';
 %         highest_folderpath{1} = 'D:\Lab\Data\LongTrains\amp_freq\';
-        highest_folderpath{1} = 'D:\Lab\Data\LongTrains\intermittent_180Hz\';
+%         highest_folderpath{1} = 'D:\Lab\Data\LongTrains\intermittent_180Hz\';
+        else
+            highest_folderpath{1} = 'D:\Lab\Data\StimArtifact\long_trains_array_data\amp_freq\pulse_times\';
+        end
         search_word = 'arrayData';
     elseif(single_pulse && include_non_stim_data)
         highest_folderpath{1} = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\StimRecData\SinglePulseNonStimChan\';

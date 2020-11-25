@@ -18,12 +18,13 @@
     rt(remove_idx) = []; 
     num_spikes(remove_idx,:) = [];
 
+    figure();
     plot(rt,num_spikes,'.','markersize',20)
     
 %% look at stim data
     neighbor_size = 5;
     stim_chan = 44;
-    td_stim = td(~isnan([td.stimCode]) & [td.stimCode] == 4); 
+    td_stim = td(~isnan([td.stimCode]) & [td.stimCode] == 0); 
     
     map_idx_stim_chan = find(map_data.chan == stim_chan);
     stim_chan_pos = [map_data.row(map_idx_stim_chan),map_data.col(map_idx_stim_chan)];

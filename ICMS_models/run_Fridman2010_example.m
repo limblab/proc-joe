@@ -10,17 +10,16 @@
     CONSTANTS.min_current = 10; % uA
 %% compute perceived intensity against time for different amplitudes
 
-    currents = [60]; % uA
-    amp_test = [60];
-    rates_found = [3.4];
+    currents = [200,1000]; % uA
+    rates_found = ones(size(currents));
     rates_use = rates_found; %interp1(amp_test,rate_found,currents,'linear','extrap');
     
     STIM_PARAMS.recovery_tau = 0; % seconds until stim_decay kicks in
     stim_decay_taus = 1./rates_use;
     STIM_PARAMS.pulse_width = 200; % us
-    STIM_PARAMS.frequency = 300; % Hz
-    STIM_PARAMS.duty_cycle = 0.5;
-    STIM_PARAMS.duty_length = 0.2; % s
+    STIM_PARAMS.frequency = 330; % Hz
+    STIM_PARAMS.duty_cycle = 1; % percent of cycle high
+    STIM_PARAMS.duty_length = 0.1; % s
     move_time = 0.12;
     rt_lowest = 0.35 - move_time; % correct for time to produce movement
  
@@ -34,7 +33,7 @@
         perception_data = computePerceivedIntensity(STIM_PARAMS, PARAMS, CONSTANTS);
         plot(perception_data.t_list,perception_data.Ps_list,'color',colors(i_current,:));
         if(i_current == 1)
-%             threshold = perception_data.Ps_list(find(perception_data.t_list >= rt_lowest,1,'first'));
+            threshold = perception_data.Ps_list(find(perception_data.t_list >= rt_lowest,1,'first'));
             plot([0,perception_data.t_list(end)],[threshold,threshold],'--','color',getColorFromList(1,1));
         end
         on_idx = find(perception_data.Ps_list > threshold,1,'first');
@@ -50,9 +49,12 @@
     
     figure(); 
     plot(currents,on_estimate+move_time)
+    xlabel('Current (\muA)');
+    ylabel('Onset RT estimate (s)');
     figure();
     plot(currents(~isnan(off_estimate)),off_estimate(~isnan(off_estimate)))
-
+    xlabel('Current (\muA)');
+    ylabel('Offset estimate (s)');
 %% compute perceived intensity against time for different frequencies
 
     STIM_PARAMS.current = 60; % uA

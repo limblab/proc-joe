@@ -81,7 +81,7 @@ function [plots] = plotRasterPSTHRT(td,opts)
                 optsPlot.MAKE_FIGURE = 0;
                 optsPlot.NUM_PLOTS = size(yData_PSTH,2);
                 optsPlot.BAR_STYLE = 'line';
-                plotPSTHLIB(xData_PSTH,yData_PSTH,optsPlot,optsSave);
+                plotPSTHLib(xData_PSTH,yData_PSTH,optsPlot,optsSave);
             end
         end
     end
@@ -158,7 +158,7 @@ function [plots] = plotRasterPSTHRT(td,opts)
                 optsPlot.MAKE_FIGURE = 0;
                 optsPlot.NUM_PLOTS = size(yData_PSTH,2);
                 optsPlot.BAR_STYLE = 'line';
-                plotPSTHLIB(xData_PSTH,yData_PSTH,optsPlot,optsSave);
+                plotPSTHLib(xData_PSTH,yData_PSTH,optsPlot,optsSave);
             end
         end    
     end

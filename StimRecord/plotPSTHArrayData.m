@@ -10,7 +10,7 @@ function [output_data] = plotPSTHArrayData(array_data,input_data)
         max_y_lim = 0;
         f_list{u} = figure();
 
-        f_list{u}.Position = [-863 -61.4000 707.2000 788];
+        f_list{u}.Position = [2439 153 677 756];
 %         f_list{u}.Name = [array_data{u}.monkey,'_longTrains_PSTH_chan',num2str(array_data{u}.CHAN_SENT{1}),'stim_chan'...
 %             num2str(array_data{u}.CHAN_REC),'rec_',num2str(array_data{u}.ID),'ID'];%'rec_IPI',num2str(input_data.IPI(cond)),...
 % %                 '_numPulses',num2str(input_data.num_pulses(cond)),'_unitID',num2str(u)];
