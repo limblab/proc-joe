@@ -16,7 +16,7 @@
 
 %% plot rasters and psth for each condition and neuron
 
-    for arrIdx = 1:numel(arrayData)
+    for arrIdx = 1%:numel(arrayData)
 %     arrIdx = 7;
 
         % plot raster, and PSTH for the given unit above
@@ -28,10 +28,10 @@
         optsPlotFunc.FIGURE_PREFIX = [arrayData{arrIdx}.monkey,'_short_'];
 
         optsPlotFunc.PRE_TIME = 30/1000;
-        optsPlotFunc.POST_TIME = 60/1000;
+        optsPlotFunc.POST_TIME = 100/1000;
         optsPlotFunc.SORT_DATA = '';
 
-        optsPlotFunc.MARKER_STYLE  = 'line';
+        optsPlotFunc.MARKER_STYLE  = '.';
         
         optsPlotFunc.PLOT_AFTER_STIMULATION_END = 1;
         optsPlotFunc.STIMULATION_LENGTH = [];

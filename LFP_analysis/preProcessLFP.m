@@ -50,7 +50,7 @@ function [ trial_data, lfp_data ] = preProcessLFP(cds, trial_data, input_data )
         % store power_data into trial_data
         trial_data(i_trial).lfp_data = power_data;
         
-        % get baseline flag based on trial data
+        % get power spectra for each trial and electrode
         
         
         

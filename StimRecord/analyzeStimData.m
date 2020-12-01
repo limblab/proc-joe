@@ -1,16 +1,17 @@
 %% set file names 
 
-    inputData.folderpath = 'D:\Lab\Data\ReactionTime\Han_20180808_FCreactTime_record\';
-    inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+    inputData.folderpath = 'D:\Lab\Data\StimPDs\Pop\20201023\';
+    
+%     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 %     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
-
+    inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Pop_18E3\Array Map Files\Implant_2020_01\6250-002086\SN 6250-002086.cmp';
 
     folderpath = inputData.folderpath; % rest of code uses folderpath currently...may have switched this, not 100% certain
 
-    inputData.task='taskRT';
+    inputData.task='taskWM';
     inputData.ranBy='ranByJoseph'; 
-    inputData.array1='arrayLeftS1'; 
-    inputData.monkey='monkeyHan';
+    inputData.array1='arrayLeftM1'; 
+    inputData.monkey='monkeyPop';
     inputData.labnum = 6;
 
     pwd=cd;
@@ -22,35 +23,54 @@
 %% extract relevant data for all units -- recommend saving arrayData after this step
     tic
 
-    optsExtract.STIMULI_RESPONSE = 'all';
-    optsExtract.STIMULATIONS_PER_TRAIN = 1;
-    optsExtract.STIMULATION_BATCH_SIZE = 1000;
-    optsExtract.DOWNSAMPLE_STIM_TIMES = 0;
-    
-    optsExtract.NUM_WAVEFORM_TYPES = 1;
-    
-    optsExtract.USE_STIM_CODE = 1;
-    optsExtract.STIM_ELECTRODE = {15,42,44,48,50};
-    optsExtract.CHAN_LIST = {};
+    for i_file = 7:numel(fileList)
+        optsExtract.ANALOG_SYNC_LINE = 'stimsync';
+        optsExtract.STIMULI_RESPONSE = 'all';
+        optsExtract.STIMULATIONS_PER_TRAIN = 10;
+        optsExtract.STIMULATION_BATCH_SIZE = 1000;
+        optsExtract.DOWNSAMPLE_STIM_TIMES = 0;
 
-    optsExtract.PRE_TIME = 200/1000; % made negative in the function
-    optsExtract.POST_TIME = 500/1000;
+        optsExtract.REMOVE_IMPEDANCE_TEST = 0; % basically removes stim on's if impedance test is detected.
 
-    optsExtract.BIN_SIZE = 5/1000;
-    optsExtract.TIME_AFTER_STIMULATION_WAVEFORMS = 10/1000;
-    optsExtract.USE_ANALOG_FOR_STIM_TIMES = 1; % this uses the analog sync line to get stim times, not sure why you would want to do anything else
-    
-    optsExtract.GET_KIN = 1;
-    optsExtract.GET_FORCE = 0;
-    
-    arrayData = extractDataAroundStimulations(inputData,fileList,stimInfoFileList,optsExtract);
+        optsExtract.NUM_WAVEFORM_TYPES = 1;
 
+        optsExtract.USE_STIM_CODE = 0;
+        optsExtract.STIM_ELECTRODE = {};
+        
+        % get chan list from file name
+        fname = fileList(i_file).name;
+        strIdx = [strfind(fname,'chan'), strfind(fname,'stim')];
+        % check for the word and, which would indicate two
+        % channels
+        andIdx = strfind(fname,'and');
+        if(~isempty(andIdx))
+            chanStim = [str2num(fname(strIdx(1)+4:andIdx-1)),str2num(fname(andIdx(1)+3:strIdx(end)-1))]; % chan#and#stim
+        else
+            chanStim = str2num(fname(strIdx(1)+4:strIdx(end)-1)); % some files have chans....chan#stim
+        end
+        optsExtract.CHAN_LIST = {chanStim};
+
+        optsExtract.PRE_TIME = 500/1000; % made negative in the function
+        optsExtract.POST_TIME = 1000/1000;
+
+        optsExtract.BIN_SIZE = 5/1000;
+        optsExtract.TIME_AFTER_STIMULATION_WAVEFORMS = 10/1000;
+        optsExtract.USE_ANALOG_FOR_STIM_TIMES = 1; % this uses the analog sync line to get stim times, not sure why you would want to do anything else
+
+        optsExtract.GET_KIN = 1;
+        optsExtract.GET_FORCE = 0;
+
+        arrayData = extractDataAroundStimulations(inputData,fileList(i_file),stimInfoFileList(i_file),optsExtract);
+        
+        array_data_fname = [fileList(i_file).name(1:end-26),'arrayData'];
+        save(array_data_fname,'arrayData','optsExtract');
+    end
     toc
     
     
 %% pick a unit (index in array data)
 % plot raster, and PSTH for the given unit above
-for arrIdx = 1:5%numel(arrayData)
+for arrIdx = 1:numel(arrayData)
 % arrIdx = 13;
     % plot raster, and PSTH for the given unit above
 
@@ -61,8 +81,8 @@ for arrIdx = 1:5%numel(arrayData)
     optsPlotFunc.FIGURE_PREFIX = 'Han_20190923';
 
 
-    optsPlotFunc.PRE_TIME = 150/1000;
-    optsPlotFunc.POST_TIME = 350/1000;
+    optsPlotFunc.PRE_TIME = 400/1000;
+    optsPlotFunc.POST_TIME = 800/1000;
 
     optsPlotFunc.SORT_DATA = '';
 

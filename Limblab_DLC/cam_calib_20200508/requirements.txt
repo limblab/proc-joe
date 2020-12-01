@@ -1,0 +1,10 @@
+opencv-contrib-python
+pandas
+numpy
+toml
+tqdm
+scikit-video
+scipy
+checkerboard
+matplotlib
+tables

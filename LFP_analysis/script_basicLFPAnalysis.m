@@ -1,12 +1,12 @@
 %% set filename
     input_data.folderpath = 'D:\Lab\Data\LFP\Han_20191101_CObumpmove\';
     
-    mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
-%     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+%     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
+    mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
     
-    input_data.date = '20191106';
+    input_data.date = '20191101';
     input_data.array = 'arrayLeftS1';
-    input_data.monkey = 'monkeyDuncan';
+    input_data.monkey = 'monkeyHan';
     input_data.ranBy = 'ranByJoe';
     input_data.lab = 6;  
     input_data.mapFile = strcat('mapFile',mapFileName);
@@ -44,6 +44,7 @@
     td_all = parseFileByTrial(cds,params);
     td_all = stripSpikeSorting(td_all);
     td_all = getSpeed(td_all);
+    td_all = getNorm(td_all,'vel');
     td_all = removeBadTrials(td_all);
     
     if(td_all(1).bin_size < 0.05)
@@ -52,7 +53,7 @@
     end
   
     
-    td_all = getMoveOnset(td_all,move_onset_params);
+    td_all = getMoveOnsetAndPeak(td_all,move_onset_params);
     td_all = removeBadTrials(td_all);
 
 
@@ -63,8 +64,8 @@
     % calculate power in frequency bands 
     input_data.subtract_common_average = 1;
     input_data.FFT_length = 256; % in ms
-    input_data.power_bands = [15,30];
-    
+%     input_data.power_bands = [8,15;15,30;30,50;50,80;80,120;120,170;170,230;230,300];
+    input_data.power_bands = [(1:10:291)', (10:10:300)'];
     [td_lfp, lfp_data] = preProcessLFP(cds, td_all ,input_data);
     
  
@@ -73,14 +74,14 @@
     power_colors = inferno(size(input_data.power_bands,1)+1);
     power_idx = 1;
     reach_dir = unique([td_lfp.target_direction]);
-    window = [-0.5,1.5]; % around go cue
+    window = [-1,1.5]; % around go cue
     spikes_subplot_idx = [15,3,11,23];
     power_subplot_idx = [14,8,12,18];
     
     mean_firing_rate = zeros(size(td_lfp(1).LeftS1_unit_guide,1),numel(reach_dir),floor(diff(window)/td_lfp(1).bin_size));
     mean_power = zeros(size(td_lfp(1).LeftS1_unit_guide,1),numel(reach_dir),size(input_data.power_bands,1), floor(diff(window)/td_lfp(1).bin_size));
     x_data = linspace(window(1),window(2),floor(diff(window)/td_lfp(1).bin_size));
-    for i_unit = 21%:size(td_all(1).LeftS1_unit_guide,1)
+    for i_unit = 1%:20%:size(td_all(1).LeftS1_unit_guide,1)
         if(plot_data) figure('Position',[680 266 856 712]); end
         for i_reach = 1:numel(reach_dir)
             trial_idx = find([td_lfp.target_direction] == reach_dir(i_reach) & [td_lfp.result] == 'R' & isnan([td_lfp.bumpDir]));
@@ -94,7 +95,7 @@
             
                 % get mean power (add up power, divide after for loop)
                 mean_power(i_unit,i_reach,:,:) = squeeze(mean_power(i_unit,i_reach,:,:)) + ...
-                    squeeze(td_lfp(trial).lfp_data(trial_window(1):trial_window(2),i_unit,:));
+                    squeeze(td_lfp(trial).lfp_data(trial_window(1):trial_window(2),i_unit,:))';
             end
             
             % normalize by number of trials and bin size
@@ -121,6 +122,61 @@
         end
     end
 
+
+%% plot power data and neural firing during reaches -- heatmap across frequencies
+    plot_data = 1;
+    reach_dir = unique([td_lfp.target_direction]);
+    window = [-1,1]; % around move onset
+    spikes_subplot_idx = [15,3,11,23];
+    power_subplot_idx = [14,8,12,18];
+    
+    baseline_idx = 1:1:numel(-1:td_lfp(1).bin_size:-0.5);
+    
+    mean_power = zeros(size(td_lfp(1).LeftS1_unit_guide,1),numel(reach_dir),size(input_data.power_bands,1), floor(diff(window)/td_lfp(1).bin_size));
+    mean_firing_rate = zeros(size(td_lfp(1).LeftS1_unit_guide,1),numel(reach_dir),floor(diff(window)/td_lfp(1).bin_size));
+    x_data = linspace(window(1),window(2),floor(diff(window)/td_lfp(1).bin_size));
+    for i_unit = 33:64%size(td_all(1).LeftS1_unit_guide,1)
+        if(plot_data) figure('Position',[680 266 856 712]); end
+        for i_reach = 1:numel(reach_dir)
+            trial_idx = find([td_lfp.target_direction] == reach_dir(i_reach) & [td_lfp.result] == 'R' & isnan([td_lfp.bumpDir]));
+            for trial = trial_idx
+                trial_window = td_lfp(trial).idx_movement_on + floor(window/td_lfp(1).bin_size);
+                trial_window(end) = trial_window(end)-1;
+
+                % get mean firing rate (add up spike counts, divide after
+                % for loop)
+                mean_firing_rate(i_unit,i_reach,:) = mean_firing_rate(i_unit,i_reach,:) + ...
+                    reshape(td_lfp(trial).LeftS1_spikes(trial_window(1):trial_window(2),i_unit),1,1,size(mean_firing_rate,3));
+                
+                % get mean power (add up power, divide after for loop)
+                mean_power(i_unit,i_reach,:,:) = squeeze(mean_power(i_unit,i_reach,:,:)) + ...
+                    squeeze(td_lfp(trial).lfp_data(trial_window(1):trial_window(2),i_unit,:))';
+            end
+            % normalize by number of trials and bin size
+            mean_firing_rate(i_unit,i_reach,:) = mean_firing_rate(i_unit,i_reach,:)/numel(trial_idx)/td_lfp(1).bin_size;
+            % normalzie power by number of trials
+            mean_power(i_unit,i_reach,:,:) = mean_power(i_unit,i_reach,:,:)/numel(trial_idx);
+            % subtract off baseline firing
+            baseline_power = mean(mean_power(i_unit,i_reach,:,baseline_idx),4);
+            mean_power(i_unit,i_reach,:,:) = log10(mean_power(i_unit,i_reach,:,:)) - log10(baseline_power);
+            
+            if(plot_data)
+                % plot firing rate
+                ax = subplot(5,5,spikes_subplot_idx(i_reach));
+                plot(x_data,squeeze(mean_firing_rate(i_unit,i_reach,:)),'color',getColorFromList(1,1),'linewidth',1.5);
+                hold on;
+                plot([0,0],ax.YLim,'r--','linewidth',0.75)
+                xlim(window)
+                % plot power
+                power_mat = squeeze(mean_power(i_unit,i_reach,:,:));
+                ax = subplot(5,5,power_subplot_idx(i_reach));
+                imagesc(x_data,1:1:size(power_mat,1),flip(power_mat,1))
+                colormap(jet);
+                xlim(window)
+                ax.CLim = [-0.05,0.1];
+            end
+        end
+    end
     
 %% try to decode hand kinematics (velocity and position) with spikes and LFP to see if LFP data is even good....
     percent_train = 0.8;

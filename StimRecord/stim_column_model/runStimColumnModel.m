@@ -3,7 +3,7 @@
 % column of homogenous neurons (radius = r_col), then drops electrodes at
 % different steps (r_step), and computes the area overlap
 % between the stimulation sphere (based on Stoney's results, I = current, K
-% = excitability constant). The function returns the percent overlaps (perc_overlap)
+% = excitability constant) and the column. The function returns the percent overlaps (perc_overlap)
 % at each step. 
 
 %% run model for a single set of parameters

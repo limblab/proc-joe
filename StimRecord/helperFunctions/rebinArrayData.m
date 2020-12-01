@@ -6,12 +6,20 @@ function [arrayDataRebin] = rebinArrayData(arrayData,binSize)
         remove_cell = 1;
     end
     % rebins data in arrayData based on inputData.bin_size
-  
-    
     arrayDataRebin = arrayData;
-    binEdges = (arrayData{1}.binEdges{1}(1)):binSize:(arrayData{1}.binEdges{1}(end)); % in ms
+    
+    
+    
     for u = 1:numel(arrayDataRebin)
-        for condition = 1:numel(arrayDataRebin{u}.binCounts)
+        % makes binEdges if it doesn't already exist
+        if(~isfield(arrayData{u},'binEdges'))
+            binLimits = round([min(cellfun(@min,arrayData{u}.spikeTrialTimes)),max(cellfun(@max,arrayData{u}.spikeTrialTimes))]*1000,-1); % round to nearest 10ms
+            binEdges = binLimits(1):binSize:binLimits(2);
+        else
+            binEdges = (arrayData{u}.binEdges{1}(1)):binSize:(arrayData{u}.binEdges{1}(end)); % in ms
+        end
+        
+        for condition = 1:numel(arrayDataRebin{u}.spikeTrialTimes)
             spikeTrialTimes = arrayDataRebin{u}.spikeTrialTimes{condition}; % in s for some reason
             
             

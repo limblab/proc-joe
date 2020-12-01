@@ -1,16 +1,30 @@
 % get model data -- stim channel response
     mdl_input_data = [];
-    mdl_input_data.folderpath = 'C:\Users\Joseph Sombeck\Box\Miller-Grill_S1-stim\ModelData\StimChannelResponse\with_Intrinsic_Activity\';
-    mdl_input_data.diam_list = [1,2,3];
-    mdl_input_data.amp_list = [5,10,15,20,25,30,40,50,100];
-    mdl_input_data.get_axon_dendrite_locs = 0;
-    mdl_input_data.cell_id_list = [6,11,16,21];
+%     mdl_input_data.folderpath = 'C:\Users\Joseph Sombeck\Box\Miller-Grill_S1-stim\ModelData\StimChannelResponse\with_Intrinsic_Activity\';
+    mdl_input_data.folderpath = 'C:\Users\Joseph Sombeck\Box\Miller-Grill_S1-stim\ModelData\TemporalResponse\SinglePulse\';
+    
+%     mdl_input_data.temporal_data = 0;
+%     mdl_input_data.gaba_ratio_list = -1;
+%     mdl_input_data.diam_list = [1,2,3];
+%     mdl_input_data.amp_list = [5,10,15,20,25,30,40,50,100];
+%     mdl_input_data.cell_id_list = [6,11,16,21];
+%     mdl_input_data.num_clones = 1;
+%     mdl_input_data.stim_times = (200:500:(200+500*9))-0.453; % ms
+    
+    mdl_input_data.temporal_data = 1;
+    mdl_input_data.gaba_ratio_list = [0.2,0.4,0.6,0.8,1];
+    mdl_input_data.diam_list = [-1];
+    mdl_input_data.amp_list = [15,30,50,100];
+    mdl_input_data.cell_id_list = 16;
     mdl_input_data.num_clones = 1;
-    mdl_input_data.stim_times = (200:500:(200+500*9)) - 0.453; % ms
+    mdl_input_data.stim_times = (1000:500:(1000+500*9)); % ms
+    
+    mdl_input_data.get_axon_dendrite_locs = 0;
     mdl_input_data.wave_length = 0.453; % ms
     mdl_input_data.stim_window = [-100,400]; % ms around stim
     mdl_input_data.get_IPIs = 1;
     mdl_input_data.get_synapses = 0;
+    
     
     % cell_id=6:10 %L23 PC, clones 1-5
     % cell_id=11:15 %L4 LBC, clones 1-5
@@ -34,25 +48,26 @@
 %% plot raster of example neuron
 
     raster_input_data = [];
-    raster_input_data.x_lim = [-50,150]; % ms
+    raster_input_data.x_lim = [-50,200]; % ms
     raster_input_data.amp_list = mdl_input_data.amp_list;
-    raster_input_data.marker_style = '.'; % line is the correct way, but much slower
+    raster_input_data.marker_style = 'line'; % line is the correct way, but much slower
     
-    for exp_idx = 1:30 %4, 5, 13, 25
+    for exp_idx = 4:10 %4, 5, 13, 25
         raster_input_data.is_model = 0;
-        plotModelExpRaster(exp_array_data{exp_idx},raster_input_data);
+        plotModelExpAmpRaster(exp_array_data{exp_idx},raster_input_data);
     end
 %     mdl_idx = 160; % 186,191,198,199
-%     raster_input_data.is_model = 1;
-%     plotModelExpRaster(mdl_array_data{mdl_idx},raster_input_data);
-
+%     for mdl_idx = 101:150
+%         raster_input_data.is_model = 1;
+%         plotModelExpAmpRaster(mdl_array_data{mdl_idx},raster_input_data);
+%     end
 %% resample neurons based on proportions observed in rat cortex
 %     num_sample = 200;
     [mdl_array_data,mdl_mask_data] = resampleModelData(mdl_array_data_all,mdl_mask_data_all);
     
 
 %% Activation threshold
-    activation_input_data.spike_window = [0,5]/1000;
+    activation_input_data.spike_window = [1,5]/1000;
     activation_input_data.remove_intrinsic = 1;
     activation_input_data.sub_baseline = 1;
     activation_input_data.amp_list = mdl_input_data.amp_list;
@@ -159,6 +174,27 @@
     formatForLee(gcf); set(gca,'fontsize',14);
     ylabel('% responsive');
     
+    
+%% Percent cells activated against threshold used
+    thresholds = 0:0.05:1;
+%     activation_input_data.spike_window = [0,10]/1000;
+    exp_percent_resp = nan(size(thresholds));
+    mdl_percent_resp = nan(size(thresholds));
+    for i_thresh = 1:numel(thresholds)
+        activation_input_data.threshold = thresholds(i_thresh);
+        activation_input_data.is_model = 0;
+        exp_threshold_data = getActivationThreshold(exp_array_data,activation_input_data);
+        activation_input_data.is_model = 1;
+        mdl_threshold_data = getActivationThreshold(mdl_array_data,activation_input_data);
+        exp_percent_resp(i_thresh) = sum(exp_threshold_data.is_responsive)/numel(exp_threshold_data.is_responsive);
+        mdl_percent_resp(i_thresh) = sum(mdl_threshold_data.is_responsive)/numel(mdl_threshold_data.is_responsive);
+    end
+    
+    figure();
+    plot(thresholds, exp_percent_resp,'k');
+    hold on;
+    plot(thresholds, mdl_percent_resp,'color',getColorFromList(1,1));
+
 %% Compare binned spike times after stim
     times_input_data.window = [0,8]/1000; % s
     times_input_data.bin_size = 1/1000; % s
@@ -192,11 +228,10 @@
     lat_input_data.is_model = 1;
     mdl_latency_data = getLatencyOfPeaks(mdl_array_data,lat_input_data);
     
-% plots...
-
-    % change in latency of first peak vs. amplitude
-        % change in latency relative to peak at lowest amplitude for each
-        % unit
+%% plot change in latency of first peak vs. amplitude (peak timing across amps)
+    % change in latency relative to peak at lowest amplitude for each
+    % unit
+    
     boxplot_params = [];
     boxplot_params.use_same_color_for_all = 1; % omits median color
     
@@ -219,12 +254,20 @@
             data_mask = lat_data.delta_amp == lat_input_data.amp_list(i_amp);
 
             if(sum(data_mask) > 2)
-                boxplot_wrapper(lat_input_data.amp_list(i_amp)+offset,lat_data.delta_lat(data_mask),boxplot_params);
+                boxplot_wrapper(lat_input_data.amp_list(i_amp)+offset,lat_data.delta_lat(data_mask)*1000,boxplot_params);
             end
         end
     end
     
-% density plots showing latency vs. standard dev of spikes
+    xlabel('Amplitude (\muA)');
+    ylabel('Change in peak latency from lowest amp (ms)');
+    formatForLee(gcf);
+    set(gca,'fontsize',14);
+  
+    
+    
+    
+%% density plots showing latency vs. standard dev of spikes in a peak
     bin_size = 0.1; % ms
     x_edges = [0:bin_size:10]/1000;
     y_edges = [0:bin_size:10]/1000;
@@ -235,7 +278,7 @@
     
     subplot(1,2,2)
     densityplot(mdl_latency_data.lat_list,mdl_latency_data.std_list,'edges',{x_edges,y_edges})
-% num peaks vs amplitude
+%% num peaks vs amplitude
 
     boxplot_params = [];
     boxplot_params.use_same_color_for_all = 1; % omits median color
@@ -265,7 +308,12 @@
     end
     
     
-
+    xlabel('Amplitude (\muA)');
+    ylabel('Num peaks');
+    formatForLee(gcf);
+    set(gca,'fontsize',14);
+    
+    
     
 %% compute inhibition duration and plot across amplitudes
 
@@ -281,26 +329,33 @@
     inhib_input_data.num_consec_bins = 2;
     inhib_input_data.amp_list = [5,10,15,20,25,30,40,50,100];
     
-    
+    mdl_array_data = rebinArrayData(mdl_array_data,inhib_input_data.bin_size*1000);
     exp_inhib_data = getInhibitionDurationAmpWrapper(exp_array_data,inhib_input_data);
-
-    % plot percent of cells that have inhibition, and duration at each
+    mdl_inhib_data = getInhibitionDurationAmpWrapper(mdl_array_data,inhib_input_data);
+    
+%% plot percent of cells that have inhibition, and duration at each
     % amplitude
     
     figure('Position',[680 558 942 420]);
     subplot(1,2,1)
-    
-    for i_amp = 1:numel(inhib_input_data.amp_list)
-        boxplot_params = [];
-        boxplot_params.use_same_color_for_all = 1;
-        boxplot_params.master_color = getColorFromList(1,1);
-        boxplot_params.box_width = 2.4;
-        
-        data = exp_inhib_data.inhib_dur(:,i_amp);
-        data(isnan(data)) = [];
-        
-        boxplot_wrapper(inhib_input_data.amp_list(i_amp), data, boxplot_params);
-        
+    offset = [-1,1];
+    for i_type = 1:2
+        for i_amp = 1:numel(inhib_input_data.amp_list)
+            boxplot_params = [];
+            boxplot_params.use_same_color_for_all = 1;
+            if(i_type == 1)
+                boxplot_params.master_color = 'k';
+                data = exp_inhib_data.inhib_dur(:,i_amp);
+            else
+                boxplot_params.master_color = getColorFromList(1,1);
+                data = mdl_inhib_data.inhib_dur(:,i_amp);
+            end
+            boxplot_params.box_width = 2.4;
+            data(isnan(data)) = [];
+
+            boxplot_wrapper(inhib_input_data.amp_list(i_amp)+offset(i_type), data, boxplot_params);
+
+        end
     end
     % format
     formatForLee(gcf)
@@ -308,10 +363,12 @@
     ylabel('Inhib dur (s)');
     xlabel('Amp (\muA)');
     
-    subplot(1,2,2) % percent inhib
+    subplot(1,2,2); hold on; % percent inhib
     percent_inhib = sum(~isnan(exp_inhib_data.inhib_dur),1)/size(exp_inhib_data.inhib_dur,1);
-    plot(inhib_input_data.amp_list,percent_inhib,'color',getColorFromList(1,1),'linewidth',1.5,'marker','.','markersize',14)
+    plot(inhib_input_data.amp_list,percent_inhib,'color','k','linewidth',1.5,'marker','.','markersize',14)
     
+    percent_inhib = sum(~isnan(mdl_inhib_data.inhib_dur),1)/size(mdl_inhib_data.inhib_dur,1);
+    plot(inhib_input_data.amp_list,percent_inhib,'color',getColorFromList(1,1),'linewidth',1.5,'marker','.','markersize',14)
     % format
     ylim([0,1])
     formatForLee(gcf)

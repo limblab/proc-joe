@@ -1,4 +1,4 @@
-function [output_data] = plotModelExpRaster(data, input_data)
+function [output_data] = plotModelExpAmpRaster(data, input_data)
 
     
     % send in x_data, y_data, optsPlot, optsSave

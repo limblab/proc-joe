@@ -23,8 +23,8 @@
 %% for each recording channel, plot time off rails
     f=figure();
     f.Name = '20190218_timeOffRails';
-    map_file_name = 'R:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';      
-%     map_file_name = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+%     map_file_name = 'R:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';      
+    map_file_name = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
     map_data = loadMapFile(map_file_name);
     
     % plot time off rails for each stim electrode against distance from stim
@@ -32,10 +32,10 @@
     ax=gca;
     for chan_stim_idx = 1:size(mean_time_off_rails,1)
         for chan_rec_idx = 1:size(mean_time_off_rails,3)
-            for wave = 1%:size(mean_time_off_rails,2)
+            for wave = 1:size(mean_time_off_rails,2)
                 map_data_chan_stim = find(map_data.chan == unique_chan_list{chan_stim_idx});
                 map_data_chan_rec = find(map_data.chan == chan_rec_idx);
-                dist = 400*sqrt((map_data.row(map_data_chan_stim)-map_data.row(map_data_chan_rec))^2 + (map_data.col(map_data_chan_stim)-map_data.col(map_data_chan_rec))^2);
+                dist = 400*sqrt((map_data.row(map_data_chan_stim(1))-map_data.row(map_data_chan_rec))^2 + (map_data.col(map_data_chan_stim(1))-map_data.col(map_data_chan_rec))^2);
                 plot(dist,squeeze(mean_time_off_rails(chan_stim_idx,wave,chan_rec_idx)),'.','markersize',16,'color',getColorFromList(1,chan_stim_idx))
                 hold on
             end

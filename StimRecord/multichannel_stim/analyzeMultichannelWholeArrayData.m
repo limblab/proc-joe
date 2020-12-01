@@ -1,10 +1,10 @@
 %% build match data with bootstrapping for all neurons in array data
 % and repeat
-    params.monkey_name = 'Han';
+    params.monkey_name = 'Duncan';
     params.bootstrap = 0;
     params.num_boot = 1;
     params.array_name = 'LeftS1';
-    params.post_stim_window_size = 10;
+    params.post_stim_window_size = 3;
     
 % remove indices from arrayData that have bad artifacts
     arrayDataOld = arrayData;
@@ -30,7 +30,7 @@
     
 
 %% plot observed vs independence, with confidence bounds (95% based on bootstrap)
-
+    min_prob = 0;
     f=figure(); % for all on one plot
     f.Name = [params.monkey_name,'_',params.array_name,'_ObservedVsIndependence'];
     for arr_idx = 1:numel(match_data) % for each neuron
@@ -38,19 +38,21 @@
 %         f = figure(); % for individual plots
         for cond = 1:size(match_data{arr_idx}.independence,1)
             % get conf bounds (95% bootstrap)
-            independence_bounds = [prctile(squeeze(match_data{arr_idx}.independence(cond,:,:)),0.025),prctile(squeeze(match_data{arr_idx}.independence(cond,:,:)),0.975)];
-            together_bounds = [prctile(squeeze(match_data{arr_idx}.together(cond,:,:)),0.025),prctile(squeeze(match_data{arr_idx}.together(cond,:,:)),0.975)];
+            if(sum(match_data{arr_idx}.individual(cond,:) > min_prob) >= size(match_data{arr_idx}.individual,2))
+                independence_bounds = [prctile(squeeze(match_data{arr_idx}.independence(cond,:,:)),0.025),prctile(squeeze(match_data{arr_idx}.independence(cond,:,:)),0.975)];
+                together_bounds = [prctile(squeeze(match_data{arr_idx}.together(cond,:,:)),0.025),prctile(squeeze(match_data{arr_idx}.together(cond,:,:)),0.975)];
 
-            % plot with errorbars, color each amplitude differently
-            errorbar(squeeze(match_data{arr_idx}.independence(cond,:,1)),squeeze(match_data{arr_idx}.together(cond,:,1)),...
-                abs(squeeze(match_data{arr_idx}.together(cond,:,1) - together_bounds(1))),abs(squeeze(match_data{arr_idx}.together(cond,:,1) - together_bounds(2))),...
-                abs(squeeze(match_data{arr_idx}.independence(cond,:,1) - independence_bounds(1))),abs(squeeze(match_data{arr_idx}.independence(cond,:,1) - independence_bounds(2))),...
-                '.','markersize',16,'color',getColorFromList(1,match_data{arr_idx}.wave(cond)-1))
+                % plot with errorbars, color each amplitude differently
+                errorbar(squeeze(match_data{arr_idx}.independence(cond,:,1)),squeeze(match_data{arr_idx}.together(cond,:,1)),...
+                    abs(squeeze(match_data{arr_idx}.together(cond,:,1) - together_bounds(1))),abs(squeeze(match_data{arr_idx}.together(cond,:,1) - together_bounds(2))),...
+                    abs(squeeze(match_data{arr_idx}.independence(cond,:,1) - independence_bounds(1))),abs(squeeze(match_data{arr_idx}.independence(cond,:,1) - independence_bounds(2))),...
+                    '.','markersize',16,'color',getColorFromList(1,match_data{arr_idx}.wave(cond)-1))
 
-            hold on
+                hold on
 %             if(match_data{arr_idx}.independence(cond) > 0 && match_data{arr_idx}.together(cond) < 0 && match_data{arr_idx}.wave(cond) == 1)
 %                 disp(arr_idx)
 %             end
+            end
         end
 
     end
@@ -78,7 +80,7 @@
         
     end
     
-    histogram(difference_data(difference_data(:,2) == 1),[-1:0.025:1])
+    histogram(difference_data(difference_data(:,2) == 3),[-1:0.025:1])
     formatForLee(gcf);
     set(gca,'fontsize',14);
  
@@ -156,8 +158,8 @@
     set(gca,'fontsize',14);
 
     
-%% FOR TWO ELECTRODES : % plot observed-independence as a function of the distance between each electrode and the unit
-    wave_to_plot = 4;
+%% FOR TWO ELECTRODES : plot observed-independence as a function of the distance between each electrode and the unit
+    wave_to_plot = 1;
 
     f=figure(); % for all on one plot
     f.Name = [params.monkey_name,'_',params.array_name,'_dependence_distanceNeuronAndElectrode_100uA'];
@@ -230,10 +232,32 @@
     lm = fitlm(tbl,'gain~dist_1*dist_2')
     
 
-
+%% FOR TWO ELECTRODES : plot amplitude of one electrode vs amplitude of second electrode
+    prob_list = [];
+    wave_list = [];
+    x_edges = [-0.1:0.05:1];
+    y_edges = x_edges;
+    for i_unit = 1:numel(match_data)
+        prob_list = [prob_list; match_data{i_unit}.individual];
+        wave_list = [wave_list; match_data{i_unit}.wave];
+    end
     
+    [n_his, x_edges, y_edges] = histcounts2(prob_list(:,1),prob_list(:,2),x_edges,y_edges);
+    n_his = log10(n_his);
+    x_center = x_edges(1:end-1) + mode(diff(x_edges))/2;
+    y_center = y_edges(1:end-1) + mode(diff(y_edges))/2;
     
-
+    imagesc(x_center, y_center, n_his)
+    colormap(inferno);
+    b=colorbar;
+    set(gca,'YDir','normal');
+    formatForLee(gcf);
+    xlabel('Response to elec 1');
+    ylabel('Response to elec 2');
+    set(gca,'fontsize',14);
+    
+    b.Label.String = 'log_1_0(Count)';
+    
 %% plot observed vs. independence as a sum of total neural activity
     f=figure(); % for all on one plot
     f.Name = [params.monkey_name,'_',params.array_name,'_popResponse'];

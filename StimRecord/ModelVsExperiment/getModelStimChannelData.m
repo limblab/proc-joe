@@ -9,72 +9,85 @@ function [mdl_data_all, array_data, mask_data] = getModelStimChannelData(input_d
     curr_fpath = cd;
     had_noise_file = 0;
     
-    diam_all = []; amp_all = []; cell_id_all = []; clone_all = [];
+    diam_all = []; amp_all = []; cell_id_all = []; clone_all = []; gaba_all = [];
     mdl_data_all = [];
     mdl_data_all.IPIs = [];
     cond_counter = 1;
-    for i_diam = 1:numel(input_data.diam_list)
-        for i_cell_id = 1:numel(input_data.cell_id_list)
-            for i_clone = 1:input_data.num_clones
-                for i_amp = 1:numel(input_data.amp_list)
-                    diam_all(end+1,1) = input_data.diam_list(i_diam);
-                    amp_all(end+1,1) = input_data.amp_list(i_amp);
-                    cell_id_all(end+1,1) = input_data.cell_id_list(i_cell_id);
-                    clone_all(end+1,1) = i_clone;
-                    
-                    % make coord data
-                    coord_data = [];
-                    coord_data.diam = input_data.diam_list(i_diam);
-                    coord_data.amp = input_data.amp_list(i_amp);
-                    coord_data.cell_id = input_data.cell_id_list(i_cell_id);
-                    coord_data.clone_id = i_clone;
-                    coord_data.get_axon_dendrite_locs = input_data.get_axon_dendrite_locs;
-                    coord_data.folderpath = input_data.folderpath;
+    for i_gaba = 1:numel(input_data.gaba_ratio_list)
+        for i_diam = 1:numel(input_data.diam_list)
+            for i_cell_id = 1:numel(input_data.cell_id_list)
+                for i_clone = 1:input_data.num_clones
+                    for i_amp = 1:numel(input_data.amp_list)
+                        diam_all(end+1,1) = input_data.diam_list(i_diam);
+                        amp_all(end+1,1) = input_data.amp_list(i_amp);
+                        cell_id_all(end+1,1) = input_data.cell_id_list(i_cell_id);
+                        clone_all(end+1,1) = i_clone;
+                        gaba_all(end+1,1) = input_data.gaba_ratio_list(i_gaba);
+                        
+                        % make coord data
+                        coord_data = [];
+                        coord_data.diam = input_data.diam_list(i_diam);
+                        coord_data.amp = input_data.amp_list(i_amp);
+                        coord_data.cell_id = input_data.cell_id_list(i_cell_id);
+                        coord_data.clone_id = i_clone;
+                        coord_data.gaba_ratio = input_data.gaba_ratio_list(i_gaba);
+                        coord_data.get_axon_dendrite_locs = input_data.get_axon_dendrite_locs;
+                        coord_data.folderpath = input_data.folderpath;
 
-                    % get location and spike data
-                    data_path = [coord_data.folderpath, 'Diam',num2str(coord_data.diam),'_',num2str(coord_data.amp),'uA\'];
-                    cd(data_path);
-                    location_data = getTrueCoordinates(coord_data);
-                    
-                    data_soma = [];
-                    try
-                        if(input_data.get_synapses)
-                            load(['data_soma',num2str(coord_data.cell_id + coord_data.clone_id - 1),'_syn']);
-                        else
-                            load(['data_soma',num2str(coord_data.cell_id + coord_data.clone_id - 1)]);
-                        end
-                    end
-                    if(exist('PoissonNoise.mat') > 0)
-                        load('PoissonNoise.mat');
-                        had_noise_file = 1;
-                    else
-                        noise = [];
-                    end
-                    mdl_data_all(cond_counter).soma = location_data.soma;
-                    mdl_data_all(cond_counter).axon = location_data.axon;
-                    mdl_data_all(cond_counter).loc_all = location_data.loc_all;
-                    mdl_data_all(cond_counter).spike_data = data_soma;
-                    mdl_data_all(cond_counter).diam = coord_data.diam;
-                    mdl_data_all(cond_counter).amp = coord_data.amp;
-                    mdl_data_all(cond_counter).cell_id = coord_data.cell_id;
-                    mdl_data_all(cond_counter).folderpath = data_path;
-                    mdl_data_all(cond_counter).get_axon_dendrite_locs = coord_data.get_axon_dendrite_locs;
-                    mdl_data_all(cond_counter).noise = noise;
-
-                    % get IPI distribution for each condition combined....
-                    if(input_data.get_IPIs)
-                        for i_soma = 1:numel(data_soma)
-                            if(~isempty(data_soma(i_soma).times))
-                                mdl_data_all(cond_counter).IPIs(end+1:end+numel(data_soma(i_soma).times)-1) = diff(sort(data_soma(i_soma).times/1000));
+                        % get location and spike data
+                        data_soma = [];
+                        try
+                            if(input_data.get_synapses)
+                                data_path = [coord_data.folderpath, 'Diam',num2str(coord_data.diam),'_',num2str(coord_data.amp),'uA\'];
+                                cd(data_path);  
+                                load(['data_soma',num2str(coord_data.cell_id + coord_data.clone_id - 1),'_syn']);
+                            elseif(input_data.temporal_data)
+                                data_path = input_data.folderpath;
+                                cd(input_data.folderpath);
+                                load([input_data.folderpath,'data_soma',num2str(coord_data.cell_id + coord_data.clone_id - 1),'_amp_',num2str(input_data.amp_list(i_amp)),'uA_freq_',...
+                                   '2Hz_gabab_',num2str(input_data.gaba_ratio_list(i_gaba)),'_syn_act_100%_onlyexcitation_1.mat']);
+                            else
+                                data_path = [coord_data.folderpath, 'Diam',num2str(coord_data.diam),'_',num2str(coord_data.amp),'uA\'];
+                                cd(data_path);
+                                load(['data_soma',num2str(coord_data.cell_id + coord_data.clone_id - 1)]);
                             end
                         end
+                        
+                        location_data = getTrueCoordinates(coord_data);
+                        
+                        if(exist('PoissonNoise.mat') > 0)
+                            load('PoissonNoise.mat');
+                            had_noise_file = 1;
+                        else
+                            noise = [];
+                        end
+                        mdl_data_all(cond_counter).soma = location_data.soma;
+                        mdl_data_all(cond_counter).axon = location_data.axon;
+                        mdl_data_all(cond_counter).loc_all = location_data.loc_all;
+                        mdl_data_all(cond_counter).spike_data = data_soma;
+                        mdl_data_all(cond_counter).gaba_ratio = coord_data.gaba_ratio;
+                        mdl_data_all(cond_counter).diam = coord_data.diam;
+                        mdl_data_all(cond_counter).amp = coord_data.amp;
+                        mdl_data_all(cond_counter).cell_id = coord_data.cell_id;
+                        mdl_data_all(cond_counter).folderpath = data_path;
+                        mdl_data_all(cond_counter).get_axon_dendrite_locs = coord_data.get_axon_dendrite_locs;
+                        mdl_data_all(cond_counter).noise = noise;
+
+                        % get IPI distribution for each condition combined....
+                        if(input_data.get_IPIs)
+                            for i_soma = 1:numel(data_soma)
+                                if(~isempty(data_soma(i_soma).times))
+                                    mdl_data_all(cond_counter).IPIs(end+1:end+numel(data_soma(i_soma).times)-1) = diff(sort(data_soma(i_soma).times/1000));
+                                end
+                            end
+                        end
+                        % update counter
+                        cond_counter = cond_counter + 1;
                     end
-                    % update counter
-                    cond_counter = cond_counter + 1;
                 end
             end
-        end
-    end    
+        end    
+    end
     
     
     
@@ -85,71 +98,78 @@ function [mdl_data_all, array_data, mask_data] = getModelStimChannelData(input_d
     mask_data.diam = [];
     mask_data.cell_id = [];
     mask_data.clone = [];
+    mask_data.gaba_ratio = [];
     
     cell_counter = 1;
     % for each cell type and diameter
-    for i_diam = 1:numel(input_data.diam_list)
-        for i_cell_id = 1:numel(input_data.cell_id_list)
-            for i_clone = 1:input_data.num_clones
-                amp_idx = find(diam_all == input_data.diam_list(i_diam) & cell_id_all == input_data.cell_id_list(i_cell_id) & clone_all == i_clone);
-                % for each cell, then go through amplitudes
-                for i_soma = 1:numel(mdl_data_all(amp_idx(1)).spike_data)
-                    % setup masks which may be useful later
-                    mask_data.diam(cell_counter,1) = input_data.diam_list(i_diam);
-                    mask_data.cell_id(cell_counter,1) = input_data.cell_id_list(i_cell_id);
-                    mask_data.clone(cell_counter,1) = i_clone;
+    for i_gaba = 1:numel(input_data.gaba_ratio_list)
+        for i_diam = 1:numel(input_data.diam_list)
+            for i_cell_id = 1:numel(input_data.cell_id_list)
+                for i_clone = 1:input_data.num_clones
+                    amp_idx = find(diam_all == input_data.diam_list(i_diam) & cell_id_all == input_data.cell_id_list(i_cell_id) & ...
+                        gaba_all == input_data.gaba_ratio_list(i_gaba) & clone_all == i_clone);
                     
-                    % populate array_data
-                    array_data{cell_counter}.stimData = cell(1,numel(amp_idx));
-                    array_data{cell_counter}.spikeTrialTimes = cell(1,numel(amp_idx));
-                    array_data{cell_counter}.intrinsic_near_stim = cell(1,numel(amp_idx));
-                    array_data{cell_counter}.baseline_fr = 0;
-                    for i_amp = 1:numel(amp_idx)
-                        % bin spikes around each stimulation based on a
-                        % provided window. Store spikes in spikeTrialTimes and
-                        % stim num in stimData
-                        % spike time is relative to stim offset
-                        % also need to determine if intrinsically generated
-                        % spike was near (some window) stimulation. Label as
-                        % such
-                        array_data{cell_counter}.intrinsic_near_stim{i_amp} = zeros(numel(input_data.stim_times),1);
-                        for i_stim = 1:numel(input_data.stim_times)
-                            % determine if intrinsic noise occurs 0-5 ms around
-                            % stim
-                            if(had_noise_file)
-                                noise_to_stim = noise(i_soma).times-input_data.stim_times(i_stim);
-                                noise_to_stim(noise_to_stim < 0) = 10000; % set negative entries as large
-                                array_data{cell_counter}.intrinsic_near_stim{1,i_amp}(i_stim) = min(noise_to_stim) < 5;
-                                array_data{cell_counter}.baseline_fr = 1000/(mean(diff(noise(i_soma).times))); % Hz
+                    % for each cell, then go through amplitudes
+                    for i_soma = 1:numel(mdl_data_all(amp_idx(1)).spike_data)
+                        % setup masks which may be useful later
+                        mask_data.diam(cell_counter,1) = input_data.diam_list(i_diam);
+                        mask_data.cell_id(cell_counter,1) = input_data.cell_id_list(i_cell_id);
+                        mask_data.clone(cell_counter,1) = i_clone;
+                        mask_data.gaba_ratio(cell_counter,1) = input_data.gaba_ratio_list(i_gaba);
+                        
+                        % populate array_data
+                        array_data{cell_counter}.stimData = cell(1,numel(amp_idx));
+                        array_data{cell_counter}.spikeTrialTimes = cell(1,numel(amp_idx));
+                        array_data{cell_counter}.intrinsic_near_stim = cell(1,numel(amp_idx));
+                        array_data{cell_counter}.baseline_fr = 0;
+                        for i_amp = 1:numel(amp_idx)
+                            % bin spikes around each stimulation based on a
+                            % provided window. Store spikes in spikeTrialTimes and
+                            % stim num in stimData
+                            % spike time is relative to stim offset
+                            % also need to determine if intrinsically generated
+                            % spike was near (some window) stimulation. Label as
+                            % such
+                            array_data{cell_counter}.intrinsic_near_stim{i_amp} = zeros(numel(input_data.stim_times),1);
+                            for i_stim = 1:numel(input_data.stim_times)
+                                % determine if intrinsic noise occurs 0-5 ms around
+                                % stim
+                                if(had_noise_file)
+                                    noise_to_stim = noise(i_soma).times-input_data.stim_times(i_stim);
+                                    noise_to_stim(noise_to_stim < 0) = 10000; % set negative entries as large
+                                    array_data{cell_counter}.intrinsic_near_stim{1,i_amp}(i_stim) = min(noise_to_stim) < 5;
+                                    array_data{cell_counter}.baseline_fr = 1000/(mean(diff(noise(i_soma).times))); % Hz
+                                end
+                                % get spike times around stim time
+                                spike_mask = mdl_data_all(amp_idx(i_amp)).spike_data(i_soma).times > input_data.stim_times(i_stim)+input_data.stim_window(1) & ...
+                                    mdl_data_all(amp_idx(i_amp)).spike_data(i_soma).times <= input_data.stim_times(i_stim)+input_data.stim_window(2);
+
+                                array_data{cell_counter}.spikeTrialTimes{i_amp}(end+1:end+sum(spike_mask),1) = mdl_data_all(amp_idx(i_amp)).spike_data(i_soma).times(spike_mask==1) - (input_data.stim_times(i_stim)+input_data.wave_length);
+
+                                array_data{cell_counter}.stimData{i_amp}(end+1:end+sum(spike_mask),1) = i_stim+zeros(sum(spike_mask),1);
                             end
-                            % get spike times around stim time
-                            spike_mask = mdl_data_all(amp_idx(i_amp)).spike_data(i_soma).times > input_data.stim_times(i_stim)+input_data.stim_window(1) & ...
-                                mdl_data_all(amp_idx(i_amp)).spike_data(i_soma).times <= input_data.stim_times(i_stim)+input_data.stim_window(2);
+                            % convert times to s
+                            array_data{cell_counter}.spikeTrialTimes{i_amp} = array_data{cell_counter}.spikeTrialTimes{i_amp}/1000;
 
-                            array_data{cell_counter}.spikeTrialTimes{i_amp}(end+1:end+sum(spike_mask),1) = mdl_data_all(amp_idx(i_amp)).spike_data(i_soma).times(spike_mask==1) - (input_data.stim_times(i_stim)+input_data.wave_length);
+                            array_data{cell_counter}.STIM_PARAMETERS(i_amp).amp1 = [mdl_data_all(amp_idx(i_amp)).amp];
+                        end % end amp
 
-                            array_data{cell_counter}.stimData{i_amp}(end+1:end+sum(spike_mask),1) = i_stim+zeros(sum(spike_mask),1);
-                        end
-                        % convert times to s
-                        array_data{cell_counter}.spikeTrialTimes{i_amp} = array_data{cell_counter}.spikeTrialTimes{i_amp}/1000;
+                        % meta data : STIM_PARAMETERS, WAVEFORM_LIST, ID, location,
+                        % monkey, numStims, diameter, cell_id
+                        array_data{cell_counter}.monkey = 'model';
+                        array_data{cell_counter}.loc = mdl_data_all(amp_idx(1)).soma(i_soma).coord;
+                        array_data{cell_counter}.waveform_list = 1:1:numel(amp_idx);
 
-                        array_data{cell_counter}.STIM_PARAMETERS(i_amp).amp1 = [mdl_data_all(amp_idx(i_amp)).amp];
-                    end % end amp
-
-                    % meta data : STIM_PARAMETERS, WAVEFORM_LIST, ID, location,
-                    % monkey, numStims, diameter, cell_id
-                    array_data{cell_counter}.monkey = 'model';
-                    array_data{cell_counter}.loc = mdl_data_all(amp_idx(1)).soma(i_soma).coord;
-                    array_data{cell_counter}.waveform_list = 1:1:numel(amp_idx);
-
-                    array_data{cell_counter}.numStims = numel(input_data.stim_times)+zeros(1,numel(amp_idx));
-                    array_data{cell_counter}.diam = input_data.diam_list(i_diam);
-                    array_data{cell_counter}.cell_id = input_data.cell_id_list(i_cell_id);
-                    array_data{cell_counter}.clone_num = i_clone;
-                    
-                    % update counter after each soma
-                    cell_counter = cell_counter + 1;
-                end % end soma
+                        array_data{cell_counter}.numStims = numel(input_data.stim_times)+zeros(1,numel(amp_idx));
+                        array_data{cell_counter}.diam = input_data.diam_list(i_diam);
+                        array_data{cell_counter}.cell_id = input_data.cell_id_list(i_cell_id);
+                        array_data{cell_counter}.clone_num = i_clone;
+                        array_data{cell_counter}.gaba_ratio = input_data.gaba_ratio_list(i_gaba);
+                        
+                        % update counter after each soma
+                        cell_counter = cell_counter + 1;
+                    end % end soma
+                end
             end
         end
     end

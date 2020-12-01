@@ -71,7 +71,7 @@
 % across all neurons for experiment
 % across all clones for model
     max_dist = 1000*ceil(max([exp_resp_data.dist_from_stim; mdl_resp_data.dist_from_stim])/1000);
-    bin_size = 400; % um
+    bin_size = 200; % um
     bin_edges = 200:bin_size:max_dist;
     bin_centers = bin_edges(1:end-1) + mode(diff(bin_edges))/2;
     [~,~,exp_bin_idx] = histcounts(exp_resp_data.dist_from_stim,bin_edges);

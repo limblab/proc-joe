@@ -15,7 +15,8 @@ function [output_data] = getInhibitionDurationAmpWrapper(array_data,input_data)
     threshold = [];
     is_inhib = zeros(numel(array_data),numel(input_data.amp_list),1);
     inhib_dur = nan(numel(array_data),numel(input_data.amp_list),1);
-        
+    inhib_off_time = nan(numel(array_data),numel(input_data.amp_list),1);
+    
     for i_unit = 1:numel(array_data)
         
         % for each i_ampition:
@@ -30,7 +31,7 @@ function [output_data] = getInhibitionDurationAmpWrapper(array_data,input_data)
                 filtered_PSTH(i_unit,i_amp,:) = temp_inhib_data.filtered_PSTH;
                 is_inhib(i_unit,i_amp) = temp_inhib_data.is_inhib;
                 inhib_dur(i_unit,i_amp) = temp_inhib_data.inhib_dur;
-                
+                inhib_off_time(i_unit,i_amp) = temp_inhib_data.inhib_off_time;
             end
         end
     end
@@ -38,6 +39,7 @@ function [output_data] = getInhibitionDurationAmpWrapper(array_data,input_data)
     output_data.filtered_PSTH = filtered_PSTH;
     output_data.is_inhib = is_inhib;
     output_data.inhib_dur = inhib_dur;
+    output_data.inhib_off_time = inhib_off_time;
     output_data.PSTH = PSTH;
     output_data.threshold = threshold;
     output_data.amp = amp;

@@ -1,16 +1,16 @@
 %% script to process reaction time data 
 %% determine filename and input data
-    inputData.folderpath = 'D:\Lab\Data\ReactionTime\Han_20200929_FCreactTime_blocking\';
+    inputData.folderpath = 'D:\Lab\Data\ReactionTime\Crackle\Crackle_20201110_bumpvis\';
     
 %     inputData.folderpath = 'D:\Lab\Data\ReactionTime\Han_20180427_training\';
-    inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
-%     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\right S1 20180919\SN 6251-001804.cmp';
+%     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+    inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\right S1 20180919\SN 6251-001804.cmp';
     
     
     inputData.task='taskRT';
     inputData.ranBy='ranByJoseph'; 
     inputData.array1='arrayLeftS1'; 
-    inputData.monkey='monkeyHan';
+    inputData.monkey='monkeyCrackle';
     inputData.labnum = 6;
     
     pwd=cd;
@@ -82,16 +82,17 @@
     td_reward = td_reward(~isnan([td_reward.idx_goCueTime]));
     td_reward = getSpeed(td_reward);
     
+
     % get movement onset
     params.field_idx = 1;
-    params.start_idx_offset = 100;
+    params.start_idx_offset = 150;
     params.be_aggressive = 1;
-    params.which_field = 'speed';
+    params.which_field = 'vel';
 
     % Han's parameters
     params.threshold_acc = -1; % absolute threshold on acceleration, using this instead of threshold_mult
     params.min_s = 1;
-    params.pre_move_thresh = 1;
+    params.pre_move_thresh = 8;
 
 %     Duncan's parameters
 %     params.threshold_acc = 35;
@@ -117,8 +118,8 @@
     
 %% plot a set of reaches aligned to go cue with reaction time markers
     opts.MAX_PLOT = 30;
-    opts.WHICH_FIELD = 'speed';
-    opts.DIR = 90;
+    opts.WHICH_FIELD = 'vel';
+    opts.DIR = 0;
     
     opts.BUMP_MAGS = [];
     opts.STIM_CODES = [];
@@ -141,10 +142,10 @@
 
     opts.FIGURE_PREFIX = 'Han'; % no _ required
     
-%     opts.BUMP_MAGS = [0.5:0.5:4.5];
-    opts.STIM_CODES = [0,1];
+    opts.BUMP_MAGS = [];
+    opts.STIM_CODES = [];
     opts.STIM_LABEL = 'Channel';
-    opts.STIM_PARAMS = [1,2];    
+    opts.STIM_PARAMS = [];    
 %     opts.STIM_X_LABEL = {'10','15','20','25','30','35'};
 %     opts.STIM_PARAMS = [5:5:35];
 %     opts.STIM_LABEL = 'Frequency (Hz)';
@@ -165,8 +166,8 @@
 %     opts.COLOR_LIST = 2;
 %     opts.STIM_LABEL = 'Bump Mag';
     opts.FIT = 	0;
-    opts.PLOT_BUMP = 0;
-    opts.PLOT_STIM = 1;
+    opts.PLOT_BUMP = 1;
+    opts.PLOT_STIM = 0;
     
     opts.LINE_WIDTH = 1.5;
     [data,plots] = plotReactionTimeDataTD(td_reward_rt,td_all_rt,opts);
@@ -201,7 +202,7 @@
 %% analyze blocking experiment
     % get single and together (combined) trial datas
     offset = 0.025;
-    single_cue_idx = [1:78,160:213];
+    single_cue_idx = [1:77,146:229,289:351];
     
     
     td_single = td_reward(single_cue_idx);
@@ -220,21 +221,21 @@
     codes_combined = [td_combined.stimCode];
     codes_all = [td_reward_rt.stimCode];
     
-    unique_codes = unique(codes_single);
+    unique_codes = unique(codes_all);
     
     % plot mean and std dev RT for each cue during single and combined
     % blocks
     figure(); hold on;
     for i_code = 1:numel(unique_codes)  
         % plot single
-        scatter(unique_codes(i_code)-offset*ones(sum(codes_single==unique_codes(i_code)),1),rt_single(codes_single==unique_codes(i_code)),24,'markerfacecolor','k','markeredgecolor','none');
+        scatter(unique_codes(i_code)-offset+1*ones(sum(codes_single==unique_codes(i_code)),1),rt_single(codes_single==unique_codes(i_code)),24,'markerfacecolor','k','markeredgecolor','none');
         alpha(0.3);
-        x1=errorbar(unique_codes(i_code)-offset,mean(rt_single(codes_single==unique_codes(i_code))),std(rt_single(codes_single==unique_codes(i_code))),'k.','markersize',30,'linewidth',1);
+        x1=errorbar(unique_codes(i_code)-offset+1,mean(rt_single(codes_single==unique_codes(i_code))),std(rt_single(codes_single==unique_codes(i_code))),'k.','markersize',30,'linewidth',1);
         
         % plot combined
-        scatter(unique_codes(i_code)+offset*ones(sum(codes_combined==unique_codes(i_code)),1),rt_combined(codes_combined==unique_codes(i_code)),24,'markerfacecolor','r','markeredgecolor','none');
+        scatter(unique_codes(i_code)+offset+1*ones(sum(codes_combined==unique_codes(i_code)),1),rt_combined(codes_combined==unique_codes(i_code)),24,'markerfacecolor','r','markeredgecolor','none');
         alpha(0.3);
-        x2=errorbar(unique_codes(i_code)+offset,mean(rt_combined(codes_combined==unique_codes(i_code))),std(rt_combined(codes_combined==unique_codes(i_code))),'r.','markersize',30,'linewidth',1);
+        x2=errorbar(unique_codes(i_code)+offset+1,mean(rt_combined(codes_combined==unique_codes(i_code))),std(rt_combined(codes_combined==unique_codes(i_code))),'r.','markersize',30,'linewidth',1);
     end
     l=legend([x1,x2],'Alone','Together');
     set(l,'location','best');
@@ -258,35 +259,37 @@
         
     
     % plot RT at beginning and end of block
-    num_trials = 25;
+    num_trials = 10;
     figure(); hold on;
     for i_code = 1:numel(unique_codes)
-        % single
-        code_mask = codes_single==unique_codes(i_code);
-            % beginning of block
-            beg_idx = find(code_mask,num_trials,'first');
-            beg_mask = 1:1:beg_idx(end);
-            rt = rt_single(code_mask(1:beg_idx(end)) & beg_mask);
-            errorbar(i_code-1.5*offset,mean(rt),std(rt),'k.');
-            
-            % end of block
-            end_idx = find(code_mask,num_trials,'last');
-            end_mask = numel(code_mask):-1:end_idx(1);
-            rt = rt_single(code_mask(end_idx(1):end) & end_mask);
-            errorbar(i_code-.5*offset,mean(rt),std(rt),'k.');
-        % combined
-        code_mask = codes_combined==unique_codes(i_code);
-            % beginning of block
-            beg_idx = find(code_mask,num_trials,'first');
-            beg_mask = 1:1:beg_idx(end);
-            rt = rt_combined(code_mask(1:beg_idx(end)) & beg_mask);
-            errorbar(i_code+.5*offset,mean(rt),std(rt),'k.');
-            
-            % end of block
-            end_idx = find(code_mask,num_trials,'last');
-            end_mask = numel(code_mask):-1:end_idx(1);
-            rt = rt_combined(code_mask(end_idx(1):end) & end_mask);
-            errorbar(i_code+1.5*offset,mean(rt),std(rt),'k.');
+        try % code fails if a code wasn't presented alone
+            % single
+            code_mask = codes_single==unique_codes(i_code);
+                % beginning of block
+                beg_idx = find(code_mask,num_trials,'first');
+                beg_mask = 1:1:beg_idx(end);
+                rt = rt_single(code_mask(1:beg_idx(end)) & beg_mask);
+                errorbar(i_code-1.5*offset,mean(rt),std(rt),'k.');
+
+                % end of block
+                end_idx = find(code_mask,num_trials,'last');
+                end_mask = numel(code_mask):-1:end_idx(1);
+                rt = rt_single(code_mask(end_idx(1):end) & end_mask);
+                errorbar(i_code-.5*offset,mean(rt),std(rt),'k.');
+            % combined
+            code_mask = codes_combined==unique_codes(i_code);
+                % beginning of block
+                beg_idx = find(code_mask,num_trials,'first');
+                beg_mask = 1:1:beg_idx(end);
+                rt = rt_combined(code_mask(1:beg_idx(end)) & beg_mask);
+                errorbar(i_code+.5*offset,mean(rt),std(rt),'k.');
+
+                % end of block
+                end_idx = find(code_mask,num_trials,'last');
+                end_mask = numel(code_mask):-1:end_idx(1);
+                rt = rt_combined(code_mask(end_idx(1):end) & end_mask);
+                errorbar(i_code+1.5*offset,mean(rt),std(rt),'k.');
+        end
     end
         
     % for each cue during combined block, plot RT on repetitive trials vs.

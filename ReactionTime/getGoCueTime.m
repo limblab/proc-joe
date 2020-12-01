@@ -53,6 +53,16 @@ function [td] = getGoCueTime(td,cds)
     
     if(isempty(visualSyncIdx))
         for j=1:numel(cds.analog)
+            visualSyncIdx=find(strcmp(cds.analog{j}.Properties.VariableNames,'visualsync'));
+            if ~isempty(visualSyncIdx)
+                visualSyncIdx=j;
+                visualSyncName='visualsync';
+            end
+        end
+    end
+    
+    if(isempty(visualSyncIdx))
+        for j=1:numel(cds.analog)
             visualSyncIdx=find(strcmp(cds.analog{j}.Properties.VariableNames,'ainp15'));
             if ~isempty(visualSyncIdx)
                 visualSyncIdx=j;

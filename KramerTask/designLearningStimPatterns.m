@@ -2,11 +2,11 @@
 
 
 %% determine filename and input data
-    input_data.folderpath = 'D:\Lab\Data\BumpDirection\Han_20200820_cobump\';
+    input_data.folderpath = 'D:\Lab\Data\DLC_videos\Han_20201119\';
 %     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
     input_data.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 
-    input_data.task='taskCObump';
+    input_data.task='taskRW';
     input_data.ranBy='ranByJoseph'; 
     input_data.array1='arrayLeftS1'; 
     input_data.monkey='monkeyHan';

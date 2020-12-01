@@ -206,7 +206,7 @@
         
 
 %% plot PSTH for each condition
-    for u = 1:numel(array_data)
+    for u = 31:70%numel(array_data)
         input_data.amp_freq = 1;
 %         array_data{u}.monkey = 'Han';
 %         array_data{u}.num_stims = array_data{u}.numStims;
@@ -215,7 +215,7 @@
         input_data.unit_idx = u;
 %         input_data.chan_rec = num2str(array_data{u}.CHAN_LIST);%{1};
         input_data.num_cols = 3;
-        input_data.account_for_artifact = 0;
+        input_data.account_for_artifact = 1;
         plotPSTHArrayData(array_data,input_data);
 %         f=figure(1);
 %         saveFiguresLIB(f,fpath,f.Name);
@@ -591,7 +591,7 @@
     
     
 %% get decay time constant for all conditions and plot
-    is_intermittent = 1;
+    is_intermittent = 0;
     bin_size = 50; % ms
     min_rate = 0.5; % Hz
     
@@ -631,7 +631,7 @@
     end
 %% get time constant using response to each pulse instead of time data
 
-    for unit = 1:numel(array_ data)
+    for unit = 1:numel(array_data)
         for condition = 1:12
             
             x_data_stim = (1:210)*1/51;
@@ -644,7 +644,7 @@
     end
     
 %% plot time constant
-    amp_freq_data = 0;
+    amp_freq_data = 1;
     marker_size = 8;
     offset = [0.95,1,1.05];
         

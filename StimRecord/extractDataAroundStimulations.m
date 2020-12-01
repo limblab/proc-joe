@@ -22,7 +22,7 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
         end
         cd(inputData.folderpath)
         cds.file2cds([inputData.folderpath fileList(fileNumber).name],inputData.task,inputData.ranBy,...
-            inputData.monkey,inputData.labnum,inputData.array1,inputData.mapFileName); % DO NOT USE RECOVER PRE SYNC, currently this shifts the units and the analog signal differently
+            inputData.monkey,inputData.labnum,inputData.array1,inputData.mapFileName,'recoverPreSync'); % DO NOT USE RECOVER PRE SYNC, currently this shifts the units and the analog signal differently
 
         % check to make sure stimInfo.() are all column vectors
         fnames = fieldnames(stimInfo);
@@ -48,6 +48,13 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
                 idx_keep = find(diff(stimInfo.stimOn) > 1);
                 idx_keep = [1;idx_keep + 1];
                 stimInfo.stimOn = stimInfo.stimOn(idx_keep);
+            end
+            
+            if(opts.REMOVE_IMPEDANCE_TEST) % look for 96 consecutive stimOn's that are ~3ms data points apart
+                stimInfo.stimOn(end-96:end) = [];
+                stimInfo.stimOff(end-96:end) = [];
+                stimInfo.waveSent(end-96:end) = [];
+                stimInfo.chanSent(end-96:end) = [];
             end
         end
 
@@ -118,7 +125,14 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
                     chanStim = str2num(fname(underscoreIdx+1:strIdx-1));
                 elseif(~isempty(strfind(fname,'stim')) && ~isempty(strfind(fname,'chan')))
                     strIdx = [strfind(fname,'chan'), strfind(fname,'stim')];
-                    chanStim = str2num(fname(strIdx(end-1)+4:strIdx(end)-1)); % some files have chans....chan#stim
+                    % check for the word and, which would indicate two
+                    % channels
+                    andIdx = strfind(fname,'and');
+                    if(~isempty(andIdx))
+                        chanStim = [str2num(fname(strIdx(1)+4:andIdx-1)),str2num(fname(andIdx(1)+3:strIdx(end)-1))]; % chan#and#stim
+                    else
+                        chanStim = str2num(fname(strIdx(1)+4:strIdx(end)-1)); % some files have chans....chan#stim
+                    end
                 end
                 
                 if(~isempty(chanStim))
@@ -417,7 +431,7 @@ function [ arrayData ] = extractDataAroundStimulations( inputData, fileList, sti
             
             arrayData{arrayDataIdx}.numStims = arrayData{arrayDataIdx}.numStims(arrayData_mask == 1);
             temp = repmat(arrayData{arrayDataIdx}.CHAN_LIST,1,NUM_WAVEFORM_TYPES)
-            arrayData{arrayDataIdx}.STIM_PARAM_LIST(:,1) = temp(arrayData_mask == 1);
+            arrayData{arrayDataIdx}.STIM_PARAMETERS(:,1) = temp(arrayData_mask == 1);
             if(~isempty(amplitude_master_list))
                 temp = repmat(amplitude_master_list,NUM_CHANS,1);
                 arrayData{arrayDataIdx}.STIM_PARAM_LIST(:,2) = temp(arrayData_mask == 1);
@@ -472,6 +486,8 @@ function [opts] = configureOpts(optsInput)
     opts.FLAG_WAVEFORM = 0;
     opts.CHAN_LIST = [];
     opts.NUM_WAVEFORM_TYPES = [];
+    
+    opts.REMOVE_IMPEDANCE_TEST = 0;
     %% check if in optsSave and optsSaveInput, overwrite if so
     try
         inputFieldnames = fieldnames(optsInput);

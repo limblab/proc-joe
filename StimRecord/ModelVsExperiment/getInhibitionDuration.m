@@ -14,7 +14,7 @@ function [output_data] = getInhibitionDuration(array_data,cond_idx,input_data)
     threshold = [];
     is_inhib = 0;
     inhib_dur = nan;
-        
+    inhib_off_time = nan;
     
     % rebin (or bin for the first time)
     array_data_rebin = array_data;
@@ -76,10 +76,11 @@ function [output_data] = getInhibitionDuration(array_data,cond_idx,input_data)
     end
     num_consecutive_ones = end_ones(1:min(numel(end_ones),numel(start_ones))) - start_ones(1:min(numel(end_ones),numel(start_ones))) + 1;
 
-    num_consecutive_ones = max(num_consecutive_ones);
+    [num_consecutive_ones,max_idx] = max(num_consecutive_ones);
     if(~isempty(num_consecutive_ones) && num_consecutive_ones >= input_data.num_consec_bins)
         is_inhib = 1;
         inhib_dur = num_consecutive_ones*input_data.bin_size;
+        inhib_off_time = end_ones(max_idx)*input_data.bin_size;
     end      
     
     output_data.filtered_PSTH = filtered_PSTH;
@@ -87,6 +88,7 @@ function [output_data] = getInhibitionDuration(array_data,cond_idx,input_data)
     output_data.inhib_dur = inhib_dur;
     output_data.PSTH = PSTH;
     output_data.threshold = threshold;
+    output_data.inhib_off_time = inhib_off_time;
 end
 
 

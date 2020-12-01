@@ -1,8 +1,8 @@
 %% combine array data's that exist within a folder structure
 
-    single_pulse = 1;
+    single_pulse = 0;
     home_computer = 1;
-    include_non_stim_data = 0;
+    include_non_stim_data = 1;
 
     if(single_pulse && home_computer)
         highest_folderpath{1} = 'D:\Lab\Data\StimArtifact\singlePulseModelExperiment\data\stim_rec_single_pulse_data\Duncan\';

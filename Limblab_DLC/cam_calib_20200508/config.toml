@@ -1,0 +1,104 @@
+paths_to_2d_data = ['/media/minyoungpark/Min/pop_0317_2/dlc/3d_filt/static/cam_0.csv',
+'/media/minyoungpark/Min/pop_0317_2/dlc/3d_filt/static/cam_1.csv',
+'/media/minyoungpark/Min/pop_0317_2/dlc/3d_filt/static/cam_2.csv',
+'/media/minyoungpark/Min/pop_0317_2/dlc/3d_filt/static/cam_3.csv']
+
+#paths_to_2d_data = ['/media/minyoungpark/Min/pop_0317_2/dlc/3d/cam_0.csv',
+#'/media/minyoungpark/Min/pop_0317_2/dlc/3d/cam_1.csv',
+#'/media/minyoungpark/Min/pop_0317_2/dlc/3d/cam_2.csv',
+#'/media/minyoungpark/Min/pop_0317_2/dlc/3d/cam_3.csv']
+
+#paths_to_2d_data = ['/home/minyoungpark/Dropbox/Research/Miller/Codes/cam_calib/cam_0.csv',
+#'/home/minyoungpark/Dropbox/Research/Miller/Codes/cam_calib/cam_1.csv',
+#'/home/minyoungpark/Dropbox/Research/Miller/Codes/cam_calib/cam_2.csv',
+#'/home/minyoungpark/Dropbox/Research/Miller/Codes/cam_calib/cam_3.csv']
+
+
+#paths_to_labeled_2d_data = ['/home/minyoungpark/Dropbox/Research/Miller/Project/Pop_freeReach_0317_cam_0-Min-2020-03-23/labeled-data/cam_0/CollectedData_Min.csv',
+#'/home/minyoungpark/Dropbox/Research/Miller/Project/Pop_freeReach_0317_cam_1-Min-2020-03-19/labeled-data/cam_1/CollectedData_Min.csv',
+#'/home/minyoungpark/Dropbox/Research/Miller/Project/Pop_freeReach_0317_cam_2-Min-2020-03-23/labeled-data/cam_2/CollectedData_Min.csv',
+#'/home/minyoungpark/Dropbox/Research/Miller/Project/Pop_freeReach_0317_cam_3-Min-2020-03-23/labeled-data/cam_3/CollectedData_Min.csv']
+
+path_to_save_static_data = '/media/minyoungpark/Min/pop_0317_2/dlc/3d_filt/static'
+
+output_video_path = '/media/minyoungpark/Min/pop_0317_2/dlc/3d_filt/test'
+
+[video]
+fps = 30
+resolution = [2048, 1536]
+#resolution = [1280, 1024]
+
+[calibration]
+# checkerboard / charuco / aruco
+board_type = 'charuco'
+
+# width and height of grid
+board_size = [5, 7]
+
+# number of bits in the markers, if aruco/charuco
+board_marker_bits = 6
+
+# number of markers in dictionary, if aruco/charuco
+board_marker_dict_number = 50
+
+# length of marker side
+board_marker_length = 22.1 # mm
+
+# If aruco, length of marker separation
+# board_marker_separation_length = 1 # mm
+
+# If charuco or checkerboard, square side length
+board_square_side_length = 36.7 # mm
+
+calib_video_path = '/media/minyoungpark/Min/calib_0317/'
+#calib_video_path = '/media/minyoungpark/Min/1101/shown/calibration'
+#calib_video_path = '/Users/minyoungpark/Dropbox/Research/Miller/Codes/calib_test/images'
+calib_video_prefix = 'cam'
+video_extension = 'avi'
+
+
+[triangulation]
+#axes = [
+#    ["z", "MCP2", "Wrist"], 
+#    ["y", "MCP1", "MCP2"]]
+axes = [["y", "Plate2", "Plate3"], ["z", "Plate2", "Plate1"]]
+#axes = [["z", "Plate2", "Plate1"], ["y", "Plate2", "Plate3"]]
+
+reference_point = "Plate2"
+cam_align = "0"
+reconstruction_threshold = 0.5
+reconstruction_output_path = '/media/minyoungpark/Min/pop_0317_2/dlc/3d_filt/test'
+#reconstruction_output_path = '/media/minyoungpark/Min/1101/shown/3d'
+
+
+[labeling]
+scheme = [
+  ["Wrist", "CMC_thumb"],
+  ["CMC_thumb", "MCP_thumb"],
+  ["MCP_thumb", "IP_thumb"],
+  ["IP_thumb", "Tip_thumb"],
+  ["Wrist", "MCP1"],
+  ["Wrist", "MCP2"],
+  ["Wrist", "MCP3"],
+  ["Wrist", "MCP4"],
+  ["MCP1", "PIP1"],
+  ["MCP2", "PIP2"],
+  ["MCP3", "PIP3"],
+  ["MCP4", "PIP4"],
+  ["PIP1", "Dip1"],
+  ["PIP2", "Dip2"],
+  ["PIP3", "Dip3"],
+  ["PIP4", "Dip4"],
+  ["Dip1", "Tip1"],
+  ["Dip2", "Tip2"],
+  ["Dip3", "Tip3"],
+  ["Dip4", "Tip4"],
+  ["Plate1", "Plate2"],
+  ["Plate2", "Plate3"],
+  ["Plate3", "Plate4"],
+  ["Plate4", "Plate1"]]
+
+bodyparts_interested = ['Wrist', 'CMC_thumb', 'MCP_thumb', 'MCP1', 'MCP2', 'MCP3', 'MCP4',
+          'IP_thumb', 'PIP1', 'PIP2', 'PIP3', 'PIP4', 'Dip1', 'Dip2', 'Dip3', 'Dip4',
+          'Tip_thumb', 'Tip1', 'Tip2', 'Tip3', 'Tip4',
+          'Plate1', 'Plate2', 'Plate3', 'Plate4']
