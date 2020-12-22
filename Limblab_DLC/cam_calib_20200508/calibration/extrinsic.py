@@ -28,6 +28,8 @@ get_calibration_board, get_board_type, get_expected_corners
 from triangulation.triangulate import triangulate_simple, triangulate_points, \
     reprojection_error_und
 
+from utils.utils import align_frames, get_framenums
+
 
 def fill_points(corners, ids, board):
     board_type = get_board_type(board)
@@ -268,17 +270,25 @@ def get_matrices(vid_indices, videos, intrinsics_dict, board, skip=40):
     all_Ms = []
     all_points = []
 
-    for framenum in trange(minlen, ncols=70):
+    # deal with dropouts by getting list of true framenums for each camera
+    all_frame_list, good_frame_nums = get_framenums(vid_indices, videos)        
+    minlen = len(good_frame_nums)
+
+    for framenum in good_frame_nums:
         M_dict = dict()
         point_dict = dict()
-
+        counter = 0
         for vid_idx in vid_indices:
             cap = caps[vid_idx]
+            cap.set(cv2.CAP_PROP_POS_FRAMES,all_frame_list[counter][framenum])
             ret, frame = cap.read()
 
             if framenum % skip != 0 and go <= 0:
                 continue
 
+            if(framenum % 250 == 0 and int(vid_idx)==1):
+                print(framenum/good_frame_nums[-1])
+                
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             intrinsics = intrinsics_dict[vid_idx]
             success, result = estimate_pose(gray, intrinsics, board)
@@ -296,7 +306,8 @@ def get_matrices(vid_indices, videos, intrinsics_dict, board, skip=40):
 
             point_dict[vid_idx] = points_new.reshape(points.shape)
 
-
+            counter=counter+1
+            
         if len(M_dict) >= 2:
             go = skip
             all_Ms.append(M_dict)

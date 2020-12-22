@@ -11,7 +11,8 @@ import numpy as np
 import pandas as pd
 from tqdm import trange
 from numpy import array as arr
-
+from utils.utils import align_frames, get_framenums
+from utils.calibration_utils import get_video_path
 
 def read_single_2d_data(data_path, offset, bp_interested):
     data = pd.read_csv(data_path, header=[1,2], index_col=0)
@@ -55,14 +56,37 @@ def load_2d_data(config, vid_indices, bp_interested):
     all_points_raw = []
     all_scores = []
     
+    
+    videos = config['paths_to_2d_data']
+    temp_vid_list= []
+    
+    # trim excess DLC related stuff from video filename
+    for vid in videos:
+        DLC_idx = vid.rindex("DLC")
+        temp_vid_list.append(vid[:DLC_idx]+".avi")
+        
+    videos = temp_vid_list
+    
+    all_frame_list, good_frame_nums = get_framenums(vid_indices, videos)   
+    
     # all_points_raw = np.zeros((length, len(cam_names), len(bodyparts), 2))
     # all_scores = np.zeros((length, len(cam_names), len(bodyparts)))
     
     for ix_cam, (vid_idx, data_path) in \
             enumerate(zip(vid_indices, paths_to_2d_data)):
         out = read_single_2d_data(data_path, offsets_dict[vid_idx], bp_interested)
-        all_points_raw.append(out['coords'])
-        all_scores.append(out['scores'])
+        
+        # adjust out idx based on all_frame_list and good_frame_nums
+        coords_adj = np.zeros((good_frame_nums[-1]+1,out['coords'].shape[1],out['coords'].shape[2])) - 10000
+        scores_adj = np.zeros((good_frame_nums[-1]+1,out['coords'].shape[1])) - 10000
+        
+        for i_coord in range(out['length']):
+            coords_adj[all_frame_list[ix_cam][i_coord],:,:] = out['coords'][i_coord,:,:]
+            scores_adj[all_frame_list[ix_cam][i_coord],:] = out['scores'][i_coord,:]
+            
+            
+        all_points_raw.append(coords_adj)
+        all_scores.append(scores_adj)
         
     all_points_raw = np.stack(all_points_raw, axis=1)
     all_scores = np.stack(all_scores, axis=1)
@@ -167,4 +191,4 @@ def add_static_points(config, labels, static, snapshots):
             data = data.join(pd.DataFrame(likelihood,
                                           columns=pd.MultiIndex.from_product([[snapshot],[label],['likelihood']]),
                                           index=data.index))
-            data.to_csv(os.path.join(path_to_save, 'cam_' + str(i) +'.csv'), mode='w')
+            data.to_csv(os.path.join(data_path), mode='w')

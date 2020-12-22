@@ -19,7 +19,6 @@ from utils.triangulation_utils import load_2d_data, load_labeled_2d_data
 
 from utils.calibration_utils import get_video_path, load_intrinsics, load_extrinsics
 
-
 def expand_matrix(mtx):
     z = np.zeros((4,4))
     z[0:3,0:3] = mtx[0:3,0:3]
@@ -186,7 +185,7 @@ def undistort_points(all_points_raw, cam_names, intrinsics):
 
     return all_points_und
 
-def reconstruct_3d(config, **kwargs):
+def reconstruct_3d(config,csv_idx, **kwargs):
     path, videos, vid_indices = get_video_path(config)
     bp_interested = config['labeling']['bodyparts_interested']
     reconstruction_threshold = config['triangulation']['reconstruction_threshold']
@@ -217,6 +216,7 @@ def reconstruct_3d(config, **kwargs):
     out = load_2d_data(config, vid_indices, bp_interested)
     all_points_raw = out['points']
     all_scores = out['scores']
+        
     all_points_und = undistort_points(all_points_raw, vid_indices, intrinsics)
     length = all_points_raw.shape[0]
     shape = all_points_raw.shape
@@ -243,6 +243,7 @@ def reconstruct_3d(config, **kwargs):
                 scores_3d[i,j] = np.min(all_scores[i, :, j][good])
     if 'reference_point' in config['triangulation'] and 'axes' in config['triangulation']:
         all_points_3d_adj, recovery = correct_coordinate_frame(config, all_points_3d, bp_interested)
+        #all_points_3d_adj = all_points_3d
     else:
         all_points_3d_adj = all_points_3d
     dout = pd.DataFrame()
@@ -253,7 +254,7 @@ def reconstruct_3d(config, **kwargs):
         dout[bp + '_ncams'] = num_cams[:, bp_num]
         dout[bp + '_score'] = scores_3d[:, bp_num]
     dout['fnum'] = np.arange(length)
-    dout.to_csv(os.path.join(output_path, 'output_3d_data.csv'), index=False)
+    dout.to_csv(os.path.join(output_path, 'output_3d_data_' + str(csv_idx) + '.csv'), index=False)
     if 'reference_point' in config['triangulation'] and 'axes' in config['triangulation']:
         return recovery
     else:

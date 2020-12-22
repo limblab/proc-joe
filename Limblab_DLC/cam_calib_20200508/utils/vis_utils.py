@@ -401,7 +401,7 @@ def reconstruction_validation(config, img_paths):
     return points_3d, points_3d_transform
 
 
-def generate_three_dim_video(config, **kwargs):
+def generate_three_dim_video(config,csv_idx, **kwargs):
 #def generate_three_dim_video(config, azimuth, elevation **kwargs):
    
     path, videos, vid_indices = get_video_path(config)
@@ -423,7 +423,7 @@ def generate_three_dim_video(config, **kwargs):
     else:
         reconstruction_output_path = config['triangulation']['reconstruction_output_path']
     
-    reconstruction_filename = 'output_3d_data.csv'
+    reconstruction_filename = 'output_3d_data_' + str(csv_idx)+ '.csv'
     data = pd.read_csv(os.path.join(reconstruction_output_path, reconstruction_filename))
     
     all_points = np.array([np.array(data.loc[:, (bp+'_x', bp+'_y', bp+'_z')])
@@ -446,8 +446,8 @@ def generate_three_dim_video(config, **kwargs):
     resolution = config['video']['resolution']
     resolution = (640, 480)
     
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    three_dim_video_filename = 'output_3d_video.mp4'
+    fourcc = cv2.VideoWriter_fourcc(*'DIVX')
+    three_dim_video_filename = 'output_3d_video_' + str(csv_idx) + '.avi'
     writer = cv2.VideoWriter(os.path.join(output_path, three_dim_video_filename), 
                               fourcc, fps, resolution)
     
@@ -488,19 +488,20 @@ def generate_three_dim_video(config, **kwargs):
     # # For testing
     # all_points = all_points[:600]
     canvas = FigureCanvas(fig)
-    for i in trange(len(all_points), ncols=70):
+    for i in trange(int(len(all_points)/20), ncols=70):
         ax.cla()
         points = all_points[i]
         draw_lines(points)
         canvas.draw()
         img = np.array(canvas.renderer._renderer)
         img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+        img = cv2.resize(img, resolution)
         writer.write(img)
     plt.close()
     writer.release()
 
 
-def generate_three_dim_pictures(config, **kwargs):
+def generate_three_dim_pictures(config,csv_idx, **kwargs):
    
     path, videos, vid_indices = get_video_path(config)
     if config.get('output_video_path') is None:
@@ -521,7 +522,7 @@ def generate_three_dim_pictures(config, **kwargs):
     else:
         reconstruction_output_path = config['triangulation']['reconstruction_output_path']
     
-    reconstruction_filename = 'output_3d_data.csv'
+    reconstruction_filename = 'output_3d_data_' + str(csv_idx) + '.csv'
     data = pd.read_csv(os.path.join(reconstruction_output_path, reconstruction_filename))
     
     all_points = np.array([np.array(data.loc[:, (bp+'_x', bp+'_y', bp+'_z')])
@@ -545,9 +546,7 @@ def generate_three_dim_pictures(config, **kwargs):
     resolution = (640, 480)
     
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    three_dim_video_filename = 'output_3d_video.mp4'
-    writer = cv2.VideoWriter(os.path.join(output_path, three_dim_video_filename), 
-                              fourcc, fps, resolution)
+    three_dim_video_filename = 'output_3d_video_' + str(csv_idx) + '.mp4'
     
     # cmap = plt.get_cmap('tab10')
     
