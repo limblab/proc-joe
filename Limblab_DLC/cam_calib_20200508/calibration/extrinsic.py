@@ -257,6 +257,7 @@ def mean_transform_robust(M_list, approx=None, error=0.3):
 def get_matrices(vid_indices, videos, intrinsics_dict, board, skip=40):
     minlen = np.inf
     caps = dict()
+	
     for vid_idx, vid in zip(vid_indices, videos):
         cap = cv2.VideoCapture(vid)
         caps[vid_idx] = cap
@@ -609,6 +610,7 @@ def get_extrinsics(vid_indices, videos, intrinsics_dict, cam_align, board, skip=
 
 def calibrate_extrinsic(config):
     path, videos, vid_indices = get_video_path(config)
+	
     output_filename = 'extrinsics.toml'
     output_path = os.path.join(path, output_filename)
 

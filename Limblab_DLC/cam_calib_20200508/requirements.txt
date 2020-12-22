@@ -8,3 +8,4 @@ scipy
 checkerboard
 matplotlib
 tables
+mayavi

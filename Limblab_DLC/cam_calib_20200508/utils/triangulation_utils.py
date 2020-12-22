@@ -139,9 +139,16 @@ def add_static_points(config, labels, static, snapshots):
         else:
             print('Wrong input.')
             return
-        
+    data = []   
     for i, (snapshot, data_path) in enumerate(zip(snapshots, data_paths)):
         data = pd.read_csv(data_path, header=[0,1,2], index_col=0)
+        
+        # remove existing pointX, pointY, pointZ
+        for (header, bp, axis) in data.columns.values:
+            if(bp.lower() == 'pointX'.lower() or bp.lower() == 'pointY'.lower() or bp.lower() == 'pointZ'.lower()):
+                data.drop((header,bp,axis),axis=1,inplace=True)
+                
+        # write new pointX, pointY, pointZ based on static
         for label in labels:
             if np.isnan(static[label][i][0]):
                 x = np.zeros(len(data))
