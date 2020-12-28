@@ -271,7 +271,7 @@ def get_matrices(vid_indices, videos, intrinsics_dict, board, skip=40):
     all_points = []
 
     # deal with dropouts by getting list of true framenums for each camera
-    all_frame_list, good_frame_nums = get_framenums(vid_indices, videos)        
+    all_frame_list, good_frame_nums, popped_first_entry = get_framenums(vid_indices, videos)        
     minlen = len(good_frame_nums)
 
     for framenum in good_frame_nums:
@@ -281,6 +281,7 @@ def get_matrices(vid_indices, videos, intrinsics_dict, board, skip=40):
         for vid_idx in vid_indices:
             cap = caps[vid_idx]
             cap.set(cv2.CAP_PROP_POS_FRAMES,all_frame_list[counter][framenum])
+            counter=counter+1
             ret, frame = cap.read()
 
             if framenum % skip != 0 and go <= 0:
@@ -305,8 +306,6 @@ def get_matrices(vid_indices, videos, intrinsics_dict, board, skip=40):
                                              np.array(intrinsics['dist_coeff']))
 
             point_dict[vid_idx] = points_new.reshape(points.shape)
-
-            counter=counter+1
             
         if len(M_dict) >= 2:
             go = skip

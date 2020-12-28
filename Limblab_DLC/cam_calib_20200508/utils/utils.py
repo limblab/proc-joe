@@ -113,6 +113,7 @@ def get_framenums(vid_indices, videos):
 
     # info files have the same filename as the real videos, just with .xiinfo appended at end
     # check to see if info files exist first
+    popped_first_entry = False
     append_str= '.xiinfo'
     ts_list = []
     n_frames = np.zeros(len(vid_indices))
@@ -137,9 +138,13 @@ def get_framenums(vid_indices, videos):
             if("timestamp" in line): # find number and store
                 temp_list=np.append(temp_list,(int(line[line.index('\"')+1:-4])))
         
-        # pop first ts_list entry if it's nonsense
-        if(temp_list[1] - temp_list[0] > 40000*10):
+        # pop first ts_list entry if it's effectively 0
+        if(temp_list[0] < 1): # 
             temp_list = temp_list[1:]
+        # pop first ts_list entry if it's a few seconds from the next entry. Sometimes starting neural recording triggers a single frame
+        if(temp_list[1]-temp_list[0] > 40000*8):
+            temp_list = temp_list[1:]
+            popped_first_entry = True
             
         ts_list.append(temp_list)
         
@@ -149,4 +154,4 @@ def get_framenums(vid_indices, videos):
                 
     all_cams_frame_list,good_frame_nums = align_frames(ts_list)   
     
-    return all_cams_frame_list, good_frame_nums
+    return all_cams_frame_list, good_frame_nums, popped_first_entry

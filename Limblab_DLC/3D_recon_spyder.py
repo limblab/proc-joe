@@ -30,19 +30,19 @@ from utils.triangulation_utils import add_static_points
 
 
 # set project folder 
-project_folder = r'D:\Lab\Data\DLC_videos\Han_20201203_rwFreeReach'
+project_folder = r'D:\Lab\Data\DLC_videos\Han_20201204_rwFreeReach'
 
 # determine if we are using filtered data or not
 use_filtered_data = True
-remove_triangulation = True
 
 # using reference frame or use an arbitrary frame?
-use_reference_frame = False
+use_reference_frame = True
 
 # set number of cameras
 n_cams = 4
 
-
+# determine if making videos at the end of this (can take awhile)
+make_videos = False
 
 # setup config file 
 # load basic toml folder and then fill out relevant entries
@@ -50,7 +50,7 @@ parsed_toml = toml.load(calib_folder + r'\config_master.toml')
 
 # upate calib video path and prefix and extension
 parsed_toml['calibration']['calib_video_path'] = project_folder + r'\videos\calib'
-parsed_toml['calibration']['calib_video_prefix'] = 'Calib_20201203_0000'
+parsed_toml['calibration']['calib_video_prefix'] = 'Calib_20201204_0000'
 
 # update paths to 2d data while removing (or keeping) videos with filtered
 if(use_filtered_data):
@@ -74,7 +74,7 @@ parsed_toml['path_to_save_static_data'] = project_folder + r'\videos'
 parsed_toml['output_video_path'] = project_folder + r'\reconstructed-3d-data'
 
 # update triangulation data (or remove if desired)
-if(remove_triangulation):
+if(not use_reference_frame):
     parsed_toml['triangulation'].pop('axes', None)
     parsed_toml['triangulation'].pop('reference_point', None)
 # else, likely leave alone. Could fill this in if we change how we do reference points
@@ -126,6 +126,7 @@ if(use_reference_frame):
         video_prefix = video_name[:DLC_idx]
         
         path_to_folder = labeled_folder + '\\' + video_prefix
+        path_to_folder = glob.glob(path_to_folder+'*')[0]
         csv_file = glob.glob(path_to_folder+ '\\*.csv')[0]
         data = pd.read_csv(csv_file, header=[1,2], index_col=0)
     
@@ -155,7 +156,7 @@ if(num_vids % n_cams != 0):
     
 for i_set in range(num_camera_sets):
     config["paths_to_2d_data"] = vid_list_all[(i_set)*n_cams:(i_set+1)*n_cams]
-    #recovery = reconstruct_3d(config,i_set)
+    recovery = reconstruct_3d(config,i_set)
 
 config["paths_to_2d_data"] = vid_list_all
 
@@ -164,8 +165,9 @@ config["paths_to_2d_data"] = vid_list_all
 
 vid_list_all = config['paths_to_2d_data']
 for i_set in range(num_camera_sets):
-    config["paths_to_2d_data"] = vid_list_all[(i_set)*n_cams:(i_set+1)*n_cams]
-    generate_three_dim_video(config,i_set)
+    if(make_videos):
+        config["paths_to_2d_data"] = vid_list_all[(i_set)*n_cams:(i_set+1)*n_cams]
+        generate_three_dim_video(config,i_set)
     
 config["paths_to_2d_data"] = vid_list_all
 

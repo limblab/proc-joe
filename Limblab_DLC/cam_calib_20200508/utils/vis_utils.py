@@ -488,7 +488,7 @@ def generate_three_dim_video(config,csv_idx, **kwargs):
     # # For testing
     # all_points = all_points[:600]
     canvas = FigureCanvas(fig)
-    for i in trange(int(len(all_points)/20), ncols=70):
+    for i in trange((len(all_points)), ncols=70):
         ax.cla()
         points = all_points[i]
         draw_lines(points)

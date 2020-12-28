@@ -216,7 +216,8 @@ def reconstruct_3d(config,csv_idx, **kwargs):
     out = load_2d_data(config, vid_indices, bp_interested)
     all_points_raw = out['points']
     all_scores = out['scores']
-        
+    all_is_good = out['is_good']
+    
     all_points_und = undistort_points(all_points_raw, vid_indices, intrinsics)
     length = all_points_raw.shape[0]
     shape = all_points_raw.shape
@@ -253,6 +254,8 @@ def reconstruct_3d(config,csv_idx, **kwargs):
         dout[bp + '_error'] = errors[:, bp_num]
         dout[bp + '_ncams'] = num_cams[:, bp_num]
         dout[bp + '_score'] = scores_3d[:, bp_num]
+    dout['is_good_frame'] = all_is_good
+    
     dout['fnum'] = np.arange(length)
     dout.to_csv(os.path.join(output_path, 'output_3d_data_' + str(csv_idx) + '.csv'), index=False)
     if 'reference_point' in config['triangulation'] and 'axes' in config['triangulation']:
