@@ -6,7 +6,7 @@
 % CreateTime: 23 Nov 2017
 % Function  : This function is used to make density plot
 %-------------------------------------------------------------------------------
-function H = densityplot(x,y,varargin)
+function [H,b] = densityplot(x,y,varargin)
 % Parameters as 'name',value pairs:
 % - 'nbins': Array in the form of [nxbins nybins] to set the
 % number of bins in each dimension
@@ -48,5 +48,5 @@ H = pcolor(wx, wy, N');
 box on
 shading interp
 set(H,'edgecolor','none');
-colorbar
+b=colorbar;
 colormap jet

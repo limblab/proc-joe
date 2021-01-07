@@ -1,29 +1,3 @@
-% get model data -- stim channel response
-    mdl_input_data = [];
-    mdl_input_data.folderpath = 'C:\Users\Joseph Sombeck\Box\Miller-Grill_S1-stim\ModelData\TemporalResponse\ShortTrain\';
-    mdl_input_data.amp_list = [50];
-    mdl_input_data.IPI_list = [50,20,10,5];
-    mdl_input_data.gaba_ratio_list = [0.2,0.4,0.6,0.8,1.0];
-    mdl_input_data.get_axon_dendrite_locs = 0;
-    mdl_input_data.cell_id_list = [16];
-    mdl_input_data.num_clones = 1;
-    mdl_input_data.stim_times = (1000:500:(1000+500*9)); % ms, just the first one
-    mdl_input_data.wave_length = 0.453; % ms
-    mdl_input_data.stim_window = [-200,600]; % ms around stim
-    mdl_input_data.get_IPIs = 1;
-    mdl_input_data.get_synapses = 0;
-    mdl_input_data.is_train = 1;
-    
-    % cell_id=6:10 %L23 PC, clones 1-5
-    % cell_id=11:15 %L4 LBC, clones 1-5
-    % cell_id=16:20 %L5 PC, clones 1-5
-    % cell_id=21:25 %L6 PC, clones 1-5
-
-    [mdl_data_all,mdl_array_data_all,mdl_mask_data_all] = getModelDoublePulseData(mdl_input_data);
-    mdl_array_data = mdl_array_data_all; mdl_mask_data = mdl_mask_data_all; % use same proportion of cells as default, can resample below
-    
-    mdl_dists = getModelDistances(mdl_array_data);
-
 
 %% get experimental data
     exp_input_data.home_computer = 1;
@@ -60,23 +34,6 @@
         plotModelExpDoublePulseRaster(exp_array_data{exp_idx},raster_input_data);
     end
     
-%     for mdl_idx = 1:50
-%         raster_input_data.is_model = 1;
-%         raster_input_data.cond_list = [1,2,3];
-%         plotModelExpDoublePulseRaster(mdl_array_data{mdl_idx},raster_input_data);
-%     end
-    
-
-
-
-
-
-
-
-
-
-
-
 
 
 

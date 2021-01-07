@@ -27,7 +27,7 @@ function [output_data] = getActivationThreshold(array_data, input_data)
                 end
                 baseline_val = 0;
                 if(input_data.sub_baseline && (input_data.is_model == 0 || input_data.remove_intrinsic == 0))
-                    baseline_val = array_data{i_unit}.baseline_fr*(diff(input_data.spike_window)-(0.001-input_data.spike_window(1))); % spike window starts at 0, so remove the 1 ms from experimental recordings
+                    baseline_val = array_data{i_unit}.baseline_fr*(diff(input_data.spike_window)); 
                 end
                 percent_responsive(i_unit,i_amp) = num_responsive/total_stims - baseline_val;
             end
@@ -39,7 +39,7 @@ function [output_data] = getActivationThreshold(array_data, input_data)
             is_responsive(i_unit) = 1;
         end
     end
-
+    
     % package outputs
 
     output_data.thresholds = thresholds;

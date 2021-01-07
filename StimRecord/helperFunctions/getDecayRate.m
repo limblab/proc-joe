@@ -46,7 +46,13 @@ function [ output_data ] = getDecayRate( array_data, stim_window, baseline_windo
             num_spikes = 0;
             num_stim_pulses = 0;
             for p = 1:numel(array_data.PULSE_TIMES{condition}{1})-1
-                spike_window_adj = [spike_window(1)/1000 + array_data.PULSE_TIMES{condition}{1}(p),array_data.PULSE_TIMES{condition}{1}(p+1)];
+                % this one counts all spikes within in the time window
+                % (except for those occuring near stim onset)
+%                 spike_window_adj = [spike_window(1)/1000 + array_data.PULSE_TIMES{condition}{1}(p),array_data.PULSE_TIMES{condition}{1}(p+1)];
+                % this one counts spikes within a time window post stim for 
+                % each pulse in the response amp time window
+                spike_window_adj = [spike_window(1)/1000 + array_data.PULSE_TIMES{condition}{1}(p),...
+                    spike_window(2)/1000 + array_data.PULSE_TIMES{condition}{1}(p)];
                 spike_window_adj = [min(spike_window_adj(1),response_amp_time/1000),min(spike_window_adj(2),response_amp_time/1000)];
                 
                 num_spikes = num_spikes + sum(array_data.spikeTrialTimes{condition} >= spike_window_adj(1) & array_data.spikeTrialTimes{condition} <= spike_window_adj(2));
@@ -55,8 +61,11 @@ function [ output_data ] = getDecayRate( array_data, stim_window, baseline_windo
                     num_stim_pulses = num_stim_pulses + 1;
                 end
             end
-            response_amp(condition) = (num_spikes/array_data.numStims(condition))/(response_amp_time - num_stim_pulses*spike_window(1))*1000 - ...
+%             response_amp(condition) = (num_spikes/array_data.numStims(condition))/(response_amp_time - num_stim_pulses*spike_window(1))*1000 - ...
+%                 mean(y_data_baseline)/mode(diff(array_data.binEdges{condition})/1000); % Hz above baseline
+            response_amp(condition) = (num_spikes/array_data.numStims(condition))/(num_stim_pulses*diff(spike_window))*1000 - ...
                 mean(y_data_baseline)/mode(diff(array_data.binEdges{condition})/1000); % Hz above baseline
+
         end
         
         

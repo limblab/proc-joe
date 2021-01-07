@@ -1,30 +1,3 @@
-% get model data -- stim channel responses for paired pulse data
-    mdl_input_data = [];
-    mdl_input_data.folderpath = 'C:\Users\Joseph Sombeck\Box\Miller-Grill_S1-stim\ModelData\TemporalResponse\SinglePulse\';
-    mdl_input_data.amp_list = [15,30,50,100];
-    mdl_input_data.IPI_list = [-1];
-    mdl_input_data.gaba_ratio_list = [0.2,0.4,0.6,0.8,1.0];
-    mdl_input_data.get_axon_dendrite_locs = 0;
-    mdl_input_data.cell_id_list = [16];
-    mdl_input_data.num_clones = 1;
-    mdl_input_data.stim_times = (1000:500:(1000+500*9)); % ms, just the first one
-    mdl_input_data.wave_length = 0.; % ms
-    mdl_input_data.stim_window = [-200,600]; % ms around stim
-    mdl_input_data.get_IPIs = 1;
-    mdl_input_data.get_synapses = 0;
-    
-    mdl_input_data.is_train = 0;
-    mdl_input_data.is_single_pulse = 1;
-    % cell_id=6:10 %L23 PC, clones 1-5
-    % cell_id=11:15 %L4 LBC, clones 1-5
-    % cell_id=16:20 %L5 PC, clones 1-5
-    % cell_id=21:25 %L6 PC, clones 1-5
-
-    [mdl_data_all,mdl_array_data_all,mdl_mask_data_all] = getModelDoublePulseData(mdl_input_data);
-    mdl_array_data = mdl_array_data_all; mdl_mask_data = mdl_mask_data_all; % use same proportion of cells as default, can resample below
-    
-    mdl_dists = getModelDistances(mdl_array_data);
-
 
 %% get experimental data -- stim channel response
     exp_input_data.home_computer = 1;
@@ -54,35 +27,20 @@
     raster_input_data.cond_list = [1,7,8,6];
     raster_input_data.marker_style = 'line'; % line is the correct way, but much slower
     
-%     for exp_idx = 6 % 6
-%         raster_input_data.is_model = 0;
-%         plotModelExpDoublePulseRaster(exp_array_data{exp_idx},raster_input_data);
-%     end
-    for mdl_idx = [1:10]
-        raster_input_data.is_model = 1;
-        raster_input_data.cond_list = [1,2,3];
-        plotModelExpDoublePulseRaster(mdl_array_data{mdl_idx},raster_input_data);
+    for exp_idx = 6 % 6
+        raster_input_data.is_model = 0;
+        plotModelExpDoublePulseRaster(exp_array_data{exp_idx},raster_input_data);
     end
-    
-    
-    
+  
 %% compare response to first pulse to response to second pulse
     resp_input_data.spike_window = [-0,5]; % ms post stim to count spikes
     
-    [mdl_array_data] = getResponseToEachPulse(mdl_array_data,resp_input_data);
     exp_array_data = getResponseToEachPulse(exp_array_data,resp_input_data);
     
     % 6,7,8 = 200, 10 20 ms for exp
     % 1,2,3 = 10,20,300 ms for model
 %% plot response to first pulse against response to second pulse for each IPI
 
-    figure(); hold on;
-    for i_unit = 1:50%numel(mdl_array_data)
-        plot(mdl_array_data{i_unit}.mean_resp_each_pulse{1}(1),mdl_array_data{i_unit}.mean_resp_each_pulse{1}(2),'r.')
-%         plot(mdl_array_data{i_unit}.mean_resp_each_pulse{2}(1),mdl_array_data{i_unit}.mean_resp_each_pulse{2}(2),'b.')
-%         plot(mdl_array_data{i_unit}.mean_resp_each_pulse{3}(1),mdl_array_data{i_unit}.mean_resp_each_pulse{3}(2),'k.')
-    end
-    
     for i_unit = 1:numel(exp_array_data)
         if(numel(exp_array_data{i_unit}.mean_resp_each_pulse) > 6)
             plot(exp_array_data{i_unit}.mean_resp_each_pulse{7}(1),exp_array_data{i_unit}.mean_resp_each_pulse{7}(2),'r.')
