@@ -1,6 +1,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% freereaching_analysis - 
-%%      script to perform the free reach vs constrained analyses.
+%% singleworkspace_analysis - 
+%%      script to perform glm analyses for a single workspace
 %%      Note: this script is essentially split into two parts:
 %%      The first part fits the encoder models using cross-validation
 %%      while the second part plots the results. This segregation is
@@ -94,7 +94,7 @@
             end
             % remove trials where monkey's arm position is out of the
             % "workspace"
-            td_list{i_td} = getExperimentPhase(td_list{i_td},task_list{i_td});
+%             td_list{i_td} = getExperimentPhase(td_list{i_td},task_list{i_td});
 
             % get robot height (z data of a hand marker). This is
             % meaningless during free reach...
@@ -102,30 +102,11 @@
             dlc_idx = find((strcmpi(td_list{i_td}.dlc_pos_names,[markername,'_z'])));
             robot_height(end+1) = mean(td_list{i_td}.dlc_pos(:,dlc_idx));
         end
-        td_all{filenum} = td_list;
+        td_all{filenum} = td_list{1};
         task_list_all{filenum} = task_list;
         robot_height_all{filenum} = robot_height;
         clear td_list;
     end
-
-    
-    
-%% plot handle vs hand position
-    markername = 'hand3';
-    for filenum = 1:numel(td_all)
-        td_list = td_all{filenum};
-        task_list = task_list_all{filenum};
-        for i_td = 1:numel(td_list)
-            if(strcmpi(task_list{i_td},'RT'))
-                figure();
-                dlc_idx = [find((strcmpi(td_list{1}.dlc_pos_names,[markername,'_x']))),find((strcmpi(td_list{1}.dlc_pos_names,[markername,'_y'])))];
-                plot(td_list{i_td}.pos(:,2),td_list{i_td}.dlc_pos(:,dlc_idx(1)),'k');
-                hold on;
-                
-            end
-        end
-    end
-
     
 %% Loop through files to cross-validate encoders
     fprintf('Starting analysis of %d files. Warning: cross-validation will take a long time\n',length(td_all))
@@ -135,12 +116,10 @@
         td_list = td_all{filenum};
         task_list = task_list_all{filenum};
         % bin data at 50ms
-        for i_td = 1:numel(td_list)
-            td_list{i_td} = binTD(td_list{i_td},0.05/td_list{i_td}(1).bin_size);
-        end
+        td_list = binTD(td_list,0.05/td_list(1).bin_size);
         
         % Get encoding models
-        encoderResults_cell{filenum} = reachingEncoders(td_list,task_list,robot_height_all{filenum},struct(...
+        encoderResults_cell{filenum} = singleWorkspaceEncoders(td_list,struct(...
             'model_aliases',{included_models},...
             'arrayname',arrayname,...
             'num_tuning_bins',16,...
@@ -183,19 +162,6 @@
             model_eval_cell{modelnum} = table(encoderResults.crossEval.(sprintf('glm_%s_model_eval',included_models{modelnum})),...
                 'VariableNames',strcat(included_models(modelnum),'_eval'));
             model_eval_cell{modelnum}.Properties.VariableDescriptions = {'linear'};
-            for spacenum = 1:2
-                space_eval_cell{spacenum,modelnum} = table(encoderResults.crossEval.(sprintf('glm_%s_model_space%d_eval',included_models{modelnum},spacenum)),...
-                    'VariableNames',{sprintf('%s_space%d_eval',included_models{modelnum},spacenum)});
-                space_eval_cell{spacenum,modelnum}.Properties.VariableDescriptions = {'linear'};
-                % because some old files don't have this...
-                try
-                    space_eval_within_cell{spacenum,modelnum} = table(encoderResults.crossEval.(sprintf('glm_%s_model_space%d_within_eval',included_models{modelnum},spacenum)),...
-                        'VariableNames',{sprintf('%s_space%d_within_eval',included_models{modelnum},spacenum)});
-                    space_eval_within_cell{spacenum,modelnum}.Properties.VariableDescriptions = {'linear'};
-                catch ME
-                    warning('Within space predictions are not available. Eval table is not completely filled out')
-                end
-            end
         end
         model_eval{monkey_idx,session_ctr(monkey_idx)} = horzcat(...
             model_eval{monkey_idx,session_ctr(monkey_idx)},...
@@ -266,41 +232,4 @@
     end
     suptitle('Pseudo-R^2 pairwise comparisons')
 
-    % show scatter plot for hand/elbow pR2 within condition vs against condition
-    for modelnum = 1:length(models_to_plot)
-        figure
-        for monkeynum = 1:length(monkey_names)
-            for spacenum = 1:2
-                % set subplot
-                subplot(2,length(monkey_names),(spacenum-1)*length(monkey_names)+monkeynum)
-
-                % plot lines
-                plot([-1 1],[-1 1],'k--','linewidth',0.5)
-                hold on
-                plot([0 0],[-1 1],'k-','linewidth',0.5)
-                plot([-1 1],[0 0],'k-','linewidth',0.5)
-
-                % plot out each session
-                for sessionnum = 1:session_ctr(monkeynum)
-                    avg_pR2 = neuronAverage(model_eval{monkeynum,sessionnum},struct('keycols','signalID','do_ci',false));
-                    scatter(...
-                        avg_pR2.(sprintf('%s_space%d_eval',models_to_plot{modelnum},spacenum)),...
-                        avg_pR2.(sprintf('%s_space%d_within_eval',models_to_plot{modelnum},spacenum)),...
-                        [],session_colors(sessionnum,:),'filled')
-                end
-                % make axes pretty
-                set(gca,'box','off','tickdir','out',...
-                    'xlim',[-0.1 0.6],'ylim',[-0.1 0.6])
-                axis square
-                if monkeynum ~= 1 || spacenum ~= 1
-                    set(gca,'box','off','tickdir','out',...
-                        'xtick',[],'ytick',[])
-                end
-                xlabel(sprintf('%s trained across pR2',getModelTitles(models_to_plot{modelnum})))
-                ylabel(sprintf('%s trained within pR2',getModelTitles(models_to_plot{modelnum})))
-                title(sprintf('Workspace %d',spacenum))
-            end
-        end
-        suptitle('Full pR^2 vs within condition pR^2')
-    end
-
+    

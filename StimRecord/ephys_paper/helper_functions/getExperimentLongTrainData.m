@@ -4,7 +4,7 @@ function [amp_freq_data, intermittent_data] = getExperimentLongTrainData(input_d
 %         highest_folderpath{1} = 'D:\Lab\Data\StimArtifact\long_trains_array_data\';
         erorr('folderpath for laptop not yet specified');
     else
-        highest_folderpath = 'D:\Lab\Data\StimArtifact\long_trains_array_data\';
+        highest_folderpath = 'D:\Lab\Data\stim_ephys_paper\long_trains_array_data\';
     end
     
     search_word = 'arrayData';

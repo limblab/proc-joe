@@ -7,8 +7,8 @@ function [output_data] = getExperimentDoublePulseData(input_data)
     
     
     if(input_data.home_computer)
-        highest_folderpath{1} = 'D:\Lab\Data\StimArtifact\DblPulseData\Duncan\';
-        highest_folderpath{2} = 'D:\Lab\Data\StimArtifact\DblPulseData\Han\';
+        highest_folderpath{1} = 'D:\Lab\Data\stim_ephys_paper\dbl_pulse_short_trains_data\Duncan\';
+        highest_folderpath{2} = 'D:\Lab\Data\stim_ephys_paper\dbl_pulse_short_trains_data\Han\';
         search_word = 'arrayData';
     else
         error('file path not implemented for laptop yet');

@@ -51,9 +51,7 @@
         disp(file_list(file_num).name);
         
         stim_on=find(diff(sync_line_data{file_num}-mean(sync_line_data{file_num})>3)>.5);
-%         stim_on=stim_on(waveforms.waveSent == 1 & ...
-%             cellfun(@isequal,waveforms.chanSent,mat2cell(analog_pin_idx+zeros(size(waveforms.chanSent)),ones(size(waveforms.chanSent)))));
-%         
+
         anodic_idx = 2:2:numel(stim_on);
         cathodic_idx = 1:2:numel(stim_on);
 

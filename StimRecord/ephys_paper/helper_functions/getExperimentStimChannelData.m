@@ -7,8 +7,8 @@ function [output_data] = getExperimentStimChannelData(input_data)
     
     
     if(input_data.home_computer)
-        highest_folderpath{1} = 'D:\Lab\Data\StimArtifact\singlePulseModelExperiment\data\stim_rec_single_pulse_data\Duncan\';
-        highest_folderpath{2} = 'D:\Lab\Data\StimArtifact\singlePulseModelExperiment\data\stim_rec_single_pulse_data\Han\';
+        highest_folderpath{1} = 'D:\Lab\Data\stim_ephys_paper\stim_rec_single_pulse_data\Duncan\';
+        highest_folderpath{2} = 'D:\Lab\Data\stim_ephys_paper\stim_rec_single_pulse_data\Han\';
         search_word = 'arrayData';
     else
         highest_folderpath{1} = 'C:\Users\Joseph\Desktop\Lab\Data\StimArtifact\StimRecData\SinglePulseStimChan\Duncan\';

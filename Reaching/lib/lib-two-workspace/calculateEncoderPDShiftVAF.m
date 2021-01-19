@@ -21,7 +21,7 @@ function shift_vaf = calculateEncoderPDShiftVAF(encoderResults,params)
 
     % default params
     model_aliases = encoderResults.params.model_aliases;
-    neural_signal = 'S1_FR';
+    neural_signal = 'LeftS1_FR';
 
     if nargin>1
         assert(isstruct(params),'params should be a struct!')

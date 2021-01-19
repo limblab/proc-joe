@@ -14,8 +14,10 @@
     raster_input_data.x_lim = [-15,30]; % ms
     raster_input_data.amp_list = exp_input_data.amp_list;
     raster_input_data.marker_style = '.'; % line is the correct way, but much slower
+    raster_input_data.plot_amp = 1;
     
-    for exp_idx = 5 %4, 5, 13, 25
+    
+    for exp_idx = 1:numel(exp_array_data)%5 %4, 5, 13, 25
         raster_input_data.is_model = 0;
         plotModelExpAmpRaster(exp_array_data{exp_idx},raster_input_data);
     end

@@ -8,6 +8,7 @@ function [output_data] = plotModelExpDoublePulseRaster(data, input_data)
     optsSave = [];
     x_data = [];
     y_data = [];
+    output_data = [];
     
     % get x_data and y_data -- do for each amplitude
     trial_counter = 1;
@@ -68,12 +69,12 @@ function [output_data] = plotModelExpDoublePulseRaster(data, input_data)
                 y_data = [optsPlot.DIVIDING_LINES(i_cond-1),optsPlot.DIVIDING_LINES(i_cond)];
             end
             
-%             num_pulses = numel(data.PULSE_TIMES{cond_idx}{1});
-%             for i_pulse = 1:num_pulses
-%                 x_data = zeros(1,2) + data.PULSE_TIMES{cond_idx}{1}(i_pulse)*1000;
-%             
-%                 plot(x_data,y_data,'r-','linewidth',1);
-%             end
+            num_pulses = numel(data.PULSE_TIMES{cond_idx}{1});
+            for i_pulse = 1:num_pulses
+                x_data = zeros(1,2) + data.PULSE_TIMES{cond_idx}{1}(i_pulse)*1000;
+            
+                plot(x_data,y_data,'-','linewidth',0.1,'Color',[1,0,0,0.25]);
+            end
             
         end
     end

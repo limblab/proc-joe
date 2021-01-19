@@ -1,6 +1,10 @@
 function results = mwEncoders(td,params)
 %% Split up trial data and preprocess
-    % Split td into different workspaces (workspace 1 is PM and workspace 2 is DL)
+    % Split td into different workspaces each entry in td_list is a
+    % different workspace. Task list determines if it is 2D (RT) or 3D
+    % reaching (RT3D). Each 2D file has the robot at a different height,
+    % specified by robot_height (high or low, determined by DLC_z data).
+    
     % also make sure we have balanced workspaces (slightly biases us towards early trials, but this isn't too bad)
     [~,td_pm] = getTDidx(td,'spaceNum',1);
     [~,td_dl] = getTDidx(td,'spaceNum',2);

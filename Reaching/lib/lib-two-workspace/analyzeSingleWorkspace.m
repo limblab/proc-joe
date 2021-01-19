@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% function [crossEval, crossTuning, crossvalLookup] = analyzeTRT(trial_data,params)
+% function [crossEval, crossTuning, crossvalLookup] = analyzeSingleWorkspace(trial_data,params)
 % 
 % For multiworkspace files, with dl and pm workspaces:
 %   * Fits three different coordinate frame models to data from both workspaces
@@ -31,7 +31,7 @@
 %
 % OUTPUTS:
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [crossEval, crossTuning, crossvalLookup] = analyzeTRT(trial_data,params)
+function [crossEval, crossTuning, crossvalLookup] = analyzeSingleWorkspace(td,params)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Set up
@@ -42,14 +42,10 @@ function [crossEval, crossTuning, crossvalLookup] = analyzeTRT(trial_data,params
     verbose = true;
     if nargin > 1, assignParams(who,params); end % overwrite parameters
 
+    glm_params = params.glm_params;
 %% Compile training and test sets
     % inialize temporary eval holders
     [repeatEval,repeatTuning,repeatCrossvalLookup] = deal(cell(num_repeats,1));
-
-    % extract td_pm and td_dl
-    [~,td_pm] = getTDidx(trial_data,'spaceNum',1);
-    [~,td_dl] = getTDidx(trial_data,'spaceNum',2);
-    assert(length(td_pm)==length(td_dl),'Number of trials in each workspace should be the same')
 
     % loop over num repeats
     if verbose
@@ -58,7 +54,7 @@ function [crossEval, crossTuning, crossvalLookup] = analyzeTRT(trial_data,params
     end
     for repeatctr = 1:num_repeats
         % get fold indices
-        indices = crossvalind('Kfold',length(td_pm),num_folds);
+        indices = crossvalind('Kfold',length(td.pos),num_folds);
 
         % initialize temporary fold evaluation structure
         [foldEval,foldTuning,foldCrossvalLookup] = deal(cell(num_folds,1));
@@ -70,27 +66,45 @@ function [crossEval, crossTuning, crossvalLookup] = analyzeTRT(trial_data,params
         for foldctr = 1:num_folds
             % Get test and training indices for this fold
             % check if there's a crossval lookup table
+            td_test = [];
             if isempty(crossval_lookup)
                 test_idx = (indices==foldctr);
                 train_idx = ~test_idx;
-                td_train = [td_pm(train_idx) td_dl(train_idx)];
-                td_test = {td_pm(test_idx); td_dl(test_idx)};
+                % split into td_train and td_test, only use in_signals and
+                % out_signals. Also grab handle velocity for td_test so that we
+                % can compute PDs using handle kinematics
+                for modelnum = 1:numel(glm_params)
+                    for i_name = 1:size(glm_params{modelnum}.in_signals,2)
+                        for i_idx = 1:numel(glm_params{modelnum}.in_signals{i_name,2})
+                            td_train.(glm_params{modelnum}.in_signals{i_name,1}) = ...
+                                td.(glm_params{modelnum}.in_signals{i_name,1})(train_idx,:);
+                            td_test.(glm_params{modelnum}.in_signals{i_name,1}) = td.(glm_params{modelnum}.in_signals{i_name,1})(test_idx,:);
+                            % meta info....
+                            td_train.monkey = td.monkey;
+                            td_test.monkey = td.monkey;
+            
+                            td_train.task = td.task;
+                            td_test.task = td.task;
+
+                            td_train.date = td.date;
+                            td_test.date = td.date;
+                        end
+                    end
+                end
+                
+                % get out signals
+                td_train.(glm_params{1}.out_signals) = ...
+                    td.(glm_params{1}.out_signals)(train_idx,:);
+                td_test.(glm_params{1}.out_signals) = td.(glm_params{1}.out_signals)(test_idx,:); 
+
+                % set bin_size as well
+                td_train.bin_size = td.bin_size;
+                td_test.bin_size = td.bin_size;
+                
+                % set spacenum (1 only for a single workspace)
+                train_spacenum = ones(sum(train_idx),1);
             else
-                % read the crossval_lookup
-                [~,current_crossval] = getNTidx(crossval_lookup,'crossvalID',[repeatnum foldnum]);
-                td_whole = cat(2,td_pm,td_dl);
-                whole_ids = cat(1,td_whole.trialID);
-                whole_spaceNum = cat(1,td_whole.spaceNum);
-                test_idx_whole = ismember([whole_ids whole_spaceNum],current_crossval{:,{'trialID' 'spaceNum'}},'rows');
-
-                % get train and test sets (td_test is supposed to be a cell array
-                td_test = td_whole(test_idx_whole);
-                td_test = {...
-                    td_test(getTDidx(td_test,'spaceNum',1));...
-                    td_test(getTDidx(td_test,'spaceNum',2))};
-
-                train_idx_whole = ~test_idx_whole;
-                td_train = td_whole(train_idx_whole);
+                error('crossval lookup is not empty. This is not implemented');
             end
 
             % analyze fold to get model evaluations
@@ -99,13 +113,13 @@ function [crossEval, crossTuning, crossvalLookup] = analyzeTRT(trial_data,params
             else
                 params = struct('crossvalID',uint16([repeatctr foldctr]));
             end
-            [foldEval{foldctr},foldTuning{foldctr}] = analyzeFold(td_train,td_test,params);
+            [foldEval{foldctr},foldTuning{foldctr}] = analyzeFold(td_train,td_test,train_spacenum,params);
 
             % get test trialIDs
-            trialID = cat(1,td_test{1}.trialID,td_test{2}.trialID);
-            spaceNum = cat(1,td_test{1}.spaceNum,td_test{2}.spaceNum);
+            trialID = cat(1,find(indices==foldctr)',find(indices==foldctr)');
+            spaceNum = zeros(size(trialID)) + [1]; % 1 only for single workspace
             foldCrossvalLookup{foldctr} = table(...
-                repmat(params.crossvalID,length(trialID),1),trialID,spaceNum,...
+                repmat(params.crossvalID,length(trialID),1),trialID',spaceNum',...
                 'VariableNames',{'crossvalID','trialID','spaceNum'});
 
             if verbose
@@ -206,7 +220,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Sub functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [foldEval,foldTuning] = analyzeFold(td_train,td_test,params)
+function [foldEval,foldTuning] = analyzeFold(td_train,td_test,train_spacenum,params)
 % ANALYZEFOLD analyze single fold of cross-validation set and return NeuronTable structure
 %   with evaluation information for this fold
 % 
@@ -252,89 +266,35 @@ function [foldEval,foldTuning] = analyzeFold(td_train,td_test,params)
 %% Fit models
     % set up parameters for models
     glm_info = cell(1,length(model_names)-1);
+    
+    glm_info = cell(1,length(model_names)-1);
     glm_info_within = cell(2,length(model_names)-1);
     for modelnum = 1:length(model_names)-1
         [~,glm_info{modelnum}] = getModel(td_train,glm_params{modelnum});
-        
-        % get models for training on individual workspaces
-        for spacenum = 1:2
-            [~,td_train_space] = getTDidx(td_train,'spaceNum',spacenum);
-            [~,glm_info_within{spacenum,modelnum}] = getModel(td_train_space,glm_params{modelnum});
-        end
     end
-
+    
     % Predict firing rates
-    td_test_within = td_test;
     for modelnum = 1:length(model_names)-1
-        for spacenum = 1:2
-            td_test{spacenum} = getModel(td_test{spacenum},glm_info{modelnum});
-            td_test_within{spacenum} = getModel(td_test_within{spacenum},glm_info_within{spacenum,modelnum});
-        end
+        td_test = getModel(td_test,glm_info{modelnum});
     end
 
     % Evaluate model fits and add to foldEval table
     foldEval = makeNeuronTableStarter(td_train,struct('out_signal_names',unit_guide,'meta',struct('crossvalID',crossvalID)));
     model_eval = cell(1,length(model_names)-1);
-    [space_model_eval,space_model_eval_within] = deal(cell(2,length(model_names)-1));
     eval_params = glm_info;
     for modelnum = 1:length(model_names)-1
         eval_params{modelnum}.eval_metric = model_eval_metric;
         eval_params{modelnum}.num_boots = 1;
+        
         model_eval{modelnum} = array2table(...
-            squeeze(evalModel([td_test{2} td_test{1}],eval_params{modelnum}))',...
-            'VariableNames',strcat(model_names(modelnum),'_eval'));
+            squeeze(evalModel(td_test,eval_params{modelnum}))',...
+            'VariableNames',{strcat(model_names{modelnum},'_eval')});
         model_eval{modelnum}.Properties.VariableDescriptions = {'linear'};
 
-        % get evals for individual spaces
-        for spacenum = 1:2
-            space_model_eval{spacenum,modelnum} = array2table(...
-                squeeze(evalModel(td_test{spacenum},eval_params{modelnum}))',...
-                'VariableNames',{sprintf('%s_space%d_eval',model_names{modelnum},spacenum)});
-            space_model_eval{spacenum,modelnum}.Properties.VariableDescriptions = {'linear'};
-            
-            space_model_eval_within{spacenum,modelnum} = array2table(...
-                squeeze(evalModel(td_test_within{spacenum},eval_params{modelnum}))',...
-                'VariableNames',{sprintf('%s_space%d_within_eval',model_names{modelnum},spacenum)});
-            space_model_eval_within{spacenum,modelnum}.Properties.VariableDescriptions = {'linear'};
-        end
     end
-    foldEval = horzcat(foldEval, model_eval{:}, space_model_eval{:}, space_model_eval_within{:});
+    foldEval = horzcat(foldEval, model_eval{:});
 
 %% Get extrinsic test tuning (to calculate later quantities from)
-    tempTuningTable = cell(2,1);
-    for spacenum = 1:2
-        for modelnum = 1:length(model_names)
-            % get tuning weights for each model
-            pdParams = struct(...
-                'out_signals',model_names(modelnum),...
-                'prefix',model_names{modelnum},...
-                'out_signal_names',unit_guide,...
-                'bootForTuning',false,...
-                'num_boots',50,...
-                'verbose',false,...
-                'meta',struct('spaceNum',spacenum,'crossvalID',crossvalID));
-            temp_pdTable = getTDClassicalPDs(td_test{spacenum},pdParams);
-            % temp_pdTable = getTDPDs(td_test{spacenum},pdParams);
-
-            tuningParams = struct(...
-                'out_signals',model_names(modelnum),...
-                'prefix',model_names{modelnum},...
-                'out_signal_names',unit_guide,...
-                'calc_CIs',false,...
-                'num_bins',num_tuning_bins,...
-                'meta',struct('spaceNum',spacenum,'crossvalID',crossvalID));
-            temp_tuning_table = getTuningCurves(td_test{spacenum},tuningParams);
-            temp_table = join(temp_pdTable,temp_tuning_table);
-
-            % append table to full tuning table for space
-            if modelnum == 1
-                tempTuningTable{spacenum} = temp_table;
-            else
-                tempTuningTable{spacenum} = join(tempTuningTable{spacenum}, temp_table);
-            end
-        end
-    end
-    % smoosh space tables together
-    foldTuning = vertcat(tempTuningTable{:});
+    foldTuning = {};
 
 end

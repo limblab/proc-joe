@@ -15,10 +15,10 @@
 
 
 %% plot amp-freq PSTH for each condition
-    for u = 10:12%numel(exp_amp_freq_data.stim_chan)
+    for u = 1:numel(exp_amp_freq_data.stim_chan)
         input_data.amp_freq = 1;
 
-        input_data.window = [-1500,15000];
+        input_data.window = [-1500,8000];
         input_data.unit_idx = u;
         input_data.num_cols = 3;
         input_data.account_for_artifact = 1;
@@ -157,64 +157,45 @@
     
 %% plot response_amp vs. distance and fit 
     f=figure();
-    f.Name = 'AmpFreq_response_amplitude_distance';
-    make_heatmap = 0;
+    f.Name = 'AmpFreq_response_amplitude_distance';    
     
-    distance_bin_size = 500; %um, box plots and heatmap 
-    x_spacing = 200;
-    y_spacing = 10;
-    edges = {[400-x_spacing:x_spacing:4500],[0:y_spacing:150]};
-    dist_spacing = 120;
+    plot_all_conditions = 0;
     
-    idx_plot = [4,6,10,12];
+    condition_map = [10,11,12,7,8,9,4,5,6,1,2,3]; % reorder conditions since the data order is weird
+    if(plot_all_conditions)
+        idx_plot = 1:12;
+        subplot_map = condition_map;
+        subplot_size = [4,3];
+    else
+        idx_plot = [4,6,10,12]; % 20uA 104Hz, 60uA 104Hz, 20uA 51Hz, 60uA 51Hz.
+        subplot_map = [3,4,1,2];
+        subplot_size = [2,2];
+    end  
     
-    if(make_heatmap == 1)
-%         subplot_map = [10,11,12,7,8,9,4,5,6,1,2,3];
-        subplot_map = [10,11,12,3,8,4,4,5,6,1,2,2];
-        x_pred = [0:10:4500];
-        for i = idx_plot
-            ax(i) = subplot(2,2,subplot_map(i));
-%             plot(distance_from_stim,response_amp(:,i),'.')
-            [N,C] = hist3([exp_amp_freq_data.nonstim_chan_distance_from_stim,exp_amp_freq_data.nonstim_chan_response_amp(:,i)],edges);
-
-            % adjust C so it corresponds to the edge, not center
-            for i_dim = 1:numel(C)
-                C{i_dim} = C{i_dim} - mean(diff(C{i_dim}))/2;
-            end
-            pcolor(C{1},C{2},N')
-            shading interp
-            colormap viridis
-            ax(i).CLim = [0,50];
-            colorbar
-            disp(sum(sum(N)))
-%             [h,b]=densityplot(exp_amp_freq_data.nonstim_chan_distance_from_stim,exp_amp_freq_data.nonstim_chan_response_amp(:,i),edges)
-            
-
-            amp_freq_fit{i} = fit(exp_amp_freq_data.nonstim_chan_distance_from_stim,exp_amp_freq_data.nonstim_chan_response_amp(:,i),'a*exp(-x/b)','StartPoint',[50,4000],'upper',[500,1E5]);
-            a_params(ceil(subplot_map(i)/3),mod(subplot_map(i)-1,3)+1) = amp_freq_fit{i}.a;
-            b_params(ceil(subplot_map(i)/3),mod(subplot_map(i)-1,3)+1) = amp_freq_fit{i}.b;
-        end
-
-        linkaxes(ax,'xy');
-%         ylim([-30,150])
+    amp_freq_fit = {};
+    a_params = zeros(4,3);
+    a_bounds = zeros(4,3,2);
+    b_params = zeros(4,3);
+    b_bounds = zeros(4,3,2);
+    
+    x_pred = [0:10:4500];
+    for i = 1:12 % get fit and plot dot plot of responses for idx_plot
+        % fit data
+        amp_freq_fit{i} = fit(exp_amp_freq_data.nonstim_chan_distance_from_stim,exp_amp_freq_data.nonstim_chan_response_amp(:,i),...
+            'a*exp(-x/b)','StartPoint',[50,4000],'upper',[500,1E5]);
+        a_params(ceil(condition_map(i)/3),mod(condition_map(i)-1,3)+1) = amp_freq_fit{i}.a;
+        b_params(ceil(condition_map(i)/3),mod(condition_map(i)-1,3)+1) = amp_freq_fit{i}.b;
+        temp = confint(amp_freq_fit{i});
+        a_bounds(ceil(condition_map(i)/3),mod(condition_map(i)-1,3)+1,:) = temp(:,1);
+        b_bounds(ceil(condition_map(i)/3),mod(condition_map(i)-1,3)+1,:) = temp(:,2);
         
-    elseif(make_heatmap == 0) % dots for each rec:stim pair
-%         subplot_map = [10,11,12,7,8,9,4,5,6,1,2,3];
-        subplot_map = [10,11,12,3,8,4,4,5,6,1,2,2];
-        amp_freq_fit = {};
-        a_params = zeros(4,3);
-        b_params = zeros(4,3);
-
-        x_pred = [0:10:4500];
-        for i = idx_plot
-            ax(i) = subplot(2,2,subplot_map(i));
+        if(any(i==idx_plot))
+            % plot
+            data_idx = find(i==idx_plot);
+            ax(data_idx) = subplot(subplot_size(1),subplot_size(2),subplot_map(data_idx));
             plot(exp_amp_freq_data.nonstim_chan_distance_from_stim,exp_amp_freq_data.nonstim_chan_response_amp(:,i),'k.')
-            amp_freq_fit{i} = fit(exp_amp_freq_data.nonstim_chan_distance_from_stim,exp_amp_freq_data.nonstim_chan_response_amp(:,i),'a*exp(-x/b)','StartPoint',[50,4000],'upper',[500,1E5]);
             hold on
             plot(x_pred,feval(amp_freq_fit{i},[0:10:4500]),'r--','linewidth',2)
-
-            a_params(ceil(subplot_map(i)/3),mod(subplot_map(i)-1,3)+1) = amp_freq_fit{i}.a;
-            b_params(ceil(subplot_map(i)/3),mod(subplot_map(i)-1,3)+1) = amp_freq_fit{i}.b;
             
             formatForLee(gcf);
             set(gca,'fontsize',14)
@@ -223,14 +204,59 @@
                 ylabel('FR above baseline (Hz)');
             end
         end
-
-        linkaxes(ax,'xy');
-        ylim([-30,250])
-        xlim([0,4700])
     end
+
+    linkaxes(ax,'xy');
+    ylim([-30,250])
+    xlim([0,4700])
+    
+%% plot a (intercept) and b (space constant) across amplitudes and frequencies
+    f=figure(); hold on;
+    f.Name = 'Han_duncan_long_trains_spread_param_summary';
+    
+    offset = [-1,0,1]*2;
+    
+    freq_list = [51,80,104,131];
+    amp_list = [20,40,60];
+    amp_colors = [0,200,0; 0,128,0; 0,100,0]/255;
     
     
-%% build GLM
+    for i_plot = 1:2
+        subplot(1,2,i_plot)
+        switch i_plot
+            case 1
+                data = b_params;
+                bounds = b_bounds;
+            case 2
+                data = a_params;
+                bounds = a_bounds;
+        end
+        
+        for i_freq = 1:numel(freq_list)
+            for i_amp = 1:numel(amp_list)
+                errorbar(freq_list(i_freq)+offset(i_amp),data(i_freq,i_amp),...
+                    data(i_freq,i_amp)-bounds(i_freq,i_amp,1),bounds(i_freq,i_amp,2)-data(i_freq,i_amp),...
+                    'marker','.','linestyle','none','color',amp_colors(i_amp,:),'markersize',18,'linewidth',1.5);
+                hold on;
+            end
+        end
+        formatForLee(gcf);
+        set(gca,'fontsize',14);
+        xlabel('Frequency (Hz)');
+        xlim([40,140])
+        
+        if(i_plot == 1)
+            ylabel('Space constant (1/\mum)');
+            ylim([0,5000])
+            l=legend('20\muA','40\muA','60\muA');
+            set(l,'box','off');
+        else
+            ylabel('Intercept (Hz)');
+            ylim([0,100])
+        end
+    end    
+    
+%% build GLM and then assess effect of amp/frequency across distances
 
     amps = [20,40,60,20,40,60,20,40,60,20,40,60];
     freqs = [131,131,131,104,104,104,80,80,80,51,51,51];
@@ -264,12 +290,66 @@
             'VariableNames',{'resp','dist','amp','freq','monkey','chan_stim','chan_rec'});
 
     amp_freq_mdl{end+1} = fitlm(data_table,modelspec);
+     
+%% rebound excitation stats 
+% duration, percent of cells
+    rebound_input_data.cond_list = [1:12];
+    rebound_input_data.bin_window = [-200,8000]./1000;
+    rebound_input_data.pre_window = [-1000,-10]./1000;
+    rebound_input_data.post_window = [10,500]./1000;
+    rebound_input_data.blank_time = [-10,10]/1000; %s
+    
+    rebound_input_data.bin_size = 5/1000; % s
+    rebound_input_data.kernel_length = 2;
+    rebound_input_data.num_consec_bins = 6;
+    [rebound_data] = getReboundExcitationWrapper(exp_amp_freq_data.nonstim_chan,rebound_input_data);
+    
+%% plot rebound excitation data -- 
+
+    % plot duration across frequencies (with lines between same cells)
+    f=figure('Position',[1403 522 395 420]);
+    f.Name = 'Han_duncan_long_trains_rebound_excitation';
+    suptitle('Short Trains')
+    subplot(2,1,2); hold on;
+    freq_list=[180,100,50,20];
+    for i_cell = 1:size(rebound_data.is_rebound,1)
+        plot(freq_list,rebound_data.rebound_dur(i_cell,2:end)*1000,'-k','marker','.','markersize',12);
+    end
+    xlim([0,200])
+    ylim([0,300]);
+    formatForLee(gcf);
+    xlabel('Frequency (Hz)');
+    ylabel('Duration (ms)');
+    set(gca,'fontsize',14);
+    ax=gca;
+    ax.XTick = sort(freq_list);
+    ax.XMinorTick = 'off';
+
+
+    % also plot % of cells with rebound across frequencies
+    subplot(2,1,1); hold on;
+    freq_list=[180,100,50,20];
+    frac_data = nan(size(freq_list));
+    for i_freq = 2:size(rebound_data.is_rebound,2)
+        frac_data(i_freq-1) = sum(rebound_data.is_rebound(:,i_freq),'omitnan')/sum(~isnan(rebound_data.is_rebound(:,i_freq)));
+    end
+    
+    bar(freq_list,frac_data,'EdgeColor','k','FaceColor','k');
+    xlim([0,200])
+    ylim([0,1]);
+    formatForLee(gcf);
+    xlabel('Frequency (Hz)');
+    ylabel('Fraction cells');
+    set(gca,'fontsize',14);
+    ax=gca;
+    ax.XTick = sort(freq_list);
+    ax.XMinorTick = 'off';
+ 
     
     
     
     
-    
-%         amp_freq_mdl{end+1} = fitglm(data_table,modelspec,'Distribution','poisson')
+    %         amp_freq_mdl{end+1} = fitglm(data_table,modelspec,'Distribution','poisson')
 
 %     % only use 1 monkey at a time?
 %     for idx = unique(monkey_data)'
@@ -380,4 +460,3 @@
 %     end
 %        
 %     num_sig = sum(p_list < 0.05,3)
-
