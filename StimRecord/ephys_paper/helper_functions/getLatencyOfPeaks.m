@@ -11,6 +11,8 @@ function [output_data] = getLatencyOfPeaks(array_data,input_data)
     amp_list = [];
     
     num_peaks_amp = [];
+    num_peaks_amp_assume = [];
+    num_peaks_missed = zeros(numel(array_data),1);
     
     delta_lat_list = [];
     delta_amp_list = [];
@@ -81,7 +83,6 @@ function [output_data] = getLatencyOfPeaks(array_data,input_data)
                     % moving to the left
                     left_bound = find(spike_times_use(1:locs) < half_prom,1,'last');
                     
-                    
                     % extend lines to 0 (line from peak through left or
                     % right bound) to get window to count spikes
                     window = (locs(i_peak) + [-(locs(i_peak)-left_bound)*pks(i_peak)/(pks(i_peak)-spike_times_use(left_bound)),...
@@ -90,14 +91,12 @@ function [output_data] = getLatencyOfPeaks(array_data,input_data)
                     
                     % get std of spike times in this window
                     stds_temp(i_peak) = std(spike_times(spike_times >= window(1) & spike_times <= window(2)));
-                    
                 end
                 
                 
                 
                 
                 % store peak location, width, and size
-                
                 peak_size(end+1:end+numel(pks)) = pks;
                 peak_num(end+1:end+numel(pks)) = 1:1:numel(pks);
                 lat_list(end+1:end+numel(pks)) = bin_centers(locs);
@@ -115,20 +114,55 @@ function [output_data] = getLatencyOfPeaks(array_data,input_data)
                     clone_list(end+1:end+numel(pks)) = array_data{i_unit}.clone_num;
                 end
 
+                % if experiment, check to see if 100uA condition misses an assumed
+                % peak at ~1ms due to the artifact. Add result to an
+                % assumed_variable.
+                if(~input_data.is_model && input_data.amp_list(i_amp)==50)
+                    % store 50uA data
+                    first_50_peak = min(bin_centers(locs));
+                end
+                if(~input_data.is_model && input_data.amp_list(i_amp)==100)                    
+                    % if 50uA has a peak and 100uA does not, assume it is
+                    % there. 
+                    first_100_peak = min(bin_centers(locs));
+                    if(isempty(first_50_peak))
+                        num_peaks_missed(i_unit) = 0;
+                    elseif(isempty(first_100_peak))
+                        num_peaks_missed(i_unit) = 1;
+                    elseif(first_100_peak > 0.0019 && first_50_peak < 0.0014)
+                        num_peaks_missed(i_unit) = 1;
+                    else
+                        num_peaks_missed(i_unit) = 0;
+                    end
+                    
+                    num_peaks_amp_assume(end+1,:) = [num_peaks_amp(end,1)+num_peaks_missed(i_unit),num_peaks_amp(end,2)];
+                elseif(input_data.amp_list(i_amp)==100) % pass in found value
+                    num_peaks_amp_assume(end+1,:) = num_peaks_amp(end,:);
+                end
+                
             end
+            
+            
+            
         end
         
+
+        
         % get change in latency data for first peak
-        data_mask = unit_idx == i_unit & peak_num == 1 & lat_list < 2/1000 & amp_list  >= 10;
+        data_mask = unit_idx == i_unit & peak_num == 1 & lat_list < 2/1000 & lat_list > 1/1000;
         
         temp_list = lat_list(data_mask) - lat_list(find(data_mask,1,'first'));
-        data_mask(find(data_mask,1,'first')) = 0; % remove first entry 
+        data_mask(find(data_mask,1,'first')) = 0;
         num_add = sum(data_mask);
         
         delta_lat_list(end+1:end+num_add) = temp_list(2:end);
         delta_amp_list(end+1:end+num_add) = amp_list(data_mask);
         delta_unit_idx(end+1:end+num_add) = unit_idx(data_mask);
  
+        if(any(temp_list > 0.0005))
+            disp('here');
+        end
+        
     end
 
     
@@ -146,6 +180,7 @@ function [output_data] = getLatencyOfPeaks(array_data,input_data)
     output_data.amp_idx = amp_list;
     
     output_data.num_peaks_amp = num_peaks_amp;
+    output_data.num_peaks_amp_assume = num_peaks_amp_assume;
     
     output_data.delta_lat = delta_lat_list;
     output_data.delta_amp = delta_amp_list;

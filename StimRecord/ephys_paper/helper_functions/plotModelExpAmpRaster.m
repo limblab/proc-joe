@@ -5,6 +5,8 @@ function [output_data] = plotModelExpAmpRaster(data, input_data)
     optsPlot = [];
     optsPlot.DIVIDING_LINES = []; % list of numbers -- separate amplitude trials
     optsPlot.DIVIDING_LINES_COLORS = {};
+    optsPlot.DUKE_BLANKED_REGION = []; % [min, max] for each region in dividing lines
+    optsPlot.BLACK_BLANKED_REGION = []; % [min, max] for each region in dividing lines
     optsSave = [];
     x_data = [];
     y_data = [];
@@ -25,6 +27,16 @@ function [output_data] = plotModelExpAmpRaster(data, input_data)
             end
             optsPlot.DIVIDING_LINES(end+1) = trial_counter - 0.5;
             optsPlot.DIVIDING_LINES_COLORS{end+1} = getColorFromList(1,1);
+            
+            % get blanked region
+            if(isfield(input_data,'duke_blank_times'))
+                optsPlot.DUKE_BLANKED_REGION(end+1,:) = input_data.duke_blank_times(amp_idx,:);
+            end
+            
+            % get blanked region
+            if(isfield(input_data,'black_blank_times'))
+                optsPlot.BLACK_BLANKED_REGION(end+1,:) = input_data.black_blank_times(amp_idx,:);
+            end
         end
         optsPlot.DIVIDING_LINES = optsPlot.DIVIDING_LINES(1:end-1); % remove last entry
     else % plot polarity

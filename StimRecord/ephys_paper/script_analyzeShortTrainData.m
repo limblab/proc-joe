@@ -67,7 +67,7 @@ end
     subplot(2,1,2); hold on;
     freq_list=[180,100,50,20];
     for i_cell = 1:size(rebound_data.is_rebound,1)
-        plot(freq_list,rebound_data.rebound_dur(i_cell,2:end)*1000,'-k','marker','.','markersize',12);
+        plot(freq_list+7*rand()-3.5,rebound_data.rebound_dur(i_cell,:)*1000,'-k','marker','o','markersize',6);
     end
     xlim([0,200])
     ylim([0,300]);
@@ -84,8 +84,8 @@ end
     subplot(2,1,1); hold on;
     freq_list=[180,100,50,20];
     frac_data = nan(size(freq_list));
-    for i_freq = 2:size(rebound_data.is_rebound,2)
-        frac_data(i_freq-1) = sum(rebound_data.is_rebound(:,i_freq),'omitnan')/sum(~isnan(rebound_data.is_rebound(:,i_freq)));
+    for i_freq = 1:size(rebound_data.is_rebound,2)
+        frac_data(i_freq) = sum(rebound_data.is_rebound(:,i_freq),'omitnan')/sum(~isnan(rebound_data.is_rebound(:,i_freq)));
     end
     
     bar(freq_list,frac_data,'EdgeColor','k','FaceColor','k');

@@ -11,13 +11,17 @@
 %% plot raster of example neuron
 
     raster_input_data = [];
-    raster_input_data.x_lim = [-15,30]; % ms
+    raster_input_data.x_lim = [-12,15]; % ms
     raster_input_data.amp_list = exp_input_data.amp_list;
-    raster_input_data.marker_style = '.'; % line is the correct way, but much slower
+    raster_input_data.marker_style = 'line'; % line is the correct way, but much slower
     raster_input_data.plot_amp = 1;
     
+    load('D:\Lab\Data\stim_ephys_paper\artifact_analysis\sim_study\duke_blank_times');
+    raster_input_data.duke_blank_times = blank_times;
+    load('D:\Lab\Data\stim_ephys_paper\artifact_analysis\sim_study\black_blank_times');
+    raster_input_data.black_blank_times = blank_times;
     
-    for exp_idx = 1:numel(exp_array_data)%5 %4, 5, 13, 25
+    for exp_idx = 5%1:numel(exp_array_data)%5 %4, 5, 13, 25
         raster_input_data.is_model = 0;
         plotModelExpAmpRaster(exp_array_data{exp_idx},raster_input_data);
     end
@@ -34,9 +38,9 @@
     exp_threshold_data = getActivationThreshold(exp_array_data,activation_input_data);
 
 % plot activation threshold data
-    f=figure('Position',[2918,452,446,420]);
+    f=figure('Position',[2918,452,200,400]);
     f.Name = 'Han_Duncan_activationThreshold';
-    subplot(1,2,1)
+%     subplot(1,2,1)
     % experimental data
     boxplot_params = [];
     boxplot_params.use_same_color_for_all = 1;
@@ -53,25 +57,25 @@
     ylabel('Activation threshold (\muA)');
     set(gca,'XTick',[])
 %
-    % plot percent responsive all cells against different thresholds (cdf)
-    
-    percent_resp_thresh = zeros(size(activation_input_data.test_thresholds));
-    for i_thresh = 1:numel(activation_input_data.test_thresholds)
-        percent_resp_thresh(i_thresh) = sum(max(exp_threshold_data.percent_responsive,[],2) > activation_input_data.test_thresholds(i_thresh));
-    end
-    percent_resp_thresh = percent_resp_thresh./size(exp_threshold_data.percent_responsive,1);
-    
-    subplot(1,2,2); hold on
-    % experimental data
-%     perc_resp = sum(exp_threshold_data.is_responsive)/numel(exp_threshold_data.is_responsive);
-%     b=bar(4, perc_resp);
-%     b.FaceColor = 'k';
-    plot(activation_input_data.test_thresholds, percent_resp_thresh,'k','linewidth',2);
-    plot([0.5,0.5],[0,percent_resp_thresh(find(activation_input_data.test_thresholds==0.5))],'k--','linewidth',1)
-    plot([0,0.5],[0,0]+percent_resp_thresh(find(activation_input_data.test_thresholds==0.5)),'k--','linewidth',1)
-    formatForLee(gcf); set(gca,'fontsize',14);
-    ylabel('% cells responsive above threshold');
-    xlabel('Threshold (% pulses)')
+% plot percent responsive all cells against different thresholds (cdf)
+%     
+%     percent_resp_thresh = zeros(size(activation_input_data.test_thresholds));
+%     for i_thresh = 1:numel(activation_input_data.test_thresholds)
+%         percent_resp_thresh(i_thresh) = sum(max(exp_threshold_data.percent_responsive,[],2) > activation_input_data.test_thresholds(i_thresh));
+%     end
+%     percent_resp_thresh = percent_resp_thresh./size(exp_threshold_data.percent_responsive,1);
+%     
+%     subplot(1,2,2); hold on
+%     % experimental data
+% %     perc_resp = sum(exp_threshold_data.is_responsive)/numel(exp_threshold_data.is_responsive);
+% %     b=bar(4, perc_resp);
+% %     b.FaceColor = 'k';
+%     plot(activation_input_data.test_thresholds, percent_resp_thresh,'k','linewidth',2);
+%     plot([0.5,0.5],[0,percent_resp_thresh(find(activation_input_data.test_thresholds==0.5))],'k--','linewidth',1)
+%     plot([0,0.5],[0,0]+percent_resp_thresh(find(activation_input_data.test_thresholds==0.5)),'k--','linewidth',1)
+%     formatForLee(gcf); set(gca,'fontsize',14);
+%     ylabel('% cells responsive above threshold');
+%     xlabel('Threshold (% pulses)')
 
 
 %% magnitude and latency of volleys
@@ -90,20 +94,20 @@
 %% plot change in latency of first peak vs. amplitude (peak timing across amps)
     % change in latency relative to peak at lowest amplitude for each
     % unit
-    
     boxplot_params = [];
     boxplot_params.use_same_color_for_all = 1; % omits median color
     
     boxplot_params.median_color = 'k';
     boxplot_params.box_width = 3;
     
-    f=figure('Position',[2098,350,429,420]);
+    f=figure('Position',[2098,350,350,420]);
     f.Name = 'Han_Duncan_changePeakLatency';
-    boxplot_params.master_color = 'k';
-
+    boxplot_params.master_color = [0.4,0.4,0.4];
+    x_data = []; y_data = [];
     for i_amp = 1:numel(lat_input_data.amp_list)
         data_mask = exp_latency_data.delta_amp == lat_input_data.amp_list(i_amp);
-
+        x_data = [x_data;lat_input_data.amp_list(i_amp)+zeros(sum(data_mask),1)];
+        y_data = [y_data;exp_latency_data.delta_lat(data_mask)'*1000];
         if(sum(data_mask) > 2)
             boxplot_wrapper(lat_input_data.amp_list(i_amp),exp_latency_data.delta_lat(data_mask)*1000,boxplot_params);
         end
@@ -117,10 +121,19 @@
     
 %% latency vs. standard dev of spikes in a peak
 
-    f=figure();
-    f.Name = 'Han_duncan_stimChan_spikeTimingVsSpread'
-    % latency (or peak num) vs. width
-    plot(exp_latency_data.lat_list*1000,exp_latency_data.std_list*1000,'k.')
+    f=figure('Position',[2885 476 395 327]); hold on
+    f.Name = 'Han_duncan_stimChan_spikeTimingVsSpread';
+    % latency vs. width
+    amps_plot = [2,5,8,9];
+    color_list = inferno(numel(amps_plot)+1); % remove most yellow color
+    unique_amps = unique(exp_latency_data.amp_idx);
+    color_cnt=1;
+    for i_amp = amps_plot
+        mask = exp_latency_data.amp_idx == unique_amps(i_amp);
+        plot(exp_latency_data.lat_list(mask)*1000,exp_latency_data.std_list(mask)*1000,...
+            '.','color',color_list(color_cnt,:),'markersize',12)
+        color_cnt = color_cnt+1;
+    end
     xlabel('Peak latency (ms)');
     ylabel('Spike timing std (ms)');
     formatForLee(gcf);
@@ -128,13 +141,12 @@
     
 %% num peaks vs amplitude
 
-
-    f=figure('Position',[740 476 678 247]); hold on;
+    f=figure('Position',[740 476 678 327]); hold on;
     f.Name = 'Han_duncan_numPeaksVsAmplitude';
 
     red_fact = 0.75;
     
-    num_peak_data = zeros(numel(lat_input_data.amp_list),1+max(exp_latency_data.num_peaks_amp(:,1)));
+    num_peak_data = zeros(numel(lat_input_data.amp_list),1+max([exp_latency_data.num_peaks_amp(:,1);exp_latency_data.num_peaks_amp_assume(:,1)]));
     for i_amp = 1:numel(lat_input_data.amp_list)
         data_mask = exp_latency_data.num_peaks_amp(:,2) == lat_input_data.amp_list(i_amp);
         
@@ -142,12 +154,29 @@
             num_peaks = i_num-1;
             num_peak_data(i_amp,i_num) = sum(exp_latency_data.num_peaks_amp(data_mask,1) == num_peaks);
 
+            percent_neurons = num_peak_data(i_amp,i_num)/sum(data_mask);
+            
             % draw square for this peak num and amplitude
-            color_use = [1,1 - num_peak_data(i_amp,i_num)*red_fact/sum(data_mask),1 - num_peak_data(i_amp,i_num)*red_fact/sum(data_mask)]; % red only map
+            color_use = [1,1 - percent_neurons*red_fact,1 - percent_neurons*red_fact]; % red only map
             rectangle('Position',[lat_input_data.amp_list(i_amp)-2.5,num_peaks-0.5,5,1],'EdgeColor','k','FaceColor',color_use)
             % write number of units with that number of peaks in square
-            text(lat_input_data.amp_list(i_amp),num_peaks,num2str(num_peak_data(i_amp,i_num)),'horizontalalignment','center','fontsize',12)
+            text(lat_input_data.amp_list(i_amp),num_peaks,num2str(round(percent_neurons*100,0)),'horizontalalignment','center','fontsize',12)
         end
+    end
+    
+    % plot num_peaks_assume for 100uA
+    for i_num = 1:size(num_peak_data,2)
+        num_peaks = i_num-1;
+        num_neurons = size(exp_latency_data.num_peaks_amp_assume,1);
+        num_peak_data(1,i_num) = sum(exp_latency_data.num_peaks_amp_assume(:,1) == num_peaks);
+
+        percent_neurons = num_peak_data(1,i_num)/num_neurons;
+        
+        % draw square for this peak num and amplitude
+        color_use = [1-percent_neurons*red_fact,1 - percent_neurons*red_fact,1 - percent_neurons*red_fact]; % red only map
+        rectangle('Position',[5+lat_input_data.amp_list(end)-2.5,num_peaks-0.5,5,1],'EdgeColor','k','FaceColor',color_use)
+        % write number of units with that number of peaks in square
+        text(lat_input_data.amp_list(end)+5,num_peaks,num2str(round(percent_neurons*100,0)),'horizontalalignment','center','fontsize',12)
     end
     
     xlabel('Amplitude (\muA)');
@@ -162,7 +191,7 @@
     ax.XTick = [5,15,25,40,50,100];
     ax.XRuler.MinorTickValues = lat_input_data.amp_list;
     
-    ylim([-0.5,max(exp_latency_data.num_peaks_amp(:,1))+0.5]);
+    ylim([-0.5,size(num_peak_data,2)]);
     xlim([0,110])
     
 %% compute inhibition duration and plot across amplitudes
@@ -186,7 +215,8 @@
     % amplitude
     boxplot_params = [];
     boxplot_params.use_same_color_for_all = 1;
-    boxplot_params.master_color = 'k';
+    boxplot_params.master_color = [0.4,0.4,0.4];
+    boxplot_params.median_color = 'k';
     boxplot_params.box_width = 2.4;
     boxplot_params.linewidth = 2;
     
@@ -198,7 +228,7 @@
         data = exp_inhib_data.inhib_dur(:,i_amp)*1000;
         data(isnan(data)) = [];
 
-        boxplot_wrapper(inhib_input_data.amp_list(i_amp)+offset(i_type), data, boxplot_params);
+        boxplot_wrapper(inhib_input_data.amp_list(i_amp), data, boxplot_params);
 
     end
     % format

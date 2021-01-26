@@ -28,15 +28,7 @@ for s = 1:numel(scatter_move)
     
 end
 
-% for l = 1:numel(line_move)
-%     if(strcmpi(line_move(l).LineStyle,'-'))
-%         
-%     else
-%         new_handle = copyobj(line_move(l),findobj(fig_keep,'type','axes'));
-%         new_handle.Color = color_move;
-%         new_handle.XData = line_move(l).XData + offset;
-%     end
-% end
+
 
 for e = 1:numel(errorbar_move)
     new_handle = copyobj(errorbar_move(e),findobj(fig_keep,'type','axes'));

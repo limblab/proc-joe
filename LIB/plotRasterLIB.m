@@ -93,6 +93,45 @@ function [ figHandle ] = plotRasterLIB(xData,yData,optsPlotInput,optsSaveInput)
             yVal = optsPlot.DIVIDING_LINES(idx);
             plot([-10000,10000],[yVal, yVal],'-','Color',optsPlot.DIVIDING_LINES_COLORS{idx},'linewidth',1);
         end
+        
+        if(strcmpi(optsPlot.DUKE_BLANKED_REGION,'')~=1)
+            for idx = 1:size(optsPlot.DUKE_BLANKED_REGION,1)
+                if(idx == 1)
+                    y=optsPlot.Y_LIMITS(1);
+                    h=optsPlot.DIVIDING_LINES(idx);
+                elseif(idx == size(optsPlot.DUKE_BLANKED_REGION,1))
+                    y=optsPlot.DIVIDING_LINES(idx-1);
+                    h=optsPlot.Y_LIMITS(2)-optsPlot.DIVIDING_LINES(idx-1);
+                else
+                    y=optsPlot.DIVIDING_LINES(idx-1);
+                    h=optsPlot.DIVIDING_LINES(idx)-optsPlot.DIVIDING_LINES(idx-1);
+                end
+                pos = [optsPlot.DUKE_BLANKED_REGION(idx,1),y,...
+                    optsPlot.DUKE_BLANKED_REGION(idx,2)-optsPlot.DUKE_BLANKED_REGION(idx,1),h]; % [x,y,w,h]
+                temp = rectangle('Position',pos,'edgecolor','none','facecolor',[1,0,0,0.30]);
+                uistack(temp,'bottom');
+            end
+        end
+        
+        if(strcmpi(optsPlot.BLACK_BLANKED_REGION,'')~=1)
+            for idx = 1:size(optsPlot.BLACK_BLANKED_REGION,1)
+                if(idx == 1)
+                    y=optsPlot.Y_LIMITS(1);
+                    h=optsPlot.DIVIDING_LINES(idx);
+                elseif(idx == size(optsPlot.BLACK_BLANKED_REGION,1))
+                    y=optsPlot.DIVIDING_LINES(idx-1);
+                    h=optsPlot.Y_LIMITS(2)-optsPlot.DIVIDING_LINES(idx-1);
+                else
+                    y=optsPlot.DIVIDING_LINES(idx-1);
+                    h=optsPlot.DIVIDING_LINES(idx)-optsPlot.DIVIDING_LINES(idx-1);
+                end
+                pos = [optsPlot.BLACK_BLANKED_REGION(idx,1),y,...
+                    optsPlot.BLACK_BLANKED_REGION(idx,2)-optsPlot.BLACK_BLANKED_REGION(idx,1),h]; % [x,y,w,h]
+                temp = rectangle('Position',pos,'edgecolor','none','facecolor',[0,0,0,0.2]);
+                uistack(temp,'bottom');
+            end
+        end
+        
     end
     
     % plot stim times if prompted
@@ -178,6 +217,8 @@ function [optsPlot] = configureOptionsPlot(optsPlotInput,xData,yData)
     optsPlot.MARKER_SIZE = 3;
     optsPlot.DIVIDING_LINES = '';
     optsPlot.DIVIDING_LINES_COLORS = {'k','k','k','k','k','k','k','k','k','k','k','k','k','k','k'};
+    optsPlot.DUKE_BLANKED_REGION = '';
+    optsPlot.BLACK_BLANKED_REGION = '';
     optsPlot.PLOT_STIM_TIME = 0;
     optsPlot.STIM_DATA_X = [];
     optsPlot.STIM_DATA_Y = [];

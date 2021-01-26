@@ -43,8 +43,8 @@
     end
     
 %% get decay time constant and response amp for amp-freq and intermittent data. This can take awhile....
-    analyze_amp_freq_data = 1;
-    analyze_intermittent_data = 0;
+    analyze_amp_freq_data = 0;
+    analyze_intermittent_data = 1;
 
     decay_rate_input_data = [];
     
@@ -55,7 +55,7 @@
     decay_rate_input_data.response_amp_num_pulses = -1; % set as a positive number to override response_amp_time
     decay_rate_input_data.response_amp_pulse_window = [1,5]; % if using num_pulses, this determines when after each pulse to count spikes
     
-    field_names = {'stim_chan','nonstim_chan'};
+    field_names = {'stim_chan'};
     for i_field = 1:numel(field_names)
         if(analyze_amp_freq_data)
             decay_rate_input_data.is_intermittent = 0;
@@ -75,8 +75,10 @@
     marker_size = 8;
     offset = [0.95,1,1.05];
         
-    f=figure(); hold on
-    f.Name = 'stim_channel_ampfreq_decay_rate';
+    colors = inferno(4);
+    
+    f=figure('Position',[2426 347 445 330]); hold on
+    f.Name = 'nonstim_channel_ampfreq_decay_rate';
     
     boxplot_params.linewidth = 1.75;
     boxplot_params.box_width = 3.5;
@@ -86,14 +88,13 @@
     boxplot_params.use_log_x_scale = 0;
 
     x_data = [131,131,131,104,104,104,80,80,80,51,51,51]+[-3.5,0,3.5,-3.5,0,3.5,-3.5,0,3.5,-3.5,0,3.5];
-    color_idx = [0,1,2,0,1,2,0,1,2,0,1,2];
-    f.Position = [550 473 445 420];
+    color_idx = [0,1,2,0,1,2,0,1,2,0,1,2]+1;
     for condition = 1:12
-        boxplot_params.outlier_color = getColorFromList(1,color_idx(condition));
-        boxplot_params.median_color = getColorFromList(1,color_idx(condition));
-        boxplot_params.box_color = getColorFromList(1,color_idx(condition));
-        boxplot_params.whisker_color = getColorFromList(1,color_idx(condition));
-        boxplot_wrapper(x_data(condition),(exp_amp_freq_data.stim_chan_decay_rates(:,condition)),boxplot_params);
+        boxplot_params.outlier_color = colors(color_idx(condition),:);
+        boxplot_params.median_color = colors(color_idx(condition),:);
+        boxplot_params.box_color = colors(color_idx(condition),:);
+        boxplot_params.whisker_color = colors(color_idx(condition),:);
+        boxplot_wrapper(x_data(condition),(exp_amp_freq_data.nonstim_chan_decay_rates(:,condition)),boxplot_params);
     end
     xlabel('Frequency (Hz)');
     ylabel('Decay rate (1/s)')
@@ -116,7 +117,7 @@
     x_data = [50,50,50,100,100,100,200,200,200,4000,4000,4000].*[1.1,1,0.9,1.1,1,0.9,1.1,1,0.9,1.1,1,0.9];
     color_idx = [2,1,0,2,1,0,2,1,0,2,1,0];
     f=figure(); hold on
-    f.Name = 'stim_channel_intermittent_decay_rate';
+    f.Name = 'stim_channel_intermittent_decay_rate_131Hz';
     f.Position = [550 473 890 420];
     ax1=subplot(1,2,1);
     for condition = 1:9
@@ -124,7 +125,7 @@
         boxplot_params.median_color = getColorFromList(1,color_idx(condition));
         boxplot_params.box_color = getColorFromList(1,color_idx(condition));
         boxplot_params.whisker_color = getColorFromList(1,color_idx(condition));
-        boxplot_wrapper(x_data(condition),exp_intermittent_data.high_freq.stim_chan_decay_rates(:,condition),boxplot_params);
+        boxplot_wrapper(x_data(condition),exp_intermittent_data.low_freq.stim_chan_decay_rates(:,condition),boxplot_params);
     end
     xlabel('Pulse active time (ms)');
     ylabel('Decay rate (1/s)')
@@ -154,7 +155,7 @@
     set(gca,'fontsize',14);
     ax.XMinorTick = 'off';
     linkaxes([ax1,ax2],'y');
-    
+    ax1.YLim(1)=0;
 %% plot response_amp vs. distance and fit 
     f=figure();
     f.Name = 'AmpFreq_response_amplitude_distance';    
@@ -218,9 +219,9 @@
     
     freq_list = [51,80,104,131];
     amp_list = [20,40,60];
-    amp_colors = [0,200,0; 0,128,0; 0,100,0]/255;
-    
-    
+%     amp_colors = [0,200,0; 0,128,0; 0,100,0]/255;
+    amp_colors = inferno(4);
+        
     for i_plot = 1:2
         subplot(1,2,i_plot)
         switch i_plot
@@ -346,7 +347,100 @@
     ax.XMinorTick = 'off';
  
     
+%% compare response amp vs distance metrics. 
+% Fit with exponential decay.
+% Longest distance where x percentile (75th?) response amp is above some value?
+
+%     f=figure();
+%     f.Name = 'AmpFreq_response_amplitude_distance';    
+%     
+    plot_all_conditions = 0;
     
+    condition_map = [10,11,12,7,8,9,4,5,6,1,2,3]; % reorder conditions since the data order is weird
+    if(plot_all_conditions)
+        idx_plot = 1:12;
+        subplot_map = condition_map;
+        subplot_size = [4,3];
+    else
+        idx_plot = [4,6,10,12]; % 20uA 104Hz, 60uA 104Hz, 20uA 51Hz, 60uA 51Hz.
+        subplot_map = [3,4,1,2];
+        subplot_size = [2,2];
+    end  
+    
+    amp_freq_fit = {};
+    a_params = zeros(4,3);
+    a_bounds = zeros(4,3,2);
+    b_params = zeros(4,3);
+    b_bounds = zeros(4,3,2);
+    last_bin = zeros(4,3);
+    
+    prctile_val = 75;
+    response_amp_threshold = 30;
+    
+    x_pred = [0:10:4500];
+    x_step = 100;
+    x_width = 200; % 200 both ways
+    x_max = 4500;
+    for i = 1:12 % get fit and plot dot plot of responses for idx_plot
+        % fit data
+        amp_freq_fit{i} = fit(exp_amp_freq_data.nonstim_chan_distance_from_stim,exp_amp_freq_data.nonstim_chan_response_amp(:,i),...
+            'a*exp(-x/b)','StartPoint',[50,4000],'upper',[500,1E5]);
+        a_params(ceil(condition_map(i)/3),mod(condition_map(i)-1,3)+1) = amp_freq_fit{i}.a;
+        b_params(ceil(condition_map(i)/3),mod(condition_map(i)-1,3)+1) = amp_freq_fit{i}.b;
+        temp = confint(amp_freq_fit{i});
+        a_bounds(ceil(condition_map(i)/3),mod(condition_map(i)-1,3)+1,:) = temp(:,1);
+        b_bounds(ceil(condition_map(i)/3),mod(condition_map(i)-1,3)+1,:) = temp(:,2);
+        
+        % get largest distance where x percentile response amp is above
+        % some value
+        % take steps
+        x_curr = x_width;
+        prctile_data = []; x_data = [];
+        while(x_curr < x_max)
+            resp_mask = exp_amp_freq_data.nonstim_chan_distance_from_stim > x_curr-x_width & exp_amp_freq_data.nonstim_chan_distance_from_stim < x_curr+x_width;
+            response_data = exp_amp_freq_data.nonstim_chan_response_amp(resp_mask,i);
+            prctile_data(end+1) = prctile(response_data,prctile_val);
+            x_data(end+1) = x_curr;
+            
+            x_curr = x_curr+x_step;
+            
+        end
+        % bin neurons by distance, get x percentile response amp in each bin
+%         [~,~,bin_idx] = histcounts(exp_amp_freq_data.nonstim_chan_distance_from_stim,x_bin_edges);
+%         
+%         unique_bin_idx = unique(bin_idx);
+%         prctile_data = nan(numel(unique_bin_idx),1);
+%         for i_bin = 1:numel(unique_bin_idx)
+%             response_data = exp_amp_freq_data.nonstim_chan_response_amp(bin_idx==unique_bin_idx(i_bin),i);
+%             prctile_data(i_bin) = prctile(response_data,prctile_val);
+%         end
+%         
+        if(~isempty(find(prctile_data > response_amp_threshold,1,'last')))
+            last_bin(ceil(condition_map(i)/3),mod(condition_map(i)-1,3)+1) = x_data(find(prctile_data > response_amp_threshold,1,'last'));
+        else
+            last_bin(ceil(condition_map(i)/3),mod(condition_map(i)-1,3)+1) = 0;
+        end
+        
+%         if(any(i==idx_plot))
+%             % plot
+%             data_idx = find(i==idx_plot);
+%             ax(data_idx) = subplot(subplot_size(1),subplot_size(2),subplot_map(data_idx));
+%             plot(exp_amp_freq_data.nonstim_chan_distance_from_stim,exp_amp_freq_data.nonstim_chan_response_amp(:,i),'k.')
+%             hold on
+%             plot(x_pred,feval(amp_freq_fit{i},[0:10:4500]),'r--','linewidth',2)
+%             
+%             formatForLee(gcf);
+%             set(gca,'fontsize',14)
+%             if(i==idx_plot(1))
+%                 xlabel('Distance (\mum)')
+%                 ylabel('FR above baseline (Hz)');
+%             end
+%         end
+    end
+
+%     linkaxes(ax,'xy');
+%     ylim([-30,250])
+%     xlim([0,4700])   
     
     
     %         amp_freq_mdl{end+1} = fitglm(data_table,modelspec,'Distribution','poisson')
