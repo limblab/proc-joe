@@ -1,17 +1,17 @@
 %% set file names 
 
-    inputData.folderpath = 'D:\Lab\Data\StimPDs\Pop\20201023\';
+    inputData.folderpath = 'D:\Lab\Data\StimArtifact\anodic_pulses\chan31\';
     
-%     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+    inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 %     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
-    inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Pop_18E3\Array Map Files\Implant_2020_01\6250-002086\SN 6250-002086.cmp';
+%     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Pop_18E3\Array Map Files\Implant_2020_01\6250-002086\SN 6250-002086.cmp';
 
     folderpath = inputData.folderpath; % rest of code uses folderpath currently...may have switched this, not 100% certain
 
-    inputData.task='taskWM';
+    inputData.task='taskRW';
     inputData.ranBy='ranByJoseph'; 
-    inputData.array1='arrayLeftM1'; 
-    inputData.monkey='monkeyPop';
+    inputData.array1='arrayLeftS1'; 
+    inputData.monkey='monkeyHan';
     inputData.labnum = 6;
 
     pwd=cd;
@@ -22,17 +22,17 @@
 
 %% extract relevant data for all units -- recommend saving arrayData after this step
     tic
-
-    for i_file = 7:numel(fileList)
+    i_file = 1;
+%     for i_file = 1:numel(fileList)
         optsExtract.ANALOG_SYNC_LINE = 'stimsync';
         optsExtract.STIMULI_RESPONSE = 'all';
-        optsExtract.STIMULATIONS_PER_TRAIN = 10;
+        optsExtract.STIMULATIONS_PER_TRAIN = 1;
         optsExtract.STIMULATION_BATCH_SIZE = 1000;
         optsExtract.DOWNSAMPLE_STIM_TIMES = 0;
 
         optsExtract.REMOVE_IMPEDANCE_TEST = 0; % basically removes stim on's if impedance test is detected.
 
-        optsExtract.NUM_WAVEFORM_TYPES = 1;
+        optsExtract.NUM_WAVEFORM_TYPES = 9;
 
         optsExtract.USE_STIM_CODE = 0;
         optsExtract.STIM_ELECTRODE = {};
@@ -50,8 +50,8 @@
         end
         optsExtract.CHAN_LIST = {chanStim};
 
-        optsExtract.PRE_TIME = 500/1000; % made negative in the function
-        optsExtract.POST_TIME = 1000/1000;
+        optsExtract.PRE_TIME = 200/1000; % made negative in the function
+        optsExtract.POST_TIME = 500/1000;
 
         optsExtract.BIN_SIZE = 5/1000;
         optsExtract.TIME_AFTER_STIMULATION_WAVEFORMS = 10/1000;
@@ -60,11 +60,11 @@
         optsExtract.GET_KIN = 1;
         optsExtract.GET_FORCE = 0;
 
-        arrayData = extractDataAroundStimulations(inputData,fileList(i_file),stimInfoFileList(i_file),optsExtract);
+        arrayData = extractDataAroundStimulations(inputData,fileList,stimInfoFileList,optsExtract);
         
-        array_data_fname = [fileList(i_file).name(1:end-26),'arrayData'];
-        save(array_data_fname,'arrayData','optsExtract');
-    end
+%         array_data_fname = [fileList(i_file).name(1:end-26),'arrayData'];
+%         save(array_data_fname,'arrayData','optsExtract');
+%     end
     toc
     
     
@@ -81,12 +81,12 @@ for arrIdx = 1:numel(arrayData)
     optsPlotFunc.FIGURE_PREFIX = 'Han_20190923';
 
 
-    optsPlotFunc.PRE_TIME = 400/1000;
-    optsPlotFunc.POST_TIME = 800/1000;
+    optsPlotFunc.PRE_TIME = 20/1000;
+    optsPlotFunc.POST_TIME = 50/1000;
 
     optsPlotFunc.SORT_DATA = '';
 
-    optsPlotFunc.PLOT_AFTER_STIMULATION_END = 0;
+    optsPlotFunc.PLOT_AFTER_STIMULATION_END = 1;
     optsPlotFunc.STIMULATION_LENGTH = [];
     
     rasterPlots = plotRasterStim(arrayData{arrIdx},arrayData{arrIdx}.NN,optsPlotFunc);
