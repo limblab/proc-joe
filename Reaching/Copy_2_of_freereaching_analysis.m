@@ -64,16 +64,16 @@
             end
 
             % remove unsorted neurons
-%             unit_ids = td_list{i_td}(1).(sprintf('%s_unit_guide',arrayname));
-%             unsorted_units = (unit_ids(:,2)==0);
-%             new_unit_guide = unit_ids(~unsorted_units,:);
-%             for trialnum = 1:length(td_list{i_td})
-%                 td_list{i_td}(trialnum).(sprintf('%s_unit_guide',arrayname)) = new_unit_guide;
-% 
-%                 spikes = td_list{i_td}(trialnum).(sprintf('%s_spikes',arrayname));
-%                 spikes(:,unsorted_units) = [];
-%                 td_list{i_td}(trialnum).(sprintf('%s_spikes',arrayname)) = spikes;
-%             end
+            unit_ids = td_list{i_td}(1).(sprintf('%s_unit_guide',arrayname));
+            unsorted_units = (unit_ids(:,2)==0);
+            new_unit_guide = unit_ids(~unsorted_units,:);
+            for trialnum = 1:length(td_list{i_td})
+                td_list{i_td}(trialnum).(sprintf('%s_unit_guide',arrayname)) = new_unit_guide;
+
+                spikes = td_list{i_td}(trialnum).(sprintf('%s_spikes',arrayname));
+                spikes(:,unsorted_units) = [];
+                td_list{i_td}(trialnum).(sprintf('%s_spikes',arrayname)) = spikes;
+            end
 
             % add firing rates in addition to spike counts
             td_list{i_td} = addFiringRates(td_list{i_td},struct('array',arrayname));
@@ -83,11 +83,7 @@
                 % get marker velocity
                 td_list{i_td} = getDifferential(td_list{i_td},struct('signals','dlc_pos','alias','dlc_vel'));
                 % remove time points where dlc tracking is bad
-                dlc_idx = [find((strcmpi(td_list{i_td}.dlc_pos_names,['hand2','x']))),...
-                            find((strcmpi(td_list{i_td}.dlc_pos_names,['hand2','_y']))),...
-                            find((strcmpi(td_list{i_td}.dlc_pos_names,['elbow1','_x']))),...
-                            find((strcmpi(td_list{i_td}.dlc_pos_names,['elbow1','_y'])))];
-                bad_points = any(isnan(td_list{i_td}.dlc_pos(:,dlc_idx)),2) | any(isnan(td_list{i_td}.dlc_vel(:,dlc_idx)),2);
+                bad_points = any(isnan(td_list{i_td}.dlc_pos),2) | any(isnan(td_list{i_td}.dlc_vel),2);
                 td_names = fieldnames(td_list{i_td});
                 for i_name = 1:numel(td_names)
                     if(size(bad_points,1) == size(td_list{i_td}.(td_names{i_name}),1))
@@ -104,7 +100,7 @@
             % meaningless during free reach...
             markername = 'hand3';
             dlc_idx = find((strcmpi(td_list{i_td}.dlc_pos_names,[markername,'_z'])));
-            robot_height(end+1) = mean(td_list{i_td}.dlc_pos(:,dlc_idx),'omitnan');
+            robot_height(end+1) = mean(td_list{i_td}.dlc_pos(:,dlc_idx));
         end
         td_all{filenum} = td_list;
         task_list_all{filenum} = task_list;
@@ -114,23 +110,21 @@
 
     
     
-%% Loop through files to make kinematic figures
-    fprintf('Starting kinematic analysis of %d files.',length(td_all))
-    
-    kin_input_data = [];
-    for filenum = 1:length(td_all)
+%% plot handle vs hand position
+    markername = 'hand3';
+    for filenum = 1:numel(td_all)
         td_list = td_all{filenum};
         task_list = task_list_all{filenum};
-        % bin data at 50ms
         for i_td = 1:numel(td_list)
-            td_list{i_td} = binTD(td_list{i_td},0.05/td_list{i_td}(1).bin_size);
+            if(strcmpi(task_list{i_td},'RT'))
+                figure();
+                dlc_idx = [find((strcmpi(td_list{1}.dlc_pos_names,[markername,'_x']))),find((strcmpi(td_list{1}.dlc_pos_names,[markername,'_y'])))];
+                plot(td_list{i_td}.pos(:,2),td_list{i_td}.dlc_pos(:,dlc_idx(1)),'k');
+                hold on;
+                
+            end
         end
-        
-        % get kinematic data and make plots
-        kin_data = reachingKinematics(td_list,task_list,kin_input_data);
     end
-    
-    
 
     
 %% Loop through files to cross-validate encoders
@@ -152,7 +146,7 @@
             'num_tuning_bins',16,...
             'crossval_lookup',[],...
             'get_tuning_curves',false,...
-            'num_repeats',1,... % Raeed used 20 repeats.
+            'num_repeats',1,... %Raeed used 20 repeats
             'num_folds',5));
     end
 
@@ -250,8 +244,8 @@
                 % scatter filled circles if there's a winner, empty circles if not
                 no_winner =  cellfun(@isempty,pr2_winners{monkeynum,sessionnum}(pairnum,:));
                 scatter(...
-                    avg_pR2.(strcat(model_pairs{pairnum,1},'_space1_eval'))(no_winner),...
-                    avg_pR2.(strcat(model_pairs{pairnum,2},'_space1_eval'))(no_winner),...
+                    avg_pR2.(strcat(model_pairs{pairnum,1},'_eval'))(no_winner),...
+                    avg_pR2.(strcat(model_pairs{pairnum,2},'_eval'))(no_winner),...
                     [],session_colors(sessionnum,:))
                 scatter(...
                     avg_pR2.(strcat(model_pairs{pairnum,1},'_eval'))(~no_winner),...
