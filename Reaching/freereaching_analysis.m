@@ -10,7 +10,7 @@
 
 %% Set up meta info and load trial data
     if ispc
-        folderpath = 'D:\Lab\Data\DLC_videos\Han_20201204_rwFreeReach\neural-data\';
+        folderpath = 'C:\Users\dongq\DeepLabCut\Han_20201204_rwFreeReach\neural-data\';
     else
         folderpath = '/data/raeed/project-data/limblab/s1-kinematics';
     end
@@ -344,6 +344,7 @@
     sessionnum = 1;
     spacenames = {'RT3D','RT2D'};
     legend_data = [];
+
     figure
     for monkeynum = 1:length(monkey_names)
         for spacenum = 1:2 % 1 = 3D, 2 = 2D
@@ -414,6 +415,7 @@
                 'xlim',[-0.1 0.6],'ylim',[-0.1 0.6])
             axis square
             if monkeynum ~= 1
+                suptitle('Pseudo-R^2 pairwise comparisons')
                 set(gca,'box','off','tickdir','out',...
                     'xtick',[],'ytick',[])
             end
