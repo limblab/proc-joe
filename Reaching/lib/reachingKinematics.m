@@ -138,8 +138,8 @@ function [output_data] = reachingKinematics(td_list,task_list,input_data)
     % format workspace figures
     for i = 1:numel(f_workspace)
         figure(f_workspace(i))
-%         l=legend('3D task','2D task');
-%         set(l,'box','off','location','best');
+        l=legend('3D task','2D task');
+        set(l,'box','off','location','best');
         formatForLee(gcf);
         set(gca,'fontsize',14);
     end

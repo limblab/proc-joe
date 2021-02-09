@@ -64,22 +64,24 @@
             end
 
             % remove unsorted neurons
-%             unit_ids = td_list{i_td}(1).(sprintf('%s_unit_guide',arrayname));
-%             unsorted_units = (unit_ids(:,2)==0);
-%             new_unit_guide = unit_ids(~unsorted_units,:);
-%             for trialnum = 1:length(td_list{i_td})
-%                 td_list{i_td}(trialnum).(sprintf('%s_unit_guide',arrayname)) = new_unit_guide;
-% 
-%                 spikes = td_list{i_td}(trialnum).(sprintf('%s_spikes',arrayname));
-%                 spikes(:,unsorted_units) = [];
-%                 td_list{i_td}(trialnum).(sprintf('%s_spikes',arrayname)) = spikes;
-%             end
+            unit_ids = td_list{i_td}(1).(sprintf('%s_unit_guide',arrayname));
+            unsorted_units = (unit_ids(:,2)==0);
+            new_unit_guide = unit_ids(~unsorted_units,:);
+            for trialnum = 1:length(td_list{i_td})
+                td_list{i_td}(trialnum).(sprintf('%s_unit_guide',arrayname)) = new_unit_guide;
+
+                spikes = td_list{i_td}(trialnum).(sprintf('%s_spikes',arrayname));
+                spikes(:,unsorted_units) = [];
+                td_list{i_td}(trialnum).(sprintf('%s_spikes',arrayname)) = spikes;
+            end
 
             % add firing rates in addition to spike counts
             td_list{i_td} = addFiringRates(td_list{i_td},struct('array',arrayname));
 
 
             if(isfield(td_list{i_td},'dlc_pos'))
+                % set origin as shoulder position at t=0
+                td_list{i_td} = setOriginAsShoulder(td_list{i_td},1);
                 % get marker velocity
                 td_list{i_td} = getDifferential(td_list{i_td},struct('signals','dlc_pos','alias','dlc_vel'));
                 % remove time points where dlc tracking is bad
@@ -100,6 +102,8 @@
             % "workspace"
             td_list{i_td} = getExperimentPhase(td_list{i_td},task_list{i_td});
 
+            
+            
             % get robot height (z data of a hand marker). This is
             % meaningless during free reach...
             markername = 'hand3';
@@ -121,10 +125,6 @@
     for filenum = 1:length(td_all)
         td_list = td_all{filenum};
         task_list = task_list_all{filenum};
-        % bin data at 50ms
-        for i_td = 1:numel(td_list)
-            td_list{i_td} = binTD(td_list{i_td},0.05/td_list{i_td}(1).bin_size);
-        end
         
         % get kinematic data and make plots
         kin_data = reachingKinematics(td_list,task_list,kin_input_data);
@@ -151,7 +151,7 @@
             'arrayname',arrayname,...
             'num_tuning_bins',16,...
             'crossval_lookup',[],...
-            'get_tuning_curves',false,...
+            'get_tuning_curves',true,...
             'num_repeats',1,... % Raeed used 20 repeats.
             'num_folds',5));
     end
@@ -184,7 +184,7 @@
         % We already have evaluation table in crossEval... just extract the models we want
         model_eval{monkey_idx,session_ctr(monkey_idx)} = encoderResults.crossEval(:,contains(encoderResults.crossEval.Properties.VariableDescriptions,'meta'));
         model_eval_cell = cell(1,length(included_models));
-        [space_eval_cell,space_eval_within_cell] = deal(cell(2,length(included_models)));
+        [space_eval_cell,space_eval_within_cell,space_eval_across_cell] = deal(cell(2,length(included_models)));
         for modelnum = 1:length(included_models)
             model_eval_cell{modelnum} = table(encoderResults.crossEval.(sprintf('glm_%s_model_eval',included_models{modelnum})),...
                 'VariableNames',strcat(included_models(modelnum),'_eval'));
@@ -201,19 +201,124 @@
                 catch ME
                     warning('Within space predictions are not available. Eval table is not completely filled out')
                 end
+                
+                try
+                    space_eval_across_cell{spacenum,modelnum} = table(encoderResults.crossEval.(sprintf('glm_%s_model_space%d_across_eval',included_models{modelnum},spacenum)),...
+                        'VariableNames',{sprintf('%s_space%d_across_eval',included_models{modelnum},spacenum)});
+                    space_eval_across_cell{spacenum,modelnum}.Properties.VariableDescriptions = {'linear'};
+                catch ME
+                    warning('Across space predictions are not available. Eval table is not completely filled out')
+                end
+                
             end
         end
         model_eval{monkey_idx,session_ctr(monkey_idx)} = horzcat(...
             model_eval{monkey_idx,session_ctr(monkey_idx)},...
             model_eval_cell{:},...
             space_eval_cell{:},...
-            space_eval_within_cell{:});
+            space_eval_within_cell{:},...
+            space_eval_across_cell{:});
 
+        % We already have tuning table in crossTuning... just extract the models we want
+        model_tuning{monkey_idx,session_ctr(monkey_idx)} = encoderResults.crossTuning(:,...
+            contains(encoderResults.crossTuning.Properties.VariableDescriptions,'meta') |...
+            strcmpi(encoderResults.crossTuning.Properties.VariableNames,'bins'));
+        model_tuning_cell = cell(1,length(included_models)+1);
+        for modelnum = 1:length(included_models)
+            model_tuning_cell{modelnum} = table(...
+                encoderResults.crossTuning.(sprintf('glm_%s_model_dlc_vel_handxyCurve',included_models{modelnum})),...
+                encoderResults.crossTuning.(sprintf('glm_%s_model_dlc_vel_handxyPD',included_models{modelnum})),...
+                'VariableNames',strcat(included_models(modelnum),{'_velCurve','_velPD'}));
+            model_tuning_cell{modelnum}.Properties.VariableDescriptions = {'linear','circular'};
+        end
+        model_tuning_cell{end} = table(...
+            encoderResults.crossTuning.([arrayname,'_FR_dlc_vel_handxyCurve']),...
+            encoderResults.crossTuning.([arrayname,'_FR_dlc_vel_handxyPD']),...
+            'VariableNames',strcat('S1_FR',{'_velCurve','_velPD'}));
+        model_tuning_cell{end}.Properties.VariableDescriptions = {'linear','circular'};
+        % put it together
+        model_tuning{monkey_idx,session_ctr(monkey_idx)} = horzcat(...
+            model_tuning{monkey_idx,session_ctr(monkey_idx)},...
+            model_tuning_cell{:});
+
+        % Get tuning curve correlation table
+        tuning_corr{monkey_idx,session_ctr(monkey_idx)} = calculateEncoderTuningCorr(...
+            encoderResults,struct('model_aliases',{included_models},'neural_signal',[arrayname,'_FR']));
+
+        % get tuned neurons
+        if isfield(encoderResults,'tunedNeurons')
+            % Get PD shift error table
+            shift_vaf{monkey_idx,session_ctr(monkey_idx)} = calculateEncoderPDShiftVAF(...
+                encoderResults,struct('model_aliases',{included_models}));
+            tuned_neurons{monkey_idx,session_ctr(monkey_idx)} = encoderResults.tunedNeurons;
+        else
+            warning('No tuned neurons field found!')
+        end
+        
+        
         % output a counter
         fprintf('Processed file %d of %d at time %f\n',filenum,length(encoderResults_cell),toc(fileclock))
     end
     
+%% plot random "trials" and predictions from one of the models - real FR, model predict FR
 
+    unit_idx = 25;
+    td_idx = 1; % pick which trial data (task) to use
+
+    window_plot = [-2,2]; % s
+    num_trials_plot = 4;
+    bin_size = td_list{td_idx}.bin_size;
+    % pick random time point, make sure data in window are consecutive
+    % based on trial_idx, if yes go on and plot
+    
+    td_list_smooth = smoothSignals(td_list{td_idx},'LeftS1_FR');
+
+    time_idx = []; window_idx = [];
+    for i_trial = 1:num_trials_plot
+        is_consec = 0;
+        test_ctr = 0;
+        while ~is_consec && test_ctr < 100
+            time_idx(i_trial) = (rand()*(numel(td_list{td_idx}.trial_idx) - floor(diff(window_plot)*2/bin_size))) + floor(diff(window_plot)/bin_size);
+            window_idx(i_trial,:) = time_idx(i_trial)+floor(window_plot./bin_size);
+            trial_idx = td_list{td_idx}.trial_idx(window_idx(i_trial,1):window_idx(i_trial,2));
+
+            if(max(diff(trial_idx)) == 1)
+                is_consec = 1;
+            end
+
+            test_ctr = test_ctr + 1;
+        end
+    end
+    
+    figure('Position',[145 558 1095 420]); hold on;
+    % plot FR for unit
+    x_data = (0:1:diff(window_idx(1,:)))*bin_size;
+    encoderResults = encoderResults_cell{1};
+    repeatnum = 1;
+    % predict FR for unit in time window, then plot for each model
+    for mdlnum = 1:numel(models_to_plot)
+        td_list_smooth = getModel(td_list_smooth,encoderResults.glm_info{repeatnum,mdlnum});
+    end
+    for i_trial = 1:num_trials_plot
+        ax_list(i_trial) = subplot(1,num_trials_plot,i_trial); hold on;
+        plot(x_data,td_list_smooth.LeftS1_FR(window_idx(i_trial,1):window_idx(i_trial,2),unit_idx),'k','linewidth',2)
+
+        for mdlnum = 1:numel(models_to_plot)
+            glm_fieldname = ['glm_',models_to_plot{mdlnum},'_model'];
+            plot(x_data,td_list_smooth.(glm_fieldname)(window_idx(i_trial,1):window_idx(i_trial,2),unit_idx),'color',getColorFromList(1,mdlnum-1),'linewidth',2)
+        end
+        
+        formatForLee(gcf);
+        set(gca,'fontsize',14);
+        
+    end
+    
+    linkaxes(ax_list,'xy');
+    subplot(1,4,1); 
+    l=legend('Actual','Hand-only','Whole-arm');
+    set(l,'box','off');
+    xlabel('Time (s)');
+    ylabel('FR (Hz)');
 %% Get pR2 pairwise comparisons for model pairs and all neurons
     % find winners of pR2
     pr2_winners = cell(length(monkey_names),size(session_colors,1));
@@ -234,79 +339,137 @@
     handelbow_winners = sum(strcmpi(all_pr2_winners,'handelbow'),2);
     fprintf('pR2 winners -- hand-only: %d, whole-arm: %d\n',ext_winners,handelbow_winners)
 
-    % make the pairwise comparison scatter plot
+    % compare two models trained and tested within each task. Subplot for each task, each model is
+    % an axis
+    sessionnum = 1;
+    spacenames = {'RT3D','RT2D'};
+    legend_data = [];
     figure
     for monkeynum = 1:length(monkey_names)
-        for pairnum = 1:size(model_pairs,1)
+        for spacenum = 1:2 % 1 = 3D, 2 = 2D
             % set subplot
-            subplot(size(model_pairs,1),length(monkey_names),...
-                (pairnum-1)*length(monkey_names)+monkeynum)
+            subplot(1,length(monkey_names),monkeynum)
             plot([-1 1],[-1 1],'k--','linewidth',0.5)
             hold on
             plot([0 0],[-1 1],'k-','linewidth',0.5)
             plot([-1 1],[0 0],'k-','linewidth',0.5)
-            for sessionnum = 1:session_ctr(monkeynum)
-                avg_pR2 = neuronAverage(model_eval{monkeynum,sessionnum},struct('keycols','signalID','do_ci',false));
-                % scatter filled circles if there's a winner, empty circles if not
-                no_winner =  cellfun(@isempty,pr2_winners{monkeynum,sessionnum}(pairnum,:));
-                scatter(...
-                    avg_pR2.(strcat(model_pairs{pairnum,1},'_space1_eval'))(no_winner),...
-                    avg_pR2.(strcat(model_pairs{pairnum,2},'_space1_eval'))(no_winner),...
-                    [],session_colors(sessionnum,:))
-                scatter(...
-                    avg_pR2.(strcat(model_pairs{pairnum,1},'_eval'))(~no_winner),...
-                    avg_pR2.(strcat(model_pairs{pairnum,2},'_eval'))(~no_winner),...
-                    [],session_colors(sessionnum,:),'filled')
-            end
+            
+            avg_pR2 = neuronAverage(model_eval{monkeynum,sessionnum},struct('keycols','signalID','do_ci',false));
+            % scatter filled circles if there's a winner, empty circles if not
+            no_winner =  cellfun(@isempty,pr2_winners{monkeynum,sessionnum}(1,:));
+            model_extension = ['_space',num2str(spacenum),'_within_eval'];
+
+            scatter(...
+                avg_pR2.(strcat(model_pairs{1,1},model_extension))(no_winner),...
+                avg_pR2.(strcat(model_pairs{1,2},model_extension))(no_winner),...
+                [],getColorFromList(1,spacenum+1));
+            legend_data(end+1) = scatter(...
+                avg_pR2.(strcat(model_pairs{1,1},model_extension))(~no_winner),...
+                avg_pR2.(strcat(model_pairs{1,2},model_extension))(~no_winner),...
+                [],getColorFromList(1,spacenum+1),'filled');
+                
+                
             % make axes pretty
             set(gca,'box','off','tickdir','out',...
                 'xlim',[-0.1 0.6],'ylim',[-0.1 0.6])
             axis square
-            if monkeynum ~= 1 || pairnum ~= 1
+            if monkeynum ~= 1
                 set(gca,'box','off','tickdir','out',...
                     'xtick',[],'ytick',[])
             end
-            xlabel(sprintf('%s pR2',getModelTitles(model_pairs{pairnum,1})))
-            ylabel(sprintf('%s pR2',getModelTitles(model_pairs{pairnum,2})))
+            xlabel(sprintf('%s pR2',getModelTitles(model_pairs{1,1})))
+            ylabel(sprintf('%s pR2',getModelTitles(model_pairs{1,2})))
         end
+        legend(legend_data,spacenames)
     end
-    suptitle('Pseudo-R^2 pairwise comparisons')
+    suptitle('Within Pseudo-R^2 pairwise comparisons')
+    
+    
+%% plot, for each model, RT3D vs RT2D predictions on the same plot
 
-    % show scatter plot for hand/elbow pR2 within condition vs against condition
-    for modelnum = 1:length(models_to_plot)
-        figure
-        for monkeynum = 1:length(monkey_names)
-            for spacenum = 1:2
-                % set subplot
-                subplot(2,length(monkey_names),(spacenum-1)*length(monkey_names)+monkeynum)
-
-                % plot lines
-                plot([-1 1],[-1 1],'k--','linewidth',0.5)
-                hold on
-                plot([0 0],[-1 1],'k-','linewidth',0.5)
-                plot([-1 1],[0 0],'k-','linewidth',0.5)
-
-                % plot out each session
-                for sessionnum = 1:session_ctr(monkeynum)
-                    avg_pR2 = neuronAverage(model_eval{monkeynum,sessionnum},struct('keycols','signalID','do_ci',false));
-                    scatter(...
-                        avg_pR2.(sprintf('%s_space%d_eval',models_to_plot{modelnum},spacenum)),...
-                        avg_pR2.(sprintf('%s_space%d_within_eval',models_to_plot{modelnum},spacenum)),...
-                        [],session_colors(sessionnum,:),'filled')
-                end
-                % make axes pretty
+    sessionnum = 1;
+    legend_data = [];
+    figure
+    for monkeynum = 1:length(monkey_names)
+        for i_mdl = 1:length(models_to_plot) % 1 = 3D, 2 = 2D
+            % set subplot
+            subplot(1,length(monkey_names),monkeynum)
+            plot([-1 1],[-1 1],'k--','linewidth',0.5)
+            hold on
+            plot([0 0],[-1 1],'k-','linewidth',0.5)
+            plot([-1 1],[0 0],'k-','linewidth',0.5)
+            
+            avg_pR2 = neuronAverage(model_eval{monkeynum,sessionnum},struct('keycols','signalID','do_ci',false));
+            % scatter filled circles if there's a winner, empty circles if not
+            no_winner =  cellfun(@isempty,pr2_winners{monkeynum,sessionnum}(1,:));
+            space_extensions = {'_space1_within_eval','_space2_within_eval'};
+            
+            legend_data(end+1) = scatter(...
+                avg_pR2.(strcat(model_pairs{1,i_mdl},space_extensions{2})),...
+                avg_pR2.(strcat(model_pairs{1,i_mdl},space_extensions{1})),...
+                [],getColorFromList(1,i_mdl-1),'filled');
+                
+            % make axes pretty
+            set(gca,'box','off','tickdir','out',...
+                'xlim',[-0.1 0.6],'ylim',[-0.1 0.6])
+            axis square
+            if monkeynum ~= 1
                 set(gca,'box','off','tickdir','out',...
-                    'xlim',[-0.1 0.6],'ylim',[-0.1 0.6])
-                axis square
-                if monkeynum ~= 1 || spacenum ~= 1
-                    set(gca,'box','off','tickdir','out',...
-                        'xtick',[],'ytick',[])
-                end
-                xlabel(sprintf('%s trained across pR2',getModelTitles(models_to_plot{modelnum})))
-                ylabel(sprintf('%s trained within pR2',getModelTitles(models_to_plot{modelnum})))
-                title(sprintf('Workspace %d',spacenum))
+                    'xtick',[],'ytick',[])
             end
+            xlabel(spacenames(2))
+            ylabel(spacenames(1))
         end
-        suptitle('Full pR^2 vs within condition pR^2')
+        legend(legend_data,models_to_plot)
     end
+    suptitle('Within Pseudo-R^2 pairwise comparisons')
+    
+%% plot PDs across spaces (actual, as well as predicted by each model)
+    sessionnum = 1;
+    spacenames = {'RT3D','RT2D'};
+    tasknames = {'Unknown','RW'};
+    legend_data = [];
+    figure
+    models_to_plot_temp = models_to_plot;
+    models_to_plot_temp{end+1} = 'S1_FR';
+    
+    for monkeynum = 1:length(monkey_names)
+        for mdlnum = 1:numel(models_to_plot_temp)
+            % set subplot
+            subplot(1,length(monkey_names),monkeynum); hold on;
+            plot([-4 4],[-4 4],'k--','linewidth',0.5)
+            hold on
+            plot([0 0],[-4 4],'k-','linewidth',0.5)
+            plot([-4 4],[0 0],'k-','linewidth',0.5)
 
+            keep_mask = strcmpi(model_tuning{monkeynum,sessionnum}.task,tasknames{1});
+            space_1_tuning = model_tuning{monkeynum,sessionnum}(keep_mask,:);
+            keep_mask = strcmpi(model_tuning{monkeynum,sessionnum}.task,tasknames{2});
+            space_2_tuning = model_tuning{monkeynum,sessionnum}(keep_mask,:);
+            
+            avg_1_tuning = neuronAverage(space_1_tuning,struct('keycols','signalID','do_ci',false));
+            avg_2_tuning = neuronAverage(space_2_tuning,struct('keycols','signalID','do_ci',false));
+
+            % scatter filled circles if there's a winner, empty circles if not
+            model_extension = ['_velPD'];
+
+
+            legend_data(end+1) = scatter(...
+                avg_1_tuning.(strcat(models_to_plot_temp{mdlnum},model_extension)),...
+                avg_2_tuning.(strcat(models_to_plot_temp{mdlnum},model_extension)),...
+                [],getColorFromList(1,mdlnum+1),'filled'); hold on;
+
+
+            % make axes pretty
+            set(gca,'box','off','tickdir','out',...
+                'xlim',[-4 4],'ylim',[-4 4])
+            axis square
+            if monkeynum ~= 1
+                set(gca,'box','off','tickdir','out',...
+                    'xtick',[],'ytick',[])
+            end
+            xlabel(sprintf('PD during %s',spacenames{1}))
+            ylabel(sprintf('PD during %s',spacenames{2}))
+        end
+        legend(legend_data,models_to_plot_temp)
+    end

@@ -31,7 +31,7 @@
 %
 % OUTPUTS:
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [crossEval, crossTuning, crossvalLookup] = analyze3DReachVs2DReach(td_list,params)
+function [crossEval, crossTuning, crossvalLookup, crossval_glm_info] = analyze3DReachVs2DReach(td_list,params)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Set up
@@ -40,12 +40,13 @@ function [crossEval, crossTuning, crossvalLookup] = analyze3DReachVs2DReach(td_l
     num_repeats = 20;
     crossval_lookup = [];
     verbose = true;
+    get_tuning_curves = false;
     if nargin > 1, assignParams(who,params); end % overwrite parameters
 
     glm_params = params.glm_params;
 %% Compile training and test sets
     % inialize temporary eval holders
-    [repeatEval,repeatTuning,repeatCrossvalLookup] = deal(cell(num_repeats,1));
+    [repeatEval,repeatTuning,repeatCrossvalLookup,repeatInfo] = deal(cell(num_repeats,1));
 
     % extract td_high and td_low
     td_plane = td_list{1};
@@ -61,7 +62,7 @@ function [crossEval, crossTuning, crossvalLookup] = analyze3DReachVs2DReach(td_l
         indices = crossvalind('Kfold',length(td_plane.pos),num_folds);
 
         % initialize temporary fold evaluation structure
-        [foldEval,foldTuning,foldCrossvalLookup] = deal(cell(num_folds,1));
+        [foldEval,foldTuning,foldCrossvalLookup,foldInfo] = deal(cell(num_folds,1));
 
         % loop over number of folds
         if verbose
@@ -111,6 +112,10 @@ function [crossEval, crossTuning, crossvalLookup] = analyze3DReachVs2DReach(td_l
                 td_test_plane.bin_size = td_freereach.bin_size;
                 td_test_freereach.bin_size = td_freereach.bin_size;
                 
+                % pass in dlc_names as well for PD analysis
+                td_test_plane.dlc_names = td_plane.dlc_pos_names;
+                td_test_freereach.dlc_names = td_freereach.dlc_pos_names;
+                
                 % set spacenum (1=high, 2=low)
                 train_spacenum = [ones(sum(train_idx),1);1+ones(sum(train_idx),1)];
             else
@@ -120,10 +125,12 @@ function [crossEval, crossTuning, crossvalLookup] = analyze3DReachVs2DReach(td_l
             % analyze fold to get model evaluations
             if exist('params','var')
                 params.crossvalID = uint16([repeatctr foldctr]);
+                params.get_tuning_curves = get_tuning_curves;
             else
                 params = struct('crossvalID',uint16([repeatctr foldctr]));
+                params.get_tuning_curves = get_tuning_curves;
             end
-            [foldEval{foldctr},foldTuning{foldctr}] = analyzeFold(td_train,{td_test_plane,td_test_freereach},train_spacenum,params);
+            [foldEval{foldctr},foldTuning{foldctr}, foldInfo{foldctr}] = analyzeFold(td_train,{td_test_plane,td_test_freereach},train_spacenum,params);
 
             % get test trialIDs
             trialID = cat(1,find(indices==foldctr)',find(indices==foldctr)');
@@ -141,7 +148,7 @@ function [crossEval, crossTuning, crossvalLookup] = analyze3DReachVs2DReach(td_l
         repeatEval{repeatctr} = vertcat(foldEval{:});
         repeatTuning{repeatctr} = vertcat(foldTuning{:});
         repeatCrossvalLookup{repeatctr} = vertcat(foldCrossvalLookup{:});
-
+        repeatInfo{repeatctr} = vertcat(foldInfo{:});
         if verbose
             fprintf('Evaluated repeat %d of %d at time %f\n',repeatctr,num_repeats,toc(repeat_timer));
         end
@@ -151,7 +158,7 @@ function [crossEval, crossTuning, crossvalLookup] = analyze3DReachVs2DReach(td_l
     crossEval = vertcat(repeatEval{:});
     crossTuning = vertcat(repeatTuning{:});
     crossvalLookup = vertcat(repeatCrossvalLookup{:});
-
+    crossval_glm_info = vertcat(repeatInfo{:});
 %% Diagnostics...
     % [foldEval,foldTuning] = analyzeFold(td_train,td_test);
     % musc_err = minusPi2Pi(foldEval.glm_musc_model_velPDShift-foldEval.S1_FR_velPDShift);
@@ -230,7 +237,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Sub functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [foldEval,foldTuning] = analyzeFold(td_train,td_test,train_spacenum,params)
+function [foldEval,foldTuning,glm_info] = analyzeFold(td_train,td_test,train_spacenum,params)
 % ANALYZEFOLD analyze single fold of cross-validation set and return NeuronTable structure
 %   with evaluation information for this fold
 % 
@@ -263,6 +270,7 @@ function [foldEval,foldTuning] = analyzeFold(td_train,td_test,train_spacenum,par
     num_tuning_bins = 16;
     unit_guide = [];
     crossvalID = [];
+    get_tuning_curves = false;
     if nargin > 2
         assignParams(who,params);
     end % overwrite parameters
@@ -299,17 +307,19 @@ function [foldEval,foldTuning] = analyzeFold(td_train,td_test,train_spacenum,par
 
     % Predict firing rates
     td_test_within = td_test;
+    td_test_across = flip(td_test);
     for modelnum = 1:length(model_names)-1
         for spacenum = 1:2
             td_test{spacenum} = getModel(td_test{spacenum},glm_info{modelnum});
             td_test_within{spacenum} = getModel(td_test_within{spacenum},glm_info_within{spacenum,modelnum});
+            td_test_across{spacenum} = getModel(td_test_across{spacenum},glm_info_within{spacenum,modelnum});
         end
     end
 
     % Evaluate model fits and add to foldEval table
     foldEval = makeNeuronTableStarter(td_train,struct('out_signal_names',unit_guide,'meta',struct('crossvalID',crossvalID)));
     model_eval = cell(1,length(model_names)-1);
-    [space_model_eval,space_model_eval_within] = deal(cell(2,length(model_names)-1));
+    [space_model_eval,space_model_eval_within,space_model_eval_across] = deal(cell(2,length(model_names)-1));
     eval_params = glm_info;
     for modelnum = 1:length(model_names)-1
         eval_params{modelnum}.eval_metric = model_eval_metric;
@@ -340,45 +350,64 @@ function [foldEval,foldTuning] = analyzeFold(td_train,td_test,train_spacenum,par
                 squeeze(evalModel(td_test_within{spacenum},eval_params{modelnum}))',...
                 'VariableNames',{sprintf('%s_space%d_within_eval',model_names{modelnum},spacenum)});
             space_model_eval_within{spacenum,modelnum}.Properties.VariableDescriptions = {'linear'};
+            
+            space_model_eval_across{spacenum,modelnum} = array2table(...
+                squeeze(evalModel(td_test_across{spacenum},eval_params{modelnum}))',...
+                'VariableNames',{sprintf('%s_space%d_across_eval',model_names{modelnum},spacenum)});
+            space_model_eval_across{spacenum,modelnum}.Properties.VariableDescriptions = {'linear'};
         end
     end
-    foldEval = horzcat(foldEval, model_eval{:}, space_model_eval{:}, space_model_eval_within{:});
+    foldEval = horzcat(foldEval, model_eval{:}, space_model_eval{:}, space_model_eval_within{:},space_model_eval_across{:});
 
 %% Get extrinsic test tuning (to calculate later quantities from)
     tempTuningTable = cell(2,1);
-%     for spacenum = 1:2
-%         for modelnum = 1:length(model_names)
-%             % get tuning weights for each model
-%             pdParams = struct(...
-%                 'out_signals',model_names(modelnum),...
-%                 'prefix',model_names{modelnum},...
-%                 'out_signal_names',unit_guide,...
-%                 'bootForTuning',false,...
-%                 'num_boots',50,...
-%                 'verbose',false,...
-%                 'meta',struct('spaceNum',spacenum,'crossvalID',crossvalID));
-%             temp_pdTable = getTDClassicalPDs(td_test{spacenum},pdParams);
-%             % temp_pdTable = getTDPDs(td_test{spacenum},pdParams);
-% 
-%             tuningParams = struct(...
-%                 'out_signals',model_names(modelnum),...
-%                 'prefix',model_names{modelnum},...
-%                 'out_signal_names',unit_guide,...
-%                 'calc_CIs',false,...
-%                 'num_bins',num_tuning_bins,...
-%                 'meta',struct('spaceNum',spacenum,'crossvalID',crossvalID));
-%             temp_tuning_table = getTuningCurves(td_test{spacenum},tuningParams);
-%             temp_table = join(temp_pdTable,temp_tuning_table);
-% 
-%             % append table to full tuning table for space
-%             if modelnum == 1
-%                 tempTuningTable{spacenum} = temp_table;
-%             else
-%                 tempTuningTable{spacenum} = join(tempTuningTable{spacenum}, temp_table);
-%             end
-%         end
-%     end
-%     % smoosh space tables together
-%     foldTuning = vertcat(tempTuningTable{:});
-    foldTuning = {};
+    if(get_tuning_curves)
+        for spacenum = 1:2
+            for modelnum = 1:length(model_names)
+                % get x,y of hand marker to compute PDs from
+                markername = 'hand2';
+                dlc_idx = [find(strcmpi(td_test{spacenum}.dlc_names,[markername,'_x'])),...
+                    find(strcmpi(td_test{spacenum}.dlc_names,[markername,'_y'])),...
+                    find(strcmpi(td_test{spacenum}.dlc_names,[markername,'_z']))];
+                
+                td_test{spacenum}.dlc_vel_handxy = td_test{spacenum}.dlc_vel(:,dlc_idx);
+                
+                % get tuning weights for each model
+                pdParams = struct(...
+                    'out_signals',model_names(modelnum),...
+                    'in_signals','dlc_vel_handxy',...
+                    'prefix',model_names{modelnum},...
+                    'out_signal_names',unit_guide,...
+                    'bootForTuning',false,...
+                    'num_boots',50,...
+                    'verbose',false,...
+                    'doing_3D_pd',true,...
+                    'meta',struct('spaceNum',spacenum,'crossvalID',crossvalID));
+%                 temp_pdTable = getTDClassicalPDs(td_test{spacenum},pdParams);
+                temp_pdTable = getTDPDs(td_test{spacenum},pdParams);
+
+                tuningParams = struct(...
+                    'out_signals',model_names(modelnum),...
+                    'move_corr','dlc_vel_handxy',...
+                    'prefix',model_names{modelnum},...
+                    'out_signal_names',unit_guide,...
+                    'calc_CIs',false,...
+                    'num_bins',num_tuning_bins,...
+                    'meta',struct('spaceNum',spacenum,'crossvalID',crossvalID));
+                temp_tuning_table = getTuningCurves(td_test{spacenum},tuningParams);
+                temp_table = join(temp_pdTable,temp_tuning_table);
+
+                % append table to full tuning table for space
+                if modelnum == 1
+                    tempTuningTable{spacenum} = temp_table;
+                else
+                    tempTuningTable{spacenum} = join(tempTuningTable{spacenum}, temp_table);
+                end
+            end
+        end
+        % smoosh space tables together
+        foldTuning = vertcat(tempTuningTable{:});
+    else
+        foldTuning = {};
+    end
 end

@@ -43,7 +43,7 @@
     end
     
 %% get decay time constant and response amp for amp-freq and intermittent data. This can take awhile....
-    analyze_amp_freq_data = 0;
+    analyze_amp_freq_data = 1;
     analyze_intermittent_data = 1;
 
     decay_rate_input_data = [];
@@ -55,7 +55,7 @@
     decay_rate_input_data.response_amp_num_pulses = -1; % set as a positive number to override response_amp_time
     decay_rate_input_data.response_amp_pulse_window = [1,5]; % if using num_pulses, this determines when after each pulse to count spikes
     
-    field_names = {'stim_chan'};
+    field_names = {'stim_chan','nonstim_chan'};
     for i_field = 1:numel(field_names)
         if(analyze_amp_freq_data)
             decay_rate_input_data.is_intermittent = 0;
@@ -106,6 +106,36 @@
     set(gca,'fontsize',14);
     ax.XMinorTick = 'off';
         
+% do statistics for amp-freq decay rate
+    amp_data = [20,40,60,20,40,60,20,40,60,20,40,60];
+    freq_data = [131,131,131,104,104,104,80,80,80,51,51,51];
+    
+    % make table of decay rates and inputs for fitlm
+    amp_list = []; freq_list = []; monkey_list = []; is_stim_chan = []; decay_list = [];
+    
+    for i_unit = 1:size(exp_amp_freq_data.stim_chan_decay_rates,1)
+        decay_list = [decay_list; exp_amp_freq_data.stim_chan_decay_rates(i_unit,:)'];
+        amp_list = [amp_list;amp_data'];
+        freq_list = [freq_list;freq_data'];
+        monkey_list = [monkey_list; exp_amp_freq_data.stim_chan_monkey(i_unit)*ones(12,1)];
+        is_stim_chan = [is_stim_chan; ones(12,1)];
+    end
+    for i_unit = 1:size(exp_amp_freq_data.nonstim_chan_decay_rates,1)
+        decay_list = [decay_list; exp_amp_freq_data.nonstim_chan_decay_rates(i_unit,:)'];
+        amp_list = [amp_list;amp_data'];
+        freq_list = [freq_list;freq_data'];
+        monkey_list = [monkey_list; exp_amp_freq_data.nonstim_chan_monkey(i_unit)*ones(12,1)];
+        is_stim_chan = [is_stim_chan; zeros(12,1)];
+    end
+    
+    amp_freq_decay_tbl = table(decay_list,amp_list,freq_list,categorical(monkey_list),categorical(is_stim_chan),...
+        'VariableNames',{'decay','amp','freq','monkey','is_stim_chan'});
+    
+    mdl_spec = 'decay~amp*freq*is_stim_chan + monkey';
+    amp_freq_decay_mdl = fitlm(amp_freq_decay_tbl,mdl_spec)
+    
+    
+    
 %% plot decay rate for intermittent data
     boxplot_params.linewidth = 1.75;
     boxplot_params.box_width = 1.05;
@@ -116,9 +146,8 @@
 
     x_data = [50,50,50,100,100,100,200,200,200,4000,4000,4000].*[1.1,1,0.9,1.1,1,0.9,1.1,1,0.9,1.1,1,0.9];
     color_idx = [2,1,0,2,1,0,2,1,0,2,1,0];
-    f=figure(); hold on
+    f=figure('Position',[573 477 890 350]); hold on
     f.Name = 'stim_channel_intermittent_decay_rate_131Hz';
-    f.Position = [550 473 890 420];
     ax1=subplot(1,2,1);
     for condition = 1:9
         boxplot_params.outlier_color = getColorFromList(1,color_idx(condition));
@@ -155,7 +184,51 @@
     set(gca,'fontsize',14);
     ax.XMinorTick = 'off';
     linkaxes([ax1,ax2],'y');
-    ax1.YLim(1)=0;
+    ax1.YLim=[0,5];
+    
+%% do statistics for intermittent decay rate
+    duty_data = [67,50,33,67,50,33,67,50,33,67,50,33];
+    dur_data = [50,50,50,100,100,100,200,200,200,-1,-1,-1];
+    
+    % make table of decay rates and inputs for fitlm
+    duty_list = []; dur_list = []; monkey_list = []; decay_list = []; freq_list = [];
+    is_cont_list = [];
+    for i_unit = 1:size(exp_intermittent_data.high_freq.stim_chan_decay_rates,1)
+        decay_list = [decay_list; exp_intermittent_data.high_freq.stim_chan_decay_rates(i_unit,:)'];
+        duty_list = [duty_list;duty_data'];
+        dur_list = [dur_list;dur_data'];
+        monkey_list = [monkey_list; exp_intermittent_data.high_freq.stim_chan_monkey(i_unit)*ones(12,1)];
+        freq_list = [freq_list; 180*ones(12,1)];
+        is_cont_list = [is_cont_list; zeros(9,1); ones(3,1)];
+    end
+    for i_unit = 1:size(exp_intermittent_data.low_freq.stim_chan_decay_rates,1)
+        decay_list = [decay_list; exp_intermittent_data.low_freq.stim_chan_decay_rates(i_unit,:)'];
+        duty_list = [duty_list;duty_data'];
+        dur_list = [dur_list;dur_data'];
+        monkey_list = [monkey_list; exp_intermittent_data.low_freq.stim_chan_monkey(i_unit)*ones(12,1)];
+        freq_list = [freq_list; 131*ones(12,1)];
+        is_cont_list = [is_cont_list; zeros(9,1); ones(3,1)];
+    end
+    
+%% make two tables, one for studying how duration and duty cycle affect the data
+    keep_mask = is_cont_list == 0;
+    duty_decay_tbl = table(decay_list(keep_mask),duty_list(keep_mask),dur_list(keep_mask),...
+        categorical(monkey_list(keep_mask)),categorical(freq_list(keep_mask)),...
+        'VariableNames',{'decay','duty','dur','monkey','freq'});
+    
+    mdl_spec = 'decay~duty*dur + monkey + freq';
+    duty_decay_mdl = fitlm(duty_decay_tbl,mdl_spec)
+    
+    % second is for comparing decay rate during intermittent and continuous
+    % stimulation
+    int_decay_tbl = table(decay_list,duty_list,...
+        categorical(monkey_list),categorical(freq_list),categorical(is_cont_list),...
+        'VariableNames',{'decay','duty','monkey','freq','is_cont'});
+    
+    mdl_spec = 'decay~duty*is_cont + monkey + freq';
+    int_decay_mdl = fitlm(int_decay_tbl,mdl_spec)
+    
+    
 %% plot response_amp vs. distance and fit 
     f=figure();
     f.Name = 'AmpFreq_response_amplitude_distance';    
@@ -266,7 +339,7 @@
     distance_data = [];
     amp_data = [];
     freq_data = [];
-    chan_rec_data = []; % add 100 if monkey is han
+    chan_rec_data = []; % add 100 if monkey is han to prevent repeated channels
     monkey_data = []; % 1 = han, 0 = duncan
     chan_stim_data = []; % add 100 if monkey is han
     
@@ -282,16 +355,25 @@
     
     
     response_data(response_data < 0) = 0;
-    
-    modelspec = 'resp ~ dist+amp+freq+monkey+chan_rec*chan_stim';
-    amp_freq_mdl = {};
+    response_data = sqrt(response_data);
+    modelspec = 'resp~dist*amp + dist*freq + monkey +chan_rec*chan_stim';
     % both monkeys simultaneously
     data_table = table(response_data,distance_data,amp_data,...
             freq_data,categorical(monkey_data),categorical(chan_stim_data),categorical(chan_rec_data),...
             'VariableNames',{'resp','dist','amp','freq','monkey','chan_stim','chan_rec'});
 
-    amp_freq_mdl{end+1} = fitlm(data_table,modelspec);
-     
+    amp_freq_mdl = fitlm(data_table,modelspec);
+    % output amp_freq_mdl data in an easily readable way
+    str_find = {'amp','freq','dist','monkey_1'};
+    keep_mask = zeros(size(amp_freq_mdl.CoefficientNames));
+    for i_str = 1:numel(str_find)
+        idx_keep = find(~cellfun(@isempty,strfind(amp_freq_mdl.CoefficientNames,str_find{i_str})));
+        keep_mask(idx_keep)=1;
+    end
+    
+    disp(amp_freq_mdl.Formula)
+    amp_freq_mdl.Coefficients(keep_mask==1,:)
+    disp(amp_freq_mdl.Rsquared)
 %% rebound excitation stats 
 % duration, percent of cells
     rebound_input_data.cond_list = [1:12];

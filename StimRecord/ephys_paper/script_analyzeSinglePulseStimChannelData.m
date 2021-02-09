@@ -119,6 +119,9 @@
     set(gca,'fontsize',14);
     xlim([0,110])
     
+    lat_mdl = fitlm(x_data,y_data)
+    
+    
 %% latency vs. standard dev of spikes in a peak
 
     f=figure('Position',[2885 476 395 327]); hold on
@@ -139,6 +142,7 @@
     formatForLee(gcf);
     set(gca,'fontsize',14)
     
+    std_mdl = fitlm(exp_latency_data.lat_list(mask)*1000,exp_latency_data.std_list(mask)*1000)
 %% num peaks vs amplitude
 
     f=figure('Position',[740 476 678 327]); hold on;
@@ -194,6 +198,15 @@
     ylim([-0.5,size(num_peak_data,2)]);
     xlim([0,110])
     
+    %% setup linear model for statistics. then build linear model
+    
+    peak_tbl = table(exp_latency_data.num_peaks_amp(:,2),exp_latency_data.num_peaks_amp(:,1),exp_latency_data.num_peaks_id,...
+        'VariableNames',{'amp','peaks','id'});
+    peak_tbl.id = categorical(peak_tbl.id);
+    
+    mdl_spec = 'peaks~amp+id';
+    peak_mdl = fitlm(peak_tbl,mdl_spec);
+    
 %% compute inhibition duration and plot across amplitudes
 
     inhib_input_data = [];
@@ -224,10 +237,13 @@
     f.Name = 'Han_duncan_inhibition';
     subplot(1,2,1)
     offset = [-1,1];
+    x_data = []; y_data = [];
     for i_amp = 1:numel(inhib_input_data.amp_list)   
         data = exp_inhib_data.inhib_dur(:,i_amp)*1000;
         data(isnan(data)) = [];
-
+        
+        x_data = [x_data; inhib_input_data.amp_list(i_amp)*ones(numel(data),1)];
+        y_data = [y_data; data];
         boxplot_wrapper(inhib_input_data.amp_list(i_amp), data, boxplot_params);
 
     end
@@ -250,3 +266,11 @@
     xlabel('Amp (\muA)');
     ylim([0,1])
     xlim([0,110]);
+    
+    
+    % inhibition duration stats
+    inhib_mdl = fitlm(x_data,y_data)
+    
+    
+    
+    

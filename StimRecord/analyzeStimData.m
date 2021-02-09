@@ -1,6 +1,6 @@
 %% set file names 
 
-    inputData.folderpath = 'D:\Lab\Data\StimArtifact\anodic_pulses\chan31\';
+    inputData.folderpath = 'D:\Lab\Data\StimArtifact\Han_20210203_nonStimDukeRec\chan22\';
     
     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 %     inputData.mapFileName = 'mapFileR:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
@@ -32,7 +32,7 @@
 
         optsExtract.REMOVE_IMPEDANCE_TEST = 0; % basically removes stim on's if impedance test is detected.
 
-        optsExtract.NUM_WAVEFORM_TYPES = 9;
+        optsExtract.NUM_WAVEFORM_TYPES = 4;
 
         optsExtract.USE_STIM_CODE = 0;
         optsExtract.STIM_ELECTRODE = {};
@@ -48,7 +48,7 @@
         else
             chanStim = str2num(fname(strIdx(1)+4:strIdx(end)-1)); % some files have chans....chan#stim
         end
-        optsExtract.CHAN_LIST = {chanStim};
+        optsExtract.CHAN_LIST = {};
 
         optsExtract.PRE_TIME = 200/1000; % made negative in the function
         optsExtract.POST_TIME = 500/1000;
@@ -76,14 +76,14 @@ for arrIdx = 1:numel(arrayData)
 
 %     optsPlotFunc.BIN_SIZE = optsExtract.BIN_SIZE;
     optsPlotFunc.BIN_SIZE = mode(diff(arrayData{1}.binEdges{1,1}));
-    optsPlotFunc.FIGURE_SAVE = 0;
+    optsPlotFunc.FIGURE_SAVE = 1;
     optsPlotFunc.FIGURE_DIR = inputData.folderpath;
-    optsPlotFunc.FIGURE_PREFIX = 'Han_20190923';
+    optsPlotFunc.FIGURE_PREFIX = 'Han_20210128_anodicFirst';
 
 
-    optsPlotFunc.PRE_TIME = 20/1000;
-    optsPlotFunc.POST_TIME = 50/1000;
-
+    optsPlotFunc.PRE_TIME = 10/1000;
+    optsPlotFunc.POST_TIME = 10/1000;
+    optsFunc.PLOT_TITLE = 1;
     optsPlotFunc.SORT_DATA = '';
 
     optsPlotFunc.PLOT_AFTER_STIMULATION_END = 1;

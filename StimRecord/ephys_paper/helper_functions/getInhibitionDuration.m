@@ -29,30 +29,32 @@ function [output_data] = getInhibitionDuration(array_data,cond_idx,input_data)
     % threshold for each condition)
     threshold_all = 0;
     for i_cond = 1:numel(array_data_rebin.binCounts)
-        PSTH = array_data_rebin.binCounts{1,i_cond};
-        % smooth with running average of N kernel_length bins
-        filtered_PSTH = movmean(PSTH,[input_data.kernel_length,0]);
+        if(array_data_rebin.numStims(i_cond) > 0)
+            PSTH = array_data_rebin.binCounts{i_cond};
+            % smooth with running average of N kernel_length bins
+            filtered_PSTH = movmean(PSTH,[input_data.kernel_length,0]);
 
-        % compute spontaneous firing rate
-        pre_window_idx = [find(array_data_rebin.binEdges{1,i_cond} >= input_data.pre_window(1),1,'first'),...
-            find(array_data_rebin.binEdges{1,i_cond} >= input_data.pre_window(2),1,'first')];
-        spont_fr = mean(filtered_PSTH(pre_window_idx(1):pre_window_idx(2)));
-        spont_std = std(filtered_PSTH(pre_window_idx(1):pre_window_idx(2)));
+            % compute spontaneous firing rate
+            pre_window_idx = [find(array_data_rebin.binEdges{i_cond} >= input_data.pre_window(1),1,'first'),...
+                find(array_data_rebin.binEdges{i_cond} >= input_data.pre_window(2),1,'first')];
+            spont_fr = mean(filtered_PSTH(pre_window_idx(1):pre_window_idx(2)));
+            spont_std = std(filtered_PSTH(pre_window_idx(1):pre_window_idx(2)));
 
-        % set threshold based on spont_fr
-        threshold_all = threshold_all + spont_fr*0.75;
+            % set threshold based on spont_fr
+            threshold_all = threshold_all + spont_fr*0.75;
+        end
     end
     cond_mask = array_data_rebin.numStims > 0;
     threshold = threshold_all/sum(cond_mask); % take mean across conditions
     % get inhibition duration for this condition
     
-    PSTH = array_data_rebin.binCounts{1,cond_idx};
+    PSTH = array_data_rebin.binCounts{cond_idx};
 
     % blank period with mean from baseline
-    blank_idx = [find(array_data_rebin.binEdges{1,cond_idx} >= input_data.blank_time(1),1,'first'),...
-        find(array_data_rebin.binEdges{1,cond_idx} >= input_data.blank_time(2),1,'first')];
-    pre_window_idx = [find(array_data_rebin.binEdges{1,cond_idx} >= input_data.pre_window(1),1,'first'),...
-        find(array_data_rebin.binEdges{1,cond_idx} >= input_data.pre_window(2),1,'first')];
+    blank_idx = [find(array_data_rebin.binEdges{cond_idx} >= input_data.blank_time(1),1,'first'),...
+        find(array_data_rebin.binEdges{cond_idx} >= input_data.blank_time(2),1,'first')];
+    pre_window_idx = [find(array_data_rebin.binEdges{cond_idx} >= input_data.pre_window(1),1,'first'),...
+        find(array_data_rebin.binEdges{cond_idx} >= input_data.pre_window(2),1,'first')];
 
     PSTH(blank_idx(1):blank_idx(2)) = mean(PSTH(pre_window_idx(1):pre_window_idx(2)));
 
@@ -64,8 +66,8 @@ function [output_data] = getInhibitionDuration(array_data,cond_idx,input_data)
 
      % if firing rate undershoots thresh, define duration as the time
     % between this point and when the FR comes back above thresh. 
-    post_window_idx = [find(array_data_rebin.binEdges{1,cond_idx} >= input_data.post_window(1),1,'first'),...
-        find(array_data_rebin.binEdges{1,cond_idx} >= input_data.post_window(2),1,'first')];
+    post_window_idx = [find(array_data_rebin.binEdges{cond_idx} >= input_data.post_window(1),1,'first'),...
+        find(array_data_rebin.binEdges{cond_idx} >= input_data.post_window(2),1,'first')];
     under_thresh_mask(1,:) = squeeze(filtered_PSTH(post_window_idx(1):post_window_idx(2)) < threshold);
 
     start_ones = strfind([under_thresh_mask,1],[0 1]);

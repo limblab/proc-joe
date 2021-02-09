@@ -13,6 +13,7 @@ function [output_data] = getLatencyOfPeaks(array_data,input_data)
     num_peaks_amp = [];
     num_peaks_amp_assume = [];
     num_peaks_missed = zeros(numel(array_data),1);
+    num_peaks_id = [];
     
     delta_lat_list = [];
     delta_amp_list = [];
@@ -107,6 +108,7 @@ function [output_data] = getLatencyOfPeaks(array_data,input_data)
                 amp_list(end+1:end+numel(pks)) = input_data.amp_list(i_amp);
                 
                 num_peaks_amp(end+1,:) = [numel(pks),input_data.amp_list(i_amp)];
+                num_peaks_id(end+1,1) = i_unit;
                 % if it's the model, store diam_idx, cell_idx, clone num
                 if(input_data.is_model)
                     diam_list(end+1:end+numel(pks)) = array_data{i_unit}.diam;
@@ -181,6 +183,7 @@ function [output_data] = getLatencyOfPeaks(array_data,input_data)
     
     output_data.num_peaks_amp = num_peaks_amp;
     output_data.num_peaks_amp_assume = num_peaks_amp_assume;
+    output_data.num_peaks_id = num_peaks_id;
     
     output_data.delta_lat = delta_lat_list;
     output_data.delta_amp = delta_amp_list;
