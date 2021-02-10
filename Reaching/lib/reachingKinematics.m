@@ -27,8 +27,7 @@ function [output_data] = reachingKinematics(td_list,task_list,input_data)
             ax1=subplot(2,num_2D_task,sub_counter);
             plot(x_data,td_list{i_td}.pos(:,1)-mean_td_pos(1),'color',getColorFromList(1,0),'linestyle','-')
             hold on;
-            %plot(x_data,-(td_list{i_td}.dlc_pos(:,dlc_idx(1))-mean_dlc_pos(dlc_idx(1))),'color',getColorFromList(1,1),'linestyle','-');
-            plot(x_data,-(td_list{i_td}.dlc_pos(:,dlc_idx(2))-mean_dlc_pos(dlc_idx(2))),'color',getColorFromList(1,1),'linestyle','-');
+            plot(x_data,(td_list{i_td}.dlc_pos(:,dlc_idx(1))-mean_dlc_pos(dlc_idx(1))),'color',getColorFromList(1,1),'linestyle','-');
             
             ylabel('x-pos (cm)');
             l=legend('handle','dlc');
@@ -40,8 +39,7 @@ function [output_data] = reachingKinematics(td_list,task_list,input_data)
             ax2=subplot(2,num_2D_task,sub_counter+num_2D_task);
             plot(x_data,td_list{i_td}.pos(:,2)-mean_td_pos(2),'color',getColorFromList(1,0),'linestyle','-')
             hold on
-            %plot(x_data,td_list{i_td}.dlc_pos(:,dlc_idx(2))-mean_dlc_pos(dlc_idx(2)),'color',getColorFromList(1,1),'linestyle','-');
-            plot(x_data,td_list{i_td}.dlc_pos(:,dlc_idx(1))-mean_dlc_pos(dlc_idx(1)),'color',getColorFromList(1,1),'linestyle','-');
+            plot(x_data,td_list{i_td}.dlc_pos(:,dlc_idx(2))-mean_dlc_pos(dlc_idx(2)),'color',getColorFromList(1,1),'linestyle','-');
             
             xlabel('Experiment time (s)');
             ylabel('y-pos (s)');

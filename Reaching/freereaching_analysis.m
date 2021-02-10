@@ -10,7 +10,7 @@
 
 %% Set up meta info and load trial data
     if ispc
-        folderpath = 'C:\Users\dongq\DeepLabCut\Han_20201204_rwFreeReach\neural-data\';
+        folderpath = 'D:\Lab\Data\DLC_videos\Han_20201204_rwFreeReach\neural-data\';
     else
         folderpath = '/data/raeed/project-data/limblab/s1-kinematics';
     end
@@ -426,11 +426,9 @@
     end
 %% (New) Plots between whole-arm and hand-only for RT2D and RT3D
     
-task_names = ["Random Target 2D task", "Random Target 3D task"]
-
-
+    task_names = {'Random Target 2D task', 'Random Target 3D task'};
     % show scatter plot for hand/elbow pR2 within condition vs against condition
-%    for modelnum = 1:length(models_to_plot)
+    for modelnum = 1:length(models_to_plot)
         figure
         for monkeynum = 1:length(monkey_names)
             for spacenum = 1:2
@@ -465,7 +463,7 @@ task_names = ["Random Target 2D task", "Random Target 3D task"]
             end
         end
         suptitle('pR^2 Comparison Between Whole-Arm model vs Hand-Only model')
-%    end
+    end
    
     suptitle('Within Pseudo-R^2 pairwise comparisons')
     
