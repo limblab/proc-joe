@@ -152,7 +152,7 @@
             'num_tuning_bins',16,...
             'crossval_lookup',[],...
             'get_tuning_curves',false,...
-            'num_repeats',1,... % Raeed used 20 repeats.
+            'num_repeats',20,... % Raeed used 20 repeats.
             'num_folds',5));
     end
 
@@ -309,4 +309,46 @@
         end
         suptitle('Full pR^2 vs within condition pR^2')
     end
+%% (New) Plots between whole-arm and hand-only for RT2D and RT3D
+    
+task_names = ["Random Target 2D task", "Random Target 3D task"]
 
+
+    % show scatter plot for hand/elbow pR2 within condition vs against condition
+%    for modelnum = 1:length(models_to_plot)
+        figure
+        for monkeynum = 1:length(monkey_names)
+            for spacenum = 1:2
+                % set subplot
+                subplot(2,length(monkey_names),(spacenum-1)*length(monkey_names)+monkeynum)
+
+                % plot lines
+                plot([-1 1],[-1 1],'k--','linewidth',0.5)
+                hold on
+                plot([0 0],[-1 1],'k-','linewidth',0.5)
+                plot([-1 1],[0 0],'k-','linewidth',0.5)
+
+                % plot out each session
+                for sessionnum = 1:session_ctr(monkeynum)
+                    avg_pR2 = neuronAverage(model_eval{monkeynum,sessionnum},struct('keycols','signalID','do_ci',false));
+                    scatter(...
+                        avg_pR2.(sprintf('%s_space%d_within_eval',models_to_plot{1},spacenum)),... %Warning, hardcode (1)
+                        avg_pR2.(sprintf('%s_space%d_within_eval',models_to_plot{2},spacenum)),... %Warning, hardcode (2)
+                        [],session_colors(sessionnum,:),'filled')
+                end
+                % make axes pretty
+                set(gca,'box','off','tickdir','out',...
+                    'xlim',[-0.1 0.6],'ylim',[-0.1 0.6])
+                axis square
+                if monkeynum ~= 1 || spacenum ~= 1
+                    set(gca,'box','off','tickdir','out',...
+                        'xtick',[],'ytick',[])
+                end
+                xlabel(sprintf('Hand-Only model'))
+                ylabel(sprintf('Whole-Arm model'))
+                title(task_names(spacenum))
+            end
+        end
+        suptitle('pR^2 Comparison Between Whole-Arm model vs Hand-Only model')
+%    end
+   

@@ -27,18 +27,21 @@ function [output_data] = reachingKinematics(td_list,task_list,input_data)
             ax1=subplot(2,num_2D_task,sub_counter);
             plot(x_data,td_list{i_td}.pos(:,1)-mean_td_pos(1),'color',getColorFromList(1,0),'linestyle','-')
             hold on;
-            plot(x_data,td_list{i_td}.dlc_pos(:,dlc_idx(1))-mean_dlc_pos(dlc_idx(1)),'color',getColorFromList(1,1),'linestyle','-');
+            %plot(x_data,-(td_list{i_td}.dlc_pos(:,dlc_idx(1))-mean_dlc_pos(dlc_idx(1))),'color',getColorFromList(1,1),'linestyle','-');
+            plot(x_data,-(td_list{i_td}.dlc_pos(:,dlc_idx(2))-mean_dlc_pos(dlc_idx(2))),'color',getColorFromList(1,1),'linestyle','-');
             
             ylabel('x-pos (cm)');
             l=legend('handle','dlc');
             set(l,'box','off','location','best');
+            title('hand position against handle position');
             formatForLee(gca);
             set(gca,'fontsize',14);
             
             ax2=subplot(2,num_2D_task,sub_counter+num_2D_task);
             plot(x_data,td_list{i_td}.pos(:,2)-mean_td_pos(2),'color',getColorFromList(1,0),'linestyle','-')
             hold on
-            plot(x_data,td_list{i_td}.dlc_pos(:,dlc_idx(2))-mean_dlc_pos(dlc_idx(2)),'color',getColorFromList(1,1),'linestyle','-');
+            %plot(x_data,td_list{i_td}.dlc_pos(:,dlc_idx(2))-mean_dlc_pos(dlc_idx(2)),'color',getColorFromList(1,1),'linestyle','-');
+            plot(x_data,td_list{i_td}.dlc_pos(:,dlc_idx(1))-mean_dlc_pos(dlc_idx(1)),'color',getColorFromList(1,1),'linestyle','-');
             
             xlabel('Experiment time (s)');
             ylabel('y-pos (s)');
@@ -87,10 +90,21 @@ function [output_data] = reachingKinematics(td_list,task_list,input_data)
             dlc_idx = [find((strcmpi(td_list{task_idx}.dlc_pos_names,[markername,'_x']))),...
                 find((strcmpi(td_list{task_idx}.dlc_pos_names,[markername,'_y']))),...
                 find((strcmpi(td_list{task_idx}.dlc_pos_names,[markername,'_z'])))];
-
-            plot3(td_list{task_idx}.dlc_pos(:,dlc_idx(1)),td_list{task_idx}.dlc_pos(:,dlc_idx(2)),td_list{task_idx}.dlc_pos(:,dlc_idx(3)),...
-                '.','linestyle','none','color',getColorFromList(1,i_task-1)); hold on;
+            
+            temp_start = 5000;
+            temp_end = 5200;
+            
+            %plot3(td_list{task_idx}.dlc_pos(:,dlc_idx(1)),td_list{task_idx}.dlc_pos(:,dlc_idx(2)),td_list{task_idx}.dlc_pos(:,dlc_idx(3)),...
+            %    '.','linestyle','none','color',getColorFromList(1,i_task-1)); hold on;
+            %plot3(td_list{task_idx}.dlc_pos(temp_start:temp_end,dlc_idx(1)),td_list{task_idx}.dlc_pos(temp_start:temp_end,dlc_idx(2)),td_list{task_idx}.dlc_pos(temp_start:temp_end,dlc_idx(3)),...
+            %    '.','linestyle','none','color',getColorFromList(1,i_task-1)); hold on;
+            plot3(td_list{task_idx}.dlc_pos(temp_start:temp_end,dlc_idx(1)),td_list{task_idx}.dlc_pos(temp_start:temp_end,dlc_idx(2)),td_list{task_idx}.dlc_pos(temp_start:temp_end,dlc_idx(3)),...
+            'color',getColorFromList(1,i_task-1)); hold on;
+            grid on
             xlabel('x-pos (cm)'); ylabel('y-pos (cm)'); zlabel('z-pos');
+            l=legend('RT3D','RT2D');
+            set(l,'box','off','location','best');
+            
             % compute volume, and extent along each axis
             if(~isempty(strfind(markername,'hand')))
                 % for extent, only look at data within some percentile
@@ -123,6 +137,7 @@ function [output_data] = reachingKinematics(td_list,task_list,input_data)
         corr_data = corr(dlc_data);
         subplot(1,3,i_task)
         imagesc(corr_data,[-1,1]);
+        set(gca, 'xTick', [1:9]);
         b=colorbar();
         kin_corr(:,:,i_task) = corr_data;
         title(title_str);
@@ -132,6 +147,7 @@ function [output_data] = reachingKinematics(td_list,task_list,input_data)
     figure(f_corr)
     subplot(1,3,3)
     imagesc(kin_corr(:,:,1) - kin_corr(:,:,2),[-1,1]);
+    set(gca, 'xTick', [1:9]);
     b=colorbar();
     title('3D - 2D');
     
