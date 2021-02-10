@@ -39,15 +39,15 @@ function tuning_corr = calculateEncoderTuningCorr(encoderResults,params)
     tuning_corr_cell = cell(height(crossTuningPM),1);
     for tablerownum = 1:height(crossTuningPM)
         real_tuning_shape = horzcat(...
-            crossTuningPM(tablerownum,:).(sprintf('%s_velCurve',neural_signal)),...
-            crossTuningDL(tablerownum,:).(sprintf('%s_velCurve',neural_signal)))';
+            crossTuningPM(tablerownum,:).(sprintf('%s_dlc_vel_handxyCurve',neural_signal)),...
+            crossTuningDL(tablerownum,:).(sprintf('%s_dlc_vel_handxyCurve',neural_signal)))';
 
         model_tuning_shape = zeros(length(real_tuning_shape),length(model_aliases));
         for modelnum = 1:length(model_aliases)
             % get tuning shapes
             model_tuning_shape(:,modelnum) = horzcat(...
-                crossTuningPM(tablerownum,:).(sprintf('glm_%s_model_velCurve',model_aliases{modelnum})),...
-                crossTuningDL(tablerownum,:).(sprintf('glm_%s_model_velCurve',model_aliases{modelnum})))';
+                crossTuningPM(tablerownum,:).(sprintf('glm_%s_model_dlc_vel_handxyCurve',model_aliases{modelnum})),...
+                crossTuningDL(tablerownum,:).(sprintf('glm_%s_model_dlc_vel_handxyCurve',model_aliases{modelnum})))';
         end
         % get correlation value
         covar_mat = nancov([model_tuning_shape real_tuning_shape]);

@@ -110,7 +110,7 @@ function [figureHandle] = plotRasterStim(unitData,NEURON_NUMBER,optsPlot)
             end
             optsSave.FIGURE_SAVE = opts.FIGURE_SAVE;
             optsSave.FIGURE_DIR = opts.FIGURE_DIR;
-%                 optsSave.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'nn',num2str(NEURON_NUMBER),'_chan',num2str(unitData.CHAN_REC),'_stimChan',num2str(CHAN_LIST(chan)),'_waveNum',num2str(wave),'_raster');
+            optsSave.FIGURE_NAME = strcat(opts.FIGURE_PREFIX,'nn',num2str(NEURON_NUMBER),'_chan',num2str(unitData.CHAN_REC),'_stimChan',num2str(CHAN_LIST{chan}),'_waveNum',num2str(wave),'_raster');
             
 %             if(isfield(unitData,'STIM_PARAMETERS') && size(unitData.spikeTrialTimes,2) <= numel(unitData.STIM_PARAMETERS))
 %                 
@@ -131,7 +131,7 @@ function [figureHandle] = plotRasterStim(unitData,NEURON_NUMBER,optsPlot)
 %                     optsSave.FIGURE_NAME = '';
 %                 end
 %             end
-            optsSave.FIGURE_NAME = '';
+%             optsSave.FIGURE_NAME = '';
             optsPlot.MARKER_STYLE = opts.MARKER_STYLE;
             optsPlot.MARKER_SIZE = opts.MARKER_SIZE;
             

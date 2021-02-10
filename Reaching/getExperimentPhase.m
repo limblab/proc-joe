@@ -55,7 +55,37 @@ function [trial_data] = getExperimentPhase(trial_data,task)
         trial_data.trial_idx = find(keep_mask);
         
     elseif(strcmpi(task,'RT3D')==1)
-        warning('getExperimentPhase is not implemented for this task. Nothing was done');
+        
+        if(strcmpi(trial_data.monkey,'Han'))
+            % we have already moved bad tracking, just remove if hand is on
+            % the face plate. We have predefined (x,y,z) bounds for this
+            
+            x_bound = 16; % remove if larger than this, and others
+            y_bound = 3; % remove if smaller than this, and others
+            z_bound = 4.5; % remove if larger than this, and others
+            
+            markername = 'hand2';
+            dlc_idx = [find(strcmpi(trial_data.dlc_pos_names,[markername,'_x'])),find(strcmpi(trial_data.dlc_pos_names,[markername,'_y'])),...
+                find(strcmpi(trial_data.dlc_pos_names,[markername,'_z']))];
+            
+            keep_mask = ~(trial_data.dlc_pos(:,dlc_idx(1)) > x_bound & ...
+                trial_data.dlc_pos(:,dlc_idx(2)) < y_bound & ...
+                trial_data.dlc_pos(:,dlc_idx(3)) > z_bound);
+            
+            % remove points
+            td_fields = fieldnames(trial_data);
+            pos_len = length(trial_data.dlc_pos);
+            for i_field = 1:numel(td_fields)
+                if(length(trial_data.(td_fields{i_field})) == pos_len)
+                    trial_data.(td_fields{i_field}) = trial_data.(td_fields{i_field})(keep_mask==1,:);
+                end
+            end
+            trial_data.trial_idx = find(keep_mask);
+            
+        else
+            warning('getExperimentPhase is not implemented for this task and monkey. Nothing was done');
+        end
+
     end
     
     

@@ -32,7 +32,7 @@ end
 %% plot raster of example neuron(s)
 
     raster_input_data = [];
-    raster_input_data.x_lim = [-100,400]; % ms
+    raster_input_data.x_lim = [-100,480]; % ms
     raster_input_data.cond_list = [2,3,4,5]; % 
     raster_input_data.marker_style = '.'; % line is the correct way, but much slower
     
@@ -65,7 +65,7 @@ end
     f.Name = 'Han_duncan_short_trains_rebound_excitation';
     suptitle('Short Trains')
     subplot(2,1,2); hold on;
-    freq_list=[180,100,50,20];
+    freq_list=[179,94,49,20];
     for i_cell = 1:size(rebound_data.is_rebound,1)
         plot(freq_list+7*rand()-3.5,rebound_data.rebound_dur(i_cell,:)*1000,'-k','marker','o','markersize',6);
     end
@@ -82,7 +82,6 @@ end
 
     % also plot % of cells with rebound across frequencies
     subplot(2,1,1); hold on;
-    freq_list=[180,100,50,20];
     frac_data = nan(size(freq_list));
     for i_freq = 1:size(rebound_data.is_rebound,2)
         frac_data(i_freq) = sum(rebound_data.is_rebound(:,i_freq),'omitnan')/sum(~isnan(rebound_data.is_rebound(:,i_freq)));
@@ -99,6 +98,64 @@ end
     ax.XTick = sort(freq_list);
     ax.XMinorTick = 'off';
     
+    
+    
+%% compute inhibition duration and plot across train frequencies
+
+    inhib_input_data = [];
+    inhib_input_data.pre_window = [-80,-15]/1000; % s 
+    inhib_input_data.post_window = [0,260]/1000; % s
+    inhib_input_data.bin_window = [inhib_input_data.pre_window(1),490/1000];
+    inhib_input_data.max_time_start = 150/1000; % s
+    inhib_input_data.bin_size = 5/1000; % s
+    inhib_input_data.kernel_length = 2;
+    inhib_input_data.blank_time = [-5,10]/1000; % s
+    
+    inhib_input_data.num_consec_bins = 2;
+    inhib_input_data.cond_list = [1,2,3,4,5]; % single, 180Hz, 90 Hz, 50Hz, 20 Hz
+    
+    exp_inhib_data = getInhibitionDurationDoublePulseWrapper(exp_array_data,inhib_input_data);
+
+%% plot inhibition data for short trains
+
+    % plot inhibition duration across frequencies (with lines between same cells)
+    f=figure('Position',[1403 522 395 420]);
+    f.Name = 'Han_duncan_short_trains_inhibition';
+    suptitle('Short Trains')
+    subplot(2,1,2); hold on;
+    freq_list=[179,94,49,20];
+    for i_cell = 1:size(exp_inhib_data.is_inhib,1)
+        plot(freq_list+7*rand()-3.5,exp_inhib_data.inhib_dur(i_cell,2:end)*1000,'-k','marker','o','markersize',6);
+    end
+    xlim([0,200])
+    ylim([0,300]);
+    formatForLee(gcf);
+    xlabel('Frequency (Hz)');
+    ylabel('Duration (ms)');
+    set(gca,'fontsize',14);
+    ax=gca;
+    ax.XTick = sort(freq_list);
+    ax.XMinorTick = 'off';
+
+    % also plot % of cells with inhibition response
+    subplot(2,1,1); hold on;
+    frac_data = nan(size(freq_list)-1);
+    for i_freq = 2:size(exp_inhib_data.is_inhib,2)
+        frac_data(i_freq-1) = sum(exp_inhib_data.is_inhib(:,i_freq),'omitnan')/sum(~isnan(exp_inhib_data.is_inhib(:,i_freq)));
+    end
+    
+    bar(freq_list,frac_data,'EdgeColor','k','FaceColor','k');
+    xlim([0,200])
+    ylim([0,1]);
+    formatForLee(gcf);
+    xlabel('Frequency (Hz)');
+    ylabel('Fraction cells');
+    set(gca,'fontsize',14);
+    ax=gca;
+    ax.XTick = sort(freq_list);
+    ax.XMinorTick = 'off';
+    
+
     
 %% get decay rate for each neuron across stim frequencies
     decay_input_data.cond_list = [2,3,4,5];
@@ -118,32 +175,6 @@ end
         boxplot_wrapper(1,decay_data.slope(rebound_data.is_rebound(:,i_freq)==0,i_freq),boxplot_params)
     end
 
-
-    
-%% compute inhibition duration and plot across train frequencies
-
-    inhib_input_data = [];
-    inhib_input_data.pre_window = [-80,-15]/1000; % s 
-    inhib_input_data.post_window = [0,220]/1000; % s
-    inhib_input_data.bin_window = [inhib_input_data.pre_window(1),490/1000];
-    inhib_input_data.max_time_start = 60/1000; % s
-    inhib_input_data.bin_size = 5/1000; % s
-    inhib_input_data.kernel_length = 2;
-    inhib_input_data.blank_time = [-5,10]/1000; % s
-    
-    inhib_input_data.num_consec_bins = 2;
-    inhib_input_data.cond_list = [1,2,3,4,5]; % single, 180Hz, 90 Hz, 50Hz, 20 Hz
-    
-    exp_inhib_data = getInhibitionDurationDoublePulseWrapper(exp_array_data,inhib_input_data);
-
-  
-    f=figure(); hold on
-    plot(exp_inhib_data.inhib_dur(:,1),exp_inhib_data.inhib_dur(:,2),'.','markersize',20)
-    plot(exp_inhib_data.inhib_dur(:,1),exp_inhib_data.inhib_dur(:,3),'.','markersize',20)
-    plot(exp_inhib_data.inhib_dur(:,1),exp_inhib_data.inhib_dur(:,4),'.','markersize',20)
-    plot(exp_inhib_data.inhib_dur(:,1),exp_inhib_data.inhib_dur(:,5),'.','markersize',20)
-    plot([0,0.25],[0,0.25],'k--')
-    
 
 %% sanity check code
 figure(); hold on

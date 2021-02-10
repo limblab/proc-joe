@@ -79,7 +79,7 @@ function results = reachingEncoders(td_list,task_list,robot_height,params)
             assert(all(point_exists),'Hand marker does not exist?')
 
             markername = 'elbow1';
-            [point_exists,marker_elbow_idx] = ismember(strcat(markername,'_',{'x','y','z'}),td_freereach.dlc_pos_names);
+            [point_exists,marker_elbow_idx] = ismember(strcat(markername,'_',{'x','y','z'}),td_plane.dlc_pos_names);
             assert(all(point_exists),'Elbow marker does not exist?')
 
             glm_params{modelnum} = struct(...
@@ -93,92 +93,6 @@ function results = reachingEncoders(td_list,task_list,robot_height,params)
         end
     end
 
-%% Get comparison of actual tuning curves with various modeled tuning curves
-    pdTables = cell(2,num_models);
-    tuning_curves = cell(2,num_models);
-    td_tuning = [];
-    if get_tuning_curves
-        % use K-fold crossvalidation to get neural predictions from each model for tuning curves and PDs
-        indices = crossvalind('Kfold',length(td_plane.pos),num_folds);
-        td_test_plane = cell(1,num_folds);
-        td_test_freereach = cell(1,num_folds);
-
-        % do the crossval
-        for foldctr = 1:num_folds
-            % split into testing and training
-            test_idx = (indices==foldctr);
-            train_idx = ~test_idx;
-            td_train = [];
-
-            % split into td_train and td_test, only use in_signals and
-            % out_signals. Also grab handle velocity for td_test so that we
-            % can compute PDs using handle kinematics
-            
-            for i_name = 1:size(glm_params{modelnum}.in_signals,2)
-                for i_idx = 1:numel(glm_params{modelnum}.in_signals{i_name,2})
-                    td_train.(glm_params{modelnum}.in_signals{i_name,1}) = ...
-                        [td_plane.(glm_params{modelnum}.in_signals{i_name,1})(train_idx,:); td_freereach.(glm_params{modelnum}.in_signals{i_name,1})(train_idx,:)];
-                    td_test_plane{1,foldctr}.(glm_params{modelnum}.in_signals{i_name,1}) = td_plane.(glm_params{modelnum}.in_signals{i_name,1})(test_idx,:);
-                    td_test_freereach{1,foldctr}.(glm_params{modelnum}.in_signals{i_name,1}) = td_freereach.(glm_params{modelnum}.in_signals{i_name,1})(test_idx,:);
-                    td_test_plane{1,foldctr}.vel = td_plane.vel(test_idx,:);
-                    td_test_freereach{1,foldctr}.vel = td_freereach.vel(test_idx,:);
-                    
-                    % meta info
-                    td_test_plane{1,foldctr}.monkey = td_plane.monkey;
-                    td_test_freereach{1,foldctr}.monkey = td_freereach.monkey;
-                    
-                    td_test_plane{1,foldctr}.task = td_plane.task;
-                    td_test_freereach{1,foldctr}.task = td_freereach.task;
-                    
-                    td_test_plane{1,foldctr}.date = td_plane.date;
-                    td_test_freereach{1,foldctr}.date = td_freereach.date;
-                end
-            end
-            % get out signals
-            td_train.(glm_params{modelnum}.out_signals) = ...
-                [td_plane.(glm_params{modelnum}.out_signals)(train_idx,:); td_freereach.(glm_params{modelnum}.out_signals)(train_idx,:)];
-            td_test_plane{1,foldctr}.(glm_params{modelnum}.out_signals) = td_plane.(glm_params{modelnum}.out_signals)(test_idx,:); 
-            td_test_freereach{1,foldctr}.(glm_params{modelnum}.out_signals) = td_freereach.(glm_params{modelnum}.out_signals)(test_idx,:);
-            
-            % set bin_size as well
-            td_train.bin_size = td_plane.bin_size;
-            td_test_plane{1,foldctr}.bin_size = td_freereach.bin_size;
-            td_test_freereach{1,foldctr}.bin_size = td_freereach.bin_size;
-            
-            % Fit models on training data
-            for modelnum = 1:num_models-1
-                [~,glm_info] = getModel(td_train,glm_params{modelnum});
-
-                % predict firing rates for td_test
-                td_test_plane{1,foldctr} = getModel(td_test_plane{1,foldctr},glm_info);
-                td_test_freereach{1,foldctr} = getModel(td_test_freereach{1,foldctr},glm_info);
-            end
-        end
-        
-        td_test_plane = horzcat(td_test_plane{1,:});
-        td_test_freereach = horzcat(td_test_freereach{1,:});
-        
-        % get PDs and tuning curves
-        for modelnum = 1:num_models
-            % First PDs
-            pd_params = struct(...
-                'out_signals',model_names{modelnum},...
-                'out_signal_names',unit_guide,...
-                'do_plot',false,...
-                'meta',struct('spaceNum',0));
-            pdTables{1,modelnum} = getTDClassicalPDs(td_test_plane,pd_params);
-            pdTables{2,modelnum} = getTDClassicalPDs(td_test_freereach,pd_params);
-            
-            
-            tuning_params = struct(...
-                'out_signals',model_names{modelnum},...
-                'out_signal_names',unit_guide,...
-                'num_bins',num_tuning_bins,...
-                'meta',struct('spaceNum',0));
-            tuning_curves{1,modelnum} = getTuningCurves(td_test_plane,tuning_params);
-            tuning_curves{2,modelnum} = getTuningCurves(td_test_freereach,tuning_params);
-        end
-    end
 
 %% Cross-validate models of neural data
     % Get crossval info
@@ -189,8 +103,9 @@ function results = reachingEncoders(td_list,task_list,robot_height,params)
         'num_repeats',num_repeats,...
         'crossval_lookup',[],...
         'unit_guide',unit_guide,...
-        'num_tuning_bins',num_tuning_bins);
-    [crossEval,crossTuning,crossval_lookup] = analyze3DReachVs2DReach({td_plane,td_freereach},crossval_params);
+        'num_tuning_bins',num_tuning_bins,...
+        'get_tuning_curves',get_tuning_curves);
+    [crossEval,crossTuning,crossval_lookup,crossval_glm_info] = analyze3DReachVs2DReach({td_plane,td_freereach},crossval_params);
 
 %% create return struct
     % for cross validation plots
@@ -200,15 +115,6 @@ function results = reachingEncoders(td_list,task_list,robot_height,params)
     % get names of neurons
     signalIDs = unit_guide;
     
-    if get_tuning_curves
-        results.tuning_curves = tuning_curves;
-        results.pdTables = pdTables;
-        results.isTuned = pdTables{1,end}.velTuned & pdTables{2,end}.velTuned;
-        results.tunedNeurons = signalIDs(results.isTuned,:);
-        
-        % for showing predictive capability
-        results.td_tuning = td_tuning;
-    end
 
     % get parameters
     results.params.num_folds = num_folds;
@@ -221,3 +127,4 @@ function results = reachingEncoders(td_list,task_list,robot_height,params)
     results.params.neural_signals = neural_signals;
     results.params.glm_params = glm_params;
     results.params.crossval_lookup = crossval_lookup;
+    results.glm_info = crossval_glm_info;
