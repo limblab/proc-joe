@@ -384,7 +384,7 @@ function [foldEval,foldTuning,glm_info] = analyzeFold(td_train,td_test,train_spa
                     'doing_3D_pd',true,...
                     'meta',struct('spaceNum',spacenum,'crossvalID',crossvalID));
 %                 temp_pdTable = getTDClassicalPDs(td_test{spacenum},pdParams);
-                temp_pdTable = getTDPDs(td_test{spacenum},pdParams);
+                temp_pdTable = getTDPDs3D(td_test{spacenum},pdParams);
 
                 tuningParams = struct(...
                     'out_signals',model_names(modelnum),...
@@ -394,7 +394,7 @@ function [foldEval,foldTuning,glm_info] = analyzeFold(td_train,td_test,train_spa
                     'calc_CIs',false,...
                     'num_bins',num_tuning_bins,...
                     'meta',struct('spaceNum',spacenum,'crossvalID',crossvalID));
-                temp_tuning_table = getTuningCurves(td_test{spacenum},tuningParams);
+                temp_tuning_table = getTuningCurves3D(td_test{spacenum},tuningParams);
                 temp_table = join(temp_pdTable,temp_tuning_table);
 
                 % append table to full tuning table for space
