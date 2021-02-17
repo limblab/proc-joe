@@ -97,7 +97,7 @@ function [output_data] = reachingKinematics(td_list,task_list,input_data)
             %plot3(td_list{task_idx}.dlc_pos(temp_start:temp_end,dlc_idx(1)),td_list{task_idx}.dlc_pos(temp_start:temp_end,dlc_idx(2)),td_list{task_idx}.dlc_pos(temp_start:temp_end,dlc_idx(3)),...
             %    '.','linestyle','none','color',getColorFromList(1,i_task-1)); hold on;
             plot3(td_list{task_idx}.dlc_pos(temp_start:temp_end,dlc_idx(1)),td_list{task_idx}.dlc_pos(temp_start:temp_end,dlc_idx(2)),td_list{task_idx}.dlc_pos(temp_start:temp_end,dlc_idx(3)),...
-            'color',getColorFromList(1,i_task-1)); hold on;
+                'color',getColorFromList(1,i_task-1)); hold on;
             grid on
             xlabel('x-pos (cm)'); ylabel('y-pos (cm)'); zlabel('z-pos');
             l=legend('RT3D','RT2D');

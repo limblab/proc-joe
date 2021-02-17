@@ -10,7 +10,7 @@
 
 %% Set up meta info and load trial data
     if ispc
-        folderpath = 'D:\Lab\Data\DLC_videos\Han_20201204_rwFreeReach\neural-data\';
+        folderpath = 'D:\Lab\Data\DLC_videos\Crackle-Qiwei-2020-12-15\neural-data\';
     else
         folderpath = '/data/raeed/project-data/limblab/s1-kinematics';
     end
@@ -101,14 +101,13 @@
             % remove trials where monkey's arm position is out of the
             % "workspace"
             td_list{i_td} = getExperimentPhase(td_list{i_td},task_list{i_td});
-
-            
-            
-            % get robot height (z data of a hand marker). This is
-            % meaningless during free reach...
-            markername = 'hand3';
-            dlc_idx = find((strcmpi(td_list{i_td}.dlc_pos_names,[markername,'_z'])));
-            robot_height(end+1) = mean(td_list{i_td}.dlc_pos(:,dlc_idx),'omitnan');
+% 
+% 
+%             % get robot height (z data of a hand marker). This is
+%             % meaningless during free reach...
+%             markername = 'hand3';
+%             dlc_idx = find((strcmpi(td_list{i_td}.dlc_pos_names,[markername,'_z'])));
+%             robot_height(end+1) = mean(td_list{i_td}.dlc_pos(:,dlc_idx),'omitnan');
         end
         td_all{filenum} = td_list;
         task_list_all{filenum} = task_list;

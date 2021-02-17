@@ -210,7 +210,7 @@
         is_cont_list = [is_cont_list; zeros(9,1); ones(3,1)];
     end
     
-%% make two tables, one for studying how duration and duty cycle affect the data
+% make two tables, one for studying how duration and duty cycle affect the data
     keep_mask = is_cont_list == 0;
     duty_decay_tbl = table(decay_list(keep_mask),duty_list(keep_mask),dur_list(keep_mask),...
         categorical(monkey_list(keep_mask)),categorical(freq_list(keep_mask)),...

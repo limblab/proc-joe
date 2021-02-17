@@ -155,7 +155,23 @@ end
     ax.XTick = sort(freq_list);
     ax.XMinorTick = 'off';
     
-
+%% inhib dur stats
+    freq_list=[179,94,49,20];
+    
+    freqs = []; inhib_durs = []; cell_id = [];
+    for i_cell = 1:size(exp_inhib_data.is_inhib,1)
+        num_add = sum(exp_inhib_data.is_inhib(i_cell,2:end));
+        cell_id = [cell_id; i_cell+zeros(num_add,1)];
+        freqs = [freqs; freq_list(exp_inhib_data.is_inhib(i_cell,2:end)==1)'];
+        inhib_durs = [inhib_durs; exp_inhib_data.inhib_dur(i_cell,find(exp_inhib_data.is_inhib(i_cell,2:end))+1)'];
+    end
+    inhib_durs = inhib_durs*1000;
+    
+    inhib_tbl = table(freqs, inhib_durs, categorical(cell_id), 'VariableNames',{'freq','dur','cell'});
+    mdl_spec = 'dur~freq + cell';
+    
+    inhib_mdl = fitlm(inhib_tbl,mdl_spec)
+    
     
 %% get decay rate for each neuron across stim frequencies
     decay_input_data.cond_list = [2,3,4,5];

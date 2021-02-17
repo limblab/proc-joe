@@ -119,8 +119,8 @@
     set(gca,'fontsize',14);
     xlim([0,110])
     
-    lat_mdl = fitlm(x_data,y_data)
-    
+%     lat_mdl = fitlm(x_data,y_data)
+    lat_mdl = LinearModel.fit(x_data-5,y_data,'Intercept',false)
     
 %% latency vs. standard dev of spikes in a peak
 

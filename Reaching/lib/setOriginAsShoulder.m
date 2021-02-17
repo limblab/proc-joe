@@ -1,10 +1,16 @@
 function [td] = setOriginAsShoulder(td,is_fixed_origin)
     
 
-    dlc_idx = [find((strcmpi(td.dlc_pos_names,'shoulder_x'))),...
-        find((strcmpi(td.dlc_pos_names,'shoulder_y'))),...
-        find((strcmpi(td.dlc_pos_names,'shoulder_z')))];
+    dlc_idx = [find((strcmpi(td.dlc_pos_names,'shoulder1_x'))),...
+        find((strcmpi(td.dlc_pos_names,'shoulder1_y'))),...
+        find((strcmpi(td.dlc_pos_names,'shoulder1_z')))];
 
+    if(isempty(dlc_idx))
+        dlc_idx = [find((strcmpi(td.dlc_pos_names,'shoulder_x'))),...
+            find((strcmpi(td.dlc_pos_names,'shoulder_y'))),...
+            find((strcmpi(td.dlc_pos_names,'shoulder_z')))];
+    end
+    
     if(is_fixed_origin)
         
         dlc_pos = td.dlc_pos(:,dlc_idx);

@@ -10,7 +10,7 @@
 
 %% Set up meta info and load trial data
     if ispc
-        folderpath = 'D:\Lab\Data\DLC_videos\Han_20201223_rwTwoPlanes\neural-data';
+        folderpath = 'D:\Lab\Data\DLC_videos\Han_20201222_rwTwoPlanes\neural-data';
     else
         folderpath = '/data/raeed/project-data/limblab/s1-kinematics';
     end
@@ -118,10 +118,10 @@
         for i_td = 1:numel(td_list)
             if(strcmpi(task_list{i_td},'RT'))
                 figure();
-                dlc_idx = [find((strcmpi(td_list{1}.dlc_pos_names,[markername,'_x']))),find((strcmpi(td_list{1}.dlc_pos_names,[markername,'_y'])))];
-                plot(td_list{i_td}.pos(:,2),td_list{i_td}.dlc_pos(:,dlc_idx(1)),'k');
+                dlc_idx = [find((strcmpi(td_list{1}.dlc_pos_names,[markername,'_x']))),find((strcmpi(td_list{1}.dlc_pos_names,[markername,'_z'])))];
+                plot(td_list{i_td}.pos(:,1)-mean(td_list{i_td}.pos(:,1)),'k');
                 hold on;
-                
+                plot(-1*td_list{i_td}.dlc_pos(:,dlc_idx(2))+mean(td_list{i_td}.dlc_pos(:,dlc_idx(2))),'r');
             end
         end
     end
