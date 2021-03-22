@@ -5,33 +5,50 @@
     [exp_data] = getExperimentStimChannelData(exp_input_data);
     exp_array_data = exp_data.array_data;
     exp_array_data = adjustArrayDataSpikeTimes(exp_array_data, 0.453/1000); % stim pulse length
-    exp_array_data = getBaselineFiringRate(exp_array_data,[-80,-5]/1000); % window relative to stim onset
+    exp_array_data = getBaselineFiringRate(exp_array_data,[-80,-10]/1000); % window relative to stim onset
  
+%% get amplitude list for each neuron
+    amps = {};
+    num_stims = [];
+    for i_unit = 1:numel(exp_array_data)
+        amps{i_unit,1} = [exp_array_data{i_unit}.STIM_PARAMETERS.amp1];
+        num_stims = [num_stims, exp_array_data{i_unit}.numStims];
+    end
+    
     
 %% plot raster of example neuron
 
     raster_input_data = [];
     raster_input_data.x_lim = [-12,15]; % ms
     raster_input_data.amp_list = exp_input_data.amp_list;
-    raster_input_data.marker_style = 'line'; % line is the correct way, but much slower
+    raster_input_data.marker_style = '.'; % line is the correct way, but much slower
     raster_input_data.plot_amp = 1;
     
-    load('D:\Lab\Data\stim_ephys_paper\artifact_analysis\sim_study\duke_blank_times');
-    raster_input_data.duke_blank_times = blank_times;
-    load('D:\Lab\Data\stim_ephys_paper\artifact_analysis\sim_study\black_blank_times');
-    raster_input_data.black_blank_times = blank_times;
+%     load('D:\Lab\Data\stim_ephys_paper\artifact_analysis\sim_study\duke_blank_times');
+%     raster_input_data.duke_blank_times = blank_times;
+%     load('D:\Lab\Data\stim_ephys_paper\artifact_analysis\sim_study\black_blank_times');
+%     raster_input_data.black_blank_times = blank_times;
     
-    for exp_idx = 5%1:numel(exp_array_data)%5 %4, 5, 13, 25
+    for exp_idx = 15%1:numel(exp_array_data)%5 %4, 5, 13, 25 (14,12)
         raster_input_data.is_model = 0;
         plotModelExpAmpRaster(exp_array_data{exp_idx},raster_input_data);
     end
 
 %% Activation threshold
-    activation_input_data.spike_window = [1,5]/1000;
+    activation_input_data.spike_window = [0.5,5]/1000;
     activation_input_data.remove_intrinsic = 1;
-    activation_input_data.sub_baseline = 1;
     activation_input_data.amp_list = exp_input_data.amp_list;
-    activation_input_data.threshold = 0.5;
+    
+    activation_input_data.use_stats = 1; % or use percent cutoff. Threshold is used for both
+    
+    if(activation_input_data.use_stats) 
+        activation_input_data.sub_baseline = 0;
+        activation_input_data.threshold = 0.05/numel(exp_input_data.amp_list);
+    else
+        activation_input_data.sub_baseline = 1;
+        activation_input_data.threshold = 0.5;
+    end
+  
     activation_input_data.test_thresholds = 0:0.05:1;
     
     activation_input_data.is_model = 0;
@@ -40,11 +57,13 @@
 % plot activation threshold data
     f=figure('Position',[2918,452,200,400]);
     f.Name = 'Han_Duncan_activationThreshold';
+    
 %     subplot(1,2,1)
     % experimental data
     boxplot_params = [];
     boxplot_params.use_same_color_for_all = 1;
-    boxplot_params.master_color = 'k';
+    boxplot_params.master_color = [0.4,0.4,0.4];
+    boxplot_params.median_color = 'k';
 %     mask = exp_threshold_data.is_responsive == 1;
 %     data_all(end+1:end+sum(mask)) = exp_threshold_data.thresholds(mask);
 %     group_all(end+1:end+sum(mask)) = 4;
@@ -81,7 +100,7 @@
 %% magnitude and latency of volleys
     lat_input_data.amp_list = exp_input_data.amp_list;
     lat_input_data.peak_window = [0,10]/1000; % s
-    lat_input_data.bin_size = 0.2/1000; % s
+    lat_input_data.bin_size = 0.1/1000; % s
     
     lat_input_data.use_gauss_filter = 1;
     lat_input_data.dt = 0.0001;
@@ -104,23 +123,29 @@
     f.Name = 'Han_Duncan_changePeakLatency';
     boxplot_params.master_color = [0.4,0.4,0.4];
     x_data = []; y_data = [];
-    for i_amp = 1:numel(lat_input_data.amp_list)
-        data_mask = exp_latency_data.delta_amp == lat_input_data.amp_list(i_amp);
-        x_data = [x_data;lat_input_data.amp_list(i_amp)+zeros(sum(data_mask),1)];
+    
+    delta_amp = exp_latency_data.delta_amp - exp_latency_data.delta_min_amp;
+    unique_amp_list = unique(delta_amp);
+    for i_amp = 1:numel(unique_amp_list)
+        data_mask = delta_amp == unique_amp_list(i_amp);
+        x_data = [x_data;unique_amp_list(i_amp)+zeros(sum(data_mask),1)];
         y_data = [y_data;exp_latency_data.delta_lat(data_mask)'*1000];
         if(sum(data_mask) > 2)
-            boxplot_wrapper(lat_input_data.amp_list(i_amp),exp_latency_data.delta_lat(data_mask)*1000,boxplot_params);
+            boxplot_wrapper(unique_amp_list(i_amp),exp_latency_data.delta_lat(data_mask)*1000,boxplot_params);
+%             hold on
+%             plot(unique_amp_list(i_amp)+2*rand(sum(data_mask),1)-1,exp_latency_data.delta_lat(data_mask)*1000,'ko','markersize',6);
         end
     end
     
-    xlabel('Amplitude (\muA)');
+    
+    xlabel('\Delta Amplitude (\muA)');
     ylabel('\Delta peak latency (ms)');
     formatForLee(gcf);
     set(gca,'fontsize',14);
-    xlim([0,110])
+    xlim([0,45])
     
-%     lat_mdl = fitlm(x_data,y_data)
-    lat_mdl = LinearModel.fit(x_data-5,y_data,'Intercept',false)
+    lat_mdl = fitlm(x_data,y_data,'Intercept',false)
+%     lat_mdl = LinearModel.fit(x_data-min(x_data),y_data,'Intercept',false)
     
 %% latency vs. standard dev of spikes in a peak
 
@@ -131,18 +156,30 @@
     color_list = inferno(numel(amps_plot)+1); % remove most yellow color
     unique_amps = unique(exp_latency_data.amp_idx);
     color_cnt=1;
-    for i_amp = amps_plot
+    lat_list = []; std_list = []; amp_list = []; id_list = [];
+    for i_amp = 1:numel(unique_amps)
         mask = exp_latency_data.amp_idx == unique_amps(i_amp);
-        plot(exp_latency_data.lat_list(mask)*1000,exp_latency_data.std_list(mask)*1000,...
-            '.','color',color_list(color_cnt,:),'markersize',12)
-        color_cnt = color_cnt+1;
+        lat_list = [lat_list; exp_latency_data.lat_list(mask)'*1000];
+        std_list = [std_list; exp_latency_data.std_list(mask)'*1000];
+        amp_list = [amp_list; unique_amps(i_amp)*ones(sum(mask),1)];
+        id_list = [id_list; exp_latency_data.unit_idx(mask)'];
+        
+        if(any(i_amp==amps_plot))
+            plot(exp_latency_data.lat_list(mask)*1000,exp_latency_data.std_list(mask)*1000,...
+                '.','color',color_list(color_cnt,:),'markersize',12)
+            color_cnt = color_cnt+1;
+        end
     end
     xlabel('Peak latency (ms)');
     ylabel('Spike timing std (ms)');
     formatForLee(gcf);
     set(gca,'fontsize',14)
     
-    std_mdl = fitlm(exp_latency_data.lat_list(mask)*1000,exp_latency_data.std_list(mask)*1000)
+    std_tbl = table(lat_list, std_list, amp_list,id_list,'VariableNames',{'lat','std','amp','neuron'});
+    std_mdl_spec = 'std~lat*amp + neuron';
+    std_mdl = fitlm(std_tbl,std_mdl_spec)
+    
+    
 %% num peaks vs amplitude
 
     f=figure('Position',[740 476 678 327]); hold on;
@@ -198,24 +235,24 @@
     ylim([-0.5,size(num_peak_data,2)]);
     xlim([0,110])
     
-    %% setup linear model for statistics. then build linear model
+    % setup linear model for statistics. then build linear model
     
     peak_tbl = table(exp_latency_data.num_peaks_amp(:,2),exp_latency_data.num_peaks_amp(:,1),exp_latency_data.num_peaks_id,...
         'VariableNames',{'amp','peaks','id'});
     peak_tbl.id = categorical(peak_tbl.id);
     
     mdl_spec = 'peaks~amp+id';
-    peak_mdl = fitlm(peak_tbl,mdl_spec);
+    peak_mdl = fitlm(peak_tbl,mdl_spec)
     
 %% compute inhibition duration and plot across amplitudes
 
     inhib_input_data = [];
-    inhib_input_data.pre_window = [-80,-5]/1000; % s 
+    inhib_input_data.pre_window = [-80,-10]/1000; % s 
     inhib_input_data.post_window = [0,220]/1000; % s
     inhib_input_data.bin_window = [inhib_input_data.pre_window(1),inhib_input_data.post_window(2)+10/1000];
     inhib_input_data.max_time_start = 40/1000; % s
     inhib_input_data.bin_size = 5/1000; % s
-    inhib_input_data.kernel_length = 2;
+    inhib_input_data.kernel_length = 1;
     inhib_input_data.blank_time = [0,10]/1000; % s
     
     inhib_input_data.num_consec_bins = 2;
@@ -237,13 +274,16 @@
     f.Name = 'Han_duncan_inhibition';
     subplot(1,2,1)
     offset = [-1,1];
-    x_data = []; y_data = [];
+    amp_data = []; inhib_dur_data = []; id_list = [];
     for i_amp = 1:numel(inhib_input_data.amp_list)   
         data = exp_inhib_data.inhib_dur(:,i_amp)*1000;
+        temp_id = 1:1:numel(data)';
+        temp_id(isnan(data)) = [];
         data(isnan(data)) = [];
         
-        x_data = [x_data; inhib_input_data.amp_list(i_amp)*ones(numel(data),1)];
-        y_data = [y_data; data];
+        amp_data = [amp_data; inhib_input_data.amp_list(i_amp)*ones(numel(data),1)];
+        inhib_dur_data = [inhib_dur_data; data];
+        id_list = [id_list; temp_id'];
         boxplot_wrapper(inhib_input_data.amp_list(i_amp), data, boxplot_params);
 
     end
@@ -269,7 +309,10 @@
     
     
     % inhibition duration stats
-    inhib_mdl = fitlm(x_data,y_data)
+    inhib_tbl = table(amp_data,inhib_dur_data,categorical(id_list),'VariableNames',{'amp','dur','id'});
+    
+    mdlspec = 'dur~amp + id';
+    inhib_mdl = fitlm(inhib_tbl,mdlspec)
     
     
     

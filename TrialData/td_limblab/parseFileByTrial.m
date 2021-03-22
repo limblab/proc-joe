@@ -294,25 +294,44 @@ end
 % Process OpenSim data
 % Figure out if we have opensim data
 opensim_analog_idx = 0;
+opensimList = {};
+opensim = [];
 for i=1:length(cds.analog)
     header = cds.analog{i}.Properties.VariableNames;
     if any(contains(header,'_ang')) || any(contains(header,'_vel')) || any(contains(header,'_len')) || any(contains(header,'_muscVel'))
         opensim_analog_idx = i;
-        break
+
+        opensim_temp=cds.analog{opensim_analog_idx};
+        opensimList_temp = opensim_temp.Properties.VariableNames;
+
+        % TODO?: replace this with something that separates out the different types of
+        % opensim data, e.g. separate joints and muscles, kinematics and
+        % dynamics
+
+        % Assign to a new 'opensim' variable
+        dt = mode(diff(opensim_temp.t));
+        if(dt < bin_size)
+            opensim_temp = decimate_signals(opensim_temp,opensimList_temp,bin_size);
+        else
+            opensim_temp = resample_signals(opensim_temp,opensimList_temp,bin_size,min(opensim_temp.t(1),cds.meta.dataWindow(1)),max(cds.meta.dataWindow(2),opensim_temp.t(end)));
+        end
+
+        for i_field = 1:numel(opensimList_temp)
+            if(~strcmpi(opensimList_temp{i_field},'t'))
+                opensim.(opensimList_temp{i_field}) = opensim_temp.(opensimList_temp{i_field});
+                opensimList{end+1} = opensimList_temp{i_field};
+            else
+                if(~isfield(opensim,'t'))
+                    opensim.t = opensim_temp.t;
+                    opensimList{end+1} = 't';
+                end
+            end
+        end
     end
 end
-if opensim_analog_idx > 0
-    opensim=cds.analog{opensim_analog_idx};
-    opensimList = opensim.Properties.VariableNames;
-    
-    % TODO?: replace this with something that separates out the different types of
-    % opensim data, e.g. separate joints and muscles, kinematics and
-    % dynamics
-    
-    % Assign to a new 'opensim' variable
-    cds_bin.opensim = decimate_signals(opensim,opensimList,bin_size);
-    clear opensim;
-end
+
+cds_bin.opensim = opensim;
+clear opensim
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Process Markers data

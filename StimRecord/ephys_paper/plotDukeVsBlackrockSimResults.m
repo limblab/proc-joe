@@ -56,7 +56,7 @@
     prop_recovered = nan(numel(duke_spikes_found_ts),numel(bin_edges)-1);
     
     
-    bin_list = []; amp_list = []; is_duke = []; recov_list = [];
+    bin_list = []; amp_list = []; is_duke = []; recov_list = []; chan_list = [];
     for i_amp = 1:numel(duke_spikes_found_ts)
         for i = 1:2
             switch i
@@ -85,18 +85,19 @@
                 is_duke = [is_duke;(i==1)*ones(numel(temp_recov),1)];
                 amp_list = [amp_list; amps(i_amp)*ones(numel(temp_recov),1)];
                 bin_list = [bin_list; bin_edges(1:end-1)' + mode(diff(bin_edges))/2];
+                chan_list = [chan_list; i_chan*ones(numel(temp_recov),1)];
             end
         
         end
 
     end
    
-recov_tbl = table(bin_list,amp_list,is_duke,recov_list,'VariableNames',{'t','amp','is_duke','recov'});
-recov_tbl.is_duke = categorical(recov_tbl.is_duke);
+recov_tbl = table(bin_list,amp_list,categorical(is_duke),recov_list,categorical(chan_list),'VariableNames',{'t','amp','is_duke','recov','chan'});
 
 recov_tbl(recov_tbl.recov <= 0,:) = [];
 
-mdl_spec = 'recov~t*amp + amp*is_duke + t*is_duke';
+mdl_spec = 'recov~t*amp + amp*is_duke + t*is_duke + t*chan';
+% mdl_spec = 'recov~t + amp + is_duke + chan + t:amp + t:is_duke + t:is_duke:amp';
 recov_mdl = fitglm(recov_tbl,mdl_spec,'distribution','binomial','link','logit')
 
 

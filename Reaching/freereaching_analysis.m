@@ -10,7 +10,7 @@
 
 %% Set up meta info and load trial data
     if ispc
-        folderpath = 'D:\Lab\Data\DLC_videos\Crackle-Qiwei-2020-12-15\neural-data\';
+        folderpath = 'D:\Lab\Data\DLC_videos\Han_20201204_rwFreeReach\neural-data\';
     else
         folderpath = '/data/raeed/project-data/limblab/s1-kinematics';
     end
@@ -55,7 +55,7 @@
         load(fullfile(file_info(filenum).folder,file_info(filenum).name));
         keep_mask = ones(size(td_list));
         robot_height = [];
-        for i_td = 1:numel(td_list) % each entry in td_list is a different trial_data for a different experiment (free reach vs 2D random walk for example)            
+        for i_td = 2:numel(td_list) % each entry in td_list is a different trial_data for a different experiment (free reach vs 2D random walk for example)            
             % resample trial data to appropriate bin size
             if(td_list{i_td}.bin_size <= bin_size)
                 td_list{i_td} = binTD(td_list{i_td},bin_size/td_list{i_td}.bin_size);

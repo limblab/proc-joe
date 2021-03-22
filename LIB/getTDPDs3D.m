@@ -30,7 +30,7 @@
 % Written by Raeed Chowdhury. Updated Nov 2017.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function pdTable = getTDPDs(trial_data,params)
+function pdTable = getTDPDs3D(trial_data,params)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % DEFAULT PARAMETERS
 out_signals      =  [];
@@ -119,21 +119,21 @@ for uid = 1:size(response_var,2)
         tab_append{in_signal_idx}.([prefix move_corr 'PD'])(uid,:)=circ_mean(dirs);
         if(doing_3D_pd) % compute z-angle as well
             z_ang = acos(boot_coef(:,2+in_signal_idx*2)/sqrt(boot_coef(:,in_signal_idx*2).^2 + boot_coef(:,1+in_signal_idx*2).^2 + boot_coef(:,2+in_signal_idx*2).^2));
-            tab_append{in_signal_idx}.([prefix move_corr 'PD_zAng'])(uid,:)=circ_mean(z_ang);
+            tab_append{in_signal_idx}.([prefix move_corr 'PD_zAng'])(uid)=circ_mean(z_ang);
         end
         %handle wrap around problems:
         centeredDirs=minusPi2Pi(dirs-circ_mean(dirs));
         
         if bootForTuning
-            tab_append{in_signal_idx}.([prefix move_corr 'PDCI'])(uid,:)=prctile(centeredDirs,[2.5 97.5])+circ_mean(dirs);
+            tab_append{in_signal_idx}.([prefix move_corr 'PDCI'])(uid)=prctile(centeredDirs,[2.5 97.5])+circ_mean(dirs);
         end
         
         % moddepth is poorly defined for GLM context, but for this case, let's use sqrt(sum(squares))
         moddepths_2D = sqrt(sum(boot_coef(:,(2*in_signal_idx):(2*in_signal_idx+1)).^2,2));
-        tab_append{in_signal_idx}.([prefix move_corr 'Moddepth'])(uid,:)= mean(moddepths_2D);
+        tab_append{in_signal_idx}.([prefix move_corr 'Moddepth'])(uid)= mean(moddepths_2D);
         if(doing_3D_pd)
             moddepths_3D = sqrt(sum(boot_coef(:,(2*in_signal_idx):(2*in_signal_idx+2)).^2,2));
-            tab_append{in_signal_idx}.([prefix move_corr 'Moddepth3D'])(uid,:)= mean(moddepths_2D);
+            tab_append{in_signal_idx}.([prefix move_corr 'Moddepth3D'])(uid)= mean(moddepths_2D);
         end
         
         if bootForTuning
@@ -158,5 +158,5 @@ for uid = 1:size(response_var,2)
     end
 end
 starter = makeNeuronTableStarter(trial_data,params);
-pdTable = horzcat(starter,tab_append{:});
+pdTable = tab_append{:};
 end%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

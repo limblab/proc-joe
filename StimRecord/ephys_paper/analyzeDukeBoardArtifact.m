@@ -7,15 +7,17 @@ load('D:\Lab\Data\stim_ephys_paper\artifact_analysis\Duncan_Han_dukeProjBox\Duke
     save_plot = 0;
     threshold = 0.2;
     peak_data = {};
-    
+    num_stims = [];
     for file_num = 1:numel(file_list)
         disp(file_list(file_num).name);
         
         stim_on=find(diff(sync_line_data{file_num}-mean(sync_line_data{file_num})>3)>.5);
-
+        
         anodic_idx = 2:2:numel(stim_on);
         cathodic_idx = 1:2:numel(stim_on);
 
+        num_stims(end+1,:) = [numel(anodic_idx),numel(cathodic_idx)];
+        
         plot_data = [];
         x_data = [window_idx(1):window_idx(2)]'/30 - (pulse_width_1(file_num) + pulse_width_2(file_num) + interphase)/1000;
 
@@ -225,6 +227,8 @@ load('D:\Lab\Data\stim_ephys_paper\artifact_analysis\Duncan_Han_dukeProjBox\Duke
     amp_keep = [10,25,50,100]';
     amp_mask = any(amps==amp_keep);
     
+    offset_cathodic = [-0.9,0.1,1.1,-0.9]./40;
+    offset_anodic = [-1.1,-0.1,-0.9,-1.1]./40;
     color_list = inferno(numel(amp_keep)+1);
     
     f=figure(); hold on;
@@ -235,20 +239,28 @@ load('D:\Lab\Data\stim_ephys_paper\artifact_analysis\Duncan_Han_dukeProjBox\Duke
         for polarity_idx = 1:2
             if(amp_mask(i_amp)==1)
                 if(polarity_idx == 1)
-%                     low_bar = median_gain_cathodic(i_amp,:)-squeeze(prc_gain_cathodic(i_amp,:,1));
-%                     high_bar = squeeze(prc_gain_cathodic(i_amp,:,2))-median_gain_cathodic(i_amp,:);
+%                     low_bar = metric_gain_cathodic(i_amp,:)-squeeze(prc_gain_cathodic(i_amp,:,1));
+%                     high_bar = squeeze(prc_gain_cathodic(i_amp,:,2))-metric_gain_cathodic(i_amp,:);
                     
-%                     errorbar(bin_centers+offset(sum(amp_mask(1:i_amp))),median_gain_cathodic(i_amp,:),low_bar,high_bar,...
-                    plot(bin_centers,metric_gain_cathodic(i_amp,:),...
-                        'marker','.','markersize',12,'linestyle','-',...
+                    low_bar = -std_gain_cathodic(i_amp,:);
+                    high_bar = std_gain_cathodic(i_amp,:);
+                    errorbar(bin_centers+offset_cathodic(sum(amp_mask(1:i_amp))),metric_gain_cathodic(i_amp,:),low_bar,high_bar,...
+                        'marker','.','markersize',22,'linestyle','-',...
                         'color',color_list(sum(amp_mask(1:i_amp)),:),'linewidth',2);
+                    
+                %                     plot(bin_centers,metric_gain_cathodic(i_amp,:),...
+
                 else
-%                     low_bar = median_gain_cathodic(i_amp,:)-squeeze(prc_gain_cathodic(i_amp,:,1));
-%                     high_bar = squeeze(prc_gain_cathodic(i_amp,:,2))-median_gain_cathodic(i_amp,:);
-%                     errorbar(bin_centers-offset(sum(amp_mask(1:i_amp))),median_gain_anodic(i_amp,:),low_bar,high_bar,...
-                    plot(bin_centers,metric_gain_anodic(i_amp,:),...
-                        'marker','.','markersize',12,'linestyle','--',...
+%                     low_bar = metric_gain_anodic(i_amp,:)-squeeze(prc_gain_anodic(i_amp,:,1));
+%                     high_bar = squeeze(prc_gain_anodic(i_amp,:,2))-metric_gain_anodic(i_amp,:);
+                    low_bar = -std_gain_anodic(i_amp,:);
+                    high_bar = std_gain_anodic(i_amp,:);
+                    d=errorbar(bin_centers+offset_anodic(sum(amp_mask(1:i_amp))),metric_gain_anodic(i_amp,:),low_bar,high_bar,...
+                        'marker','s','markersize',8,'linestyle',':',...
                         'color',color_list(sum(amp_mask(1:i_amp)),:),'linewidth',2);
+                    d.Bar.LineStyle = 'dotted';
+                %                     plot(bin_centers,metric_gain_anodic(i_amp,:),...
+
                 end
             end
         end
@@ -264,7 +276,7 @@ load('D:\Lab\Data\stim_ephys_paper\artifact_analysis\Duncan_Han_dukeProjBox\Duke
     set(l,'box','off');
 
     xlim([0,5]);
-    ylim([0,1.1]);
+    ylim([0.2,1.15]);
 %% stats on gain data -- with gain data with a curve, let pulse polarity and amplitude be factors
 
 % amps has the amplitude, gain_ratio has the cathodic and anodic data for
@@ -288,27 +300,33 @@ for i_amp = 1:numel(gain_ratio_anodic)
                 temp_is_cath = 1;
         end
         
-        t_list = [t_list; temp_t];
-        gain_list = [gain_list; temp_gain];
-        amp_list = [amp_list; amps(i_amp)*ones(numel(temp_gain),1)];
-        is_cathodic = [is_cathodic; temp_is_cath*ones(numel(temp_gain),1)];
-        stim_chan_list = [stim_chan_list; temp_chan];
+%         keep_mask = temp_t > 0.9 & temp_t < 1.1;
+%         keep_mask = temp_t > 1.3 & temp_t < 1.4;
+        keep_mask = temp_t > 2.0 & temp_t < 2.1;
+%         keep_mask = ones(size(temp_t));
+        t_list = [t_list; temp_t(keep_mask==1)];
+        gain_list = [gain_list; temp_gain(keep_mask==1)];
+        amp_list = [amp_list; amps(i_amp)*ones(sum(keep_mask==1),1)];
+        is_cathodic = [is_cathodic; temp_is_cath*ones(sum(keep_mask==1),1)];
+        stim_chan_list = [stim_chan_list; temp_chan(keep_mask==1)];
     end
     
 end
+
+
+
 
 gain_tbl = table(t_list,gain_list,amp_list,is_cathodic,stim_chan_list,'VariableNames',{'t','gain','amp','is_cath','chan'});
 
 gain_tbl.is_cath = categorical(gain_tbl.is_cath);
 gain_tbl.chan = categorical(gain_tbl.chan);
 
-mdl_spec = 'gain~t*amp + t*is_cath + t*chan';
 
-S.Link = @(x)exp(x);
-S.Derivative = @(x)exp(x);
-S.Inverse = @(x)log(x);
+mdl_spec = 'gain~amp+is_cath + chan';
 
-gain_mdl = fitglm(gain_tbl,mdl_spec,'Link',S);
+gain_mdl = fitlm(gain_tbl,mdl_spec)
+% gain_mdl = fitglm(gain_tbl,mdl_spec,'Distribution','binomial')
 gain_pred = predict(gain_mdl,gain_tbl);
-% plot(gain_pred,gain_tbl.gain,'.')
+plot(gain_pred,gain_tbl.gain,'.')
+
 
