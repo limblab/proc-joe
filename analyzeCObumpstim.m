@@ -1,11 +1,11 @@
 %% set initial parameters
 
-    input_data.folderpath = 'D:\Lab\Data\CObumpmove\Han_20200610_stim\';
+    input_data.folderpath = 'D:\Lab\Data\StimDuringMove\Han_20191004_CObump_stimDuringTask\';
 %     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 %     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Pop_18E3\Array Map Files\6250-002085\SN 6250-002085.cmp';
     
-    input_data.date = '20191003';
+    input_data.date = '20191004';
     input_data.array = 'arrayLeftS1';
     input_data.monkey = 'monkeyHan';
     input_data.ranBy = 'ranByJoe';
@@ -32,8 +32,7 @@
     params.exclude_units = [0,255];
     
     td_all = [];
-    td_all = [];
-    for file_num = 2:numel(file_name)
+    for file_num = 1:numel(file_name)
         cds = commonDataStructure();
         cds.file2cds(strcat(input_data.folderpath,file_name(file_num).name),input_data.array,input_data.monkey,input_data.ranBy,...
             input_data.lab,input_data.mapFile,input_data.task,'recoverPreSync','ignoreJumps','ignoreFilecat');
@@ -54,6 +53,9 @@
     % remove stim trials where stim happens too far after movement onset
     td_all = td_all(isnan([td_all.idx_stimTime]) | ... 
         [td_all.idx_stimTime] - [td_all.idx_goCueTime] <= 0.4/td_all(1).bin_size);
+    
+    td_all = binTD(td_all, 50);
+    
     
 %% plot kinematics....
     % plot example traces for each target
@@ -204,16 +206,6 @@
     mean_speed_hold = mean_speed_hold./repmat(reshape(num_trials_hold,1,numel(num_trials_hold)),size(mean_speed_hold,1),1);
 
     
-%% plot raster for each neuron
-    num_neurons = size(td_all(1).LeftS1_spikes,2);
-    
-    spike_row = []; spike_time = [];
-    stim_row = []; stim_time = [];
-    
-    for i_unit = 1:num_neurons
-
-
-    end
 %% plot PSTH data for each neuron
     move_subplot_idx = [6,2,4,8]; % right, up, left, down
     hold_subplot_idx = 5;
@@ -335,24 +327,6 @@
     formatForLee(gcf);
     xlabel('Center-hold evoked response (Hz)');
     ylabel('Move evoked response (Hz)');
-    set(gca,'fontsize',14)
-    
-    figure(); hold on;
-    plot(mod_depth,move_fr_center_fr_diff,'.');
-    ax = gca;
-    plot([max([ax.XLim,ax.YLim]),-max([ax.XLim,ax.YLim])],[-max([ax.XLim,ax.YLim]),max([ax.XLim,ax.YLim])],'k--')
-    formatForLee(gcf);
-    xlabel('Move - center hold no stim (Hz)');
-    ylabel('Move - center hold stim (Hz)');
-    set(gca,'fontsize',14)
-%     
-    figure(); hold on;
-    plot(move_fr_baseline,move_fr,'.');
-    ax = gca;
-    plot([0,max([ax.XLim,ax.YLim])],[0,max([ax.XLim,ax.YLim])],'k--')
-    formatForLee(gcf);
-    xlabel('movement baseline response (Hz)');
-    ylabel('stim during movement response (Hz)');
     set(gca,'fontsize',14)
     
 %     errorbar(center_hold_fr(~stim_chan_mask),move_fr(~stim_chan_mask,1),...

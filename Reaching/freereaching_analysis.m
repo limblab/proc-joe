@@ -55,7 +55,7 @@
         load(fullfile(file_info(filenum).folder,file_info(filenum).name));
         keep_mask = ones(size(td_list));
         robot_height = [];
-        for i_td = 2:numel(td_list) % each entry in td_list is a different trial_data for a different experiment (free reach vs 2D random walk for example)            
+        for i_td = 1:numel(td_list) % each entry in td_list is a different trial_data for a different experiment (free reach vs 2D random walk for example)            
             % resample trial data to appropriate bin size
             if(td_list{i_td}.bin_size <= bin_size)
                 td_list{i_td} = binTD(td_list{i_td},bin_size/td_list{i_td}.bin_size);
@@ -129,7 +129,25 @@
         kin_data = reachingKinematics(td_list,task_list,kin_input_data);
     end
     
-    
+%% get pca of muscle lengths for predictions
+    for filenum = 1:length(td_all)
+        td_list = td_all{filenum};
+        for i_td = 1:numel(td_list)
+            PCAparams = struct('signals',{{'opensim',find(contains(td_list{i_td}.opensim_names,'_len') & ~contains(td_list{i_td}.opensim_names,'tricep_lat'))}},...
+                                    'do_plot',true);
+    %                 PCAparams = struct('signals','muscle_len', 'do_plot',false);
+            [td_temp,~] = dimReduce(td_list{i_td},PCAparams);
+            td_list{i_td}.musc_len_pca = td_temp.opensim_pca;
+            % get velocity PCA
+            % need to drop a muscle: for some reason, PCA says rank of muscle kinematics matrix is 38, not 39.
+            PCAparams_vel = struct('signals',{{'opensim',find(contains(td_list{i_td}.opensim_names,'_muscVel') & ~contains(td_list{i_td}.opensim_names,'tricep_lat'))}},...
+                                'do_plot',true);
+            [td_temp,~] = dimReduce(td_list{i_td},PCAparams_vel);
+            td_list{i_td}.musc_vel_pca = td_temp.opensim_pca;
+            clear td_temp;
+        end
+        td_all{filenum} = td_list;
+    end
 
     
 %% Loop through files to cross-validate encoders
@@ -261,10 +279,10 @@
     
 %% plot random "trials" and predictions from one of the models - real FR, model predict FR
 
-    unit_idx = 25;
-    td_idx = 1; % pick which trial data (task) to use
+    unit_idx = 33;
+    td_idx = 2; % pick which trial data (task) to use
 
-    window_plot = [-2,2]; % s
+    window_plot = [-10,10]; % s
     num_trials_plot = 4;
     bin_size = td_list{td_idx}.bin_size;
     % pick random time point, make sure data in window are consecutive
@@ -327,7 +345,7 @@
                     model_eval{monkeynum,sessionnum},struct(...
                         'bonferroni_correction',6,...
                         'models',{models_to_plot},...
-                        'model_pairs',{{'ext','handelbow'}},...
+                        'model_pairs',{{'musc','ext'}},...
                         'postfix','_eval'));
         end
     end
@@ -469,7 +487,7 @@
 %% plot PDs across spaces (actual, as well as predicted by each model)
     sessionnum = 1;
     spacenames = {'RT3D','RT2D'};
-    tasknames = {'Unknown','RW'};
+    tasknames = {'none','RW'};
     legend_data = [];
     figure
     models_to_plot_temp = models_to_plot;

@@ -52,6 +52,9 @@ end
         end
     end
 
+    
+
+    
 %% rebound excitation stats 
 % duration, percent of cells
     rebound_input_data.cond_list = [2,3,4,5];
@@ -180,6 +183,14 @@ end
     
     inhib_mdl = fitlm(inhib_tbl,mdl_spec)
     
+%% percent of baseline blocked during stimulus
+    blocking_input_data.cond_list = [2,3,4,5];
+    blocking_input_data.blank_time = [5]/1000; %s
+    blocking_input_data.max_train_time = 0.2; % s
+    
+    [rebound_data] = getBaselineActivityBlocked(exp_array_data,blocking_input_data);
+
+
     
 %% get decay rate for each neuron across stim frequencies
     decay_input_data.cond_list = [2,3,4,5];

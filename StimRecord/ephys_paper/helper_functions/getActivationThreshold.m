@@ -48,7 +48,7 @@ function [output_data] = getActivationThreshold(array_data, input_data)
         end
         
         if(~isempty(unit_thresh))
-            thresholds(i_unit) = array_data{i_unit}.STIM_PARAMETERS(unit_thresh).amp1;
+            thresholds(i_unit) = input_data.amp_list(unit_thresh);
             is_responsive(i_unit) = 1;
         end
     end

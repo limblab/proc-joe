@@ -19,7 +19,7 @@
 %% plot raster of example neuron
 
     raster_input_data = [];
-    raster_input_data.x_lim = [-12,15]; % ms
+    raster_input_data.x_lim = [-50,150]; % ms
     raster_input_data.amp_list = exp_input_data.amp_list;
     raster_input_data.marker_style = '.'; % line is the correct way, but much slower
     raster_input_data.plot_amp = 1;
@@ -29,7 +29,7 @@
 %     load('D:\Lab\Data\stim_ephys_paper\artifact_analysis\sim_study\black_blank_times');
 %     raster_input_data.black_blank_times = blank_times;
     
-    for exp_idx = 15%1:numel(exp_array_data)%5 %4, 5, 13, 25 (14,12)
+    for exp_idx = 1:numel(exp_array_data)%5 %4, 5, 13, 25 (14,12)
         raster_input_data.is_model = 0;
         plotModelExpAmpRaster(exp_array_data{exp_idx},raster_input_data);
     end
@@ -43,7 +43,7 @@
     
     if(activation_input_data.use_stats) 
         activation_input_data.sub_baseline = 0;
-        activation_input_data.threshold = 0.05/numel(exp_input_data.amp_list);
+        activation_input_data.threshold = 0.0005;
     else
         activation_input_data.sub_baseline = 1;
         activation_input_data.threshold = 0.5;
@@ -54,27 +54,27 @@
     activation_input_data.is_model = 0;
     exp_threshold_data = getActivationThreshold(exp_array_data,activation_input_data);
 
-% plot activation threshold data
+%% plot activation threshold data
     f=figure('Position',[2918,452,200,400]);
     f.Name = 'Han_Duncan_activationThreshold';
-    
-%     subplot(1,2,1)
-    % experimental data
-    boxplot_params = [];
-    boxplot_params.use_same_color_for_all = 1;
-    boxplot_params.master_color = [0.4,0.4,0.4];
-    boxplot_params.median_color = 'k';
-%     mask = exp_threshold_data.is_responsive == 1;
-%     data_all(end+1:end+sum(mask)) = exp_threshold_data.thresholds(mask);
-%     group_all(end+1:end+sum(mask)) = 4;
-%     
-%     vs = violinplot(data_all,group_all)
-    data = exp_threshold_data.thresholds(exp_threshold_data.is_responsive==1);
-    boxplot_wrapper(4, data, boxplot_params);
-    
+        
     formatForLee(gcf); set(gca,'fontsize',14);
     ylabel('Activation threshold (\muA)');
     set(gca,'XTick',[])
+%     subplot(1,2,1)
+    % experimental data
+%     boxplot_params = [];
+%     boxplot_params.use_same_color_for_all = 1;
+%     boxplot_params.master_color = [0.4,0.4,0.4];
+%     boxplot_params.median_color = 'k';
+% %     mask = exp_threshold_data.is_responsive == 1;
+% %     data_all(end+1:end+sum(mask)) = exp_threshold_data.thresholds(mask);
+% %     group_all(end+1:end+sum(mask)) = 4;
+% %     
+% %     vs = violinplot(data_all,group_all)
+%     data = exp_threshold_data.thresholds(exp_threshold_data.is_responsive==1);
+%     boxplot_wrapper(4, data, boxplot_params);
+
 %
 % plot percent responsive all cells against different thresholds (cdf)
 %     
@@ -158,12 +158,11 @@
     color_cnt=1;
     lat_list = []; std_list = []; amp_list = []; id_list = [];
     for i_amp = 1:numel(unique_amps)
-        mask = exp_latency_data.amp_idx == unique_amps(i_amp);
-        lat_list = [lat_list; exp_latency_data.lat_list(mask)'*1000];
-        std_list = [std_list; exp_latency_data.std_list(mask)'*1000];
-        amp_list = [amp_list; unique_amps(i_amp)*ones(sum(mask),1)];
-        id_list = [id_list; exp_latency_data.unit_idx(mask)'];
-        
+            mask = exp_latency_data.amp_idx == unique_amps(i_amp);
+            lat_list = [lat_list; exp_latency_data.lat_list(mask)'*1000];
+            std_list = [std_list; exp_latency_data.std_list(mask)'*1000];
+            amp_list = [amp_list; unique_amps(i_amp)*ones(sum(mask),1)];
+            id_list = [id_list; exp_latency_data.unit_idx(mask)'];
         if(any(i_amp==amps_plot))
             plot(exp_latency_data.lat_list(mask)*1000,exp_latency_data.std_list(mask)*1000,...
                 '.','color',color_list(color_cnt,:),'markersize',12)
@@ -175,8 +174,9 @@
     formatForLee(gcf);
     set(gca,'fontsize',14)
     
-    std_tbl = table(lat_list, std_list, amp_list,id_list,'VariableNames',{'lat','std','amp','neuron'});
-    std_mdl_spec = 'std~lat*amp + neuron';
+    amp_mask = amp_list == 50;
+    std_tbl = table(lat_list(amp_mask), std_list(amp_mask), id_list(amp_mask),'VariableNames',{'lat','std','neuron'});
+    std_mdl_spec = 'std~lat';
     std_mdl = fitlm(std_tbl,std_mdl_spec)
     
     
@@ -185,9 +185,11 @@
     f=figure('Position',[740 476 678 327]); hold on;
     f.Name = 'Han_duncan_numPeaksVsAmplitude';
 
+    offset = [-1.25,-0.75,-0.25,0.25,0.75,1.25]*2;
     red_fact = 0.75;
     
     num_peak_data = zeros(numel(lat_input_data.amp_list),1+max([exp_latency_data.num_peaks_amp(:,1);exp_latency_data.num_peaks_amp_assume(:,1)]));
+    percent_neurons = [];
     for i_amp = 1:numel(lat_input_data.amp_list)
         data_mask = exp_latency_data.num_peaks_amp(:,2) == lat_input_data.amp_list(i_amp);
         
@@ -197,13 +199,17 @@
 
             percent_neurons = num_peak_data(i_amp,i_num)/sum(data_mask);
             
-            % draw square for this peak num and amplitude
+%             % draw square for this peak num and amplitude
             color_use = [1,1 - percent_neurons*red_fact,1 - percent_neurons*red_fact]; % red only map
             rectangle('Position',[lat_input_data.amp_list(i_amp)-2.5,num_peaks-0.5,5,1],'EdgeColor','k','FaceColor',color_use)
             % write number of units with that number of peaks in square
             text(lat_input_data.amp_list(i_amp),num_peaks,num2str(round(percent_neurons*100,0)),'horizontalalignment','center','fontsize',12)
         end
     end
+    colormap([ones(100,1,1), ones(100,1,1)-linspace(0,red_fact,100)', ones(100,1,1)-linspace(0,red_fact,100)']);
+
+    b=colorbar;
+    b.Label.String = 'Percent of neurons';
     
     % plot num_peaks_assume for 100uA
     for i_num = 1:size(num_peak_data,2)
@@ -228,7 +234,7 @@
     % set y and x tick marks
     ax=gca;
     ax.YTick = 0:2:max(exp_latency_data.num_peaks_amp(:,1));
-    ax.YRuler.MinorTickValues = 0:1:max(exp_latency_data.num_peaks_amp(:,1));
+    ax.YRuler.MinorTickValues = 0:1:max(exp_latency_data.num_peaks_amp(:,1))+1;
     ax.XTick = [5,15,25,40,50,100];
     ax.XRuler.MinorTickValues = lat_input_data.amp_list;
     
@@ -236,8 +242,8 @@
     xlim([0,110])
     
     % setup linear model for statistics. then build linear model
-    
-    peak_tbl = table(exp_latency_data.num_peaks_amp(:,2),exp_latency_data.num_peaks_amp(:,1),exp_latency_data.num_peaks_id,...
+%     amp_mask = exp_latency_data.num_peaks_amp(:,2) ~= 100;
+    peak_tbl = table(exp_latency_data.num_peaks_amp(:,2),exp_latency_data.num_peaks_amp(:,1),exp_latency_data.num_peaks_id(:),...
         'VariableNames',{'amp','peaks','id'});
     peak_tbl.id = categorical(peak_tbl.id);
     
@@ -290,7 +296,7 @@
     % format
     formatForLee(gcf)
     set(gca,'fontsize',14)
-    ylabel('Inhib dur (ms)');
+    ylabel('Inhibition duration (ms)');
     xlabel('Amp (\muA)');
     xlim([0,110]);
     
@@ -302,7 +308,7 @@
     % format
     formatForLee(gcf)
     set(gca,'fontsize',14)
-    ylabel('Fraction cells with inhib response');
+    ylabel('Fraction of cells with inhibitory response');
     xlabel('Amp (\muA)');
     ylim([0,1])
     xlim([0,110]);

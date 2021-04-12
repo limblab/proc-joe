@@ -157,6 +157,5 @@ for uid = 1:size(response_var,2)
         fprintf('  Bootstrapping GLM PD computation %d of %d (ET=%f s)\n',uid,size(response_var,2),toc(unit_tic))
     end
 end
-starter = makeNeuronTableStarter(trial_data,params);
-pdTable = tab_append{:};
+pdTable = horzcat(makeNeuronTableStarter(trial_data,params),tab_append{:});
 end%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

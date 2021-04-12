@@ -1,19 +1,19 @@
 %% set initial parameters
 
-    input_data.folderpath = 'D:\Lab\Data\StimPDs\Pop\20201023\';
+    input_data.folderpath = 'D:\Lab\Data\StimDuringMove\Han_20191004_CObump_stimDuringTask\';
 
 %     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
-%     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
-    mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Pop_18E3\Array Map Files\6250-002085\SN 6250-002085.cmp';
+    mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+%     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Pop_18E3\Array Map Files\6250-002085\SN 6250-002085.cmp';
     
-    input_data.date = '20200923';
+    input_data.date = '20191004';
 
-    input_data.array = 'arrayLeftM1';
-    input_data.monkey = 'monkeyPop';
+    input_data.array = 'arrayLeftS1';
+    input_data.monkey = 'monkeyHan';
     input_data.ranBy = 'ranByJoe';
     input_data.lab = 6;
     input_data.mapFile = strcat('mapFile',mapFileName);
-    input_data.task = 'taskWM';
+    input_data.task = 'taskCObump';
 
     pwd=cd;
     input_data.fileNum = 1;
@@ -57,11 +57,11 @@
     td_all = binTD(td_all,ceil(bin_size/td_all(1).bin_size));
         
     
-%% plot neural activity during movements to different targets
-	do_plot = 0;
+%% plot neural activity during movements to different targets (with and without stim)
+	do_plot = 1;
     
-    subplot_idx = [7,8,9,6,3,2,1,4];
-    
+%     subplot_idx = [7,8,9,6,3,2,1,4];
+    subplot_idx = [6,2,4,8];
     td_move = trimTD(td_all,{'idx_tgtOnTime',ceil(-0.3/bin_size)},{'idx_tgtOnTime',ceil(0.6/bin_size)});
     tgt_dirs = unique([td_move.target_direction]);
     if(do_plot)
@@ -79,7 +79,7 @@
                 spike_count = spike_count./numel(td_tgt);
 
                 subplot(3,3,subplot_idx(i_tgt))
-                plot(spike_count);
+                plot(spike_count/td_move(1).bin_size);
             end
         end
     end

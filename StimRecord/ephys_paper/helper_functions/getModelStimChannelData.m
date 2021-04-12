@@ -32,27 +32,25 @@ function [mdl_data_all, array_data, mask_data] = getModelStimChannelData(input_d
                         coord_data.clone_id = i_clone;
                         coord_data.gaba_ratio = input_data.gaba_ratio_list(i_gaba);
                         coord_data.get_axon_dendrite_locs = input_data.get_axon_dendrite_locs;
-                        coord_data.folderpath = input_data.folderpath;
+                        
 
                         % get location and spike data
                         data_soma = [];
-                        try
-                            if(input_data.get_synapses)
-                                data_path = [coord_data.folderpath, 'Diam',num2str(coord_data.diam),'_',num2str(coord_data.amp),'uA\'];
-                                cd(data_path);  
-                                load(['data_soma',num2str(coord_data.cell_id + coord_data.clone_id - 1),'_syn']);
-                            elseif(input_data.temporal_data)
-                                data_path = input_data.folderpath;
-                                cd(input_data.folderpath);
-                                load([input_data.folderpath,'data_soma',num2str(coord_data.cell_id + coord_data.clone_id - 1),'_amp_',num2str(input_data.amp_list(i_amp)),'uA_freq_',...
-                                   '2Hz_gabab_',num2str(input_data.gaba_ratio_list(i_gaba)),'_syn_act_100%_onlyexcitation_1.mat']);
-                            else
-                                data_path = [coord_data.folderpath, 'Diam',num2str(coord_data.diam),'_',num2str(coord_data.amp),'uA\'];
-                                cd(data_path);
-                                load(['data_soma',num2str(coord_data.cell_id + coord_data.clone_id - 1)]);
-                            end
+                        if(input_data.get_synapses)
+                            data_path = [input_data.folderpath, 'Diam',num2str(coord_data.diam),'_',num2str(coord_data.amp),'uA\'];
+                            cd(data_path);  
+                            load(['data_soma',num2str(coord_data.cell_id + coord_data.clone_id - 1),'_syn']);
+                        elseif(input_data.temporal_data)
+                            data_path = input_data.folderpath;
+                            cd(input_data.folderpath);
+                            load([input_data.folderpath,'data_soma',num2str(coord_data.cell_id + coord_data.clone_id - 1),'_amp_',num2str(input_data.amp_list(i_amp)),'uA_freq_',...
+                               '2Hz_gabab_',num2str(input_data.gaba_ratio_list(i_gaba)),'_syn_act_100%_onlyexcitation_1.mat']);
+                        else
+                            data_path = [input_data.folderpath, 'Diam',num2str(coord_data.diam),'_',num2str(coord_data.amp),'uA\'];
+                            cd(data_path);
+                            load(['data_soma',num2str(coord_data.cell_id + coord_data.clone_id - 1)]);
                         end
-                        
+                        coord_data.folderpath = data_path;
                         location_data = getTrueCoordinates(coord_data);
                         
                         if(exist('PoissonNoise.mat') > 0)
@@ -192,6 +190,9 @@ function [ output_data ] = getTrueCoordinates( input_data )
     %cell_id : 6,11,16,21 corresponds to type of cell
     
 % outputs location data for each cell
+    curr_dir = pwd;
+    cd(input_data.folderpath);
+    
     cell_id = input_data.cell_id + input_data.clone_id - 1;
     
     load('realx.dat') %x-coordinate (in um) of randomly seeded soma within spherical volume
@@ -289,6 +290,6 @@ function [ output_data ] = getTrueCoordinates( input_data )
     output_data.cell_id = input_data.cell_id;
     output_data.get_axon_dendrite_locs = input_data.get_axon_dendrite_locs;
     
-    
+    cd(curr_dir);
 end
 

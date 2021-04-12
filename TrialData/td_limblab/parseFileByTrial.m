@@ -298,7 +298,9 @@ opensimList = {};
 opensim = [];
 for i=1:length(cds.analog)
     header = cds.analog{i}.Properties.VariableNames;
-    if any(contains(header,'_ang')) || any(contains(header,'_vel')) || any(contains(header,'_len')) || any(contains(header,'_muscVel'))
+    if any(contains(header,'_ang')) || any(contains(header,'_vel')) || any(contains(header,'_len')) || any(contains(header,'_muscVel')) || ...
+            any(contains(header,'_handPos')) || any(contains(header,'_handVel')) || any(contains(header,'_elbowPos')) || any(contains(header,'_elbowVel'))
+        
         opensim_analog_idx = i;
 
         opensim_temp=cds.analog{opensim_analog_idx};
@@ -330,7 +332,9 @@ for i=1:length(cds.analog)
     end
 end
 
-cds_bin.opensim = opensim;
+if(~isempty(opensim))
+    cds_bin.opensim = opensim;
+end
 clear opensim
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

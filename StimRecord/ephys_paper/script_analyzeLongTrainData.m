@@ -55,7 +55,7 @@
     
     decay_rate_input_data.response_amp_time = 3500; % ms, ignored if num_pulses > 0
     decay_rate_input_data.response_amp_num_pulses = -1; % set as a positive number to override response_amp_time
-    decay_rate_input_data.response_amp_pulse_window = [1,5]; % if using num_pulses, this determines when after each pulse to count spikes
+    decay_rate_input_data.response_amp_pulse_window = [0.5,5]; % if using num_pulses, this determines when after each pulse to count spikes
     
     field_names = {'stim_chan','nonstim_chan'};
     for i_field = 1:numel(field_names)
@@ -80,7 +80,7 @@
     colors = inferno(4);
     
     f=figure('Position',[2426 347 445 330]); hold on
-    f.Name = 'nonstim_channel_ampfreq_decay_rate';
+    f.Name = 'stim_channel_ampfreq_decay_rate';
     
     boxplot_params.linewidth = 1.75;
     boxplot_params.box_width = 3.5;
@@ -96,7 +96,7 @@
         boxplot_params.median_color = colors(color_idx(condition),:);
         boxplot_params.box_color = colors(color_idx(condition),:);
         boxplot_params.whisker_color = colors(color_idx(condition),:);
-        boxplot_wrapper(x_data(condition),(exp_amp_freq_data.nonstim_chan_decay_rates(:,condition)),boxplot_params);
+        boxplot_wrapper(x_data(condition),(exp_amp_freq_data.stim_chan_decay_rates(:,condition)),boxplot_params);
     end
     xlabel('Frequency (Hz)');
     ylabel('Decay rate (1/s)')
@@ -125,16 +125,16 @@
         chan_stim = [chan_stim; exp_amp_freq_data.stim_chan_chan_stim(i_unit)*ones(12,1)];
         chan_rec = [chan_rec; exp_amp_freq_data.stim_chan_chan_rec(i_unit)*ones(12,1)];
     end
-    for i_unit = 1:size(exp_amp_freq_data.nonstim_chan_decay_rates,1)
-        decay_list = [decay_list; exp_amp_freq_data.nonstim_chan_decay_rates(i_unit,:)'];
-        amp_list = [amp_list;amp_data'];
-        freq_list = [freq_list;freq_data'];
-        monkey_list = [monkey_list; exp_amp_freq_data.nonstim_chan_monkey(i_unit)*ones(12,1)];
-        is_stim_chan = [is_stim_chan; zeros(12,1)];
-        unit_id = [unit_id; (i_unit+100)*ones(12,1)]; % + 100 to avoid the stim chan id's
-        chan_stim = [chan_stim; exp_amp_freq_data.nonstim_chan_chan_stim(i_unit)*ones(12,1)];
-        chan_rec = [chan_rec; exp_amp_freq_data.nonstim_chan_chan_rec(i_unit)*ones(12,1)];
-    end
+%     for i_unit = 1:size(exp_amp_freq_data.nonstim_chan_decay_rates,1)
+%         decay_list = [decay_list; exp_amp_freq_data.nonstim_chan_decay_rates(i_unit,:)'];
+%         amp_list = [amp_list;amp_data'];
+%         freq_list = [freq_list;freq_data'];
+%         monkey_list = [monkey_list; exp_amp_freq_data.nonstim_chan_monkey(i_unit)*ones(12,1)];
+%         is_stim_chan = [is_stim_chan; zeros(12,1)];
+%         unit_id = [unit_id; (i_unit+100)*ones(12,1)]; % + 100 to avoid the stim chan id's
+%         chan_stim = [chan_stim; exp_amp_freq_data.nonstim_chan_chan_stim(i_unit)*ones(12,1)];
+%         chan_rec = [chan_rec; exp_amp_freq_data.nonstim_chan_chan_rec(i_unit)*ones(12,1)];
+%     end
     
     keep_mask = ones(length(decay_list),1);
     keep_mask(decay_list > 10) = 0;
@@ -171,6 +171,21 @@
     amp_freq_decay_mdl.Coefficients(keep_mask==1,:)
     disp(amp_freq_decay_mdl.Rsquared)
     
+%% do rank sum tests for each stimulation condition
+    unique_amps = unique(amp_list);
+    unique_freqs = unique(freq_list);
+    alpha = 0.05/(numel(unique_amps)*numel(unique_freqs));
+    
+    p_vals = zeros(numel(unique_amps),numel(unique_freqs));
+    
+    for i_amp = 1:numel(unique_amps)
+        for i_freq = 1:numel(unique_freqs)
+            stim_chan_mask = amp_list==unique_amps(i_amp) & freq_list == unique_freqs(i_freq) & is_stim_chan == 1;
+            nonstim_chan_mask = amp_list==unique_amps(i_amp) & freq_list == unique_freqs(i_freq) & is_stim_chan == 0;
+            
+            p_vals(i_amp,i_freq) = ranksum(decay_list(stim_chan_mask), decay_list(nonstim_chan_mask),'tail','right');
+        end
+    end
     
 %% plot decay rate for intermittent data
     boxplot_params.linewidth = 1.75;
@@ -183,14 +198,14 @@
     x_data = [50,50,50,100,100,100,200,200,200,4000,4000,4000].*[1.1,1,0.9,1.1,1,0.9,1.1,1,0.9,1.1,1,0.9];
     color_idx = [2,1,0,2,1,0,2,1,0,2,1,0];
     f=figure('Position',[573 477 890 350]); hold on
-    f.Name = 'stim_channel_intermittent_decay_rate_179Hz';
+    f.Name = 'stim_channel_intermittent_decay_rate_131Hz';
     ax1=subplot(1,2,1);
     for condition = 1:9
         boxplot_params.outlier_color = getColorFromList(1,color_idx(condition));
         boxplot_params.median_color = getColorFromList(1,color_idx(condition));
         boxplot_params.box_color = getColorFromList(1,color_idx(condition));
         boxplot_params.whisker_color = getColorFromList(1,color_idx(condition));
-        boxplot_wrapper(x_data(condition),exp_intermittent_data.high_freq.stim_chan_decay_rates(:,condition),boxplot_params);
+        boxplot_wrapper(x_data(condition),exp_intermittent_data.low_freq.stim_chan_decay_rates(:,condition),boxplot_params);
     end
     xlabel('Pulse active time (ms)');
     ylabel('Decay rate (1/s)')
@@ -208,7 +223,7 @@
         boxplot_params.median_color = getColorFromList(1,color_idx(condition));
         boxplot_params.box_color = getColorFromList(1,color_idx(condition));
         boxplot_params.whisker_color = getColorFromList(1,color_idx(condition));
-        boxplot_wrapper(x_data(condition),exp_intermittent_data.high_freq.stim_chan_decay_rates(:,condition),boxplot_params);
+        boxplot_wrapper(x_data(condition),exp_intermittent_data.low_freq.stim_chan_decay_rates(:,condition),boxplot_params);
     end
     xlabel('Pulse active time (ms)');
     ylabel('Decay rate (1/s)')
@@ -275,9 +290,26 @@
     mdl_spec = 'decay~duty + is_cont + monkey + freq + chan_stim';
     int_decay_mdl = fitlm(int_decay_tbl,mdl_spec)
     
-    % run a friedman test.
+%% run a wilcoxon rank-sum test for each stimulation frequency and decay rate (combine durations)
+    unique_duty = unique(duty_list);
+    unique_freq = unique(freq_list);
+    
+    p_vals = ones(numel(unique_duty),numel(unique_freq));
+    
+    for i_duty = 1:numel(unique_duty)
+        for i_freq = 1:numel(unique_freq)
+            int_mask = duty_list==unique_duty(i_duty) & freq_list==unique_freq(i_freq) & is_cont_list == 0;
+            cont_mask = duty_list==unique_duty(i_duty) & freq_list==unique_freq(i_freq) & is_cont_list == 1;
+            
+            p_vals(i_duty,i_freq) = ranksum(decay_list(int_mask), decay_list(cont_mask),'tail','both');
+        end
+    end
+    
+    
 
 
+    
+    
 %% plot response_amp vs. distance and fit 
     f=figure();
     f.Name = 'AmpFreq_response_amplitude_distance';    
@@ -333,158 +365,7 @@
     ylim([-30,250])
     xlim([0,4700])
     
-%% plot a (intercept) and b (space constant) across amplitudes and frequencies
-    f=figure(); hold on;
-    f.Name = 'Han_duncan_long_trains_spread_param_summary';
-    
-    offset = [-1,0,1]*2;
-    
-    freq_list = [51,80,104,131];
-    amp_list = [20,40,60];
-%     amp_colors = [0,200,0; 0,128,0; 0,100,0]/255;
-    amp_colors = inferno(4);
-        
-    for i_plot = 1:2
-        subplot(1,2,i_plot)
-        switch i_plot
-            case 1
-                data = b_params;
-                bounds = b_bounds;
-            case 2
-                data = a_params;
-                bounds = a_bounds;
-        end
-        
-        for i_freq = 1:numel(freq_list)
-            for i_amp = 1:numel(amp_list)
-                errorbar(freq_list(i_freq)+offset(i_amp),data(i_freq,i_amp),...
-                    data(i_freq,i_amp)-bounds(i_freq,i_amp,1),bounds(i_freq,i_amp,2)-data(i_freq,i_amp),...
-                    'marker','.','linestyle','none','color',amp_colors(i_amp,:),'markersize',18,'linewidth',1.5);
-                hold on;
-            end
-        end
-        formatForLee(gcf);
-        set(gca,'fontsize',14);
-        xlabel('Frequency (Hz)');
-        xlim([40,140])
-        
-        if(i_plot == 1)
-            ylabel('Space constant (\mum)');
-            ylim([0,5000])
-            l=legend('20\muA','40\muA','60\muA');
-            set(l,'box','off');
-        else
-            ylabel('Intercept (Hz)');
-            ylim([0,100])
-        end
-    end    
-    
-    
-    
-    
-%% build GLM and then assess effect of amp/frequency across distances
 
-    amps = [20,40,60,20,40,60,20,40,60,20,40,60];
-    freqs = [131,131,131,104,104,104,80,80,80,51,51,51];
-    
-    response_data = [];
-    distance_data = [];
-    amp_data = [];
-    freq_data = [];
-    chan_rec_data = []; % add 100 if monkey is han to prevent repeated channels
-    monkey_data = []; % 1 = han, 0 = duncan
-    chan_stim_data = []; % add 100 if monkey is han
-    
-    for condition = 1:numel(amps)
-        distance_data = [distance_data;exp_amp_freq_data.nonstim_chan_distance_from_stim];
-        response_data = [response_data;exp_amp_freq_data.nonstim_chan_response_amp(:,condition)];
-        amp_data = [amp_data;zeros(numel(exp_amp_freq_data.nonstim_chan_distance_from_stim),1)+amps(condition)];
-        freq_data = [freq_data;zeros(numel(exp_amp_freq_data.nonstim_chan_distance_from_stim),1)+freqs(condition)];
-        monkey_data = [monkey_data; exp_amp_freq_data.nonstim_chan_monkey];
-        chan_stim_data = [chan_stim_data; exp_amp_freq_data.nonstim_chan_chan_stim + 100*(exp_amp_freq_data.nonstim_chan_monkey==1)];
-        chan_rec_data = [chan_rec_data; exp_amp_freq_data.nonstim_chan_chan_rec + 100*(exp_amp_freq_data.nonstim_chan_monkey==1)];
-    end
-    
-    response_data(response_data < 0) = eps;
-%     response_data = sqrt(response_data);
-    modelspec = 'resp~dist*amp+dist*freq + monkey +chan_rec*chan_stim';
-%     modelspec = 'resp~dist';
-    % both monkeys simultaneously
-    data_table = table(response_data,distance_data,amp_data,...
-            freq_data,categorical(monkey_data),categorical(chan_stim_data),categorical(chan_rec_data),...
-            'VariableNames',{'resp','dist','amp','freq','monkey','chan_stim','chan_rec'});
-
-    amp_freq_mdl = fitlm(data_table,modelspec);
-%     amp_freq_mdl = stepwiselm(data_table,modelspec);
-%     amp_freq_mdl = fitglm(data_table,modelspec,'Distribution','poisson');
-    % output amp_freq_mdl data in an easily readable way
-    str_find = {'amp','freq','dist','monkey_1'};
-    keep_mask = zeros(size(amp_freq_mdl.CoefficientNames));
-    for i_str = 1:numel(str_find)
-        idx_keep = find(~cellfun(@isempty,strfind(amp_freq_mdl.CoefficientNames,str_find{i_str})));
-        keep_mask(idx_keep)=1;
-    end
-    
-    disp(amp_freq_mdl.Formula)
-    amp_freq_mdl.Coefficients(keep_mask==1,:)
-    disp(amp_freq_mdl.Rsquared)
-    
-    
-%% rebound excitation stats 
-% duration, percent of cells
-    rebound_input_data.cond_list = [1:12];
-    rebound_input_data.bin_window = [-200,8000]./1000;
-    rebound_input_data.pre_window = [-1000,-10]./1000;
-    rebound_input_data.post_window = [10,500]./1000;
-    rebound_input_data.blank_time = [-10,10]/1000; %s
-    
-    rebound_input_data.bin_size = 5/1000; % s
-    rebound_input_data.kernel_length = 2;
-    rebound_input_data.num_consec_bins = 6;
-    [rebound_data] = getReboundExcitationWrapper(exp_amp_freq_data.nonstim_chan,rebound_input_data);
-    
-%% plot rebound excitation data -- 
-
-    % plot duration across frequencies (with lines between same cells)
-    f=figure('Position',[1403 522 395 420]);
-    f.Name = 'Han_duncan_long_trains_rebound_excitation';
-    suptitle('Short Trains')
-    subplot(2,1,2); hold on;
-    freq_list=[180,100,50,20];
-    for i_cell = 1:size(rebound_data.is_rebound,1)
-        plot(freq_list,rebound_data.rebound_dur(i_cell,2:end)*1000,'-k','marker','.','markersize',12);
-    end
-    xlim([0,200])
-    ylim([0,300]);
-    formatForLee(gcf);
-    xlabel('Frequency (Hz)');
-    ylabel('Duration (ms)');
-    set(gca,'fontsize',14);
-    ax=gca;
-    ax.XTick = sort(freq_list);
-    ax.XMinorTick = 'off';
-
-
-    % also plot % of cells with rebound across frequencies
-    subplot(2,1,1); hold on;
-    freq_list=[180,100,50,20];
-    frac_data = nan(size(freq_list));
-    for i_freq = 2:size(rebound_data.is_rebound,2)
-        frac_data(i_freq-1) = sum(rebound_data.is_rebound(:,i_freq),'omitnan')/sum(~isnan(rebound_data.is_rebound(:,i_freq)));
-    end
-    
-    bar(freq_list,frac_data,'EdgeColor','k','FaceColor','k');
-    xlim([0,200])
-    ylim([0,1]);
-    formatForLee(gcf);
-    xlabel('Frequency (Hz)');
-    ylabel('Fraction cells');
-    set(gca,'fontsize',14);
-    ax=gca;
-    ax.XTick = sort(freq_list);
-    ax.XMinorTick = 'off';
- 
-   
 %% new amp vs distance metrics
 % (a) compare change in response amp in activated neurons as params increase
     f=figure('Position',[680 558 356 420]);
@@ -561,6 +442,35 @@
     resp_amp_mdl.Coefficients(keep_mask==1,:)
     disp(resp_amp_mdl.Rsquared)
     
+%% (a2) compare effect of amplitude for each neuron individually, pooling across frequencies.
+    n = numel(exp_amp_freq_data.nonstim_chan_response_to_each_pulse);
+    p_vals = nan(n,1);
+    amp_data = [20,40,60,20,40,60,20,40,60,20,40,60];
+    freq_data = [131,131,131,104,104,104,80,80,80,51,51,51];
+    low_mask = amp_data==20;
+    high_mask = amp_data==60;
+    low_idx = 10;
+    alpha = 0.001;
+    n_pulses = 20;
+    is_responsive=exp_amp_freq_data.nonstim_chan_is_responsive(:,low_idx);
+    
+    for i_unit = 1:n
+        if(is_responsive(i_unit)==1 || 1==1)
+            x=exp_amp_freq_data.nonstim_chan_response_to_each_pulse{i_unit}(high_mask);
+            x=cellfun(@(y) y(1:n_pulses), x, 'un', 0);
+            high_resp = vertcat(x{:}); 
+            x=exp_amp_freq_data.nonstim_chan_response_to_each_pulse{i_unit}(low_mask);
+            x=cellfun(@(y) y(1:n_pulses), x, 'un', 0);
+            low_resp = vertcat(x{:});
+% %             high_resp = exp_amp_freq_data.nonstim_chan_response_amp(i_unit,high_mask);
+% %             low_resp = exp_amp_freq_data.nonstim_chan_response_amp(i_unit,low_mask);
+% 
+            p_vals(i_unit) = ranksum(high_resp,low_resp,'tail','right');
+        end
+    end
+    
+    sum(p_vals<alpha)
+    
 %% (b) compare number of activated neurons for each condition
     figure();
     offset_width = 5;
@@ -612,10 +522,10 @@
         
         prop_activated = num_act./num_tot;
         
-        if(freq_data(condition) == 51 || freq_data(condition) == 131 || freq_data(condition) == 80)
+        if(freq_data(condition) == 51 || freq_data(condition) == 131 || freq_data(condition) == 104)
             if(freq_data(condition)==51)
                 ls = '-';
-            elseif(freq_data(condition)==80)
+            elseif(freq_data(condition)==104)
                 ls = '--';
             else
                 ls =':';
@@ -647,7 +557,7 @@
     
     data_table = table(dist_all,prop_all,freq_all,amp_all,...
         'VariableNames',{'dist','prop','freq','amp'});
-    mdlspec = 'prop~dist*amp + freq';
+    mdlspec = 'prop~dist + amp + freq';
     
     data_table.prop = data_table.prop.*num_tot_all;
     dist_mdl = fitglm(data_table,mdlspec,'Distribution','Binomial','BinomialSize',num_tot_all)

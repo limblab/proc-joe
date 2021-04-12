@@ -241,21 +241,37 @@
     baseline_firing_rate = nan(numel(array_data),1);
     
     spike_window = [0,200]; % in ms
-    baseline_window = [-80,-5]; % in ms
+    baseline_window = [-100,-5]; % in ms
     
-    freq_plot = 20;
-    freq_idx = [];
-    for unit = [1:numel(array_data)]
-%         freq_idx = find(abs(1000/freq_plot - input_data_all{unit}.IPI) < 2 & input_data_all{unit}.num_pulses > 2);
-%         freq_idx = freq_idx(1);
-        
-        baseline_firing_rate(unit) = mean(getSpikesInWindow(array_data{unit},freq_idx,baseline_window,1),'omitnan');
-%         stim_firing_rate(unit) = getSpikesInWindow(array_data{unit},freq_idx,spike_window,1);
-        
+    cond_plot = 4;
+    
+    for unit = 1:numel(array_data)
+        base_fr = [];
+        stim_fr = [];
+        base_speed = [];
+        for tr = 1:array_data{unit}.num_stims(cond_plot)
+            baseline_spike_mask = array_data{unit}.stimData{cond_plot} == tr & array_data{unit}.spikeTrialTimes{cond_plot} > baseline_window(1)/1000 & ...
+                array_data{unit}.spikeTrialTimes{cond_plot} < baseline_window(2)/1000;
+            stim_spike_mask = array_data{unit}.stimData{cond_plot} == tr & array_data{unit}.spikeTrialTimes{cond_plot} > spike_window(1)/1000 & ...
+                array_data{unit}.spikeTrialTimes{cond_plot} < spike_window(2)/1000;
+            
+            base_fr(end+1,1) = sum(baseline_spike_mask);
+            stim_fr(end+1,1) = sum(stim_spike_mask);
+            if(numel(array_data{unit}.kin{cond_plot}.mean_speed) == array_data{unit}.num_stims(cond_plot))
+                base_speed(end+1,1) = array_data{unit}.kin{cond_plot}.mean_speed(tr);
+            end
+            baseline_firing_rate(unit) = mean(getSpikesInWindow(array_data{unit},cond_plot,baseline_window,1),'omitnan');
+            stim_firing_rate(unit) = getSpikesInWindow(array_data{unit},cond_plot,spike_window,1);
+        end
+            if(~isempty(base_fr) && ~isempty(stim_fr) && ~isempty(base_speed))
+                figure();
+                plot(base_speed+rand(size(base_fr))*0.25-0.125,stim_fr,'o','markersize',8);
+            end
     end
-
+    
 %     plot(baseline_firing_rate,stim_firing_rate,'.','markersize',20)
-    histogram(baseline_firing_rate,20)
+%     histogram(baseline_firing_rate,20)
+
 %% plot response to train against stimulation frequency, use same number of pulses throughout
     markers = {'.','s'};
     marker_size = [22,8];

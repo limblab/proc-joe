@@ -300,9 +300,9 @@ for i_amp = 1:numel(gain_ratio_anodic)
                 temp_is_cath = 1;
         end
         
-%         keep_mask = temp_t > 0.9 & temp_t < 1.1;
+        keep_mask = temp_t > 0.9 & temp_t < 1.1;
 %         keep_mask = temp_t > 1.3 & temp_t < 1.4;
-        keep_mask = temp_t > 2.0 & temp_t < 2.1;
+%         keep_mask = temp_t > 2.0 & temp_t < 2.1;
 %         keep_mask = ones(size(temp_t));
         t_list = [t_list; temp_t(keep_mask==1)];
         gain_list = [gain_list; temp_gain(keep_mask==1)];
@@ -312,9 +312,6 @@ for i_amp = 1:numel(gain_ratio_anodic)
     end
     
 end
-
-
-
 
 gain_tbl = table(t_list,gain_list,amp_list,is_cathodic,stim_chan_list,'VariableNames',{'t','gain','amp','is_cath','chan'});
 
