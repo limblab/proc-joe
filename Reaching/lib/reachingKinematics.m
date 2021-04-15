@@ -59,8 +59,8 @@ function [output_data] = reachingKinematics(td_list,task_list,input_data)
     f_workspace(1) = figure();
     f_workspace(2) = figure();
     f_corr = figure();
-    task_3d_idx = find(strcmpi(task_list,'RT3D'),1,'first');
-    task_2d_idx = find(strcmpi(task_list,'RT'),1,'first');
+    task_3d_idx = find(strcmpi(task_list,'RT3D'),1,'first')
+    task_2d_idx = find(strcmpi(task_list,'RT'),1,'first')
     markernames = {'hand2','elbow1'};
     perc_bound = [5,95];
     
@@ -68,6 +68,11 @@ function [output_data] = reachingKinematics(td_list,task_list,input_data)
     workspace_area = nan(1,2);
     workspace_min = nan(3,2); % x,y,z; 2D and 3D task
     workspace_max = nan(3,2);
+    
+    corr_V_RT2D = [];
+    corr_S_RT2D = [];
+    corr_V_RT3D = [];
+    corr_S_RT3D = [];
     
     kin_corr = []; % corr matrix for each task (will be a 3D array)
     for i_task = 1:2 %loop for both RT2D and RT3D tasks
@@ -278,54 +283,67 @@ function [output_data] = reachingKinematics(td_list,task_list,input_data)
         for i_marker = 1:numel(corr_markernames)
             dlc_idx = [dlc_idx,find((strcmpi(td_list{task_idx}.dlc_pos_names,[corr_markernames{i_marker},'_x']))),...
                 find((strcmpi(td_list{task_idx}.dlc_pos_names,[corr_markernames{i_marker},'_y']))),...
-                find((strcmpi(td_list{task_idx}.dlc_pos_names,[corr_markernames{i_marker},'_z'])))];
+                ];
+                %find((strcmpi(td_list{task_idx}.dlc_pos_names,[corr_markernames{i_marker},'_z'])))
         end
         dlc_data = td_list{task_idx}.dlc_pos(:,dlc_idx);
         dlc_data = dlc_data(~any(isnan(dlc_data),2),:);
         
         %Calculate velocity for each axis based on position data
-        dlc_data_velocity = [diff(dlc_data)./td_list{1}.bin_size]; %TODO: WHICH ONE IS IT
-        dlc_data_velocity = [diff(dlc_data./td_list{1}.bin_size)]; %TODO: WHICH ONE IS IT
+        dlc_data_velocity = [diff(dlc_data)./td_list{1}.bin_size];
+        %dlc_data_velocity = [diff(dlc_data./td_list{1}.bin_size)];
         %dlc_data_velocity = [diff(dlc_data)];
-        dlc_data_velocity = abs(dlc_data_velocity);
+        %dlc_data_velocity = abs(dlc_data_velocity);
         dlc_data_speed = zeros(length(dlc_data)-1,numel(corr_markernames));
-        
         dlc_data_diff = diff(dlc_data);
+        
         %size(dlc_data_diff);
         for i_marker = 1:numel(corr_markernames)
-            x = dlc_data_diff(:,i_marker*3-2);
-            y = dlc_data_diff(:,i_marker*3-1);
-            z = dlc_data_diff(:,i_marker*3-0);
-            s = sqrt(x.^2 + y.^2 + z.^2);
+            x = dlc_data_diff(:,i_marker*2-1);
+            y = dlc_data_diff(:,i_marker*2-0);
+            %x = dlc_data_diff(:,i_marker*3-2);
+            %y = dlc_data_diff(:,i_marker*3-1);
+            %z = dlc_data_diff(:,i_marker*3-0);
+            %s = sqrt(x.^2 + y.^2 + z.^2);
+            s = sqrt(x.^2 + y.^2);
             dlc_data_speed(:,i_marker) = s;
         end
         
         %corr_data = corr(dlc_data);
-        corr_data = corr(dlc_data_velocity);
+        corr_data = corr(dlc_data_velocity)
         %corr_data = corr(dlc_data_speed);
-        corr_speed = corr(dlc_data_speed);
+        corr_speed = corr(dlc_data_speed)
+        
+        %Save the correlation data for a scatterplot
+        if task_idx == task_3d_idx
+            corr_V_RT3D = corr_data;
+            corr_S_RT3D = corr_speed;
+        else
+            corr_V_RT2D = corr_data;
+            corr_S_RT2D = corr_speed;
+        end
+        
         subplot(1,3,i_task)
-        
-        %imagesc(corr_data,[-1,1]);
-        imagesc(corr_data,[0,1]);
-        
+        imagesc(corr_data,[-1,1]);
+        %imagesc(corr_data,[0,1]);
         %set(gca, 'xTick', [1:9]);
         
-        %hardcode
-        marker_names = {'elbow X','elbow Y','elbow Z','hand X','hand Y','hand Z'};
-        set(gca,'xtick',[1:6],'xticklabel',marker_names);
-        set(gca,'ytick',[1:6],'yticklabel',marker_names);
+        %hardcode the axis names
+        %marker_names = {'elbow X','elbow Y','elbow Z','hand X','hand Y','hand Z'};
+        %set(gca,'xtick',[1:6],'xticklabel',marker_names);
+        %set(gca,'ytick',[1:6],'yticklabel',marker_names);
+        
+        marker_names = {'elbow X','elbow Y','hand X','hand Y'};
+        set(gca,'xtick',[1:4],'xticklabel',marker_names);
+        set(gca,'ytick',[1:4],'yticklabel',marker_names);
         
         %marker_names = {'elbow','hand'};
         %set(gca,'xtick',[1:2],'xticklabel',marker_names);
         %set(gca,'ytick',[1:2],'yticklabel',marker_names);
         
-        
         colormap(gray(8))
-        
         b=colorbar();
         kin_corr(:,:,i_task) = corr_data;
-        
         title(title_str);
     end
     
@@ -340,17 +358,20 @@ function [output_data] = reachingKinematics(td_list,task_list,input_data)
     corr_diff(corr_diff<0) = -1;
     
     imagesc(corr_diff,[-1,1]);
-    set(gca, 'xTick', [1:9]);
+    set(gca, 'xTick', [1:4]);
     
     %das ist hardcoding
-    marker_names = {'elbow X','elbow Y','elbow Z','hand X','hand Y','hand Z'};
-    set(gca,'xtick',[1:6],'xticklabel',marker_names);
-    set(gca,'ytick',[1:6],'yticklabel',marker_names);
+    %marker_names = {'elbow X','elbow Y','elbow Z','hand X','hand Y','hand Z'};
+    %set(gca,'xtick',[1:6],'xticklabel',marker_names);
+    %set(gca,'ytick',[1:6],'yticklabel',marker_names);
+    
+    marker_names = {'elbow X','elbow Y','hand X','hand Y'};
+    set(gca,'xtick',[1:4],'xticklabel',marker_names);
+    set(gca,'ytick',[1:4],'yticklabel',marker_names);
     
     %marker_names = {'elbow','hand'};
     %set(gca,'xtick',[1:2],'xticklabel',marker_names);
     %set(gca,'ytick',[1:2],'yticklabel',marker_names);
-    
     
     b=colorbar();
     title('3D - 2D');
@@ -363,6 +384,47 @@ function [output_data] = reachingKinematics(td_list,task_list,input_data)
         formatForLee(gcf);
         set(gca,'fontsize',14);
     end
+    
+    
+    %Make another scatter plot with the same correlation data
+    %corr_data
+    %corr_speed
+    correlation_scatter_size = 100
+    subplot();
+    %scatter(corr_V_RT2D(1,2),corr_V_RT3D(1,2),correlation_scatter_size,'b','filled');
+    scatter(corr_V_RT2D(1,3),corr_V_RT3D(1,3),correlation_scatter_size,'r','filled');
+    hold on
+    scatter(corr_V_RT2D(2,4),corr_V_RT3D(2,4),correlation_scatter_size,'c','filled');
+    scatter(corr_S_RT2D(1,2),corr_S_RT3D(1,2),correlation_scatter_size,'k','filled');
+    
+    h(1) = plot([0 0],[-0.1 1],'k-','linewidth',0.5);
+    h(2) = plot([-0.1 1],[0 0],'k-','linewidth',0.5);
+    h(3) = plot([-0.1 1],[-0.1 1],'k--','linewidth',0.5);
+    set( get( get( h(1), 'Annotation'), 'LegendInformation' ), 'IconDisplayStyle', 'off' );
+    set( get( get( h(2), 'Annotation'), 'LegendInformation' ), 'IconDisplayStyle', 'off' );
+    set( get( get( h(3), 'Annotation'), 'LegendInformation' ), 'IconDisplayStyle', 'off' );
+    lgd = legend('Elbow-V-X - Hand-V-X',...
+    'Elbow-V-Y - Hand-V-Y',...
+    'Elbow-S - Hand-S',...
+    '','','')
+    lgd.Location = 'northwest';
+    xlim([-0.1,1]);
+    ylim([-0.1,1]);
+    xlabel('RT2D Correlation');
+    ylabel('RT3D Correlation');
+    title('Correlation Comparison Between RT2D and RT3D tasks');
+    formatForLee(gcf);
+    set(gca,'fontsize',14);
+    %scatter(corr_speed,'r')
+    %hold off
+    
+%         if task_idx == task_3d_idx
+%             corr_V_RT3D = corr_data;
+%             corr_S_RT3D = corr_speed;
+%         else
+%             corr_V_RT2D = corr_data;
+%             corr_S_RT2D = corr_speed;
+%         end
     
 
 
