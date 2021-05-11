@@ -15,7 +15,7 @@ function [trial_data] = getExperimentPhase(trial_data,task)
     if(strcmpi(task,'RW')==1 || strcmpi(task,'RT') == 1)
         % get transformation from DLC coordinates to robot coordinates
         % (rotation and offset)
-        markername = 'hand3';
+        markername = 'hand2';
         dlc_idx = [find(strcmpi(trial_data.dlc_pos_names,[markername,'_x'])),find(strcmpi(trial_data.dlc_pos_names,[markername,'_y'])),...
             find(strcmpi(trial_data.dlc_pos_names,[markername,'_z']))];
         dlc_pos = trial_data.dlc_pos(:,dlc_idx);
@@ -42,7 +42,10 @@ function [trial_data] = getExperimentPhase(trial_data,task)
         
         handle_pos = [trial_data.pos] - mean_handle_pos; 
         % check to see if hand is within distance bound to handle
-        keep_mask = sqrt(sum((dlc_rot(:,1:2)-handle_pos).^2,2)) < 3.5; % 3.5 was chosen again by looking at a histogram of distances for an example dataset
+        %dlc_rot(:,1:2)
+        %handle_pos
+        %sqrt(sum((dlc_rot(:,1:2)-handle_pos).^2,2))
+        keep_mask = sqrt(sum((dlc_rot(:,1:2)-handle_pos).^2,2)) < 1000; % 3.5 was chosen again by looking at a histogram of distances for an example dataset
         
         % remove points
         td_fields = fieldnames(trial_data);

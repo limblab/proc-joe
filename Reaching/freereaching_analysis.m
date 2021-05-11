@@ -9,15 +9,24 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Set up meta info and load trial data
+    clear; close all; clc;
     if ispc
-        folderpath = 'C:\Users\dongq\DeepLabCut\Han_20201204_rwFreeReach\neural-data\';
+        %folderpath = 'C:\Users\dongq\DeepLabCut\!DLC folders not to be used for thesis but can be used later\Han_20201204_rwFreeReach\neural-data\';
+        %folderpath = 'C:\Users\dongq\DeepLabCut\Han_20201204_rwFreeReach\neural-data\';
+        folderpath = 'D:\DLCdata\Han_20201204_rwFreeReach\neural-data\';
+        %folderpath = 'C:\Users\dongq\DeepLabCut\Han_20201203_rwFreeReach\neural-data\';
+        %folderpath = 'C:\Users\dongq\DeepLabCut\Han_20201217_rwFreeReach\neural-data\';
+        %folderpath = 'C:\Users\dongq\DeepLabCut\!DLC folders not to be used for thesis but can be used later\Crackle-Qiwei-2020-12-03\neural-data\';
+        %folderpath = 'C:\Users\dongq\DeepLabCut\Crackle-Qiwei-2020-12-03\neural-data\';
+        %folderpath = 'C:\Users\dongq\DeepLabCut\Crackle-Qiwei-2020-12-15\neural-data\';
+        %folderpath = 'C:\Users\dongq\DeepLabCut\Crackle-Qiwei-2020-12-16\neural-data\';
     else
-
         folderpath = '/data/raeed/project-data/limblab/s1-kinematics';
     end
     
     % load data
     file_info = dir(fullfile(folderpath,'*td*'));
+
     filenames = horzcat({file_info.name})';
     
     % save directory information (for convenience, since this code takes a while)
@@ -33,6 +42,7 @@
     
     arrayname = 'LeftS1';
     monkey_names = {'Han'};
+    %monkey_names = {'Crackle'};
     included_models = {'ext','handelbow'}; % models to calculate encoders for
     models_to_plot = {'ext','handelbow'}; % main models of the paper
     not_plot_models = setdiff(included_models,models_to_plot);
@@ -56,7 +66,7 @@
         load(fullfile(file_info(filenum).folder,file_info(filenum).name));
         keep_mask = ones(size(td_list));
         robot_height = [];
-        for i_td = 1:numel(td_list) % each entry in td_list is a different trial_data for a different experiment (free reach vs 2D random walk for example)            
+        for i_td = 1:numel(td_list) % each entry in td_list is a different trial_data for a different experiment (free reach vs 2D random walk for example)
             % resample trial data to appropriate bin size
             if(td_list{i_td}.bin_size <= bin_size)
                 td_list{i_td} = binTD(td_list{i_td},bin_size/td_list{i_td}.bin_size);
@@ -75,7 +85,7 @@
                 spikes(:,unsorted_units) = [];
                 td_list{i_td}(trialnum).(sprintf('%s_spikes',arrayname)) = spikes;
             end
-
+            
             % add firing rates in addition to spike counts
             td_list{i_td} = addFiringRates(td_list{i_td},struct('array',arrayname));
 
@@ -101,8 +111,10 @@
             end
             % remove trials where monkey's arm position is out of the
             % "workspace"
+            %td_list{i_td}
+            %task_list{i_td}
             td_list{i_td} = getExperimentPhase(td_list{i_td},task_list{i_td});
-
+            %td_list{i_td}
             
             
             % get robot height (z data of a hand marker). This is
@@ -152,7 +164,7 @@
             'num_tuning_bins',16,...
             'crossval_lookup',[],...
             'get_tuning_curves',true,...
-            'num_repeats',1,... % Raeed used 20 repeats.
+            'num_repeats',20,... % Raeed used 20 repeats.
             'num_folds',5));
     end
 
@@ -344,7 +356,7 @@
     %unit_idx_list = [28,29,30]; %30 not responding
     %unit_idx_list = [31];
     %unit_idx_list = [12,25,31]; %RT2D
-    num_rows = length(unit_idx_list) + 1 %last row for speed
+    num_rows = length(unit_idx_list) + 1 + 1 %last row for speed %another row for pR2
     td_idx = 1; % pick which trial data (task) to use, 1 for RT2D 2 for RT3D
 
     window_plot = [-2,2]; % s
@@ -406,16 +418,18 @@
             current_plot_num = (i_neuron - 1) * num_trials_plot + j_trial
             ax_list(j_trial) = subplot(num_rows,num_trials_plot,current_plot_num); hold on;
             
-            if i_neuron ~= num_rows
-                plot(x_data,td_list_smooth.LeftS1_FR(window_idx(j_trial,1):window_idx(j_trial,2),unit_idx_list(i_neuron)),'k','linewidth',2)
+            %plot the actual firing rate data
+            if i_neuron ~= num_rows && i_neuron ~= num_rows - 1
+                actual_y_data = td_list_smooth.LeftS1_FR(window_idx(j_trial,1):window_idx(j_trial,2),unit_idx_list(i_neuron));
+                plot(x_data,actual_y_data,'k','linewidth',2)
             end
             
-            if j_trial == 1 & i_neuron ~= num_rows %the first column
-                ylabel("neuron " + string(unit_idx_list(i_neuron)))
+            if j_trial == 1 & i_neuron ~= num_rows & i_neuron ~= num_rows - 1%the first column
+                ylabel("neuron " + string(unit_idx_list(i_neuron)));
             end
             
             %Plot speed
-            if i_neuron == num_rows %if last row
+            if i_neuron == num_rows - 1 %if last row
                 dlc_section_pos = td_list_smooth.dlc_pos(window_idx(j_trial,1):window_idx(j_trial,2),19:21);
                 dlc_section_velocity = diff(dlc_section_pos);
                 dlc_section_speed = sqrt(dlc_section_velocity(:,1).^2 + dlc_section_velocity(:,2).^2 + dlc_section_velocity(:,3).^2)./td_list_smooth.bin_size/100;
@@ -433,23 +447,51 @@
                 if j_trial == 1
                     ylabel("speed (in m/s)")
                 end
-                
             end
             
-            %plot speed
+            
+            %try to calculate pR2 here in this section where I plot the
+            %neural data
+            %plot estimated neural data
             for mdlnum = 1:numel(models_to_plot)
-                if i_neuron ~= num_rows %if not the last row
+                if i_neuron ~= num_rows && i_neuron ~= num_rows -1  %if not the last row
                     glm_fieldname = ['glm_',models_to_plot{mdlnum},'_model'];
-                    plot(x_data,td_list_smooth.(glm_fieldname)(window_idx(j_trial,1):window_idx(j_trial,2),unit_idx_list(i_neuron)),'color',getColorFromList(1,mdlnum-1),'linewidth',2)
-
-                    %if i_neuron == 1 %the first row
-                        %hand2: column 19~21
-                    %end
+                    y_data = td_list_smooth.(glm_fieldname)(window_idx(j_trial,1):window_idx(j_trial,2),unit_idx_list(i_neuron));
+                    plot(x_data,y_data,'color',getColorFromList(1,mdlnum-1),'linewidth',2)
                     %ylim([0,100])
-                    ylim([0,100])
+%                     %calculate pR2
+%                     [~, dev] = glmfit(x_data, y_data, 'binomial');
+%                     [~, devModel] = glmfit(x_data, y_data, 'binomial'); 
+%                     [~, devNull]  = glmfit(x_data, y_data(randperm(length(y_data))), 'binomial');
+%                     R2 = (DevNull-DevModel)/(DevNull)
+                end
+                if i_neuron == num_rows % if is the last row
+                    temp_1d_actual_y_data = reshape(actual_y_data.',1,[]);
+                    temp_1d_y_data = reshape(y_data.',1,[]);
+                    temp_pR2 = pseudoR2(temp_1d_actual_y_data, temp_1d_y_data, mean(actual_y_data));
+                    
+                    %temp_1d_actual_y_data(end+1) = temp_1d_actual_y_data(end);
+                    %temp_1d_y_data(end+1) = temp_1d_y_data(end);
+                    
+                    temp_pR2_single_frame = [];
+                    temp_1d_actual_y_data(1)
+                    temp_1d_y_data(1)
+                    for i = 1:numel(temp_1d_actual_y_data)
+                        temp_pR2_single_frame(i) = pseudoR2(temp_1d_actual_y_data(i), temp_1d_y_data(i), temp_1d_actual_y_data(i));
+                        %temp_pR2_single_frame(i) = pseudoR2(temp_1d_actual_y_data(i), temp_1d_y_data(i), mean(temp_1d_actual_y_data));
+                    end
+                    %temp_pR2_single_frame(1)
+                    plot(x_data, temp_pR2_single_frame,'color',getColorFromList(1,mdlnum-1),'linewidth',2)
+                    
+                    
                 end
             end
                 
+            %plot pR2
+            if i_neuron == num_rows
+
+                
+            end
 
             formatForLee(gcf);
             set(gca,'fontsize',14);
@@ -466,7 +508,7 @@
 
         end
     end
-    linkaxes(ax_list,'xy');
+    %linkaxes(ax_list,'xy');
     subplot(num_rows,num_trials_plot,1); 
     %l=legend('Actual','Hand-only','Whole-arm');
     %set(l,'box','off');
@@ -523,7 +565,7 @@ for i = 1:num_of_neurons
     end
 end
 %x_data_section = transpose((0:1:(example_section_end-example_section_start),0:  32)*bin_size);
-
+figure
 example_kinematics_section_pos = td_list{task}.dlc_pos(example_section_start:example_section_end,19:21)
 example_kinematics_section_vel = diff(example_kinematics_section_pos) %difference in position for each 0.05s bin
 example_kinematics_section_spd = sqrt(example_kinematics_section_vel(:,1).^2 + example_kinematics_section_vel(:,2).^2 + example_kinematics_section_vel(:,3).^2)./td_list_smooth.bin_size/100; %now in m/s
@@ -622,7 +664,7 @@ xlabel("number of spikes in this section")
     legend_data = [];
     figure
     for monkeynum = 1:length(monkey_names)
-        for i_mdl = 1:length(models_to_plot) % 1 = 3D, 2 = 2D
+        for i_mdl = 1:length(models_to_plot) % 1 = RT3D, 2 = RT2D
             % set subplot
             subplot(1,length(monkey_names),monkeynum)
             plot([-1 1],[-1 1],'k--','linewidth',0.5)
@@ -639,10 +681,26 @@ xlabel("number of spikes in this section")
                 avg_pR2.(strcat(model_pairs{1,i_mdl},space_extensions{2})),...
                 avg_pR2.(strcat(model_pairs{1,i_mdl},space_extensions{1})),...
                 [],getColorFromList(1,i_mdl-1),'filled');
+            
+            %TEMP, plot the link between the two dots in two lines, to see
+            %how close the two models' performances are to each other
+            %Only plot this in the first iteration
+            if i_mdl == 1
+                num_neurons = length(avg_pR2.(strcat(model_pairs{1,i_mdl},space_extensions{2})));
+                for i = 1:num_neurons
+                    model1_x = avg_pR2.(strcat(model_pairs{1,1},space_extensions{2}))(i);
+                    model1_y = avg_pR2.(strcat(model_pairs{1,1},space_extensions{1}))(i);
+                    model2_x = avg_pR2.(strcat(model_pairs{1,2},space_extensions{2}))(i);
+                    model2_y = avg_pR2.(strcat(model_pairs{1,2},space_extensions{1}))(i);
+                    plot([model1_x,model2_x],[model1_y,model2_y],'k','LineWidth',2)
+                end
+            end
+                    
+                
                 
             % make axes pretty
             set(gca,'box','off','tickdir','out',...
-                'xlim',[-0.1 0.6],'ylim',[-0.1 0.6])
+                'xlim',[-0.1 0.5],'ylim',[-0.1 0.5],'FontSize',16)
             axis square
             if monkeynum ~= 1
                 suptitle('Pseudo-R^2 pairwise comparisons')
@@ -652,7 +710,20 @@ xlabel("number of spikes in this section")
             xlabel(spacenames(2))
             ylabel(spacenames(1))
         end
-        legend(legend_data,models_to_plot)
+        
+        models_to_plot_QiweiNames = strings;
+        for i = 1:length(models_to_plot)
+            if strcmp(string(models_to_plot(i)), 'ext') == 1
+                models_to_plot_QiweiNames(i) = 'Hand-Only';
+            elseif strcmp(string(models_to_plot(i)), 'handelbow') == 1
+                 models_to_plot_QiweiNames(i) = 'Whole-Arm';
+            else
+                models_to_plot_QiweiNames(i) = 'Unknown Model';
+            end
+        end
+        
+        legend(legend_data,models_to_plot_QiweiNames)
+        %set(gca,'DefaultTextFontSize',22)
     end
 %% (New) Plots between whole-arm and hand-only for RT2D and RT3D
     

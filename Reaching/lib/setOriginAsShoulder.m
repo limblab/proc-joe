@@ -1,9 +1,13 @@
 function [td] = setOriginAsShoulder(td,is_fixed_origin)
     
-
+% For Han
     dlc_idx = [find((strcmpi(td.dlc_pos_names,'shoulder_x'))),...
         find((strcmpi(td.dlc_pos_names,'shoulder_y'))),...
         find((strcmpi(td.dlc_pos_names,'shoulder_z')))];
+% For Crackle
+%     dlc_idx = [find((strcmpi(td.dlc_pos_names,'shoulder1_x'))),...
+%         find((strcmpi(td.dlc_pos_names,'shoulder1_y'))),...
+%         find((strcmpi(td.dlc_pos_names,'shoulder1_z')))];
 
     if(is_fixed_origin)
         
