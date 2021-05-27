@@ -11,13 +11,20 @@
 %% Set up meta info and load trial data
     clear; close all; clc;
     if ispc
+        %base_folderpath = 'C:\Users\dongq\DeepLabCut\Crackle-Qiwei-2020-12-03\';
+        %base_folderpath = 'C:\Users\dongq\DeepLabCut\Crackle-Qiwei-2020-12-15\';
+        %base_folderpath = 'C:\Users\dongq\DeepLabCut\Crackle-Qiwei-2020-12-16\';
+        %base_folderpath = 'C:\Users\dongq\DeepLabCut\Han_20201203_rwFreeReach\'; %PROBLEM: RT3D task does not have trial_idx
+        %base_folderpath = 'C:\Users\dongq\DeepLabCut\Han_20201204_rwFreeReach\'; %PROBLEM: RT3D task does not have trial_idx
+        base_folderpath = 'C:\Users\dongq\DeepLabCut\Han_20201217_rwFreeReach\';
+        folderpath = strcat(base_folderpath, 'neural-data\');
         %folderpath = 'C:\Users\dongq\DeepLabCut\!DLC folders not to be used for thesis but can be used later\Han_20201204_rwFreeReach\neural-data\';
         %folderpath = 'C:\Users\dongq\DeepLabCut\Han_20201204_rwFreeReach\neural-data\';
-        folderpath = 'D:\DLCdata\Han_20201204_rwFreeReach\neural-data\';
+        %folderpath = 'D:\DLCdata\Han_20201204_rwFreeReach\neural-data\';
         %folderpath = 'C:\Users\dongq\DeepLabCut\Han_20201203_rwFreeReach\neural-data\';
         %folderpath = 'C:\Users\dongq\DeepLabCut\Han_20201217_rwFreeReach\neural-data\';
         %folderpath = 'C:\Users\dongq\DeepLabCut\!DLC folders not to be used for thesis but can be used later\Crackle-Qiwei-2020-12-03\neural-data\';
-        %folderpath = 'C:\Users\dongq\DeepLabCut\Crackle-Qiwei-2020-12-03\neural-data\';
+
         %folderpath = 'C:\Users\dongq\DeepLabCut\Crackle-Qiwei-2020-12-15\neural-data\';
         %folderpath = 'C:\Users\dongq\DeepLabCut\Crackle-Qiwei-2020-12-16\neural-data\';
     else
@@ -107,7 +114,7 @@
                         td_list{i_td}.(td_names{i_name})(bad_points,:) = [];
                     end
                 end
-                fprintf('Removed %d percent of trials because of missing markers\n',sum(bad_points)/numel(bad_points)*100)
+                fprintf('Removed %.2f%% percent of trials because of missing markers\n',sum(bad_points)/numel(bad_points)*100)
             end
             % remove trials where monkey's arm position is out of the
             % "workspace"
@@ -164,7 +171,7 @@
             'num_tuning_bins',16,...
             'crossval_lookup',[],...
             'get_tuning_curves',true,...
-            'num_repeats',20,... % Raeed used 20 repeats.
+            'num_repeats',5,... % Raeed used 20 repeats.
             'num_folds',5));
     end
 
@@ -342,7 +349,13 @@
 
     unit_idx = 10;
     %unit_idx_list = [10,11,12]; %RT3D
+    %For Han-1204
     unit_idx_list = [13,19,25]; %RT3D 13,16,19,22,25,31
+    %For Crackle-1215
+    %unit_idx_list = [4,14,18];
+    %For Crackle-1216
+    %unit_idx_list = [10,11,14];
+    
     %unit_idx_list = [1,2,3]; % 1,2 not responding
     %unit_idx_list = [4,5,6]; %6 not responding
     %unit_idx_list = [7,8,9]; %8,9 not responding (I actually want to say
@@ -398,6 +411,12 @@
     RT2D_section1 = 8000;
     RT2D_section2 = 6980;
     RT2D_section3 = 2400;
+    
+    %Try for Crackle-1216
+%     RT2D_section1 = 7000;
+%     RT2D_section2 = 500;
+%     RT2D_section3 = 4020;
+    
     window_idx = [RT2D_section1,RT2D_section1+window_length; 
         RT2D_section2,RT2D_section2+window_length; 
         RT2D_section3,RT2D_section3+window_length];
@@ -581,13 +600,6 @@ ylabel("each neuron")
 %xlim([0,80])
 xlabel("number of spikes in this section")
 %alpha(speed,0.5)
-
-
-
-%% Plot example of whole arm in 3D
-                    
-                    
-                    
                     
     
     
@@ -818,3 +830,23 @@ xlabel("number of spikes in this section")
         legend(legend_data,models_to_plot_temp)
     end
 
+%% (Try) to save all the showing figures
+FolderName = strcat(base_folderpath, 'analysis-results\');   % Your destination folder
+if ~exist(FolderName, 'dir')
+   mkdir(FolderName)
+end
+FigList = findobj(allchild(0), 'flat', 'Type', 'figure');
+for iFig = 1:length(FigList)
+  FigHandle = FigList(iFig);
+  %??? What do we have in fighandle, can we have fig title?
+  FigName   = num2str(get(FigHandle, 'Number'));
+  set(0, 'CurrentFigure', FigHandle);
+  savefig(fullfile(FolderName, [FigName '.fig']));
+  saveas(FigHandle,fullfile(FolderName, [FigName '.png']));
+  %saveas(FigHandle,strcat(FolderName, [FigName '.pdf']));
+  print(FigHandle, strcat(FolderName,FigName),'-dpdf','-bestfit');
+  %savefig(fullfile(FolderName, [FigName '.png']));
+end
+
+%% close all figures
+close all

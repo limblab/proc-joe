@@ -1,20 +1,21 @@
 function [td] = setOriginAsShoulder(td,is_fixed_origin)
-    
-% For Han
+
+if(strcmpi(td.monkey,'Han'))
     dlc_idx = [find((strcmpi(td.dlc_pos_names,'shoulder_x'))),...
-        find((strcmpi(td.dlc_pos_names,'shoulder_y'))),...
-        find((strcmpi(td.dlc_pos_names,'shoulder_z')))];
-% For Crackle
-%     dlc_idx = [find((strcmpi(td.dlc_pos_names,'shoulder1_x'))),...
-%         find((strcmpi(td.dlc_pos_names,'shoulder1_y'))),...
-%         find((strcmpi(td.dlc_pos_names,'shoulder1_z')))];
+    find((strcmpi(td.dlc_pos_names,'shoulder_y'))),...
+    find((strcmpi(td.dlc_pos_names,'shoulder_z')))];
+else
+    dlc_idx = [find((strcmpi(td.dlc_pos_names,'shoulder1_x'))),...
+    find((strcmpi(td.dlc_pos_names,'shoulder1_y'))),...
+    find((strcmpi(td.dlc_pos_names,'shoulder1_z')))];
 
     if(is_fixed_origin)
-        
         dlc_pos = td.dlc_pos(:,dlc_idx);
+        %disp(dlc_pos)
         dlc_pos = dlc_pos(~any(isnan(dlc_pos),2),:);
         
         origin = dlc_pos(1,:);
+        %disp(dlc_pos)
         
     else
         dlc_pos = td.dlc_pos(:,dlc_idx);
@@ -33,6 +34,12 @@ function [td] = setOriginAsShoulder(td,is_fixed_origin)
     y_idx = find(~cellfun(@isempty,strfind(td.dlc_pos_names,'_y')));
     z_idx = find(~cellfun(@isempty,strfind(td.dlc_pos_names,'_z')));
 
+    %disp(td.dlc_pos(:,x_idx))
+    %disp(origin)
+    %disp(td.dlc_pos(:,dlc_idx))
+    %disp(dlc_pos(1,:))
+    %disp(x_idx)
+    
     td.dlc_pos(:,x_idx) = td.dlc_pos(:,x_idx)-origin(:,1);
     td.dlc_pos(:,y_idx) = td.dlc_pos(:,y_idx)-origin(:,2);
     td.dlc_pos(:,z_idx) = td.dlc_pos(:,z_idx)-origin(:,3);
