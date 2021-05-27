@@ -566,100 +566,7 @@
 %     set(l,'box','off')
     ylim([0,1])
     xlim([0,105])
-%% plot PSTH for each condition for low and high speed cases
-    mean_speed_cutoff = [0.2,4]; % plot speeds in range
-    input_data.suffix = 'speed0-2';
     
-    array_data_trim = arrayData;
-    for u = 1:numel(arrayData)
-        for cond = 1:numel(arrayData{u}.binCounts)
-            arrayData{u}.kin{cond}.speed = sqrt(arrayData{u}.kin{cond}.vx.^2 + arrayData{u}.kin{cond}.vy.^2);
-            arrayData{u}.kin{cond}.mean_speed = mean(arrayData{u}.kin{cond}.speed,2);
-            trial_speeds = arrayData{u}.kin{cond}.mean_speed(arrayData{u}.stimData{cond});
-            keep_mask = trial_speeds > mean_speed_cutoff(1) & trial_speeds < mean_speed_cutoff(2);
-            trials_keep = unique(arrayData{u}.stimData{cond}(keep_mask));
-            
-            
-            spike_trial_times = arrayData{u}.spikeTrialTimes{cond}(keep_mask==1);
-            
-            array_data_trim{u}.num_stims(cond) = sum(arrayData{u}.kin{cond}.mean_speed > mean_speed_cutoff(1) & arrayData{u}.kin{cond}.mean_speed < mean_speed_cutoff(2));
-            array_data_trim{u}.binCounts{cond} = histcounts(spike_trial_times*1000,array_data_trim{u}.binEdges{cond})/array_data_trim{u}.num_stims(cond);
-            array_data_trim{u}.speed{cond} = arrayData{u}.kin{cond}.speed(trials_keep,:);
-            array_data_trim{u}.mean_speed{cond} = arrayData{u}.kin{cond}.mean_speed(trials_keep,:);
-            
-            array_data_trim{u}.binMaxYLim = 1;
-        end
-    end
-    
-    input_data.unit_idx = 1;
-    
-    optsPlotFunc.BIN_SIZE = mode(diff(array_data_trim{arrIdx}.binEdges{1,1}));
-    optsPlotFunc.FIGURE_SAVE = 0;
-    optsPlotFunc.FIGURE_DIR = [];
-    optsPlotFunc.FIGURE_PREFIX = [array_data_trim{arrIdx}.monkey,'_long_'];
-
-    optsPlotFunc.PRE_TIME = 15/1000;
-    optsPlotFunc.POST_TIME = 20/1000;
-    optsPlotFunc.SORT_DATA = 'postStimuliTime';
-
-    optsPlotFunc.MARKER_STYLE  = '.';
-
-    optsPlotFunc.PLOT_AFTER_STIMULATION_END = 1;
-    optsPlotFunc.STIMULATION_LENGTH = [];
-
-    optsPlotFunc.PLOT_ALL_ONE_FIGURE = 0;
-    optsPlotFunc.PLOT_LINE = 1;
-    optsPlotFunc.PLOT_TITLE = 0;    
-    optsPlotFunc.PLOT_ALL_WAVES_ONE_FIGURE = 0;
-        
-    %   
-    PSTHPlots = plotPSTHStim(array_data_trim{arrIdx},array_data_trim{arrIdx}.NN,optsPlotFunc);    
-
-    
-
-
-%% plot response vs baseline firing rate for each trial
-
-    num_spikes_per_trial = cell(numel(arrayData{1}.numStims),numel(arrayData));
-    num_spikes_baseline = cell(numel(arrayData{1}.numStims),numel(arrayData));
-    mean_speed_per_trial = cell(numel(arrayData{1}.numStims),numel(arrayData));
-    spike_window = [0,10]/1000; % in s
-    baseline_window = [-100,-5]/1000; % in s
-    
-    figure();
-    plot([0,10],[0,10],'k--');
-    hold on
-    for unit = 1:numel(arrayData)
-        for cond = 1:numel(arrayData{unit}.numStims)
-            arrayData{u}.kin{cond}.speed = sqrt(arrayData{u}.kin{cond}.vx.^2 + arrayData{u}.kin{cond}.vy.^2);
-            arrayData{u}.kin{cond}.mean_speed = mean(arrayData{u}.kin{cond}.speed,2);
-            if(arrayData{unit}.numStims(cond) > 0)
-                for tr = 1:arrayData{unit}.numStims(cond)
-                    % get spikes during the train
-                    spike_mask = arrayData{unit}.spikeTrialTimes{cond} > spike_window(1) & arrayData{unit}.spikeTrialTimes{cond} < spike_window(2) & ...
-                        arrayData{unit}.stimData{cond} == tr;
-                    num_spikes_per_trial{cond,unit}(tr,1) = sum(spike_mask);
-                    mean_speed_per_trial{cond,unit}(tr,1) = arrayData{unit}.kin{cond}.mean_speed(tr);
-
-                    % get baseline spike rate
-                    spike_mask = arrayData{unit}.spikeTrialTimes{cond} > baseline_window(1) & arrayData{unit}.spikeTrialTimes{cond} < baseline_window(2) & ...
-                        arrayData{unit}.stimData{cond} == tr;
-                    num_spikes_baseline{cond,unit}(tr,1) = sum(spike_mask);  
-
-                end
-                
-                % plot mean fr baseline for trials with >= 1 spike vs. that for stims with 0 spikes
-                spike_trial_mask = num_spikes_per_trial{cond,unit} > 0;
-                
-                plot(mean(num_spikes_baseline{cond,unit}(spike_trial_mask==0)),mean(num_spikes_baseline{cond,unit}(spike_trial_mask==1)),'.','markersize',16)
-            end
-        end
-    end
-
-    
-
-
-
 
 %% proportion of cells with only inhib response, only excite response, or both
 %     is_excite_inhib = zeros(numel(spikesStruct),9,2); % 9 amps, is_excite, is_inhib
@@ -697,5 +604,193 @@
 %     x = repmat(x,3,1);
 %     x = reshape(x,size(x,1)*size(x,2),1) + repmat([-0.3;0;0.3],size(is_excite_inhib,2),1);
     
+    
+   
+%% plot PSTH for each condition for low and high speed cases
+    mean_speed_cutoff = [0.5,4]; % plot speeds above and below cutoff
+    min_speed = 0.001;
+    input_data.suffix = 'speed0-2';
+    
+    array_data_low = arrayData;
+    array_data_low = rebinArrayData(array_data_low, 5);
+    array_data_high = array_data_low;
+    for u = 1:numel(arrayData)
+        for cond = 1:numel(arrayData{u}.binCounts)
+            arrayData{u}.kin{cond}.speed = sqrt(arrayData{u}.kin{cond}.vx.^2 + arrayData{u}.kin{cond}.vy.^2);
+            arrayData{u}.kin{cond}.mean_speed = mean(arrayData{u}.kin{cond}.speed,2);
+            trial_speeds = arrayData{u}.kin{cond}.mean_speed(arrayData{u}.stimData{cond});
+            
+            low_mask = trial_speeds < mean_speed_cutoff(1) & trial_speeds > min_speed & ~isnan(trial_speeds);
+            trials_keep = unique(arrayData{u}.stimData{cond}(low_mask));
+            
+            
+            spike_trial_times = arrayData{u}.spikeTrialTimes{cond}(low_mask==1);
+            
+            array_data_low{u}.num_stims(cond) = sum(low_mask);
+            array_data_low{u}.binCounts{cond} = histcounts(spike_trial_times*1000,array_data_low{u}.binEdges{cond})/array_data_low{u}.num_stims(cond);
+            array_data_low{u}.speed{cond} = arrayData{u}.kin{cond}.speed(trials_keep,:);
+            array_data_low{u}.mean_speed{cond} = arrayData{u}.kin{cond}.mean_speed(trials_keep,:);
+            
+            array_data_low{u}.binMaxYLim = 1;
+            
+            
+            high_mask = trial_speeds > mean_speed_cutoff(2) & ~isnan(trial_speeds);
+            spike_trial_times = arrayData{u}.spikeTrialTimes{cond}(high_mask==1);
+            trials_keep = unique(arrayData{u}.stimData{cond}(high_mask));
+            array_data_high{u}.num_stims(cond) = sum(high_mask);
+            array_data_high{u}.binCounts{cond} = histcounts(spike_trial_times*1000,array_data_high{u}.binEdges{cond})/array_data_high{u}.num_stims(cond);
+            array_data_high{u}.speed{cond} = arrayData{u}.kin{cond}.speed(trials_keep,:);
+            array_data_high{u}.mean_speed{cond} = arrayData{u}.kin{cond}.mean_speed(trials_keep,:);
+            
+            array_data_high{u}.binMaxYLim = 1;
+        end
+    end
+    
+    input_data.unit_idx = 14;
+    
+    optsPlotFunc.BIN_SIZE = mode(diff(array_data_high{input_data.unit_idx}.binEdges{1,1}));
+    optsPlotFunc.FIGURE_SAVE = 0;
+    optsPlotFunc.FIGURE_DIR = [];
+    optsPlotFunc.FIGURE_PREFIX = [array_data_high{input_data.unit_idx}.monkey,'_long_'];
+
+    optsPlotFunc.PRE_TIME = 15/1000;
+    optsPlotFunc.POST_TIME = 20/1000;
+    optsPlotFunc.SORT_DATA = 'postStimuliTime';
+
+    optsPlotFunc.MARKER_STYLE  = '.';
+
+    optsPlotFunc.PLOT_AFTER_STIMULATION_END = 1;
+    optsPlotFunc.STIMULATION_LENGTH = [];
+
+    optsPlotFunc.PLOT_ALL_ONE_FIGURE = 0;
+    optsPlotFunc.PLOT_LINE = 1;
+    optsPlotFunc.PLOT_TITLE = 0;    
+    optsPlotFunc.PLOT_ALL_WAVES_ONE_FIGURE = 0;
+    optsPlotFunc.MAKE_FIGURE = 1;
+    %   
+    figs_low = plotPSTHStim(array_data_low{input_data.unit_idx},array_data_low{input_data.unit_idx}.NN,optsPlotFunc);    
+        
+    figs_high = plotPSTHStim(array_data_high{input_data.unit_idx},array_data_high{input_data.unit_idx}.NN,optsPlotFunc); 
+        
+    % move stuff from figs high to low
+    for i = 1:numel(figs_low)
+        ax = findobj(figs_high{i},'type','axes');
+        h = findobj(ax, 'type','line');
+        h.Color = getColorFromList(1,1);
+        s = copyobj(h,figs_low{i}.Children);
+        close(figs_high{i});
+    end
+    array_data_low{u}.num_stims
+    array_data_high{u}.num_stims
+    
+%% plot stim evoked response vs speed
+    num_spikes_per_trial = cell(numel(arrayData{1}.numStims),numel(arrayData));
+    num_spikes_baseline = cell(numel(arrayData{1}.numStims),numel(arrayData));
+    mean_speed_per_trial = cell(numel(arrayData{1}.numStims),numel(arrayData));
+    mean_speed_all = [];
+    spike_window = [0,10]/1000; % in s
+    baseline_window = [-100,-5]/1000; % in s
+    
+    
+    cutoffs = [0,0.001;0.0001,2.6;3.78,7.64; 10.4,Inf]; % no move, 0-25, 37.5-62.5, 75-100 percentiles
+    
+    figure();
+    hold on
+    for unit = 1:numel(arrayData)
+        for cond = 1:numel(arrayData{unit}.numStims)
+            if(arrayData{unit}.STIM_PARAMETERS(cond).amp1 == 50 && arrayData{unit}.STIM_PARAMETERS(cond).polarity == 0)
+                arrayData{u}.kin{cond}.speed = sqrt(arrayData{u}.kin{cond}.vx.^2 + arrayData{u}.kin{cond}.vy.^2);
+                arrayData{u}.kin{cond}.mean_speed = mean(arrayData{u}.kin{cond}.speed,2);
+                if(arrayData{unit}.numStims(cond) > 0)
+                    for tr = 1:arrayData{unit}.numStims(cond)
+                        % get spikes during the train
+                        spike_mask = arrayData{unit}.spikeTrialTimes{cond} > spike_window(1) & arrayData{unit}.spikeTrialTimes{cond} < spike_window(2) & ...
+                            arrayData{unit}.stimData{cond} == tr;
+                        num_spikes_per_trial{cond,unit}(tr,1) = sum(spike_mask);
+                        mean_speed_per_trial{cond,unit}(tr,1) = arrayData{unit}.kin{cond}.mean_speed(tr);
+                        mean_speed_all(end+1,1) = arrayData{unit}.kin{cond}.mean_speed(tr);
+                    end
+
+                    % plot mean fr baseline for trials with >= 1 spike vs. that for stims with 0 spikes
+                    spike_trial_mask = num_spikes_per_trial{cond,unit} > 0;
+                    
+                    % plot firing rates for 3 speed groups -- low, med,
+                    % high
+                    is_nan_mask = isnan(mean_speed_per_trial{cond,unit});
+                    
+                    no_move_mask = mean_speed_per_trial{cond,unit} <= cutoffs(1,2) & ~is_nan_mask;
+                    low_mask = mean_speed_per_trial{cond,unit} >= cutoffs(2,1) & mean_speed_per_trial{cond,unit} <= cutoffs(2,2) & ~is_nan_mask;
+                    med_mask = mean_speed_per_trial{cond,unit} >= cutoffs(3,1) & mean_speed_per_trial{cond,unit} <= cutoffs(3,2) & ~is_nan_mask;
+                    high_mask = mean_speed_per_trial{cond,unit} >= cutoffs(4,1) & mean_speed_per_trial{cond,unit} <= cutoffs(4,2) & ~is_nan_mask;
+                    
+                    mean_spikes = [mean(num_spikes_per_trial{cond,unit}(no_move_mask)),...
+                        mean(num_spikes_per_trial{cond,unit}(low_mask)),...
+                        mean(num_spikes_per_trial{cond,unit}(med_mask)),...
+                        mean(num_spikes_per_trial{cond,unit}(high_mask))];
+%                     std_spikes = sqrt(mean_spikes)./[sum(no_move_mask),sum(low_mask),sum(med_mask),sum(high_mask)];
+                    
+%                     errorbar([1,2,3]+rand()*0.1-0.05, mean_spikes,std_spikes,'-','markersize',20)
+                    plot([0,1,2,3],mean_spikes,'-');
+                end
+            end
+        end
+    end
+    
+    formatForLee(gcf);
+    xlabel('Speed group');
+    ylabel('Spikes per trial after stim');
+    set(gca,'XTick',[0,1,2,3],'XMinorTick','off','XTickLabel',{'no move','low','med','high'});
+%% plot baseline FR on responsive trials vs baseline FR on non-responsive trials for each unit
+
+    num_spikes_per_trial = cell(numel(arrayData{1}.numStims),numel(arrayData));
+    num_spikes_baseline = cell(numel(arrayData{1}.numStims),numel(arrayData));
+    mean_speed_per_trial = cell(numel(arrayData{1}.numStims),numel(arrayData));
+    spike_window = [0,10]/1000; % in s
+    baseline_window = [-100,-5]/1000; % in s
+    
+    figure();
+    plot([0,10],[0,10],'k--');
+    hold on
+    for unit = 1:numel(arrayData)
+        for cond = 1:numel(arrayData{unit}.numStims)
+            if(any(arrayData{unit}.STIM_PARAMETERS(cond).amp1 == [15,25,50]) && arrayData{unit}.STIM_PARAMETERS(cond).polarity == 0)
+                arrayData{unit}.kin{cond}.speed = sqrt(arrayData{unit}.kin{cond}.vx.^2 + arrayData{unit}.kin{cond}.vy.^2);
+                arrayData{unit}.kin{cond}.mean_speed = mean(arrayData{unit}.kin{cond}.speed,2);
+                if(arrayData{unit}.numStims(cond) > 0)
+                    for tr = 1:arrayData{unit}.numStims(cond)
+                        % get spikes during the train
+                        spike_mask = arrayData{unit}.spikeTrialTimes{cond} > spike_window(1) & arrayData{unit}.spikeTrialTimes{cond} < spike_window(2) & ...
+                            arrayData{unit}.stimData{cond} == tr;
+                        num_spikes_per_trial{cond,unit}(tr,1) = sum(spike_mask);
+                        mean_speed_per_trial{cond,unit}(tr,1) = arrayData{unit}.kin{cond}.mean_speed(tr);
+
+                        % get baseline spike rate
+                        spike_mask = arrayData{unit}.spikeTrialTimes{cond} > baseline_window(1) & arrayData{unit}.spikeTrialTimes{cond} < baseline_window(2) & ...
+                            arrayData{unit}.stimData{cond} == tr;
+                        num_spikes_baseline{cond,unit}(tr,1) = sum(spike_mask);  
+
+                    end
+
+                    % plot mean fr baseline for trials with >= 1 spike vs. that for stims with 0 spikes
+                    spike_trial_mask = num_spikes_per_trial{cond,unit} > 0;
+
+                    color_idx = find(arrayData{unit}.STIM_PARAMETERS(cond).amp1 == [15,25,50]);
+                    plot(mean(num_spikes_baseline{cond,unit}(spike_trial_mask==0)),mean(num_spikes_baseline{cond,unit}(spike_trial_mask==1)),...
+                        'color',getColorFromList(1,color_idx),'marker','.','markersize',16);
+                    hold on
+                end
+            end
+        end
+
+    end
+
+    
+    formatForLee(gcf);
+    xlabel('Unresponsive trial baseline spike count');
+    ylabel('Responsive trial baseline spike count');
+    set(gca,'fontsize',14);
+    
+
+
     
     

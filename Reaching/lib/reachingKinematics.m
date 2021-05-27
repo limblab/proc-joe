@@ -288,7 +288,7 @@ function [output_data] = reachingKinematics(td_list,task_list,input_data)
                 ];
                 %find((strcmpi(td_list{task_idx}.dlc_pos_names,[corr_markernames{i_marker},'_z'])))
         end
-        dlc_data = td_list{task_idx}.dlc_pos(:,dlc_idx);
+        dlc_data = td_list{task_idx}.dlc_vel(:,dlc_idx);
         dlc_data = dlc_data(~any(isnan(dlc_data),2),:);
         
         %Calculate velocity for each axis based on position data

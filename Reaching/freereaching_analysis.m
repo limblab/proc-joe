@@ -121,14 +121,13 @@
             %td_list{i_td}
             %task_list{i_td}
             td_list{i_td} = getExperimentPhase(td_list{i_td},task_list{i_td});
-            %td_list{i_td}
-            
-            
-            % get robot height (z data of a hand marker). This is
-            % meaningless during free reach...
-            markername = 'hand3';
-            dlc_idx = find((strcmpi(td_list{i_td}.dlc_pos_names,[markername,'_z'])));
-            robot_height(end+1) = mean(td_list{i_td}.dlc_pos(:,dlc_idx),'omitnan');
+% 
+% 
+%             % get robot height (z data of a hand marker). This is
+%             % meaningless during free reach...
+%             markername = 'hand3';
+%             dlc_idx = find((strcmpi(td_list{i_td}.dlc_pos_names,[markername,'_z'])));
+%             robot_height(end+1) = mean(td_list{i_td}.dlc_pos(:,dlc_idx),'omitnan');
         end
         td_all{filenum} = td_list;
         task_list_all{filenum} = task_list;
@@ -149,7 +148,25 @@
         kin_data = reachingKinematics(td_list,task_list,kin_input_data);
     end
     
-    
+%% get pca of muscle lengths for predictions
+    for filenum = 1:length(td_all)
+        td_list = td_all{filenum};
+        for i_td = 1:numel(td_list)
+            PCAparams = struct('signals',{{'opensim',find(contains(td_list{i_td}.opensim_names,'_len') & ~contains(td_list{i_td}.opensim_names,'tricep_lat'))}},...
+                                    'do_plot',true);
+    %                 PCAparams = struct('signals','muscle_len', 'do_plot',false);
+            [td_temp,~] = dimReduce(td_list{i_td},PCAparams);
+            td_list{i_td}.musc_len_pca = td_temp.opensim_pca;
+            % get velocity PCA
+            % need to drop a muscle: for some reason, PCA says rank of muscle kinematics matrix is 38, not 39.
+            PCAparams_vel = struct('signals',{{'opensim',find(contains(td_list{i_td}.opensim_names,'_muscVel') & ~contains(td_list{i_td}.opensim_names,'tricep_lat'))}},...
+                                'do_plot',true);
+            [td_temp,~] = dimReduce(td_list{i_td},PCAparams_vel);
+            td_list{i_td}.musc_vel_pca = td_temp.opensim_pca;
+            clear td_temp;
+        end
+        td_all{filenum} = td_list;
+    end
 
     
 %% Loop through files to cross-validate encoders
@@ -612,7 +629,7 @@ xlabel("number of spikes in this section")
                     model_eval{monkeynum,sessionnum},struct(...
                         'bonferroni_correction',6,...
                         'models',{models_to_plot},...
-                        'model_pairs',{{'ext','handelbow'}},...
+                        'model_pairs',{{'musc','ext'}},...
                         'postfix','_eval'));
         end
     end
@@ -783,7 +800,7 @@ xlabel("number of spikes in this section")
 %% plot PDs across spaces (actual, as well as predicted by each model)
     sessionnum = 1;
     spacenames = {'RT3D','RT2D'};
-    tasknames = {'Unknown','RW'};
+    tasknames = {'none','RW'};
     legend_data = [];
     figure
     models_to_plot_temp = models_to_plot;

@@ -18,6 +18,7 @@ function [output_data] = getLatencyOfPeaks(array_data,input_data)
     delta_lat_list = [];
     delta_amp_list = [];
     delta_unit_idx = [];
+    delta_min_amp = [];
     
     % if it's the model, store diam_idx, cell_idx, clone num
     diam_list = [];
@@ -66,7 +67,7 @@ function [output_data] = getLatencyOfPeaks(array_data,input_data)
                 end
                 
                 [pks,locs,widths,proms] = findpeaks(spike_times_use,... % data,
-                    'MinPeakDistance',7,'MinPeakProminence',1.0,'NPeaks',4); 
+                    'MinPeakDistance',5,'MinPeakProminence',1.0,'NPeaks',6); 
                 
                 % get time window to count spikes in 
                 % do this by drawing a line from peak down based on half
@@ -151,14 +152,17 @@ function [output_data] = getLatencyOfPeaks(array_data,input_data)
 
         
         % get change in latency data for first peak
-        data_mask = unit_idx == i_unit & peak_num == 1 & lat_list < 2/1000 & lat_list > 1/1000;
+        data_mask = unit_idx == i_unit & peak_num == 1 & amp_list~=100 & lat_list < 2/1000 & lat_list > 1/1000;
         
         temp_list = lat_list(data_mask) - lat_list(find(data_mask,1,'first'));
+        lowest_amp = amp_list(find(data_mask,1,'first'));
+        
         data_mask(find(data_mask,1,'first')) = 0;
         num_add = sum(data_mask);
         
         delta_lat_list(end+1:end+num_add) = temp_list(2:end);
         delta_amp_list(end+1:end+num_add) = amp_list(data_mask);
+        delta_min_amp(end+1:end+num_add) = repmat(lowest_amp,1,num_add);
         delta_unit_idx(end+1:end+num_add) = unit_idx(data_mask);
  
         if(any(temp_list > 0.0005))
@@ -188,6 +192,7 @@ function [output_data] = getLatencyOfPeaks(array_data,input_data)
     output_data.delta_lat = delta_lat_list;
     output_data.delta_amp = delta_amp_list;
     output_data.delta_unit_idx = delta_unit_idx;
+    output_data.delta_min_amp = delta_min_amp;
     
     output_data.diam_list = diam_list;
     output_data.cell_list = cell_list;

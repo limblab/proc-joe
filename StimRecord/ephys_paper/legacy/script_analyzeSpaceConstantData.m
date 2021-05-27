@@ -10,15 +10,16 @@
     mdl_input_data.wave_length = 0.453; % ms
     mdl_input_data.stim_window = [-100,400]; % ms around stim
     mdl_input_data.get_IPIs = 0;
-    
+    mdl_input_data.gaba_ratio_list = [1];
     % cell_id=6:10 %L23 PC, clones 1-5
     % cell_id=11:15 %L4 LBC, clones 1-5
     % cell_id=16:20 %L5 PC, clones 1-5
     % cell_id=21:25 %L6 PC, clones 1-5
     
-    mdl_input_data.get_synapses = 1;
-    [mdl_data_all,mdl_syn_array_data_all,mdl_syn_mask_data_all] = getModelStimChannelData(mdl_input_data);    
-    mdl_syn_array_data = mdl_syn_array_data_all; mdl_syn_mask_data = mdl_syn_mask_data_all;
+%     mdl_input_data.get_synapses = 1;
+%     [mdl_data_all,mdl_syn_array_data_all,mdl_syn_mask_data_all] = getModelStimChannelData(mdl_input_data);    
+%     mdl_syn_array_data = mdl_syn_array_data_all; mdl_syn_mask_data = mdl_syn_mask_data_all;
+    mdl_input_data.temporal_data = 0;
     
     mdl_input_data.get_synapses = 0;
     [mdl_data_all,mdl_array_data_all,mdl_mask_data_all] = getModelStimChannelData(mdl_input_data);  
@@ -33,12 +34,12 @@
 
 %% resample neurons based on proportions observed in rat cortex
 %     num_sample = 200;
-    [mdl_array_data,mdl_mask_data] = resampleModelData(mdl_array_data_all,mdl_mask_data_all);
-    [mdl_syn_array_data,mdl_syn_mask_data] = resampleModelData(mdl_syn_array_data_all,mdl_syn_mask_data_all);
+    [mdl_array_data,mdl_mask_data] = resampleModelData(mdl_array_data,mdl_mask_data);
+%     [mdl_syn_array_data,mdl_syn_mask_data] = resampleModelData(mdl_syn_array_data_all,mdl_syn_mask_data_all);
     
 %% get response data for both model and experiment
     resp_input_data = []; 
-    resp_input_data.home_computer = input_data.home_computer;
+    resp_input_data.home_computer = 1;
     resp_input_data.monkey_list = {'Han','Duncan'};
     
     resp_input_data.sub_baseline = 1; % doesn't apply to model
@@ -52,12 +53,12 @@
     resp_input_data.spike_window = [0,5]/1000; % s
     [mdl_resp_data] = getResponseAndDistanceData(mdl_array_data, resp_input_data);
 
-    resp_input_data.is_model = 1;
-    resp_input_data.spike_window = [0,5]/1000; % s
-    [mdl_syn_resp_data] = getResponseAndDistanceData(mdl_syn_array_data, resp_input_data);
+%     resp_input_data.is_model = 1;
+%     resp_input_data.spike_window = [0,5]/1000; % s
+%     [mdl_syn_resp_data] = getResponseAndDistanceData(mdl_syn_array_data, resp_input_data);
     
     % adjust response amplitude because there's no intrinsic activity
-    mdl_syn_resp_data.response_amp = mdl_syn_resp_data.response_amp*0.5;
+%     mdl_syn_resp_data.response_amp = mdl_syn_resp_data.response_amp*0.5;
     mdl_resp_data.response_amp = mdl_resp_data.response_amp*0.5;
     
     % get experiment mean baseline FR
@@ -71,22 +72,22 @@
 % across all neurons for experiment
 % across all clones for model
     max_dist = 1000*ceil(max([exp_resp_data.dist_from_stim; mdl_resp_data.dist_from_stim])/1000);
-    bin_size = 200; % um
+    bin_size = 100; % um
     bin_edges = 200:bin_size:max_dist;
     bin_centers = bin_edges(1:end-1) + mode(diff(bin_edges))/2;
     [~,~,exp_bin_idx] = histcounts(exp_resp_data.dist_from_stim,bin_edges);
     [~,~,mdl_bin_idx] = histcounts(mdl_resp_data.dist_from_stim,bin_edges);
-    [~,~,mdl_syn_bin_idx] = histcounts(mdl_syn_resp_data.dist_from_stim,bin_edges);
+%     [~,~,mdl_syn_bin_idx] = histcounts(mdl_syn_resp_data.dist_from_stim,bin_edges);
     fit_bin_min = 0;
     
-    mdl_diam = 3; % 2 is monkey diameter
+    mdl_diam = 2; % 2 is monkey diameter
     
     figure(); hold on;
     % experiment and model activations across all neurons/cell types/clones
     % (one diameter for model)
     fits = {}; gofs = {};
     ax_list = [];
-    for i_type = 1:3
+    for i_type = 2:2
 %         ax_list(end+1,1) = subplot(1,2,i_type); hold on;
         if(i_type == 1)
             resp_data = exp_resp_data;
@@ -98,7 +99,7 @@
         elseif(i_type == 2) % model, no synapses
             resp_data = mdl_resp_data;
             bin_idx = mdl_bin_idx;
-            type_mask = mdl_resp_data.diam == mdl_diam & mdl_resp_data.cell_id == 21;
+            type_mask = mdl_resp_data.diam == mdl_diam;
             marker = 's';
             markersize = 9;
             linestyle = '-';

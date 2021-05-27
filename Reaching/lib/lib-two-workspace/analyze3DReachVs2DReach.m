@@ -79,7 +79,7 @@ function [crossEval, crossTuning, crossvalLookup, crossval_glm_info] = analyze3D
                 % out_signals. Also grab handle velocity for td_test so that we
                 % can compute PDs using handle kinematics
                 for modelnum = 1:numel(glm_params)
-                    for i_name = 1:size(glm_params{modelnum}.in_signals,2)
+                    for i_name = 1:size(glm_params{modelnum}.in_signals,1)
                         for i_idx = 1:numel(glm_params{modelnum}.in_signals{i_name,2})
                             td_train.(glm_params{modelnum}.in_signals{i_name,1}) = ...
                                 [td_plane.(glm_params{modelnum}.in_signals{i_name,1})(train_idx,:); td_freereach.(glm_params{modelnum}.in_signals{i_name,1})(train_idx,:)];

@@ -34,10 +34,10 @@ function [figureHandle] = plotPSTHStim(unitData,NEURON_NUMBER,optsPlot)
                 optsPlot.NUM_PLOTS = NUM_CHANS*NUM_WAVEFORM_TYPES;
                 for chanTemp = 1:NUM_CHANS
                     for waveTemp = 1:NUM_WAVEFORM_TYPES
-                        bEtemp = unitData.bE{chanTemp,waveTemp};
+                        bEtemp = unitData.binEdges{chanTemp,waveTemp};
                         xDataTemp = bEtemp(1:end-1)+(bEtemp(2)-bEtemp(1))/2;
                         xDataTemp = xDataTemp';
-                        yDataTemp = unitData.bC{chanTemp,waveTemp};
+                        yDataTemp = unitData.binCounts{chanTemp,waveTemp};
                         yDataTemp = yDataTemp';
                         xData(:,end+1) = xDataTemp;
                         yData(:,end+1) = yDataTemp;
@@ -46,10 +46,10 @@ function [figureHandle] = plotPSTHStim(unitData,NEURON_NUMBER,optsPlot)
             elseif(opts.PLOT_ALL_WAVES_ONE_FIGURE)
                 optsPlot.NUM_PLOTS = NUM_WAVEFORM_TYPES;
                 for waveTemp = 1:NUM_WAVEFORM_TYPES
-                    bEtemp = unitData.bE{chan,waveTemp};
+                    bEtemp = unitData.binEdges{chan,waveTemp};
                     xDataTemp = bEtemp(1:end-1)+(bEtemp(2)-bEtemp(1))/2;
                     xDataTemp = xDataTemp';
-                    yDataTemp = unitData.bC{chan,waveTemp};
+                    yDataTemp = unitData.binCounts{chan,waveTemp};
                     yDataTemp = yDataTemp';
                     xData(:,end+1) = xDataTemp;
                     yData(:,end+1) = yDataTemp;
@@ -122,7 +122,7 @@ function [figureHandle] = plotPSTHStim(unitData,NEURON_NUMBER,optsPlot)
             optsPlot.NO_RECORDING_WINDOW = opts.NO_RECORDING_WINDOW;
             optsPlot.NO_RECORDING_BOX_COLOR = opts.NO_RECORDING_BOX_COLOR;
             
-            figureHandle{chan,wave} = plotPSTHLIB(xData,yData,optsPlot,optsSave);
+            figureHandle{chan,wave} = plotPSTHLib(xData,yData,optsPlot,optsSave);
 
 
         end

@@ -1,19 +1,19 @@
 %% set initial parameters
 
-    input_data.folderpath = 'D:\Lab\Data\CObumpmove\duncan\';
+    input_data.folderpath = 'D:\Lab\Data\StimModel\Han_20160325_cds\';
 
-    mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
-%     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+%     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
+    mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 %     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Pop_18E3\Array Map Files\6250-002085\SN 6250-002085.cmp';
     
     input_data.date = '20190515';
 
     input_data.array = 'arrayLeftS1';
-    input_data.monkey = 'monkeyDuncan';
+    input_data.monkey = 'monkeyHan';
     input_data.ranBy = 'ranByKyle';
     input_data.lab = 6;
     input_data.mapFile = strcat('mapFile',mapFileName);
-    input_data.task = 'taskCObump';
+    input_data.task = 'taskRW';
 
     pwd=cd;
     input_data.fileNum = 1;
@@ -27,7 +27,7 @@
 
     file_name = dir('*nev*');
     
-    params.event_list = {'goCueTime';'bumpTime';'stimTime';'stimCode'};
+    params.event_list = {'goCueTime';'stimTime'};
     params.trial_results = {'R'};
     params.extra_time = [1,2];
     params.include_ts = 1;
@@ -40,26 +40,25 @@
     
     td_all = [];
     for i = 1%:numel(file_name)
-        cds = commonDataStructure();
-        cds.file2cds(strcat(input_data.folderpath,file_name(i).name),input_data.array,input_data.monkey,input_data.ranBy,...
-            input_data.lab,input_data.mapFile,input_data.task,'recoverPreSync','ignoreJumps','ignoreFilecat');
+%         cds = commonDataStructure();
+%         cds.file2cds(strcat(input_data.folderpath,file_name(i).name),input_data.array,input_data.monkey,input_data.ranBy,...
+%             input_data.lab,input_data.mapFile,input_data.task,'recoverPreSync','ignoreJumps','ignoreFilecat');
        
-        td_temp = parseFileByTrial(cds,params);
 %         td_temp = stripSpikeSorting(td_temp);
         td_temp = getSpeed(td_temp);
         td_temp = getNorm(td_temp,'vel');
-        td_temp = getMoveOnsetAndPeak(td_temp);
+%         td_temp = getMoveOnsetAndPeak(td_temp);
         
         td_all = [td_all,td_temp];
     end
     
-    td_all = removeBadTrials(td_all);
+%     td_all = removeBadTrials(td_all);
 %     if(td_all(1).bin_size < 0.05)
 %         % set it to 50ms
 %         td_all = binTD(td_all,ceil(0.01/td_all(1).bin_size));
 %     end
     
-        
+
 %% get correlation during movement epoch
     corr_params = [];
     corr_params.signals = {'LeftS1_spikes'};
