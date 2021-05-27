@@ -315,7 +315,7 @@ for i=1:length(cds.analog)
         if(dt < bin_size)
             opensim_temp = decimate_signals(opensim_temp,opensimList_temp,bin_size);
         else
-            opensim_temp = resample_signals(opensim_temp,opensimList_temp,bin_size,min(opensim_temp.t(1),cds.meta.dataWindow(1)),max(cds.meta.dataWindow(2),opensim_temp.t(end)));
+            opensim_temp = resample_signals(opensim_temp,opensimList_temp,bin_size,cds.meta.dataWindow(1),cds.meta.dataWindow(2));
         end
 
         for i_field = 1:numel(opensimList_temp)
@@ -340,40 +340,40 @@ clear opensim
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Process Markers data
 % Figure out if we have marker data
-marker_analog_idx = 0;
-for i=1:length(cds.analog)
-    header = cds.analog{i}.Properties.VariableNames;
-    if any(contains(header,'Frame')) || any(contains(header,'Marker'))
-        marker_analog_idx = i;
-        break
-    end
-end
-if marker_analog_idx > 0
-    markers=cds.analog{marker_analog_idx};
-    markers = markers(:,2:end); % get rid of frames column
-    
-    % recondition table to have only single column variables
-    new_markers = table(markers.t,'VariableNames',{'t'});
-    marker_postfix = {'_x','_y','_z'};
-    marker_names = markers.Properties.VariableNames;
-    for marker_ctr = 2:width(markers)
-        % for each column in each marker
-        for col_ctr = 1:3
-            % add new column to new_markers
-            col_name = [marker_names{marker_ctr} marker_postfix{col_ctr}];
-            new_col = table(markers.(marker_names{marker_ctr})(:,col_ctr),'VariableNames',{col_name});
-            new_markers = [new_markers new_col];
-        end
-    end
-    markersList = new_markers.Properties.VariableNames;
-    clear marker_analog_idx header markers marker_postfix marker_names marker_ctr col_ctr col_name new_col
-    
-    % Assign to a new 'markers' variable
-    cds_bin.markers = resample_signals(new_markers,markersList,bin_size,cds.kin.t(1),cds.kin.t(end));
-    % convert marker data from mm to cm
-    
-    clear new_markers
-end
+% marker_analog_idx = 0;
+% for i=1:length(cds.analog)
+%     header = cds.analog{i}.Properties.VariableNames;
+%     if any(contains(header,'Frame')) || any(contains(header,'Marker'))
+%         marker_analog_idx = i;
+%         break
+%     end
+% end
+% if marker_analog_idx > 0
+%     markers=cds.analog{marker_analog_idx};
+%     markers = markers(:,2:end); % get rid of frames column
+%     
+%     % recondition table to have only single column variables
+%     new_markers = table(markers.t,'VariableNames',{'t'});
+%     marker_postfix = {'_x','_y','_z'};
+%     marker_names = markers.Properties.VariableNames;
+%     for marker_ctr = 2:width(markers)
+%         % for each column in each marker
+%         for col_ctr = 1:3
+%             % add new column to new_markers
+%             col_name = [marker_names{marker_ctr} marker_postfix{col_ctr}];
+%             new_col = table(markers.(marker_names{marker_ctr})(:,col_ctr),'VariableNames',{col_name});
+%             new_markers = [new_markers new_col];
+%         end
+%     end
+%     markersList = new_markers.Properties.VariableNames;
+%     clear marker_analog_idx header markers marker_postfix marker_names marker_ctr col_ctr col_name new_col
+%     
+%     % Assign to a new 'markers' variable
+%     cds_bin.markers = resample_signals(new_markers,markersList,bin_size,cds.kin.t(1),cds.kin.t(end));
+%     % convert marker data from mm to cm
+%     
+%     clear new_markers
+% end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Process DLC data -- similar to marker data, but uses a slightly different naming scheme
 dlc_analog_idx = 0;
@@ -409,8 +409,8 @@ if dlc_analog_idx > 0
     dlc_pos.t = dlc_data.t;
     dlc_score.t = dlc_data.t;
     % resample signals
-    dlc_pos = resample_signals(dlc_pos,dlc_pos_list,bin_size,min(dlc_pos.t(1),cds.meta.dataWindow(1)),max(cds.meta.dataWindow(2),dlc_pos.t(end)));
-    dlc_score = resample_signals(dlc_score,dlc_score_list,bin_size,min(dlc_score.t(1),cds.meta.dataWindow(1)),max(cds.meta.dataWindow(2),dlc_score.t(end)));
+    dlc_pos = resample_signals(dlc_pos,dlc_pos_list,bin_size,cds.meta.dataWindow(1),cds.meta.dataWindow(2));
+    dlc_score = resample_signals(dlc_score,dlc_score_list,bin_size,cds.meta.dataWindow(1),cds.meta.dataWindow(2));
     
     cds_bin.dlc_pos = dlc_pos;
     cds_bin.dlc_score = dlc_score;

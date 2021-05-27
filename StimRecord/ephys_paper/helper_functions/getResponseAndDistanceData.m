@@ -84,10 +84,14 @@ function [output_data] = getResponseAndDistanceData(array_data, input_data)
                 spike_mask = array_data{i_unit}.spikeTrialTimes{i_chan,i_amp} > input_data.spike_window(1) & ...
                     array_data{i_unit}.spikeTrialTimes{i_chan,i_amp} <= input_data.spike_window(2);
                 
-                if(input_data.is_model && sum(spike_mask) > 1)
-                    spike_mask(2:end) = 0; % remove doublets
+                sum_spike_mask = sum(spike_mask);
+                if(input_data.is_model && sum_spike_mask > 1)
+                    if(numel(array_data{i_unit}.stimData{i_chan,i_amp}) > numel(unique(array_data{i_unit}.stimData{i_chan,i_amp})))
+                        % remove doublets
+                        sum_spike_mask = numel(unique(array_data{i_unit}.stimData{i_chan,i_amp}));
+                    end
                 end
-                response_amp(end+1,1) = sum(spike_mask)/array_data{i_unit}.numStims(i_chan,i_amp) - baseline_val;
+                response_amp(end+1,1) = sum_spike_mask/array_data{i_unit}.numStims(i_chan,i_amp) - baseline_val;
                 
                 if(sum(spike_mask) > 0 && dist_from_stim(end) < input_data.max_lat_distance)
                     latency(end+1:end+sum(spike_mask))= array_data{i_unit}.spikeTrialTimes{i_chan,i_amp}(spike_mask);

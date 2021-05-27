@@ -699,14 +699,19 @@
     for unit = 1:numel(arrayData)
         for cond = 1:numel(arrayData{unit}.numStims)
             if(arrayData{unit}.STIM_PARAMETERS(cond).amp1 == 50 && arrayData{unit}.STIM_PARAMETERS(cond).polarity == 0)
-                arrayData{u}.kin{cond}.speed = sqrt(arrayData{u}.kin{cond}.vx.^2 + arrayData{u}.kin{cond}.vy.^2);
-                arrayData{u}.kin{cond}.mean_speed = mean(arrayData{u}.kin{cond}.speed,2);
+                arrayData{unit}.kin{cond}.speed = sqrt(arrayData{unit}.kin{cond}.vx.^2 + arrayData{unit}.kin{cond}.vy.^2);
+                arrayData{unit}.kin{cond}.mean_speed = mean(arrayData{unit}.kin{cond}.speed,2);
                 if(arrayData{unit}.numStims(cond) > 0)
                     for tr = 1:arrayData{unit}.numStims(cond)
                         % get spikes during the train
+                        base_mask = arrayData{unit}.spikeTrialTimes{cond} > baseline_window (1) & arrayData{unit}.spikeTrialTimes{cond} < baseline_window(2) & ...
+                            arrayData{unit}.stimData{cond} == tr;
                         spike_mask = arrayData{unit}.spikeTrialTimes{cond} > spike_window(1) & arrayData{unit}.spikeTrialTimes{cond} < spike_window(2) & ...
                             arrayData{unit}.stimData{cond} == tr;
+                        
+
                         num_spikes_per_trial{cond,unit}(tr,1) = sum(spike_mask);
+                        num_spikes_baseline{cond,unit}(tr,1) = sum(base_mask);
                         mean_speed_per_trial{cond,unit}(tr,1) = arrayData{unit}.kin{cond}.mean_speed(tr);
                         mean_speed_all(end+1,1) = arrayData{unit}.kin{cond}.mean_speed(tr);
                     end
@@ -723,14 +728,23 @@
                     med_mask = mean_speed_per_trial{cond,unit} >= cutoffs(3,1) & mean_speed_per_trial{cond,unit} <= cutoffs(3,2) & ~is_nan_mask;
                     high_mask = mean_speed_per_trial{cond,unit} >= cutoffs(4,1) & mean_speed_per_trial{cond,unit} <= cutoffs(4,2) & ~is_nan_mask;
                     
-                    mean_spikes = [mean(num_spikes_per_trial{cond,unit}(no_move_mask)),...
+                    mean_evoked_spikes = [mean(num_spikes_per_trial{cond,unit}(no_move_mask)),...
                         mean(num_spikes_per_trial{cond,unit}(low_mask)),...
                         mean(num_spikes_per_trial{cond,unit}(med_mask)),...
                         mean(num_spikes_per_trial{cond,unit}(high_mask))];
+                    
+                    mean_base_spikes = [mean(num_spikes_baseline{cond,unit}(no_move_mask)),...
+                        mean(num_spikes_baseline{cond,unit}(low_mask)),...
+                        mean(num_spikes_baseline{cond,unit}(med_mask)),...
+                        mean(num_spikes_baseline{cond,unit}(high_mask))];
+                    
+                    factor = diff(spike_window)/diff(baseline_window);
+                    mean_evoked_spikes = mean_evoked_spikes - mean_base_spikes*factor;
+                    mean_evoked_spikes = mean_evoked_spikes - mean_evoked_spikes(2);
 %                     std_spikes = sqrt(mean_spikes)./[sum(no_move_mask),sum(low_mask),sum(med_mask),sum(high_mask)];
                     
 %                     errorbar([1,2,3]+rand()*0.1-0.05, mean_spikes,std_spikes,'-','markersize',20)
-                    plot([0,1,2,3],mean_spikes,'-');
+                    plot([0,1,2,3],mean_evoked_spikes,'-');
                 end
             end
         end

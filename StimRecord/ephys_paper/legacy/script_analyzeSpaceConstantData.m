@@ -1,12 +1,14 @@
 % get model data -- space constant DONT RUN, LOAD .MAT FILE INSTAED
     mdl_input_data = [];
     mdl_input_data.folderpath = 'C:\Users\Joseph Sombeck\Box\Miller-Grill_S1-stim\ModelData\SpaceConstant\';
+%     mdl_input_data.folderpath = 'C:\Users\Joseph Sombeck\Box\Miller-Grill_S1-stim\ModelData\StimChannelResponse\no_Intrinsic_Activity\';
     mdl_input_data.diam_list = [1,2,3];
     mdl_input_data.amp_list = [15,30,50,100];
     mdl_input_data.get_axon_dendrite_locs = 0;
     mdl_input_data.cell_id_list = [1,6,11,16,21];
     mdl_input_data.num_clones = 5;
     mdl_input_data.stim_times = (201); % ms
+%     mdl_input_data.stim_times = (201)+(0:1:9)*500; % ms
     mdl_input_data.wave_length = 0.453; % ms
     mdl_input_data.stim_window = [-100,400]; % ms around stim
     mdl_input_data.get_IPIs = 0;
@@ -45,12 +47,12 @@
     resp_input_data.sub_baseline = 1; % doesn't apply to model
     resp_input_data.max_lat_distance = 200; % max distance to count latency of a spike
     
-    resp_input_data.is_model = 0;
-    resp_input_data.spike_window = [1,5]/1000; % s
-    [exp_resp_data] = getResponseAndDistanceData(exp_array_data, resp_input_data);
+%     resp_input_data.is_model = 0;
+%     resp_input_data.spike_window = [1,5]/1000; % s
+%     [exp_resp_data] = getResponseAndDistanceData(exp_array_data, resp_input_data);
 
     resp_input_data.is_model = 1;
-    resp_input_data.spike_window = [0,5]/1000; % s
+    resp_input_data.spike_window = [-5,5]/1000; % s
     [mdl_resp_data] = getResponseAndDistanceData(mdl_array_data, resp_input_data);
 
 %     resp_input_data.is_model = 1;
@@ -59,23 +61,84 @@
     
     % adjust response amplitude because there's no intrinsic activity
 %     mdl_syn_resp_data.response_amp = mdl_syn_resp_data.response_amp*0.5;
-    mdl_resp_data.response_amp = mdl_resp_data.response_amp*0.5;
     
     % get experiment mean baseline FR
-    exp_baseline_fr = 0;
-    for i_unit = 1:numel(exp_array_data)
-        exp_baseline_fr = exp_baseline_fr + exp_array_data{i_unit}.baseline_fr;
+%     exp_baseline_fr = 0;
+%     for i_unit = 1:numel(exp_array_data)
+%         exp_baseline_fr = exp_baseline_fr + exp_array_data{i_unit}.baseline_fr;
+%     end
+%     exp_baseline_fr = exp_baseline_fr/numel(exp_array_data);
+    
+%% 
+    diam = 2;
+    amp_list = unique(mdl_resp_data.amp);
+    color_list = inferno(numel(amp_list)+2);
+    color_list(2,:) = [];
+    
+    bin_edges = [0:100:2000];
+%     bin_edges = [0:10:150];
+    [~,~,bin_idx] = histcounts(mdl_resp_data.dist_from_stim,bin_edges);
+    resp_amp_bin = zeros(numel(amp_list),numel(bin_edges)-1);
+    num_neurons_bin = zeros(numel(amp_list),numel(bin_edges)-1);
+    
+    f=figure();
+    fits = {}; gof = {}; 
+    bin_vol = 4/3*pi*(bin_edges(2:end).^3 - bin_edges(1:end-1).^3);
+    for i_amp = 1:numel(amp_list)
+        mask = mdl_resp_data.diam == diam & mdl_resp_data.amp == amp_list(i_amp);
+
+        for i_bin = 1:size(resp_amp_bin,2)
+            resp_amp_bin(i_amp,i_bin) = sum(mdl_resp_data.response_amp(mask & bin_idx == i_bin));
+            num_neurons_bin(i_amp,i_bin) = sum(mask & bin_idx == i_bin);
+        end
+        
+        density_bin = num_neurons_bin(i_amp,:)./bin_vol;
+        ideal_density = mean(density_bin(bin_edges(1:end-1) > 200));
+        correction_factor = density_bin./ideal_density;
+        
+        
+        x=bin_edges(1:end-1)+mode(diff(bin_edges))/2;
+        y=resp_amp_bin(i_amp,:);
+%         fit_mask = ~isnan(y);
+%         
+% %         fits{i_amp} = fit(x(fit_mask)', y(fit_mask)','a*exp(-1*x/b)','lower',[0,0],'upper',[2,2000],'StartPoint',[1,500]);
+%         [fits{i_amp},gof{i_amp}] = fit(x(fit_mask)', y(fit_mask)','1-1/(1+exp(-a*(x-b)))','lower',[-1,0],'upper',[1,2000],'StartPoint',[0.1,100]);
+        [fits{i_amp},gof{i_amp}] = fit(mdl_resp_data.dist_from_stim(mask),mdl_resp_data.response_amp(mask),'1-1/(1+exp(-a*(x-b)))','lower',[-1,0],'upper',[1,2000],'StartPoint',[0.1,100]);
+%        
+        plot(x,resp_amp_bin(i_amp,:)./num_neurons_bin(i_amp,:),'color',color_list(i_amp,:),'marker','.','linestyle','none','markersize',30); hold on
+        plot([0,x],feval(fits{i_amp},[0,x]),'color',color_list(i_amp,:),'linestyle','--','linewidth',2);
+    
     end
-    exp_baseline_fr = exp_baseline_fr/numel(exp_array_data);
+    
+    formatForLee(gcf);
+    xlabel('Distance from stim (\mum)')
+    ylabel('Proportion of neurons activated')
+    set(gca,'fontsize',14);
+
+%% using fits of distance and probability activated, estimate number of spikes evoked at different distances
+bin_edges = 0:1:2000;
+dBin = mode(diff(bin_edges));
+bin_centers = bin_edges(1:end-1)+dBin/2;
+density_factor = 1; % just scales result
+
+bin_vol = (bin_edges(2:end) - bin_edges(1:end-1));
+figure(); hold on;
+for i_amp = 1:numel(fits)
+    prob_act = feval(fits{i_amp},bin_centers);
+    expected_num_spikes = prob_act.*bin_vol';
+    plot(bin_centers,expected_num_spikes);
+end
+
+    
     
 %% plot response vs distance -- use bins for experiment and model, model + synapses
 % across all neurons for experiment
 % across all clones for model
-    max_dist = 1000*ceil(max([exp_resp_data.dist_from_stim; mdl_resp_data.dist_from_stim])/1000);
+    max_dist = 1000*ceil(max([mdl_resp_data.dist_from_stim])/1000);
     bin_size = 100; % um
     bin_edges = 200:bin_size:max_dist;
     bin_centers = bin_edges(1:end-1) + mode(diff(bin_edges))/2;
-    [~,~,exp_bin_idx] = histcounts(exp_resp_data.dist_from_stim,bin_edges);
+%     [~,~,exp_bin_idx] = histcounts(exp_resp_data.dist_from_stim,bin_edges);
     [~,~,mdl_bin_idx] = histcounts(mdl_resp_data.dist_from_stim,bin_edges);
 %     [~,~,mdl_syn_bin_idx] = histcounts(mdl_syn_resp_data.dist_from_stim,bin_edges);
     fit_bin_min = 0;

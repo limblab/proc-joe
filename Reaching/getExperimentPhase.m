@@ -15,7 +15,7 @@ function [trial_data] = getExperimentPhase(trial_data,task)
     if(strcmpi(task,'RW')==1 || strcmpi(task,'RT') == 1)
         % get transformation from DLC coordinates to robot coordinates
         % (rotation and offset)
-        markername = 'hand3';
+        markername = 'hand2';
         dlc_idx = [find(strcmpi(trial_data.dlc_pos_names,[markername,'_x'])),find(strcmpi(trial_data.dlc_pos_names,[markername,'_y'])),...
             find(strcmpi(trial_data.dlc_pos_names,[markername,'_z']))];
         dlc_pos = trial_data.dlc_pos(:,dlc_idx);
@@ -82,6 +82,23 @@ function [trial_data] = getExperimentPhase(trial_data,task)
             end
             trial_data.trial_idx = find(keep_mask);
             
+        elseif(strcmpi(trial_data.monkey,'Crackle'))
+            markername = 'hand2';
+            dlc_idx = [find(strcmpi(trial_data.dlc_pos_names,[markername,'_x'])),find(strcmpi(trial_data.dlc_pos_names,[markername,'_y'])),...
+                find(strcmpi(trial_data.dlc_pos_names,[markername,'_z']))];
+            
+            speed = sqrt(sum(trial_data.dlc_vel(:,dlc_idx).^2,2));
+            keep_mask = speed > 0.05 & speed < 50;
+            
+            % remove points
+            td_fields = fieldnames(trial_data);
+            pos_len = length(trial_data.dlc_pos);
+            for i_field = 1:numel(td_fields)
+                if(length(trial_data.(td_fields{i_field})) == pos_len)
+                    trial_data.(td_fields{i_field}) = trial_data.(td_fields{i_field})(keep_mask==1,:);
+                end
+            end
+            trial_data.trial_idx = find(keep_mask);
         else
             warning('getExperimentPhase is not implemented for this task and monkey. Nothing was done');
         end

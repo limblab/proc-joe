@@ -25,9 +25,9 @@ function [ temp_td ] = removeTrials( trial_data )
                 temp_td.(td_names{i_name}) = [temp_td.(td_names{i_name}); temp_val];
             elseif(~isempty(strfind(td_names{i_name},'_ts')))
                 % for the spikes, we need to go through each cell and
-                % append
+                % append. Undo trial start alignment.
                 for i_unit = 1:numel(temp_td.(td_names{i_name}))
-                    temp_td.(td_names{i_name}){i_unit} = [temp_td.(td_names{i_name}){i_unit}; trial_data(i_trial).(td_names{i_name}){i_unit}];
+                    temp_td.(td_names{i_name}){i_unit} = [temp_td.(td_names{i_name}){i_unit}; trial_data(i_trial).(td_names{i_name}){i_unit} + temp_td.idx_startTime(i_trial)];
                 end
             elseif(iscell(trial_data(1).(td_names{i_name})) || ~isempty(strfind(td_names{i_name},'_unit_guide')) || ...
                     ~isempty(strfind(td_names{i_name},'monkey')) || ~isempty(strfind(td_names{i_name},'date')) ||  ~isempty(strfind(td_names{i_name},'task')))

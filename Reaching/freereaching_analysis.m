@@ -10,7 +10,7 @@
 
 %% Set up meta info and load trial data
     if ispc
-        folderpath = 'D:\Lab\Data\DLC_videos\Han_20201204_rwFreeReach\neural-data\';
+        folderpath = 'D:\Lab\Data\DLC_videos\Han_20201217_rwFreeReach\neural-data\';
     else
         folderpath = '/data/raeed/project-data/limblab/s1-kinematics';
     end
@@ -33,7 +33,7 @@
     arrayname = 'LeftS1';
     monkey_names = {'Han'};
     included_models = {'ext','handelbow'}; % models to calculate encoders for
-    models_to_plot = {'ext','handelbow'}; % main models of the paper
+    models_to_plot = included_models; % main models of the paper
     not_plot_models = setdiff(included_models,models_to_plot);
     bin_size = 0.05; % s
     
@@ -81,11 +81,11 @@
 
             if(isfield(td_list{i_td},'dlc_pos'))
                 % set origin as shoulder position at t=0
-                td_list{i_td} = setOriginAsShoulder(td_list{i_td},1);
+%                 td_list{i_td} = setOriginAsShoulder(td_list{i_td},1);
                 % get marker velocity
                 td_list{i_td} = getDifferential(td_list{i_td},struct('signals','dlc_pos','alias','dlc_vel'));
                 % remove time points where dlc tracking is bad
-                dlc_idx = [find((strcmpi(td_list{i_td}.dlc_pos_names,['hand2','x']))),...
+                dlc_idx = [find((strcmpi(td_list{i_td}.dlc_pos_names,['hand2','_x']))),...
                             find((strcmpi(td_list{i_td}.dlc_pos_names,['hand2','_y']))),...
                             find((strcmpi(td_list{i_td}.dlc_pos_names,['elbow1','_x']))),...
                             find((strcmpi(td_list{i_td}.dlc_pos_names,['elbow1','_y'])))];
@@ -202,6 +202,7 @@
         model_eval{monkey_idx,session_ctr(monkey_idx)} = encoderResults.crossEval(:,contains(encoderResults.crossEval.Properties.VariableDescriptions,'meta'));
         model_eval_cell = cell(1,length(included_models));
         [space_eval_cell,space_eval_within_cell,space_eval_across_cell] = deal(cell(2,length(included_models)));
+        
         for modelnum = 1:length(included_models)
             model_eval_cell{modelnum} = table(encoderResults.crossEval.(sprintf('glm_%s_model_eval',included_models{modelnum})),...
                 'VariableNames',strcat(included_models(modelnum),'_eval'));
@@ -279,10 +280,10 @@
     
 %% plot random "trials" and predictions from one of the models - real FR, model predict FR
 
-    unit_idx = 33;
+    unit_idx = 12;
     td_idx = 2; % pick which trial data (task) to use
-
-    window_plot = [-10,10]; % s
+    
+    window_plot = [-3,3]; % s
     num_trials_plot = 4;
     bin_size = td_list{td_idx}.bin_size;
     % pick random time point, make sure data in window are consecutive
@@ -290,16 +291,17 @@
     
     td_list_smooth = smoothSignals(td_list{td_idx},'LeftS1_FR');
 
-    time_idx = []; window_idx = [];
+    time_idx = []; window_idx = []; trial_idx = [];
     for i_trial = 1:num_trials_plot
         is_consec = 0;
         test_ctr = 0;
         while ~is_consec && test_ctr < 100
-            time_idx(i_trial) = (rand()*(numel(td_list{td_idx}.trial_idx) - floor(diff(window_plot)*2/bin_size))) + floor(diff(window_plot)/bin_size);
+            time_idx(i_trial) = (rand()*(size(td_list{td_idx}.dlc_pos,1) - floor(diff(window_plot)*2/bin_size))) + floor(diff(window_plot)/bin_size);
             window_idx(i_trial,:) = time_idx(i_trial)+floor(window_plot./bin_size);
-            trial_idx = td_list{td_idx}.trial_idx(window_idx(i_trial,1):window_idx(i_trial,2));
+            
+            trial_idx(i_trial) = time_idx(i_trial);
 
-            if(max(diff(trial_idx)) == 1)
+            if(max(diff(trial_idx)) >= diff(window_plot))
                 is_consec = 1;
             end
 
@@ -336,6 +338,8 @@
     set(l,'box','off');
     xlabel('Time (s)');
     ylabel('FR (Hz)');
+    xlim([0,diff(window_plot)]);
+    
 %% Get pR2 pairwise comparisons for model pairs and all neurons
     % find winners of pR2
     pr2_winners = cell(length(monkey_names),size(session_colors,1));
@@ -345,7 +349,7 @@
                     model_eval{monkeynum,sessionnum},struct(...
                         'bonferroni_correction',6,...
                         'models',{models_to_plot},...
-                        'model_pairs',{{'musc','ext'}},...
+                        'model_pairs',{{'ext','handelbow'}},...
                         'postfix','_eval'));
         end
     end
@@ -441,48 +445,6 @@
         end
         legend(legend_data,models_to_plot)
     end
-%% (New) Plots between whole-arm and hand-only for RT2D and RT3D
-    
-    task_names = {'Random Target 2D task', 'Random Target 3D task'};
-    % show scatter plot for hand/elbow pR2 within condition vs against condition
-    for modelnum = 1:length(models_to_plot)
-        figure
-        for monkeynum = 1:length(monkey_names)
-            for spacenum = 1:2
-                % set subplot
-                subplot(2,length(monkey_names),(spacenum-1)*length(monkey_names)+monkeynum)
-
-                % plot lines
-                plot([-1 1],[-1 1],'k--','linewidth',0.5)
-                hold on
-                plot([0 0],[-1 1],'k-','linewidth',0.5)
-                plot([-1 1],[0 0],'k-','linewidth',0.5)
-
-                % plot out each session
-                for sessionnum = 1:session_ctr(monkeynum)
-                    avg_pR2 = neuronAverage(model_eval{monkeynum,sessionnum},struct('keycols','signalID','do_ci',false));
-                    scatter(...
-                        avg_pR2.(sprintf('%s_space%d_within_eval',models_to_plot{1},spacenum)),... %Warning, hardcode (1)
-                        avg_pR2.(sprintf('%s_space%d_within_eval',models_to_plot{2},spacenum)),... %Warning, hardcode (2)
-                        [],session_colors(sessionnum,:),'filled')
-                end
-                % make axes pretty
-                set(gca,'box','off','tickdir','out',...
-                    'xlim',[-0.1 0.6],'ylim',[-0.1 0.6])
-                axis square
-                if monkeynum ~= 1 || spacenum ~= 1
-                    set(gca,'box','off','tickdir','out',...
-                        'xtick',[],'ytick',[])
-                end
-                xlabel(sprintf('Hand-Only model'))
-                ylabel(sprintf('Whole-Arm model'))
-                title(task_names(spacenum))
-            end
-        end
-        suptitle('pR^2 Comparison Between Whole-Arm model vs Hand-Only model')
-    end
-   
-    suptitle('Within Pseudo-R^2 pairwise comparisons')
     
 %% plot PDs across spaces (actual, as well as predicted by each model)
     sessionnum = 1;

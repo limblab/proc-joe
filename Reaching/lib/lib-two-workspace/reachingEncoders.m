@@ -62,86 +62,98 @@ function results = reachingEncoders(td_list,task_list,robot_height,params)
     glm_params = cell(num_models-1,1);
     for modelnum = 1:num_models-1
         switch model_aliases{modelnum}
-        case 'ext'
-%             markername = 'Marker_1';
-            markername = 'hand2';
-            [point_exists,marker_hand_idx] = ismember(strcat(markername,'_',{'x','y','z'}),td_plane.dlc_pos_names);
-            assert(all(point_exists),'Hand marker does not exist?')
-            glm_params{modelnum} = struct(...
-                'model_type',model_type,...
-                'model_name',[model_aliases{modelnum} '_model'],...
-                'in_signals',{{'dlc_pos',marker_hand_idx;'dlc_vel',marker_hand_idx}},...
-                'out_signals',neural_signals);
-        case 'handelbow'
-            % indices for cartesian hand coordinates
-            markername = 'hand2';
-            [point_exists,marker_hand_idx] = ismember(strcat(markername,'_',{'x','y','z'}),td_plane.dlc_pos_names);
-            assert(all(point_exists),'Hand marker does not exist?')
+            case 'ext'
+    %             markername = 'Marker_1';
+                markername = 'hand2';
+                [point_exists,marker_hand_idx] = ismember(strcat(markername,'_',{'x','y','z'}),td_plane.dlc_pos_names);
+                assert(all(point_exists),'Hand marker does not exist?')
+                glm_params{modelnum} = struct(...
+                    'model_type',model_type,...
+                    'model_name',[model_aliases{modelnum} '_model'],...
+                    'in_signals',{{'dlc_pos',marker_hand_idx;'dlc_vel',marker_hand_idx}},...
+                    'out_signals',neural_signals);
+            case 'handelbow'
+                % indices for cartesian hand coordinates
+                markername = 'hand2';
+                [point_exists,marker_hand_idx] = ismember(strcat(markername,'_',{'x','y','z'}),td_plane.dlc_pos_names);
+                assert(all(point_exists),'Hand marker does not exist?')
 
-            markername = 'elbow1';
-            [point_exists,marker_elbow_idx] = ismember(strcat(markername,'_',{'x','y','z'}),td_plane.dlc_pos_names);
-            assert(all(point_exists),'Elbow marker does not exist?')
+                markername = 'elbow1';
+                [point_exists,marker_elbow_idx] = ismember(strcat(markername,'_',{'x','y','z'}),td_plane.dlc_pos_names);
+                assert(all(point_exists),'Elbow marker does not exist?')
 
-            glm_params{modelnum} = struct(...
-                'model_type',model_type,...
-                'model_name',[model_aliases{modelnum} '_model'],...
-                'in_signals',{{'dlc_pos',[marker_hand_idx marker_elbow_idx];'dlc_vel',[marker_hand_idx marker_elbow_idx]}},...
-                'out_signals',neural_signals);
-            
+                glm_params{modelnum} = struct(...
+                    'model_type',model_type,...
+                    'model_name',[model_aliases{modelnum} '_model'],...
+                    'in_signals',{{'dlc_pos',[marker_hand_idx marker_elbow_idx];'dlc_vel',[marker_hand_idx marker_elbow_idx]}},...
+                    'out_signals',neural_signals);
+
             case 'opensim_ext'
                 % indices for cartesian hand coordinates
                 markername = 'handPos';
                 [point_exists,hand_pos_idx] = ismember(strcat({'X','Y','Z'},'_',markername),td_plane.opensim_names);
                 assert(all(point_exists),'Hand marker does not exist?')
-                
+
                 markername = 'handVel';
                 [point_exists,hand_vel_idx] = ismember(strcat({'X','Y','Z'},'_',markername),td_plane.opensim_names);
                 assert(all(point_exists),'Hand marker does not exist?')
-                
+
                 glm_params{modelnum} = struct(...
                     'model_type',model_type,...
                     'model_name',[model_aliases{modelnum} '_model'],...
                     'in_signals',{{'opensim',[hand_pos_idx hand_vel_idx]}},...
                     'out_signals',neural_signals);
-                
+
             case 'opensim_handelbow'
                 % indices for cartesian hand coordinates
                 markername = 'handPos';
                 [point_exists,hand_pos_idx] = ismember(strcat({'X','Y','Z'},'_',markername),td_plane.opensim_names);
                 assert(all(point_exists),'Hand marker does not exist?')
-                
+
                 markername = 'handVel';
                 [point_exists,hand_vel_idx] = ismember(strcat({'X','Y','Z'},'_',markername),td_plane.opensim_names);
                 assert(all(point_exists),'Hand marker does not exist?')
-                
+
                 markername = 'elbowPos';
                 [point_exists,elbow_pos_idx] = ismember(strcat({'X','Y','Z'},'_',markername),td_plane.opensim_names);
                 assert(all(point_exists),'elbow marker does not exist?')
-                
+
                 markername = 'elbowVel';
                 [point_exists,elbow_vel_idx] = ismember(strcat({'X','Y','Z'},'_',markername),td_plane.opensim_names);
                 assert(all(point_exists),'elbow marker does not exist?')
-                
+
                 glm_params{modelnum} = struct('model_type',model_type,...
                     'model_name',[model_aliases{modelnum} '_model'],...
                     'in_signals',{{'opensim',[hand_pos_idx hand_vel_idx elbow_pos_idx elbow_vel_idx]}},...
                     'out_signals',neural_signals);
-                
-                
+
+
             case 'joint'
+                markername = 'ang';
+                [ang_idx] = find(~cellfun(@isempty,strfind(td_plane.opensim_names,strcat('_',markername))));
+                if(isempty(ang_idx))
+                    assert('joint angles do not exist?');
+                end
+
+                markername = 'vel';
+                [vel_idx] = find(~cellfun(@isempty,strfind(td_plane.opensim_names,strcat('_',markername))));
+                if(isempty(vel_idx))
+                    assert('joint angles do not exist?');
+                end
+
                 glm_params{modelnum} = struct('model_type',model_type,...
                     'model_name',[model_aliases{modelnum} '_model'],...
-                    'in_signals',{{'joint_ang';'joint_vel'}},...
+                    'in_signals',{{'opensim',[ang_idx, vel_idx]}},...
                     'out_signals',neural_signals);
-                
 
-                
+
+
             case 'musc'
                 % Do PCA on muscle space
                 % do PCA on muscles, training on only the training set
                 % need to drop a muscle: for some reason, PCA says rank of muscle kinematics matrix is 38, not 39.
-                
-                
+                % PCA is done outside of this function for some reason....hmm
+
                 glm_params{modelnum} = struct('model_type',model_type,...
                                         'model_name',[model_aliases{modelnum} '_model'],...
                                         'in_signals',{{'musc_len_pca',1:num_musc_pcs;'musc_vel_pca',1:num_musc_pcs}},...

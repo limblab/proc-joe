@@ -100,10 +100,16 @@ function [output_data] = getLatencyOfPeaks(array_data,input_data)
                 
                 % store peak location, width, and size
                 peak_size(end+1:end+numel(pks)) = pks;
-                peak_num(end+1:end+numel(pks)) = 1:1:numel(pks);
                 lat_list(end+1:end+numel(pks)) = bin_centers(locs);
                 width_list(end+1:end+numel(pks)) = widths*input_data.dt;
                 std_list(end+1:end+numel(pks)) = stds_temp;
+                % for peak num, make sure first peak occurs at a short
+                % enough latency. Otherwise we may have missed it
+                if(min(bin_centers(locs)) > 1.9/1000)
+                    peak_num(end+1:end+numel(pks)) = 2:1:(numel(pks)+1);
+                else
+                    peak_num(end+1:end+numel(pks)) = 1:1:numel(pks);
+                end
                 
                 unit_idx(end+1:end+numel(pks)) = i_unit;
                 amp_list(end+1:end+numel(pks)) = input_data.amp_list(i_amp);

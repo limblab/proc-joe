@@ -10,7 +10,7 @@
     f=figure(); hold on;
 
     amps_plot = [2,5,8,9];
-    % amps_plot = [1:1:9];
+%     amps_plot = [1:1:9];
     colors = inferno(numel(amps_plot)+1);
 
     % plot duke
@@ -20,8 +20,8 @@
             '-','color',colors(col_cnt,:),'linewidth',2,'markersize',16,'marker','.');
 
         % plot blackrock
-        plot(black_bin_edges(1:end-1)+mode(diff(black_bin_edges))/2,black_prop_rec(i_amp,:),...
-            '--','color',colors(col_cnt,:),'linewidth',2,'markersize',6,'marker','s');
+%         plot(black_bin_edges(1:end-1)+mode(diff(black_bin_edges))/2,black_prop_rec(i_amp,:),...
+%             '--','color',colors(col_cnt,:),'linewidth',2,'markersize',6,'marker','s');
         col_cnt = col_cnt + 1;
     end
 
@@ -96,9 +96,54 @@ recov_tbl = table(bin_list,amp_list,categorical(is_duke),recov_list,categorical(
 
 recov_tbl(recov_tbl.recov <= 0,:) = [];
 
-mdl_spec = 'recov~t*amp + amp*is_duke + t*is_duke + t*chan';
+mdl_spec = 'recov~ amp*is_duke + t*is_duke + chan';
 % mdl_spec = 'recov~t + amp + is_duke + chan + t:amp + t:is_duke + t:is_duke:amp';
 recov_mdl = fitglm(recov_tbl,mdl_spec,'distribution','binomial','link','logit')
+
+
+%% get time "recovered" to shade raster plots -- run previous two sections first
+    unique_bins = unique(bin_list);
+
+    mean_recov_duke = zeros(numel(amps),numel(unique_bins));
+    mean_recov_black = zeros(size(mean_recov_duke));
+    % smooth with bins before and after
+    for i_amp = 1:numel(amps)
+        for i_bin = 1:numel(unique_bins)
+            bins_keep = [i_bin-1,i_bin,i_bin+1];
+            bins_keep(bins_keep < 1 | bins_keep > numel(unique_bins)) = [];
+            is_bin_mask = any(bin_list == unique_bins(bins_keep)',2);
+            
+            is_amp_mask = amp_list == amps(i_amp);
+            is_duke_mask = is_duke;
+            mean_recov_duke(i_amp,i_bin) = mean(recov_list(is_bin_mask & is_amp_mask & is_duke_mask));
+            mean_recov_black(i_amp,i_bin) = mean(recov_list(is_bin_mask & is_amp_mask & ~is_duke_mask));
+
+        end
+    end
+    
+    prop_thresh = 0.5;
+    duke_blank_times = zeros(size(black_prop_rec,1),2);
+    black_blank_times = zeros(size(duke_blank_times));
+    
+    for i_amp = 1:size(black_prop_rec,1)
+        duke_blank_times(i_amp,:) = [-0.453, unique_bins(find(mean_recov_duke(i_amp,:) > prop_thresh,1,'first'))];
+        
+        black_blank_times(i_amp,:) = [-0.453, unique_bins(find(mean_recov_black(i_amp,:) > prop_thresh,1,'first'))];
+    end
+    
+    plot(duke_blank_times(:,2))
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
