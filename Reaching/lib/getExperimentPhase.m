@@ -15,8 +15,8 @@ function [trial_data,f] = getExperimentPhase(trial_data,task)
     % Find sections of data (scan_len long) where a large enough proportion
     % (prop above thresh) of speed data is above the mean speed. 
     % 
-    marker_spd = calcSpeed(trial_data.dlc_pos(:,dlc_idx(1)), trial_data.dlc_pos(:,dlc_idx(2)), trial_data.dlc_pos(:,dlc_idx(3)),trial_data.bin_size);
-    exp_phase_spd_thresh = mean(marker_spd);
+    marker_spd = sqrt(sum(trial_data.dlc_vel(:,dlc_idx).^2,2));
+        exp_phase_spd_thresh = mean(marker_spd);
     scan_len = 40; %frames/bins
     prop_above_thresh = 0.15; %If 60% of the points in this section were considered as 1
 
@@ -34,15 +34,18 @@ function [trial_data,f] = getExperimentPhase(trial_data,task)
     %Plot the actual speed and whether we kept the data point (1=yes,0=no)
     x_data = 0:trial_data.bin_size:(length(marker_spd))*trial_data.bin_size;
     f=figure;
+    f.Name = [trial_data.monkey, '_', trial_data.date, '_', task, '_speedFilter'];
     plot(x_data(1:length(marker_spd)),marker_spd);
     hold on
-    plot(x_data(1:length(keep_mask_spd)),keep_mask_spd,'LineWidth',1);
+    plot(x_data(1:length(keep_mask_spd)),keep_mask_spd*mean(marker_spd),'LineWidth',1);
     hold off 
     xlim([min(x_data), max(x_data)]);
-    legend('Actual Marker Speed','Predicted Mask');
+    l=legend('Actual Marker Speed','Predicted Mask');
+    set(l,'box','off');
     set(gca,'Fontsize',14);
     formatForLee(f);
-    
+    xlabel('Time (s)');
+    ylabel('Speed (cm/s)');
     
     % remove data points if outside of position thresholds
     % for RW task, check if monkey's hand is reasonably close to the handle
@@ -124,18 +127,3 @@ function [trial_data,f] = getExperimentPhase(trial_data,task)
     
     
 end
-    
-    
-    
-    
-    
-function [speed] = calcSpeed(pos_x, pos_y, pos_z, bin_size)
-    vel_x = pos_x(2:length(pos_x)) - pos_x(1:length(pos_x)-1);
-    vel_x = [0.0; vel_x];
-    vel_y = pos_y(2:length(pos_y)) - pos_y(1:length(pos_y)-1);
-    vel_y = [0.0; vel_y];
-    vel_z = pos_z(2:length(pos_z)) - pos_z(1:length(pos_z)-1);
-    vel_z = [0.0; vel_z];
-    speed = sqrt(vel_x.^2 + vel_y.^2 + vel_z.^2) / 100 / bin_size;
-end
-    

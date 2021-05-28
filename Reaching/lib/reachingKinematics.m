@@ -16,7 +16,7 @@ function [output_data] = reachingKinematics(td_list,task_list,input_data)
     sub_counter = 1;
     for i_td = 1:numel(td_list)
         if(strcmpi(task_list{i_td},'RT')==1) % only plot for 2D task
-            
+            f_hand_handle.Name = [td_list{i_td}.monkey, '_', td_list{i_td}.date, '_', task_list{i_td}, '_handVsHandlePos'];
             markername = 'hand2';
             dlc_idx = [find((strcmpi(td_list{1}.dlc_pos_names,[markername,'_x']))),find((strcmpi(td_list{1}.dlc_pos_names,[markername,'_y'])))];
 
@@ -28,12 +28,10 @@ function [output_data] = reachingKinematics(td_list,task_list,input_data)
             plot(x_data,td_list{i_td}.pos(:,1)-mean_td_pos(1),'color',getColorFromList(1,0),'linestyle','-')
             hold on;
             plot(x_data,(td_list{i_td}.dlc_pos(:,dlc_idx(1))-mean_dlc_pos(dlc_idx(1))),'color',getColorFromList(1,1),'linestyle','-');
-            %plot(x_data,(td_list{i_td}.dlc_pos(:,dlc_idx(2))-mean_dlc_pos(dlc_idx(2))),'color',getColorFromList(1,1),'linestyle','-');
             
             ylabel('x-pos (cm)');
             l=legend('handle','dlc');
             set(l,'box','off','location','best');
-            title('hand position against handle position');
             formatForLee(gca);
             set(gca,'fontsize',14);
             
@@ -41,7 +39,6 @@ function [output_data] = reachingKinematics(td_list,task_list,input_data)
             plot(x_data,td_list{i_td}.pos(:,2)-mean_td_pos(2),'color',getColorFromList(1,0),'linestyle','-')
             hold on
             plot(x_data,td_list{i_td}.dlc_pos(:,dlc_idx(2))-mean_dlc_pos(dlc_idx(2)),'color',getColorFromList(1,1),'linestyle','-');
-            %plot(x_data,td_list{i_td}.dlc_pos(:,dlc_idx(1))-mean_dlc_pos(dlc_idx(1)),'color',getColorFromList(1,1),'linestyle','-');
             
             xlabel('Experiment time (s)');
             ylabel('y-pos (s)');
@@ -80,10 +77,8 @@ function [output_data] = reachingKinematics(td_list,task_list,input_data)
         switch i_task
             case 1
                 task_idx = task_3d_idx;
-                title_str = 'RT3D';
             case 2
                 task_idx = task_2d_idx;
-                title_str = 'RT2D';
         end
         
         %start of plotting hand marker distribution, and correlation
@@ -91,6 +86,8 @@ function [output_data] = reachingKinematics(td_list,task_list,input_data)
         for i_marker = 1:numel(markernames) %loop for each marker
             % plot hand position for each task
             figure(f_workspace(i_marker));
+            f_workspace(i_marker).Name = [td_list{task_idx}.monkey, '_', td_list{task_idx}.date, '_', task_list{task_idx}, '_',markernames{i_marker},'Pos'];
+            
             markername = markernames{i_marker};
             title(markername)
             dlc_idx = [find((strcmpi(td_list{task_idx}.dlc_pos_names,[markername,'_x']))),...
@@ -159,6 +156,7 @@ function [output_data] = reachingKinematics(td_list,task_list,input_data)
   
     %Make a scatter plot with the correlation data
     figure(f_corr); hold on;
+    f_corr.Name = [td_list{task_idx}.monkey, '_', td_list{task_idx}.date, '_', task_list{task_idx}, '_corr2Dvs3D'];
     % plot hand x (1) vs elbow x (3)
     plot(corr_V_RT2D(1,3),corr_V_RT3D(1,3),'r.','markersize',40);
     % plot hand y (2) vs elbow y (4)
@@ -176,13 +174,12 @@ function [output_data] = reachingKinematics(td_list,task_list,input_data)
     lgd = legend('Elbow-V-X - Hand-V-X',...
     'Elbow-V-Y - Hand-V-Y',...
     'Elbow-S - Hand-S',...
-    '','','')
+    '','','');
     lgd.Location = 'northwest';
     xlim([-0.3,1]);
     ylim([-0.3,1]);
     xlabel('RT2D Correlation');
     ylabel('RT3D Correlation');
-    title('Correlation Comparison Between RT2D and RT3D tasks');
     formatForLee(gcf);
     set(gca,'fontsize',14);
     
