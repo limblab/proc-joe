@@ -10,6 +10,8 @@ function model_titles = getModelTitles(model_alias)
         switch model_alias_cell{modelnum}
         case 'ext'
             model_titles{modelnum} = 'Hand-only';
+        case 'ext_2D'
+            model_titles{modelnum} = 'Hand-only 2D';
         case 'extforce'
             model_titles{modelnum} = 'Hand Kinematic-Force';
         case 'opensim_ext'
@@ -28,6 +30,8 @@ function model_titles = getModelTitles(model_alias)
             model_titles{modelnum} = 'Muscle';
         case 'handelbow'
             model_titles{modelnum} = 'Whole-arm';
+        case 'handelbow_2D'
+            model_titles{modelnum} = 'Whole-arm 2D';
         case 'elbow'
             model_titles{modelnum} = 'Elbow';
         case 'opensim_handelbow'

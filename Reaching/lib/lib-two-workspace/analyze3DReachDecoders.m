@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% function [crossEval, crossTuning, crossvalLookup] = analyze3DReachVs2DReach(trial_data,params)
+% function [crossEval, crossTuning, crossvalLookup] = analyze3DReachDecoders(trial_data,params)
 % 
 % For multiworkspace files, with dl and pm workspaces:
 %   * Fits three different coordinate frame models to data from both workspaces
@@ -31,7 +31,7 @@
 %
 % OUTPUTS:
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [crossEval, crossTuning, crossvalLookup, crossval_glm_info] = analyze3DReachVs2DReach(td_list,params)
+function [crossEval, crossvalLookup, crossval_dec_info] = analyze3DReachDecoders(td_list,params)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Set up
@@ -43,12 +43,12 @@ function [crossEval, crossTuning, crossvalLookup, crossval_glm_info] = analyze3D
     get_tuning_curves = false;
     if nargin > 1, assignParams(who,params); end % overwrite parameters
 
-    glm_params = params.glm_params;
+    decoder_params = params.dec_params;
 %% Compile training and test sets
     % inialize temporary eval holders
-    [repeatEval,repeatTuning,repeatCrossvalLookup,repeatInfo] = deal(cell(num_repeats,1));
+    [repeatEval,repeatCrossvalLookup,repeatInfo] = deal(cell(num_repeats,1));
 
-    % extract different tasks from td_list
+    % extract td_high and td_low
     td_plane = td_list{1};
     td_freereach = td_list{2};
 
@@ -62,7 +62,7 @@ function [crossEval, crossTuning, crossvalLookup, crossval_glm_info] = analyze3D
         indices = crossvalind('Kfold',length(td_plane.pos),num_folds);
 
         % initialize temporary fold evaluation structure
-        [foldEval,foldTuning,foldCrossvalLookup,foldInfo] = deal(cell(num_folds,1));
+        [foldEval,foldCrossvalLookup,foldInfo] = deal(cell(num_folds,1));
 
         % loop over number of folds
         if verbose
@@ -78,13 +78,14 @@ function [crossEval, crossTuning, crossvalLookup, crossval_glm_info] = analyze3D
                 % split into td_train and td_test, only use in_signals and
                 % out_signals. Also grab handle velocity for td_test so that we
                 % can compute PDs using handle kinematics
-                for modelnum = 1:numel(glm_params)
-                    for i_name = 1:size(glm_params{modelnum}.in_signals,1)
-                        for i_idx = 1:numel(glm_params{modelnum}.in_signals{i_name,2})
-                            td_train.(glm_params{modelnum}.in_signals{i_name,1}) = ...
-                                [td_plane.(glm_params{modelnum}.in_signals{i_name,1})(train_idx,:); td_freereach.(glm_params{modelnum}.in_signals{i_name,1})(train_idx,:)];
-                            td_test_plane.(glm_params{modelnum}.in_signals{i_name,1}) = td_plane.(glm_params{modelnum}.in_signals{i_name,1})(test_idx,:);
-                            td_test_freereach.(glm_params{modelnum}.in_signals{i_name,1}) = td_freereach.(glm_params{modelnum}.in_signals{i_name,1})(test_idx,:);
+                for modelnum = 1:numel(decoder_params)
+                    for i_name = 1:size(decoder_params{modelnum}.out_signals,1)
+                        for i_idx = 1:numel(decoder_params{modelnum}.out_signals{i_name,2})
+                            td_train.(decoder_params{modelnum}.out_signals{i_name,1}) = ...
+                                [td_plane.(decoder_params{modelnum}.out_signals{i_name,1})(train_idx,:); td_freereach.(decoder_params{modelnum}.out_signals{i_name,1})(train_idx,:)];
+                            td_test_plane.(decoder_params{modelnum}.out_signals{i_name,1}) = td_plane.(decoder_params{modelnum}.out_signals{i_name,1})(test_idx,:);
+                            td_test_freereach.(decoder_params{modelnum}.out_signals{i_name,1}) = td_freereach.(decoder_params{modelnum}.out_signals{i_name,1})(test_idx,:);
+                            
                             % meta info....
                             td_train.monkey = td_plane.monkey;
                             td_test_plane.monkey = td_plane.monkey;
@@ -102,21 +103,17 @@ function [crossEval, crossTuning, crossvalLookup, crossval_glm_info] = analyze3D
                 end
                 
                 % get out signals
-                td_train.(glm_params{1}.out_signals) = ...
-                    [td_plane.(glm_params{1}.out_signals)(train_idx,:); td_freereach.(glm_params{1}.out_signals)(train_idx,:)];
-                td_test_plane.(glm_params{1}.out_signals) = td_plane.(glm_params{1}.out_signals)(test_idx,:); 
-                td_test_freereach.(glm_params{1}.out_signals) = td_freereach.(glm_params{1}.out_signals)(test_idx,:);
+                td_train.(decoder_params{1}.in_signals) = ...
+                    [td_plane.(decoder_params{1}.in_signals)(train_idx,:); td_freereach.(decoder_params{1}.in_signals)(train_idx,:)];
+                td_test_plane.(decoder_params{1}.in_signals) = td_plane.(decoder_params{1}.in_signals)(test_idx,:); 
+                td_test_freereach.(decoder_params{1}.in_signals) = td_freereach.(decoder_params{1}.in_signals)(test_idx,:);
 
                 % set bin_size as well
                 td_train.bin_size = td_plane.bin_size;
                 td_test_plane.bin_size = td_freereach.bin_size;
                 td_test_freereach.bin_size = td_freereach.bin_size;
                 
-                % pass in dlc_names as well for PD analysis
-                td_test_plane.dlc_names = td_plane.dlc_pos_names;
-                td_test_freereach.dlc_names = td_freereach.dlc_pos_names;
-                
-                % set spacenum
+                % set spacenum (1=high, 2=low)
                 train_spacenum = [ones(sum(train_idx),1);1+ones(sum(train_idx),1)];
             else
                 error('crossval lookup is not empty. This is not implemented');
@@ -125,12 +122,10 @@ function [crossEval, crossTuning, crossvalLookup, crossval_glm_info] = analyze3D
             % analyze fold to get model evaluations
             if exist('params','var')
                 params.crossvalID = uint16([repeatctr foldctr]);
-                params.get_tuning_curves = get_tuning_curves;
             else
                 params = struct('crossvalID',uint16([repeatctr foldctr]));
-                params.get_tuning_curves = get_tuning_curves;
             end
-            [foldEval{foldctr},foldTuning{foldctr}, foldInfo{foldctr}] = analyzeFold(td_train,{td_test_plane,td_test_freereach},train_spacenum,params);
+            [foldEval{foldctr}, foldInfo{foldctr}] = analyzeFold(td_train,{td_test_plane,td_test_freereach},train_spacenum,params);
 
             % get test trialIDs
             trialID = cat(1,find(indices==foldctr)',find(indices==foldctr)');
@@ -146,7 +141,6 @@ function [crossEval, crossTuning, crossvalLookup, crossval_glm_info] = analyze3D
 
         % put fold outputs into larger table
         repeatEval{repeatctr} = vertcat(foldEval{:});
-        repeatTuning{repeatctr} = vertcat(foldTuning{:});
         repeatCrossvalLookup{repeatctr} = vertcat(foldCrossvalLookup{:});
         repeatInfo{repeatctr} = vertcat(foldInfo{:});
         if verbose
@@ -156,16 +150,87 @@ function [crossEval, crossTuning, crossvalLookup, crossval_glm_info] = analyze3D
 
     % put all evals together
     crossEval = vertcat(repeatEval{:});
-    crossTuning = vertcat(repeatTuning{:});
     crossvalLookup = vertcat(repeatCrossvalLookup{:});
-    crossval_glm_info = vertcat(repeatInfo{:});
+    crossval_dec_info = vertcat(repeatInfo{:});
+%% Diagnostics...
+    % [foldEval,foldTuning] = analyzeFold(td_train,td_test);
+    % musc_err = minusPi2Pi(foldEval.glm_musc_model_velPDShift-foldEval.S1_FR_velPDShift);
+    % ext_err = minusPi2Pi(foldEval.glm_ext_model_velPDShift-foldEval.S1_FR_velPDShift);
+    % ego_err = minusPi2Pi(foldEval.glm_ego_model_velPDShift-foldEval.S1_FR_velPDShift);
+
+    % err_frac_musc = circ_var(musc_err)/circ_var(foldEval.S1_FR_velPDShift);
+    % err_frac_ext = circ_var(ext_err)/circ_var(foldEval.S1_FR_velPDShift);
+    % err_frac_ego = circ_var(ego_err)/circ_var(foldEval.S1_FR_velPDShift);
+
+    % figure
+    % scatter(foldEval.S1_FR_velPDShift,foldEval.glm_musc_model_velPDShift,[],'b')
+    % hold on
+    % scatter(foldEval.S1_FR_velPDShift,foldEval.glm_ext_model_velPDShift,[],'r')
+    % scatter(foldEval.S1_FR_velPDShift,foldEval.glm_ego_model_velPDShift,[],'g')
+    % plot([-pi pi],[-pi pi],'--k','linewidth',2)
+    % axis equal
+
+    % figure
+    % polar(musc_err,ones(size(musc_err)),'bo')
+    % hold on
+    % polar([0 circ_mean(musc_err)],[0 circ_r(musc_err)],'b-')
+    % set(gca,'xlim',[-1 1],'ylim',[-1 1])
+    % axis equal
+    % figure
+    % polar(ext_err,ones(size(ext_err)),'ro')
+    % hold on
+    % polar([0 circ_mean(ext_err)],[0 circ_r(ext_err)],'r-')
+    % set(gca,'xlim',[-1 1],'ylim',[-1 1])
+    % axis equal
+    % figure
+    % polar(ego_err,ones(size(ego_err)),'go')
+    % hold on
+    % polar([0 circ_mean(ego_err)],[0 circ_r(ego_err)],'g-')
+    % set(gca,'xlim',[-1 1],'ylim',[-1 1])
+    % axis equal
+
+    % figure
+    % subplot(2,1,1)
+    % scatter(cos(foldEval.S1_FR_velPDShift),cos(foldEval.glm_musc_model_velPDShift),[],'b')
+    % hold on
+    % plot([-1 1],[-1 1],'--k','linewidth',2)
+    % axis equal
+    % subplot(2,1,2)
+    % scatter(sin(foldEval.S1_FR_velPDShift),sin(foldEval.glm_musc_model_velPDShift),[],'b')
+    % hold on
+    % plot([-1 1],[-1 1],'--k','linewidth',2)
+    % axis equal
+
+    % figure
+    % subplot(2,1,1)
+    % scatter(cos(foldEval.S1_FR_velPDShift),cos(foldEval.glm_ext_model_velPDShift),[],'r')
+    % hold on
+    % plot([-1 1],[-1 1],'--k','linewidth',2)
+    % axis equal
+    % subplot(2,1,2)
+    % scatter(sin(foldEval.S1_FR_velPDShift),sin(foldEval.glm_ext_model_velPDShift),[],'r')
+    % hold on
+    % plot([-1 1],[-1 1],'--k','linewidth',2)
+    % axis equal
+
+    % figure
+    % subplot(2,1,1)
+    % scatter(cos(foldEval.S1_FR_velPDShift),cos(foldEval.glm_ego_model_velPDShift),[],'g')
+    % hold on
+    % plot([-1 1],[-1 1],'--k','linewidth',2)
+    % axis equal
+    % subplot(2,1,2)
+    % scatter(sin(foldEval.S1_FR_velPDShift),sin(foldEval.glm_ego_model_velPDShift),[],'g')
+    % hold on
+    % plot([-1 1],[-1 1],'--k','linewidth',2)
+    % axis equal
 
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Sub functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [foldEval,foldTuning,glm_info] = analyzeFold(td_train,td_test,train_spacenum,params)
+function [foldEval,dec_info] = analyzeFold(td_train,td_test,train_spacenum,params)
 % ANALYZEFOLD analyze single fold of cross-validation set and return NeuronTable structure
 %   with evaluation information for this fold
 % 
@@ -192,30 +257,26 @@ function [foldEval,foldTuning,glm_info] = analyzeFold(td_train,td_test,train_spa
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Set up
     % default parameters
-    model_eval_metric = 'pr2';
-    glm_params = {};
+    model_eval_metric = 'vaf';
+    dec_params = {};
     model_names = {};
-    num_tuning_bins = 16;
     unit_guide = [];
     crossvalID = [];
-    get_tuning_curves = false;
     if nargin > 2
         assignParams(who,params);
     end % overwrite parameters
 
     % check inputs
-    assert(~isempty(glm_params),'Must pass in glm parameters')
+    assert(~isempty(dec_params),'Must pass in glm parameters')
     assert(~isempty(model_names),'Must pass in model names')
-    assert(length(model_names) == length(glm_params) + 1,'Model names must have one more element than glm_params')
     assert(~isempty(crossvalID),'Must pass in crossvalID')
 
 %% Fit models
     % set up parameters for models
-    glm_info = cell(1,length(model_names)-1);
-    glm_info_within = cell(2,length(model_names)-1);
+    dec_info = cell(1,length(model_names)-1);
+    dec_info_within = cell(2,length(model_names)-1);
     for modelnum = 1:length(model_names)-1
-        % get model for training across workspaces
-        [~,glm_info{modelnum}] = getModel(td_train,glm_params{modelnum});
+        [~,dec_info{modelnum}] = getModel(td_train,dec_params{modelnum});
         
         % get models for training on individual workspaces
         for spacenum = 1:2
@@ -230,7 +291,7 @@ function [foldEval,foldTuning,glm_info] = analyzeFold(td_train,td_test,train_spa
                 end
             end
 
-            [~,glm_info_within{spacenum,modelnum}] = getModel(td_train_space,glm_params{modelnum});
+            [~,dec_info_within{spacenum,modelnum}] = getModel(td_train_space,dec_params{modelnum});
         end
     end
 
@@ -239,21 +300,33 @@ function [foldEval,foldTuning,glm_info] = analyzeFold(td_train,td_test,train_spa
     td_test_across = flip(td_test);
     for modelnum = 1:length(model_names)-1
         for spacenum = 1:2
-            td_test{spacenum} = getModel(td_test{spacenum},glm_info{modelnum});
-            td_test_within{spacenum} = getModel(td_test_within{spacenum},glm_info_within{spacenum,modelnum});
-            td_test_across{spacenum} = getModel(td_test_across{spacenum},glm_info_within{spacenum,modelnum});
+            td_test{spacenum} = getModel(td_test{spacenum},dec_info{modelnum});
+            td_test_within{spacenum} = getModel(td_test_within{spacenum},dec_info_within{spacenum,modelnum});
+            td_test_across{spacenum} = getModel(td_test_across{spacenum},dec_info_within{spacenum,modelnum});
         end
     end
 
     % Evaluate model fits and add to foldEval table
-    foldEval = makeNeuronTableStarter(td_train,struct('out_signal_names',unit_guide,'meta',struct('crossvalID',crossvalID)));
+    tab_height = 0;
+    signalID = [];
+    for i_out_sig = 1:size(dec_params{modelnum}.out_signals,1)
+        tab_height = tab_height + numel(dec_params{modelnum}.out_signals{i_out_sig,2});
+        signalID = [signalID; repmat(i_out_sig,numel(dec_params{modelnum}.out_signals{i_out_sig,2}),1), (1:1:numel(dec_params{modelnum}.out_signals{i_out_sig,2}))'];
+    end
+    monkey = repmat({td_train(1).monkey},tab_height,1);
+    task = repmat({td_train(1).task},tab_height,1);
+
+    crossvalID_tab = table(repmat(crossvalID,tab_height,1),'VariableNames',{'crossvalID'});
+    
+    foldEval = table(monkey,task,signalID,'VariableNames',{'monkey','task','signalID'});
+    foldEval = horzcat(foldEval, crossvalID_tab);
+    
     model_eval = cell(1,length(model_names)-1);
     [space_model_eval,space_model_eval_within,space_model_eval_across] = deal(cell(2,length(model_names)-1));
-    eval_params = glm_info;
+    eval_params = dec_info;
     for modelnum = 1:length(model_names)-1
         eval_params{modelnum}.eval_metric = model_eval_metric;
         eval_params{modelnum}.num_boots = 1;
-        
         % combine td_test{1} and td_test{2} (and anymore)
         td_test_comb = td_test{1};
         td_field_names = fieldnames(td_test{1});
@@ -289,55 +362,5 @@ function [foldEval,foldTuning,glm_info] = analyzeFold(td_train,td_test,train_spa
     end
     foldEval = horzcat(foldEval, model_eval{:}, space_model_eval{:}, space_model_eval_within{:},space_model_eval_across{:});
 
-%% Get extrinsic test tuning (to calculate later quantities from)
-    tempTuningTable = cell(2,1);
-    if(get_tuning_curves)
-        for spacenum = 1:2
-            for modelnum = 1:length(model_names)
-                % get x,y,z of hand marker to compute PDs from
-                markername = 'hand2';
-                dlc_idx = [find(strcmpi(td_test{spacenum}.dlc_names,[markername,'_x'])),...
-                    find(strcmpi(td_test{spacenum}.dlc_names,[markername,'_y'])),...
-                    find(strcmpi(td_test{spacenum}.dlc_names,[markername,'_z']))];
-                
-                td_test{spacenum}.dlc_vel_hand = td_test{spacenum}.dlc_vel(:,dlc_idx);
-                
-                % get tuning weights for each model
-                pdParams = struct(...
-                    'out_signals',model_names(modelnum),...
-                    'in_signals','dlc_vel_hand',...
-                    'prefix',model_names{modelnum},...
-                    'out_signal_names',unit_guide,...
-                    'bootForTuning',false,...
-                    'num_boots',50,...
-                    'verbose',false,...
-                    'doing_3D_pd',true,...
-                    'meta',struct('spaceNum',spacenum,'crossvalID',crossvalID));
-%                 temp_pdTable = getTDClassicalPDs(td_test{spacenum},pdParams);
-                temp_pdTable = getTDPDs3D(td_test{spacenum},pdParams);
 
-                tuningParams = struct(...
-                    'out_signals',model_names(modelnum),...
-                    'move_corr','dlc_vel_hand',...
-                    'prefix',model_names{modelnum},...
-                    'out_signal_names',unit_guide,...
-                    'calc_CIs',false,...
-                    'num_bins',num_tuning_bins,...
-                    'meta',struct('spaceNum',spacenum,'crossvalID',crossvalID));
-                temp_tuning_table = getTuningCurves3D(td_test{spacenum},tuningParams);
-                temp_table = join(temp_pdTable,temp_tuning_table);
-
-                % append table to full tuning table for space
-                if modelnum == 1
-                    tempTuningTable{spacenum} = temp_table;
-                else
-                    tempTuningTable{spacenum} = join(tempTuningTable{spacenum}, temp_table);
-                end
-            end
-        end
-        % smoosh space tables together
-        foldTuning = vertcat(tempTuningTable{:});
-    else
-        foldTuning = {};
-    end
 end

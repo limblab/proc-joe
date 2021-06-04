@@ -182,7 +182,6 @@ function [output_data] = reachingKinematics(td_list,task_list,input_data)
     ylabel('RT3D Correlation');
     formatForLee(gcf);
     set(gca,'fontsize',14);
-    
 
     % format workspace figures
     for i = 1:numel(f_workspace)
@@ -193,7 +192,42 @@ function [output_data] = reachingKinematics(td_list,task_list,input_data)
         set(gca,'fontsize',14);
     end
     
-
+    % plot speed histogram for hand and elbow markers, comparing both tasks
+    markernames = {'hand2','elbow1'};
+    spd_data = cell(numel(td_list),1); % speed data for each trial data and marker
+    max_spd = 0;
+    for i_td = 1:numel(td_list)
+        for i_marker = 1:numel(markernames)
+            dlc_idx = [find((strcmpi(td_list{i_td}.dlc_pos_names,[markernames{i_marker},'_x']))),...
+                find((strcmpi(td_list{i_td}.dlc_pos_names,[markernames{i_marker},'_y']))),...
+                find((strcmpi(td_list{i_td}.dlc_pos_names,[markernames{i_marker},'_z'])))];
+            
+            marker_vel = td_list{i_td}.dlc_vel(:,dlc_idx);
+            marker_spd = sqrt(sum(marker_vel.^2,2));
+            
+            spd_data{i_td} = [spd_data{i_td}, marker_spd];
+            max_spd = max(max_spd, max(marker_spd));
+        end
+    end
+    
+    f_speed = figure();
+    ax_list = [];
+    bin_edges = linspace(0,max_spd,100);
+    for i_marker = 1:numel(markernames)
+        ax_list(end+1) = subplot(numel(markernames),1,i_marker); hold on
+        for i_td = 1:numel(spd_data)
+            [spd_counts] = histcounts(spd_data{i_td}(:,i_marker),bin_edges,'normalization','probability');
+            histogram('BinEdges',bin_edges,'BinCounts',spd_counts,'FaceColor','none','edgeColor',getColorFromList(1,i_td-1),'linewidth',2);
+        end
+        xlabel([markernames{i_marker},' speed (cm/s)']);
+        ylabel('Proportion of data');
+        formatForLee(gcf);
+        set(gca,'fontsize',14);
+    end
+    linkaxes(ax_list,'xy');
+    l=legend(task_list); set(l,'box','off');
+    
+    
     % package outputs into nice tables so the data is easily worked with
     output_data.kin_corr = kin_corr;
     output_data.workspace_min = workspace_min;

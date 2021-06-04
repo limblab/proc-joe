@@ -72,6 +72,18 @@ function results = reachingEncoders(td_list,task_list,robot_height,params)
                     'model_name',[model_aliases{modelnum} '_model'],...
                     'in_signals',{{'dlc_pos',marker_hand_idx;'dlc_vel',marker_hand_idx}},...
                     'out_signals',neural_signals);
+                
+            case 'ext_2D'
+    %             markername = 'Marker_1';
+                markername = 'hand2';
+                [point_exists,marker_hand_idx] = ismember(strcat(markername,'_',{'x','y'}),td_plane.dlc_pos_names);
+                assert(all(point_exists),'Hand marker does not exist?')
+                glm_params{modelnum} = struct(...
+                    'model_type',model_type,...
+                    'model_name',[model_aliases{modelnum} '_model'],...
+                    'in_signals',{{'dlc_pos',marker_hand_idx;'dlc_vel',marker_hand_idx}},...
+                    'out_signals',neural_signals);    
+                
             case 'handelbow'
                 % indices for cartesian hand coordinates
                 markername = 'hand2';
@@ -80,6 +92,22 @@ function results = reachingEncoders(td_list,task_list,robot_height,params)
 
                 markername = 'elbow1';
                 [point_exists,marker_elbow_idx] = ismember(strcat(markername,'_',{'x','y','z'}),td_plane.dlc_pos_names);
+                assert(all(point_exists),'Elbow marker does not exist?')
+
+                glm_params{modelnum} = struct(...
+                    'model_type',model_type,...
+                    'model_name',[model_aliases{modelnum} '_model'],...
+                    'in_signals',{{'dlc_pos',[marker_hand_idx marker_elbow_idx];'dlc_vel',[marker_hand_idx marker_elbow_idx]}},...
+                    'out_signals',neural_signals);
+                
+            case 'handelbow_2D'
+                % indices for cartesian hand coordinates
+                markername = 'hand2';
+                [point_exists,marker_hand_idx] = ismember(strcat(markername,'_',{'x','y'}),td_plane.dlc_pos_names);
+                assert(all(point_exists),'Hand marker does not exist?')
+
+                markername = 'elbow1';
+                [point_exists,marker_elbow_idx] = ismember(strcat(markername,'_',{'x','y'}),td_plane.dlc_pos_names);
                 assert(all(point_exists),'Elbow marker does not exist?')
 
                 glm_params{modelnum} = struct(...

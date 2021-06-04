@@ -35,7 +35,7 @@ prefix = '';
 calc_CIs = true;
 if nargin > 1, assignParams(who,params); end % overwrite parameters
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-possible_corrs = {'vel','acc','force','dlc_vel_handxy','dlc_acc_handxy'};
+possible_corrs = {'vel','acc','force','dlc_vel_hand','dlc_acc_hand'};
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Process inputs
 trial_data = trial_data(use_trials);

@@ -535,7 +535,7 @@ for i = 1:length(idx_trials)
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % Add force
         if isfield(cds_bin,'force') && ~isempty(cds_bin.force)
-            trial_data(i).force = [cds_bin.force.fx(idx),cds_bin.force.fy(idx)];
+            trial_data(i).force = [cds_bin.force.fx(idx),cds_bin.force.fy(idx),cds_bin.force.fz(idx)];
         end
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

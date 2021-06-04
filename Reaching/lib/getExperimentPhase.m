@@ -16,7 +16,7 @@ function [trial_data,f] = getExperimentPhase(trial_data,task)
     % (prop above thresh) of speed data is above the mean speed. 
     % 
     marker_spd = sqrt(sum(trial_data.dlc_vel(:,dlc_idx).^2,2));
-        exp_phase_spd_thresh = mean(marker_spd);
+    exp_phase_spd_thresh = mean(marker_spd);
     scan_len = 40; %frames/bins
     prop_above_thresh = 0.15; %If 60% of the points in this section were considered as 1
 
@@ -27,10 +27,16 @@ function [trial_data,f] = getExperimentPhase(trial_data,task)
     % keep segments where enough of data is above mean_speed
     keep_mask_spd = mov_mean_spd_above_thresh > prop_above_thresh;
 
-    % remove data points where speed is too high
-    max_spd = mean(marker_spd(keep_mask_spd==1))+6*std(marker_spd(keep_mask_spd==1));
-    keep_mask_spd = keep_mask_spd & marker_spd < max_spd;
-
+    % remove data points where speed is too high for hand and elbow
+    markernames = {'hand2','elbow1'};
+    for marker = markernames
+        dlc_idx = [find(strcmpi(trial_data.dlc_pos_names,[marker{1},'_x'])),find(strcmpi(trial_data.dlc_pos_names,[marker{1},'_y'])),...
+            find(strcmpi(trial_data.dlc_pos_names,[marker{1},'_z']))];
+        marker_spd = sqrt(sum(trial_data.dlc_vel(:,dlc_idx).^2,2));
+        max_spd = mean(marker_spd(keep_mask_spd==1))+6*std(marker_spd(keep_mask_spd==1));
+        keep_mask_spd = keep_mask_spd & marker_spd < max_spd;
+    end
+    
     %Plot the actual speed and whether we kept the data point (1=yes,0=no)
     x_data = 0:trial_data.bin_size:(length(marker_spd))*trial_data.bin_size;
     f=figure;
@@ -48,56 +54,43 @@ function [trial_data,f] = getExperimentPhase(trial_data,task)
     ylabel('Speed (cm/s)');
     
     % remove data points if outside of position thresholds
-    % for RW task, check if monkey's hand is reasonably close to the handle
-    % (use hand1,2,or 3 marker). Also make sure handle is not still for
-    % extended periods of time
+    % for RW task, check if z-force is non-zero. 
     % for 3D reaching task, check position of hand in workspace
     
     if(strcmpi(task,'RW')==1 || strcmpi(task,'RT') == 1)
-        % get transformation from DLC coordinates to robot coordinates
-        % (rotation and offset)
-        handle_pos = [trial_data.pos]; 
         
-        % use only times when handle is moving for fit
-        handle_mask = sqrt(sum(trial_data.vel.^2,2)) > 1; % 1 was chosen by looking at a histogram of speeds
-        handle_pos = handle_pos(handle_mask==1,:);
-        dlc_pos = dlc_pos(handle_mask==1,:);
+        z_force = trial_data.force(:,3);
+        z_force_thresh = 0.4; % look at histograms of force when the speed is low
         
-        % subtrack mean
-        mean_dlc_pos = mean(dlc_pos);
-        mean_handle_pos = mean(handle_pos);
-        dlc_pos = dlc_pos - mean_dlc_pos;
-        handle_pos = handle_pos - mean_handle_pos;
+         % determine whether each point is above the mean marker_spd -
+        force_above_thresh = (z_force > z_force_thresh);
+        % take moving average to look at segment of data
+        mov_mean_force = movmean(force_above_thresh, scan_len);
+        % keep segments where enough of data is above mean_speed
+        keep_mask_pos = mov_mean_force > prop_above_thresh;
         
-        % find rotation matrix
-        rot_mat = dlc_pos(:,1:2)\handle_pos;
-        rot_mat = rot_mat./sqrt(sum(rot_mat.^2));
-        
-        % rotate original data
-        dlc_rot = trial_data.dlc_pos(:,dlc_idx);
-        dlc_rot = dlc_rot - mean_dlc_pos;
-        dlc_rot(:,1:2) = dlc_rot(:,1:2)*rot_mat;
-        
-        handle_pos = [trial_data.pos] - mean_handle_pos; 
-        % check to see if hand is within distance bound to handle
-        keep_mask_pos = sqrt(sum((dlc_rot(:,1:2)-handle_pos).^2,2)) < 5; % 5 was chosen again by looking at a histogram of distances for an example dataset
+        % remove data points where z-value is too far from median
+        markername = 'hand2';
+        dlc_idx = find(strcmpi(trial_data.dlc_pos_names,[markername,'_z']));
+        dlc_pos = trial_data.dlc_pos(:,dlc_idx);
+        keep_mask_pos = keep_mask_pos & abs(dlc_pos - median(dlc_pos)) < 6;
         
     elseif(strcmpi(task,'RT3D')==1)
         % remove if hand position is outside predefined cube.
         if(strcmpi(trial_data.monkey,'Han'))
-            x_upper_bound = 16; % remove if larger than this
-            x_lower_bound = -40; %remove if smaller than this
-            y_upper_bound = 40; % remove if smaller than this
-            y_lower_bound = 15;
-            z_upper_bound = Inf;
-            z_lower_bound = -10; % remove if larger than this
+            x_upper_bound = 35; % remove if larger than this
+            x_lower_bound = -35; %remove if smaller than this
+            y_upper_bound = 30; % remove if smaller than this
+            y_lower_bound = -10;
+            z_upper_bound = 50;
+            z_lower_bound = -20; % remove if larger than this
         elseif(strcmpi(trial_data.monkey,'Crackle'))       
-            x_upper_bound = 10; % remove if larger than this, and others
-            x_lower_bound = -30; %remove if smaller than this
-            y_upper_bound = 45; % remove if smaller than this, and others
-            y_lower_bound = 20;
-            z_upper_bound = 40;
-            z_lower_bound = -10; % remove if larger than this, and others
+            x_upper_bound = 35; % remove if larger than this, and others
+            x_lower_bound = -35; %remove if smaller than this
+            y_upper_bound = 30; % remove if smaller than this, and others
+            y_lower_bound = -17;
+            z_upper_bound = 35;
+            z_lower_bound = -15; % remove if larger than this, and others
         else
            warning('position bounds for 3D task is not implemented for this monkey.');
            x_upper_bound = Inf;
@@ -108,10 +101,53 @@ function [trial_data,f] = getExperimentPhase(trial_data,task)
            z_lower_bound = -Inf;
         end
         
-        keep_mask_pos = trial_data.dlc_pos(:,dlc_idx(1)) <= x_upper_bound & trial_data.dlc_pos(:,dlc_idx(1)) >= x_lower_bound &...
-                trial_data.dlc_pos(:,dlc_idx(2)) <= y_upper_bound & trial_data.dlc_pos(:,dlc_idx(2)) >= y_lower_bound & ...
-                trial_data.dlc_pos(:,dlc_idx(3)) <= z_upper_bound & trial_data.dlc_pos(:,dlc_idx(3)) >= z_lower_bound;
+         markername = 'hand2';
+        dlc_idx = [find(strcmpi(trial_data.dlc_pos_names,[markername,'_x'])),find(strcmpi(trial_data.dlc_pos_names,[markername,'_y'])),...
+            find(strcmpi(trial_data.dlc_pos_names,[markername,'_z']))];
+        dlc_pos = trial_data.dlc_pos(:,dlc_idx);
+        dlc_pos = dlc_pos - median(dlc_pos,1);
         
+        keep_mask_pos = dlc_pos(:,1) <= x_upper_bound & dlc_pos(:,1) >= x_lower_bound &...
+                dlc_pos(:,2) <= y_upper_bound & dlc_pos(:,2) >= y_lower_bound & ...
+                dlc_pos(:,3) <= z_upper_bound & dlc_pos(:,3) >= z_lower_bound;
+        
+        % remove if ELBOW position is outside predefined cube.
+        if(strcmpi(trial_data.monkey,'Han'))
+            x_upper_bound = Inf; % remove if larger than this
+            x_lower_bound = -Inf; %remove if smaller than this
+            y_upper_bound = Inf; % remove if smaller than this
+            y_lower_bound = -Inf;
+            z_upper_bound = Inf;
+            z_lower_bound = -Inf; % remove if larger than this
+        elseif(strcmpi(trial_data.monkey,'Crackle'))       
+            x_upper_bound = 35; % remove if larger than this, and others
+            x_lower_bound = -20; %remove if smaller than this
+            y_upper_bound = Inf; % remove if smaller than this, and others
+            y_lower_bound = -Inf;
+            z_upper_bound = Inf;
+            z_lower_bound = -Inf; % remove if larger than this, and others
+        else
+           warning('position bounds for 3D task is not implemented for this monkey.');
+           x_upper_bound = Inf;
+           x_lower_bound = -Inf;
+           y_upper_bound = Inf;
+           y_lower_bound = -Inf;
+           z_upper_bound = Inf;
+           z_lower_bound = -Inf;
+        end
+        
+        markername = 'elbow1';
+        dlc_idx = [find(strcmpi(trial_data.dlc_pos_names,[markername,'_x'])),find(strcmpi(trial_data.dlc_pos_names,[markername,'_y'])),...
+            find(strcmpi(trial_data.dlc_pos_names,[markername,'_z']))];
+        dlc_pos = trial_data.dlc_pos(:,dlc_idx);
+        dlc_pos = dlc_pos - median(dlc_pos,1);
+        
+        keep_mask_pos = keep_mask_pos & dlc_pos(:,1) <= x_upper_bound & dlc_pos(:,1) >= x_lower_bound &...
+                dlc_pos(:,2) <= y_upper_bound & dlc_pos(:,2) >= y_lower_bound & ...
+                dlc_pos(:,3) <= z_upper_bound & dlc_pos(:,3) >= z_lower_bound;   
+        % only keep positions within 99% bound for each
+        % direction....Removing outliers is important,
+            
     end %end of either process the RT2D task or the RT3D task to experiment-only data
     
     

@@ -119,6 +119,10 @@ for uid = 1:size(response_var,2)
         tab_append{in_signal_idx}.([prefix move_corr 'PD'])(uid,:)=circ_mean(dirs);
         if(doing_3D_pd) % compute z-angle as well
             z_ang = acos(boot_coef(:,2+in_signal_idx*2)/sqrt(boot_coef(:,in_signal_idx*2).^2 + boot_coef(:,1+in_signal_idx*2).^2 + boot_coef(:,2+in_signal_idx*2).^2));
+%             z_ang =
+%             atan2(sqrt(sum(boot_coef(:,in_signal_idx*2:in_signal_idx*2+1).^2)),
+%             boot_coef(:,2+in_signal_idx*2)); % these two methods are
+%             equivalent?
             tab_append{in_signal_idx}.([prefix move_corr 'PD_zAng'])(uid)=circ_mean(z_ang);
         end
         %handle wrap around problems:
@@ -133,7 +137,7 @@ for uid = 1:size(response_var,2)
         tab_append{in_signal_idx}.([prefix move_corr 'Moddepth'])(uid)= mean(moddepths_2D);
         if(doing_3D_pd)
             moddepths_3D = sqrt(sum(boot_coef(:,(2*in_signal_idx):(2*in_signal_idx+2)).^2,2));
-            tab_append{in_signal_idx}.([prefix move_corr 'Moddepth3D'])(uid)= mean(moddepths_2D);
+            tab_append{in_signal_idx}.([prefix move_corr 'Moddepth3D'])(uid)= mean(moddepths_3D);
         end
         
         if bootForTuning

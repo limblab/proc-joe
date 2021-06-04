@@ -9,9 +9,9 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Set up meta info and load trial data
-    clear; close all; clc;
+    clear; clc;
     if ispc
-        folderpath = 'D:\Lab\Data\DLC_videos\Crackle_20201216_rwFreeReach\neural-data\';
+        folderpath = 'D:\Lab\Data\DLC_videos\Crackle_20201203_rwFreeReach\neural-data\';
     else
         folderpath = '/data/raeed/project-data/limblab/s1-kinematics';
     end
@@ -33,9 +33,9 @@
     end
     
     arrayname = 'LeftS1';
-    monkey_names = {'Crackle'};
-    included_models = {'ext','handelbow'}; % models to calculate encoders for
-    models_to_plot = included_models; % main models of the paper
+    monkey_names = {'Han'};
+    included_models = {'ext','handelbow','joint'}; % models to calculate encoders for
+    models_to_plot = {'ext','handelbow'}; % main models of the paper
     not_plot_models = setdiff(included_models,models_to_plot);
     bin_size = 0.05; % s
     
@@ -83,15 +83,17 @@
 
             if(isfield(td_list{i_td},'dlc_pos'))
                 % set origin as shoulder position at t=0
-%                 td_list{i_td} = setOriginAsShoulder(td_list{i_td},1);
+                td_list{i_td} = setOriginAsShoulder(td_list{i_td},0); % use fixed position (t=0) or set shoulder as 0 for each data point.
                 % get marker velocity
                 td_list{i_td} = getDifferential(td_list{i_td},struct('signals','dlc_pos','alias','dlc_vel'));
                 % remove time points where dlc tracking is bad
                 dlc_idx = [find((strcmpi(td_list{i_td}.dlc_pos_names,['hand2','_x']))),...
                             find((strcmpi(td_list{i_td}.dlc_pos_names,['hand2','_y']))),...
+                            find((strcmpi(td_list{i_td}.dlc_pos_names,['hand2','_z']))),...
                             find((strcmpi(td_list{i_td}.dlc_pos_names,['elbow1','_x']))),...
+                            find((strcmpi(td_list{i_td}.dlc_pos_names,['elbow1','_y']))),...
                             find((strcmpi(td_list{i_td}.dlc_pos_names,['elbow1','_y'])))];
-                bad_points = any(isnan(td_list{i_td}.dlc_pos(:,dlc_idx)),2) | any(isnan(td_list{i_td}.dlc_vel(:,dlc_idx)),2);
+                bad_points = any(isnan(td_list{i_td}.dlc_pos(:,:)),2) | any(isnan(td_list{i_td}.dlc_vel(:,:)),2);
                 td_names = fieldnames(td_list{i_td});
                 for i_name = 1:numel(td_names)
                     if(size(bad_points,1) == size(td_list{i_td}.(td_names{i_name}),1))
@@ -105,6 +107,16 @@
             %td_list{i_td}
             %task_list{i_td}
             td_list{i_td} = getExperimentPhase(td_list{i_td},task_list{i_td});
+            
+            % 
+            markername = 'ang';
+            [ang_idx] = find(~cellfun(@isempty,strfind(td_list{i_td}.opensim_names,strcat('_',markername))));
+            if(isempty(ang_idx))
+                assert('joint angles do not exist?');
+            end
+            for i_ang = 1:numel(ang_idx)
+                td_list{i_td}.opensim(:,ang_idx(i_ang)) = angleDiff(td_list{i_td}.opensim(:,ang_idx(i_ang)),0,0,1); % don't use rad, preserve sign
+            end
 % 
 % 
 %             % get robot height (z data of a hand marker). This is
@@ -121,7 +133,7 @@
 
     
     
-%% Loop through files to make kinematic figures
+% Loop through files to make kinematic figures
     fprintf('Starting kinematic analysis of %d files.',length(td_all))
     kin_input_data = [];
     for filenum = 1:length(td_all)
@@ -132,6 +144,16 @@
         kin_data = reachingKinematics(td_list,task_list,kin_input_data);
     end
     
+    
+%% loop through files and compute cross correlation between neural signals and kinematics
+    for filenum = 1:length(td_all)
+        td_list = td_all{filenum};
+        task_list = task_list_all{filenum};
+        
+        % get kinematic data and make plots
+        xcorr_data = crossCorrKinNeural(td_list);
+    end
+
 %% get pca of muscle lengths for predictions
     for filenum = 1:length(td_all)
         td_list = td_all{filenum};
@@ -165,7 +187,7 @@
             td_list{i_td} = binTD(td_list{i_td},0.05/td_list{i_td}(1).bin_size);
         end
         
-        % Get encoding models
+        % Get encoding models, spacenum = 1:2 % 1 = 2D, 2 = 3D
         encoderResults_cell{filenum} = reachingEncoders(td_list,task_list,robot_height_all{filenum},struct(...
             'model_aliases',{included_models},...
             'arrayname',arrayname,...
@@ -247,14 +269,14 @@
         model_tuning_cell = cell(1,length(included_models)+1);
         for modelnum = 1:length(included_models)
             model_tuning_cell{modelnum} = table(...
-                encoderResults.crossTuning.(sprintf('glm_%s_model_dlc_vel_handxyCurve',included_models{modelnum})),...
-                encoderResults.crossTuning.(sprintf('glm_%s_model_dlc_vel_handxyPD',included_models{modelnum})),...
+                encoderResults.crossTuning.(sprintf('glm_%s_model_dlc_vel_handCurve',included_models{modelnum})),...
+                encoderResults.crossTuning.(sprintf('glm_%s_model_dlc_vel_handPD',included_models{modelnum})),...
                 'VariableNames',strcat(included_models(modelnum),{'_velCurve','_velPD'}));
             model_tuning_cell{modelnum}.Properties.VariableDescriptions = {'linear','circular'};
         end
         model_tuning_cell{end} = table(...
-            encoderResults.crossTuning.([arrayname,'_FR_dlc_vel_handxyCurve']),...
-            encoderResults.crossTuning.([arrayname,'_FR_dlc_vel_handxyPD']),...
+            encoderResults.crossTuning.([arrayname,'_FR_dlc_vel_handCurve']),...
+            encoderResults.crossTuning.([arrayname,'_FR_dlc_vel_handPD']),...
             'VariableNames',strcat('S1_FR',{'_velCurve','_velPD'}));
         model_tuning_cell{end}.Properties.VariableDescriptions = {'linear','circular'};
         % put it together
@@ -283,12 +305,12 @@
     
 %% %% plot random "trials" and predictions from one of the models - real FR, model predict FR ON MULTIPLE NEURONS
 
-    unit_idx_list = [1,2,3];
+    unit_idx_list = [13,14,15];
    
     num_rows = length(unit_idx_list) + 1; %last row for speed 
-    td_idx = 2; % pick which trial data (task) to use, 1 for RT2D 2 for RT3D
-
-    window_plot = [-2,2]; % s
+    td_idx = 2; % pick which task to use
+    
+    window_plot = [-4,4]; % s
     num_trials_plot = 3;
     num_neurons = length(unit_idx_list);
     bin_size = td_list{td_idx}.bin_size;
@@ -339,7 +361,7 @@
                 plot(x_data,td_list_smooth.LeftS1_FR(window_idx(j_trial,1):window_idx(j_trial,2),unit_idx_list(i_neuron)),'k','linewidth',2)
                 % plot the model firing rate data
                 plot(x_data,td_list_smooth.glm_handelbow_model(window_idx(j_trial,1):window_idx(j_trial,2),unit_idx_list(i_neuron)),'color',getColorFromList(1,0),'linewidth',2)
-                plot(x_data,td_list_smooth.glm_ext_model(window_idx(j_trial,1):window_idx(j_trial,2),unit_idx_list(i_neuron)),'color',getColorFromList(1,1),'linewidth',2)
+                plot(x_data,td_list_smooth.glm_joint_model(window_idx(j_trial,1):window_idx(j_trial,2),unit_idx_list(i_neuron)),'color',getColorFromList(1,1),'linewidth',2)
             end
             
             if j_trial == 1 && i_neuron ~= num_rows%the first column
@@ -395,13 +417,13 @@
     % compare two models trained and tested within each task. Subplot for each task, each model is
     % an axis
     sessionnum = 1;
-    spacenames = {'RT3D','RT2D'};
+    spacenames = {'RT2D','RT3D'};
     legend_data = [];
 
     f=figure();
     f.Name = [encoderResults.crossEval.monkey{1} ,'_', encoderResults.crossEval.date{1},'_encoderModelComparison'];
     for monkeynum = 1:length(monkey_names)
-        for spacenum = 1:2 % 1 = 3D, 2 = 2D
+        for spacenum = 1:2 % 1 = 2D, 2 = 3D
             % set subplot
             subplot(1,length(monkey_names),monkeynum)
             plot([-1 1],[-1 1],'k--','linewidth',0.5)
@@ -448,7 +470,7 @@
     f=figure;
     f.Name = [encoderResults.crossEval.monkey{1} ,'_', encoderResults.crossEval.date{1},'_encoderTaskComparison'];
     for monkeynum = 1:length(monkey_names)
-        for i_mdl = 1:length(models_to_plot) % 1 = RT3D, 2 = RT2D
+        for i_mdl = 1:length(models_to_plot) % 1 = RT2D, 2 = RT3D
             % set subplot
             subplot(1,length(monkey_names),monkeynum)
             plot([-1 1],[-1 1],'k--','linewidth',0.5)
@@ -462,41 +484,33 @@
             space_extensions = {'_space1_within_eval','_space2_within_eval'};
             
             legend_data(end+1) = scatter(...
-                avg_pR2.(strcat(model_pairs{1,i_mdl},space_extensions{2})),...
                 avg_pR2.(strcat(model_pairs{1,i_mdl},space_extensions{1})),...
+                avg_pR2.(strcat(model_pairs{1,i_mdl},space_extensions{2})),...
                 [],getColorFromList(1,i_mdl-1),'filled');
             
             % link corresponding data points.
             if i_mdl == 1
                 num_neurons = length(avg_pR2.(strcat(model_pairs{1,i_mdl},space_extensions{2})));
                 for i = 1:num_neurons
-                    model1_x = avg_pR2.(strcat(model_pairs{1,1},space_extensions{2}))(i);
-                    model1_y = avg_pR2.(strcat(model_pairs{1,1},space_extensions{1}))(i);
-                    model2_x = avg_pR2.(strcat(model_pairs{1,2},space_extensions{2}))(i);
-                    model2_y = avg_pR2.(strcat(model_pairs{1,2},space_extensions{1}))(i);
+                    model1_x = avg_pR2.(strcat(model_pairs{1,1},space_extensions{1}))(i);
+                    model1_y = avg_pR2.(strcat(model_pairs{1,1},space_extensions{2}))(i);
+                    model2_x = avg_pR2.(strcat(model_pairs{1,2},space_extensions{1}))(i);
+                    model2_y = avg_pR2.(strcat(model_pairs{1,2},space_extensions{2}))(i);
                     plot([model1_x,model2_x],[model1_y,model2_y],'k','LineWidth',2)
                 end
             end
-                    
-                
-                
+    
             % make axes pretty
             set(gca,'box','off','tickdir','out',...
                 'xlim',[-0.1 0.5],'ylim',[-0.1 0.5])
             axis square
-            xlabel(spacenames(2))
-            ylabel(spacenames(1))
+            xlabel(spacenames(1))
+            ylabel(spacenames(2))
         end
         
         models_to_plot_names = strings;
         for i = 1:length(models_to_plot)
-            if strcmp(string(models_to_plot(i)), 'ext') == 1
-                models_to_plot_names(i) = 'Hand-Only';
-            elseif strcmp(string(models_to_plot(i)), 'handelbow') == 1
-                 models_to_plot_names(i) = 'Whole-Arm';
-            else
-                models_to_plot_names(i) = 'Unknown Model';
-            end
+            models_to_plot_names(i) = getModelTitles(model_pairs{1,i});
         end
         
         l=legend(legend_data,models_to_plot_names);
@@ -507,56 +521,144 @@
     end
     
     
-%% plot PDs across spaces (actual, as well as predicted by each model)
+%% plot PDs across spaces (based on actual FR)
     sessionnum = 1;
-    spacenames = {'RT3D','RT2D'};
-    tasknames = {'none','RW'};
+    spacenames = {'RT2D','RT3D'};
+    tasknames = {'RW','none'};
     legend_data = [];
     figure
-    models_to_plot_temp = models_to_plot;
-    models_to_plot_temp{end+1} = 'S1_FR';
-    
+    models_to_plot_temp = {'S1_FR'};
+    max_lim = 2*pi;
     for monkeynum = 1:length(monkey_names)
         for mdlnum = 1:numel(models_to_plot_temp)
             % set subplot
             subplot(1,length(monkey_names),monkeynum); hold on;
-            plot([-4 4],[-4 4],'k--','linewidth',0.5)
+            plot([-max_lim max_lim],[-max_lim max_lim],'k--','linewidth',0.5)
+            plot([-max_lim max_lim],pi/2+[-max_lim max_lim],'k:','linewidth',0.5)
+            plot([-max_lim max_lim],-pi/2+[-max_lim max_lim],'k:','linewidth',0.5)
             hold on
-            plot([0 0],[-4 4],'k-','linewidth',0.5)
-            plot([-4 4],[0 0],'k-','linewidth',0.5)
+            plot([0 0],[-max_lim max_lim],'k-','linewidth',0.5)
+            plot([-max_lim max_lim],[0 0],'k-','linewidth',0.5)
 
             keep_mask = strcmpi(model_tuning{monkeynum,sessionnum}.task,tasknames{1});
             space_1_tuning = model_tuning{monkeynum,sessionnum}(keep_mask,:);
             keep_mask = strcmpi(model_tuning{monkeynum,sessionnum}.task,tasknames{2});
             space_2_tuning = model_tuning{monkeynum,sessionnum}(keep_mask,:);
             
-            avg_1_tuning = neuronAverage(space_1_tuning,struct('keycols','signalID','do_ci',false));
-            avg_2_tuning = neuronAverage(space_2_tuning,struct('keycols','signalID','do_ci',false));
+            avg_1_tuning = neuronAverage(space_1_tuning,struct('keycols','signalID','do_ci',true));
+            avg_2_tuning = neuronAverage(space_2_tuning,struct('keycols','signalID','do_ci',true));
 
             % scatter filled circles if there's a winner, empty circles if not
             model_extension = ['_velPD'];
 
-
+            % deal with circular data
+            avg_1_pd = avg_1_tuning.(strcat(models_to_plot_temp{mdlnum},model_extension));
+            avg_2_pd = avg_2_tuning.(strcat(models_to_plot_temp{mdlnum},model_extension));
+            
+            avg_2_pd = avg_1_pd + angleDiff(avg_1_pd,avg_2_pd,1,1); % use radians, do preserve sign
+            
             legend_data(end+1) = scatter(...
-                avg_1_tuning.(strcat(models_to_plot_temp{mdlnum},model_extension)),...
-                avg_2_tuning.(strcat(models_to_plot_temp{mdlnum},model_extension)),...
+                avg_1_pd,...
+                avg_2_pd,...
+                [],getColorFromList(1,mdlnum-1),'filled'); hold on;
+
+
+            % make axes pretty
+            set(gca,'box','off','tickdir','out',...
+                'xlim',[-max_lim max_lim],'ylim',[-max_lim max_lim])
+
+            xlabel(sprintf('PD during %s',spacenames{1}))
+            ylabel(sprintf('PD during %s',spacenames{2}))
+        end
+    end
+
+%% plot PD shifts across spaces. Compare model to actual shift
+    sessionnum = 1;
+    spacenames = {'RT2D','RT3D'};
+    tasknames = {'RW','none'};
+    legend_data = [];
+    figure
+    models_to_compare = {'ext','handelbow','joint'};
+    base_model = 'S1_FR';
+    % scatter filled circles if there's a winner, empty circles if not
+    model_extension = ['_velPD'];
+    max_lim = 2*pi;
+    for monkeynum = 1:length(monkey_names)
+        % get base model shift
+        keep_mask = strcmpi(model_tuning{monkeynum,sessionnum}.task,tasknames{1});
+        space_1_tuning = model_tuning{monkeynum,sessionnum}(keep_mask,:);
+        keep_mask = strcmpi(model_tuning{monkeynum,sessionnum}.task,tasknames{2});
+        space_2_tuning = model_tuning{monkeynum,sessionnum}(keep_mask,:);
+
+        avg_1_tuning = neuronAverage(space_1_tuning,struct('keycols','signalID','do_ci',false));
+        avg_2_tuning = neuronAverage(space_2_tuning,struct('keycols','signalID','do_ci',false));
+        
+        avg_1_pd = avg_1_tuning.(strcat(base_model,model_extension));
+        avg_2_pd = avg_2_tuning.(strcat(base_model,model_extension));
+        avg_base_tuning_shift = angleDiff(avg_1_pd,avg_2_pd,1,1); % use radians, preserve sign.
+        
+        for mdlnum = 1:numel(models_to_compare)
+            % set subplot
+            subplot(1,length(monkey_names),monkeynum); hold on;
+            plot([-max_lim max_lim],[-max_lim max_lim],'k--','linewidth',0.5)
+            plot([-max_lim max_lim],pi/2+[-max_lim max_lim],'k:','linewidth',0.5)
+            plot([-max_lim max_lim],-pi/2+[-max_lim max_lim],'k:','linewidth',0.5)
+            hold on
+            plot([0 0],[-max_lim max_lim],'k-','linewidth',0.5)
+            plot([-max_lim max_lim],[0 0],'k-','linewidth',0.5)
+
+            avg_1_pd = avg_1_tuning.(strcat(models_to_compare{mdlnum},model_extension));
+            avg_2_pd = avg_2_tuning.(strcat(models_to_compare{mdlnum},model_extension));
+            
+            avg_model_tuning_shift = angleDiff(avg_1_pd,avg_2_pd,1,1); % use radians, preserve sign.
+    
+            model_to_plot = avg_base_tuning_shift + angleDiff(avg_base_tuning_shift,avg_model_tuning_shift, 1,1);
+        
+            legend_data(end+1) = scatter(...
+                avg_base_tuning_shift,...
+                model_to_plot,...
                 [],getColorFromList(1,mdlnum+1),'filled'); hold on;
 
 
             % make axes pretty
             set(gca,'box','off','tickdir','out',...
-                'xlim',[-4 4],'ylim',[-4 4])
+                'xlim',[-max_lim max_lim],'ylim',[-max_lim max_lim])
             axis square
             if monkeynum ~= 1
                 set(gca,'box','off','tickdir','out',...
                     'xtick',[],'ytick',[])
             end
-            xlabel(sprintf('PD during %s',spacenames{1}))
-            ylabel(sprintf('PD during %s',spacenames{2}))
+            xlabel('Actual PD shift')
+            ylabel('Model PD shift')
         end
-        legend(legend_data,models_to_plot_temp)
+        legend(legend_data,models_to_compare)
     end
 
+    
+%% loop through files to cross-validate decoders
+    decoderResults_cell = cell(length(td_all),1);
+    for filenum = 1:length(td_all)
+        % Load data
+        td_list = td_all{filenum};
+        task_list = task_list_all{filenum};
+        % bin data at 50ms
+        for i_td = 1:numel(td_list)
+            td_list{i_td} = binTD(td_list{i_td},0.05/td_list{i_td}(1).bin_size);
+        end
+        
+        % Get encoding models
+        decoderResults_cell{filenum} = reachingDecoders(td_list,task_list,robot_height_all{filenum},struct(...
+            'model_aliases',{{'handelbow'}},... % currently only supports 1 model, unless multiple models have same number of out_signals
+            'arrayname',arrayname,...
+            'crossval_lookup',[],...
+            'num_repeats',2,... % 
+            'num_folds',5));
+    end
+    
+    
+    
+    
+    
 %% save all the showing figures
 
 fpath = folderpath; % folderpath is defined at the beginning, can overwrite to a different path
