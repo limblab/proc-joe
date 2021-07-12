@@ -31,7 +31,7 @@
 %
 % OUTPUTS:
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [crossEval, crossTuning, crossvalLookup, crossval_glm_info] = analyze3DReachVs2DReach(td_list,params)
+function [crossEval, crossTuning, crossvalLookup, crossval_glm_info,crossval_glm_info_within] = analyze3DReachVs2DReach(td_list,params)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Set up
@@ -44,14 +44,21 @@ function [crossEval, crossTuning, crossvalLookup, crossval_glm_info] = analyze3D
     if nargin > 1, assignParams(who,params); end % overwrite parameters
 
     glm_params = params.glm_params;
-%% Compile training and test sets
+        
     % inialize temporary eval holders
-    [repeatEval,repeatTuning,repeatCrossvalLookup,repeatInfo] = deal(cell(num_repeats,1));
+    [repeatEval,repeatTuning,repeatCrossvalLookup,repeatInfo,repeatInfoWithin] = deal(cell(num_repeats,1));
 
+%% make sure both td's have the same length
     % extract different tasks from td_list
-    td_plane = td_list{1};
-    td_freereach = td_list{2};
+    td_plane_all = td_list{1};
+    td_freereach_all = td_list{2};
 
+    min_dur = Inf;
+    for i_td = 1:2 % in case there are more tasks for some reason
+        min_dur = min(min_dur,length(td_list{i_td}.dlc_pos));
+    end
+    
+%% Compile training and test sets
     % loop over num repeats
     if verbose
         repeat_timer = tic;
@@ -59,16 +66,44 @@ function [crossEval, crossTuning, crossvalLookup, crossval_glm_info] = analyze3D
     end
     for repeatctr = 1:num_repeats
         % get fold indices
-        indices = crossvalind('Kfold',length(td_plane.pos),num_folds);
+        indices = crossvalind('Kfold',min_dur,num_folds);
 
         % initialize temporary fold evaluation structure
-        [foldEval,foldTuning,foldCrossvalLookup,foldInfo] = deal(cell(num_folds,1));
+        [foldEval,foldTuning,foldCrossvalLookup,foldInfo,foldInfoWithin] = deal(cell(num_folds,1));
 
         % loop over number of folds
         if verbose
             fold_timer = tic;
         end
         for foldctr = 1:num_folds
+            %% make sure td's have same length
+            for i=1:2
+                switch i
+                    case 1
+                        td_temp = td_plane_all;
+                    case 2
+                        td_temp = td_freereach_all;
+                end
+
+                td_fields = fieldnames(td_temp);
+                pos_length = length(td_temp.dlc_pos);
+                keep_idx = datasample(1:1:pos_length,min_dur,'Replace',false);
+
+                for i_field = 1:numel(td_fields)
+                    if(size(td_temp.(td_fields{i_field}),1) == pos_length)
+                        td_temp.(td_fields{i_field}) = td_temp.(td_fields{i_field})(keep_idx,:);
+                    end
+                end
+
+                switch i
+                    case 1
+                        td_plane = td_temp;
+                    case 2
+                        td_freereach = td_temp;
+                end
+                clear td_temp;
+            end
+            
             % Get test and training indices for this fold
             % check if there's a crossval lookup table
             td_test_freereach = []; td_test_plane = [];
@@ -130,7 +165,7 @@ function [crossEval, crossTuning, crossvalLookup, crossval_glm_info] = analyze3D
                 params = struct('crossvalID',uint16([repeatctr foldctr]));
                 params.get_tuning_curves = get_tuning_curves;
             end
-            [foldEval{foldctr},foldTuning{foldctr}, foldInfo{foldctr}] = analyzeFold(td_train,{td_test_plane,td_test_freereach},train_spacenum,params);
+            [foldEval{foldctr},foldTuning{foldctr}, foldInfo{foldctr},foldInfoWithin{foldctr}] = analyzeFold(td_train,{td_test_plane,td_test_freereach},train_spacenum,params);
 
             % get test trialIDs
             trialID = cat(1,find(indices==foldctr)',find(indices==foldctr)');
@@ -149,6 +184,8 @@ function [crossEval, crossTuning, crossvalLookup, crossval_glm_info] = analyze3D
         repeatTuning{repeatctr} = vertcat(foldTuning{:});
         repeatCrossvalLookup{repeatctr} = vertcat(foldCrossvalLookup{:});
         repeatInfo{repeatctr} = vertcat(foldInfo{:});
+        repeatInfoWithin{repeatctr} = vertcat(foldInfoWithin{:});
+        
         if verbose
             fprintf('Evaluated repeat %d of %d at time %f\n',repeatctr,num_repeats,toc(repeat_timer));
         end
@@ -159,13 +196,14 @@ function [crossEval, crossTuning, crossvalLookup, crossval_glm_info] = analyze3D
     crossTuning = vertcat(repeatTuning{:});
     crossvalLookup = vertcat(repeatCrossvalLookup{:});
     crossval_glm_info = vertcat(repeatInfo{:});
+    crossval_glm_info_within = vertcat(repeatInfoWithin{:});
 
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Sub functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [foldEval,foldTuning,glm_info] = analyzeFold(td_train,td_test,train_spacenum,params)
+function [foldEval,foldTuning,glm_info,glm_info_within] = analyzeFold(td_train,td_test,train_spacenum,params)
 % ANALYZEFOLD analyze single fold of cross-validation set and return NeuronTable structure
 %   with evaluation information for this fold
 % 
@@ -212,7 +250,7 @@ function [foldEval,foldTuning,glm_info] = analyzeFold(td_train,td_test,train_spa
 %% Fit models
     % set up parameters for models
     glm_info = cell(1,length(model_names)-1);
-    glm_info_within = cell(2,length(model_names)-1);
+    glm_info_within = cell(1,2,length(model_names)-1);
     for modelnum = 1:length(model_names)-1
         % get model for training across workspaces
         [~,glm_info{modelnum}] = getModel(td_train,glm_params{modelnum});
@@ -230,7 +268,7 @@ function [foldEval,foldTuning,glm_info] = analyzeFold(td_train,td_test,train_spa
                 end
             end
 
-            [~,glm_info_within{spacenum,modelnum}] = getModel(td_train_space,glm_params{modelnum});
+            [~,glm_info_within{1,spacenum,modelnum}] = getModel(td_train_space,glm_params{modelnum});
         end
     end
 
@@ -240,8 +278,8 @@ function [foldEval,foldTuning,glm_info] = analyzeFold(td_train,td_test,train_spa
     for modelnum = 1:length(model_names)-1
         for spacenum = 1:2
             td_test{spacenum} = getModel(td_test{spacenum},glm_info{modelnum});
-            td_test_within{spacenum} = getModel(td_test_within{spacenum},glm_info_within{spacenum,modelnum});
-            td_test_across{spacenum} = getModel(td_test_across{spacenum},glm_info_within{spacenum,modelnum});
+            td_test_within{spacenum} = getModel(td_test_within{spacenum},glm_info_within{1,spacenum,modelnum});
+            td_test_across{spacenum} = getModel(td_test_across{spacenum},glm_info_within{1,spacenum,modelnum});
         end
     end
 

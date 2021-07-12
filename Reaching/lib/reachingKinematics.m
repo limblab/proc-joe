@@ -57,7 +57,7 @@ function [output_data] = reachingKinematics(td_list,task_list,input_data)
     f_workspace(1) = figure();
     f_workspace(2) = figure();
     f_corr = figure();
-    task_3d_idx = find(strcmpi(task_list,'RT3D'),1,'first');
+    task_3d_idx = find(strcmpi(task_list,'RT3D')|strcmpi(task_list,'freeReach'),1,'first');
     task_2d_idx = find(strcmpi(task_list,'RT'),1,'first');
     markernames = {'hand2','elbow1'};
     perc_bound = [5,95];
@@ -126,7 +126,7 @@ function [output_data] = reachingKinematics(td_list,task_list,input_data)
         
         % for 2D and 3D task, compute correlation between different arm
         % markers
-        corr_markernames = {'elbow2','hand2'};
+        corr_markernames = {'elbow1','hand2'};
         dlc_idx = [];
         for i_marker = 1:numel(corr_markernames)
             dlc_idx = [dlc_idx,find((strcmpi(td_list{task_idx}.dlc_pos_names,[corr_markernames{i_marker},'_x']))),...
@@ -192,6 +192,28 @@ function [output_data] = reachingKinematics(td_list,task_list,input_data)
         set(gca,'fontsize',14);
     end
     
+    % plot correlation between joint angles for each task
+    f_joint = [];
+    for i_td = 1:numel(td_list)
+        if(isfield(td_list{i_td},'opensim_names') && ~isempty(td_list{i_td}.opensim_names))
+            markername = 'vel';
+            [vel_idx] = find(~cellfun(@isempty,strfind(td_list{i_td}.opensim_names,strcat('_',markername))));
+
+            joint_vel = td_list{i_td}.opensim(:,vel_idx);
+
+            corr_joint = corr(joint_vel);
+
+            f_joint = figure();
+            f_joint.Name = [td_list{i_td}.monkey, '_', td_list{i_td}.date, '_',td_list{i_td}.task, '_handElbowSpeedHist'];
+            imagesc(abs(corr_joint));
+            caxis([0,1]);
+            colormap(colorcet('L1'));
+            b=colorbar;
+        end
+    end
+    
+    
+    
     % plot speed histogram for hand and elbow markers, comparing both tasks
     markernames = {'hand2','elbow1'};
     spd_data = cell(numel(td_list),1); % speed data for each trial data and marker
@@ -211,6 +233,7 @@ function [output_data] = reachingKinematics(td_list,task_list,input_data)
     end
     
     f_speed = figure();
+    f_speed.Name = [td_list{i_td}.monkey, '_', td_list{i_td}.date, '_handElbowSpeedHist'];
     ax_list = [];
     bin_edges = linspace(0,max_spd,100);
     for i_marker = 1:numel(markernames)

@@ -12,35 +12,7 @@ function results = reachingEncoders(td_list,task_list,robot_height,params)
         td_plane = td_list{2};
         td_freereach = td_list{1};
     end
-    min_dur = Inf;
-    for i_td = 1:numel(td_list)
-        min_dur = min(min_dur,length(td_list{i_td}.dlc_pos));
-    end
     
-    for i=1:2
-        switch i
-            case 1
-                td_temp = td_plane;
-            case 2
-                td_temp = td_freereach;
-        end
-        
-        td_fields = fieldnames(td_temp);
-        pos_length = length(td_temp.dlc_pos);
-        for i_field = 1:numel(td_fields)
-            if(size(td_temp.(td_fields{i_field}),1) == pos_length)
-                td_temp.(td_fields{i_field}) = td_temp.(td_fields{i_field})(1:min_dur,:);
-            end
-        end
-        
-        switch i
-            case 1
-                td_plane = td_temp;
-            case 2
-                td_freereach = td_temp;
-        end
-        clear td_temp;
-    end
 
 %% Set up model variables
     num_folds = 5; % 5 is default number of folds, no need to pass in
@@ -73,6 +45,28 @@ function results = reachingEncoders(td_list,task_list,robot_height,params)
                     'in_signals',{{'dlc_pos',marker_hand_idx;'dlc_vel',marker_hand_idx}},...
                     'out_signals',neural_signals);
                 
+            case 'ext_pos'
+    %             markername = 'Marker_1';
+                markername = 'hand2';
+                [point_exists,marker_hand_idx] = ismember(strcat(markername,'_',{'x','y','z'}),td_plane.dlc_pos_names);
+                assert(all(point_exists),'Hand marker does not exist?')
+                glm_params{modelnum} = struct(...
+                    'model_type',model_type,...
+                    'model_name',[model_aliases{modelnum} '_model'],...
+                    'in_signals',{{'dlc_pos',marker_hand_idx}},...
+                    'out_signals',neural_signals);
+                
+            case 'ext_vel'
+    %             markername = 'Marker_1';
+                markername = 'hand2';
+                [point_exists,marker_hand_idx] = ismember(strcat(markername,'_',{'x','y','z'}),td_plane.dlc_pos_names);
+                assert(all(point_exists),'Hand marker does not exist?')
+                glm_params{modelnum} = struct(...
+                    'model_type',model_type,...
+                    'model_name',[model_aliases{modelnum} '_model'],...
+                    'in_signals',{{'dlc_vel',marker_hand_idx}},...
+                    'out_signals',neural_signals);  
+                
             case 'ext_2D'
     %             markername = 'Marker_1';
                 markername = 'hand2';
@@ -98,6 +92,38 @@ function results = reachingEncoders(td_list,task_list,robot_height,params)
                     'model_type',model_type,...
                     'model_name',[model_aliases{modelnum} '_model'],...
                     'in_signals',{{'dlc_pos',[marker_hand_idx marker_elbow_idx];'dlc_vel',[marker_hand_idx marker_elbow_idx]}},...
+                    'out_signals',neural_signals);
+                
+            case 'handelbow_pos'
+                % indices for cartesian hand coordinates
+                markername = 'hand2';
+                [point_exists,marker_hand_idx] = ismember(strcat(markername,'_',{'x','y','z'}),td_plane.dlc_pos_names);
+                assert(all(point_exists),'Hand marker does not exist?')
+
+                markername = 'elbow1';
+                [point_exists,marker_elbow_idx] = ismember(strcat(markername,'_',{'x','y','z'}),td_plane.dlc_pos_names);
+                assert(all(point_exists),'Elbow marker does not exist?')
+
+                glm_params{modelnum} = struct(...
+                    'model_type',model_type,...
+                    'model_name',[model_aliases{modelnum} '_model'],...
+                    'in_signals',{{'dlc_pos',[marker_hand_idx marker_elbow_idx]}},...
+                    'out_signals',neural_signals);
+                
+            case 'handelbow_vel'
+                % indices for cartesian hand coordinates
+                markername = 'hand2';
+                [point_exists,marker_hand_idx] = ismember(strcat(markername,'_',{'x','y','z'}),td_plane.dlc_pos_names);
+                assert(all(point_exists),'Hand marker does not exist?')
+
+                markername = 'elbow1';
+                [point_exists,marker_elbow_idx] = ismember(strcat(markername,'_',{'x','y','z'}),td_plane.dlc_pos_names);
+                assert(all(point_exists),'Elbow marker does not exist?')
+
+                glm_params{modelnum} = struct(...
+                    'model_type',model_type,...
+                    'model_name',[model_aliases{modelnum} '_model'],...
+                    'in_signals',{{'dlc_vel',[marker_hand_idx marker_elbow_idx]}},...
                     'out_signals',neural_signals);
                 
             case 'handelbow_2D'
@@ -203,7 +229,7 @@ function results = reachingEncoders(td_list,task_list,robot_height,params)
         'unit_guide',unit_guide,...
         'num_tuning_bins',num_tuning_bins,...
         'get_tuning_curves',get_tuning_curves);
-    [crossEval,crossTuning,crossval_lookup,crossval_glm_info] = analyze3DReachVs2DReach({td_plane,td_freereach},crossval_params);
+    [crossEval,crossTuning,crossval_lookup,crossval_glm_info,crossval_glm_info_within] = analyze3DReachVs2DReach({td_plane,td_freereach},crossval_params);
 
 %% create return struct
     % for cross validation plots
@@ -226,3 +252,4 @@ function results = reachingEncoders(td_list,task_list,robot_height,params)
     results.params.glm_params = glm_params;
     results.params.crossval_lookup = crossval_lookup;
     results.glm_info = crossval_glm_info;
+    results.glm_info_within = crossval_glm_info_within;

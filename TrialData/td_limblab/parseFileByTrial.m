@@ -259,6 +259,7 @@ end
 %   4) Check for OpenSim data and bin those
 %   5) Check for marker data and bin those
 %   6) Turn the trial table into a binned version
+%   7) check for desired analog signals
 kin_list = {'t','x','y','vx','vy','ax','ay'};
 % force_list = {'t','fx','fy'};
 force_list = cds.force.Properties.VariableNames;
@@ -274,21 +275,21 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Process EMG (high pass, rectify, low pass)
 %   default: high pass at 10 Hz, rectify, low pass at 20 Hz
-if ~isempty(cds.emg)
-    emg_list = cds.emg.Properties.VariableNames;
-    
-    emg=cds.emg;
-    % find sampling rate
-    samprate = 1/mode(diff(emg.t));
-    % filter
-    [blow,alow] = butter(n_poles,LPF_cutoff/samprate);
-    [bhigh,ahigh] = butter(n_poles,HPF_cutoff/samprate,'high');
-    idx_emg = contains(emg.Properties.VariableNames,'EMG');
-    emg{:,idx_emg} = filtfilt(blow,alow,abs(filtfilt(bhigh,ahigh,emg{:,idx_emg})));
-    cds_bin.emg = decimate_signals(emg,emg_list,bin_size);
-    
-    clear emg;
-end
+% if ~isempty(cds.emg)
+%     emg_list = cds.emg.Properties.VariableNames;
+%     
+%     emg=cds.emg;
+%     % find sampling rate
+%     samprate = 1/mode(diff(emg.t));
+%     % filter
+%     [blow,alow] = butter(n_poles,LPF_cutoff/samprate);
+%     [bhigh,ahigh] = butter(n_poles,HPF_cutoff/samprate,'high');
+%     idx_emg = contains(emg.Properties.VariableNames,'EMG');
+%     emg{:,idx_emg} = filtfilt(blow,alow,abs(filtfilt(bhigh,ahigh,emg{:,idx_emg})));
+%     cds_bin.emg = decimate_signals(emg,emg_list,bin_size);
+%     
+%     clear emg;
+% end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Process OpenSim data
@@ -417,7 +418,24 @@ if dlc_analog_idx > 0
     clear dlc_data; clear dlc_pos; clear dlc_score;
 end
 
+ana_var = {'expsync'};
+ana_idx = [];
+for i_ana = 1:numel(cds.analog)
+    if(any(strcmpi(ana_var,cds.analog{i_ana}.Properties.VariableNames)))
+        ana_idx = i_ana;
+    end
+end
 
+if ~isempty(ana_idx) && isfield(cds_bin,'dlc_pos')
+    cds_bin.ana_var = decimate_signals(cds.analog{ana_idx},[ana_var,{'t'}],bin_size);
+    if(numel(cds_bin.ana_var.t) < numel(cds_bin.dlc_pos.t))
+        cds_bin.ana_var.t = [cds_bin.ana_var.t; nan(numel(cds_bin.dlc_pos.t) - numel(cds_bin.ana_var.t))];
+        cds_bin.ana_var.(ana_var{1}) = [cds_bin.ana_var.(ana_var{1}); nan(numel(cds_bin.dlc_pos.t) - numel(cds_bin.ana_var.(ana_var{1})))];
+    elseif(numel(cds_bin.ana_var.t) > numel(cds_bin.dlc_pos.t))
+        cds_bin.ana_var.t = cds_bin.ana_var.t(1:numel(cds_bin.dlc_pos.t));
+        cds_bin.ana_var.(ana_var{1}) = cds_bin.ana_var.(ana_var{1})(1:numel(cds_bin.dlc_pos.t));
+    end
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Check the time vectors for these signals to make a master one
@@ -538,6 +556,12 @@ for i = 1:length(idx_trials)
             trial_data(i).force = [cds_bin.force.fx(idx),cds_bin.force.fy(idx),cds_bin.force.fz(idx)];
         end
         
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % Add analog signal
+        if isfield(cds_bin,'ana_var') && ~isempty(cds_bin.ana_var)
+            trial_data(i).ana_var = [cds_bin.ana_var.(ana_var{1})(idx)];
+        end
+       
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % Add emg
         if isfield(cds_bin,'emg') && ~isempty(cds_bin.emg)
@@ -692,78 +716,83 @@ if ~isempty(data)
     
     for var = 1:length(var_list)
         x = data.(var_list{var});
-        tx = data.t;
-        nan_mask = isnan(x);
         
-        if size(x,2)>1
-            error('Data in table must have single column variables to resample correctly')
-        end
-        % set edges of signal to 0 to remove edge effects from spline fit
-        % (see https://www.mathworks.com/help/signal/examples/resampling-nonuniformly-sampled-signals.html)
-        x(1) = x(find(~isnan(x(:,1)),1,'first'));
-        x(end) = x(find(~isnan(x(:,1)),1,'last'));
-        a(1) = (x(end)-x(1)) / (tx(end)-tx(1));
-        a(2) = x(1);
-        xdetrend = x - polyval(a,tx);
+        if(all(isnan(x))) % this only works if the first column is fine...
+            out.(var_list{var}) = nan(size(ty));
+        else
+            tx = data.t;
+            nan_mask = isnan(x);
 
-        % Make sure time vector endpoints are start_time and end_time
-        if start_time>tx(1)
-            xdetrend = xdetrend(tx>start_time);
-            tx = tx(tx>start_time);
-        end
-        tx = [start_time; tx];
-        xdetrend = [xdetrend(1,:); xdetrend];
-        if end_time<tx(end)
-            xdetrend = xdetrend(tx<end_time);
-            tx = tx(tx<end_time);
-        end
-        tx = [tx;end_time];
-        xdetrend = [xdetrend; xdetrend(end,:)];
-                
-        % resample signal
-        [ydetrend,ty] = resample(xdetrend,tx,1/bin_size,'spline');
+            if size(x,2)>1
+                error('Data in table must have single column variables to resample correctly')
+            end
+            % set edges of signal to 0 to remove edge effects from spline fit
+            % (see https://www.mathworks.com/help/signal/examples/resampling-nonuniformly-sampled-signals.html)
+            x(1) = x(find(~isnan(x(:,1)),1,'first'));
+            x(end) = x(find(~isnan(x(:,1)),1,'last'));
+            a(1) = (x(end)-x(1)) / (tx(end)-tx(1));
+            a(2) = x(1);
+            xdetrend = x - polyval(a,tx);
 
-        % set ydetrend as nan if nearest xdetrend was also nan so that we
-        % aren't interpolating over nan's
-        upsample_fact = ceil(mode(diff(tx))/bin_size);
-        tx_to_ty_idx = (0:1:(numel(tx)-1))*upsample_fact + 1;
-        for i_up = 1:upsample_fact
-            temp_idx = tx_to_ty_idx + i_up - ceil(upsample_fact/2);
-            temp_idx(temp_idx > numel(ty)) = [];
-            temp_idx(temp_idx < 1) = [];
-            temp_idx = temp_idx(nan_mask == 1);
-            ydetrend(temp_idx) = nan;
-        end
-        
-        % check time vector (sometimes ty is one sample too long?)
-        tol = 1e-6;
-        if abs(ty(end)-end_time)>tol
-            % check what's wrong
-            if ty(end)>end_time
-                while ty(end)-end_time>tol
-                    % probably an extra sample, remove it
-                    ty=ty(1:end-1);
-                    ydetrend = ydetrend(1:end-1);
-                end
-            else
-                warning('Something screwy going on with the end of ty in resample_signals...')
+            % Make sure time vector endpoints are start_time and end_time
+            if start_time>tx(1)
+                xdetrend = xdetrend(tx>start_time);
+                tx = tx(tx>start_time);
             end
-        end
-        if abs(ty(1)-start_time)>tol
-            % check what's wrong
-            if ty(1)<start_time
-                while start_time-ty(1)>tol
-                    % probably an extra sample, remove it
-                    ty=ty(2:end);
-                    ydetrend = ydetrend(2:end);
-                end
-            else
-                warning('Something screwy going on with the start of ty in resample_signals...')
+            tx = [start_time; tx];
+            xdetrend = [xdetrend(1,:); xdetrend];
+            if end_time<tx(end)
+                xdetrend = xdetrend(tx<end_time);
+                tx = tx(tx<end_time);
             end
+            tx = [tx;end_time];
+            xdetrend = [xdetrend; xdetrend(end,:)];
+
+            % resample signal
+            [ydetrend,ty] = resample(xdetrend,tx,1/bin_size,'spline');
+
+            % set ydetrend as nan if nearest xdetrend was also nan so that we
+            % aren't interpolating over nan's
+            upsample_fact = ceil(mode(diff(tx))/bin_size);
+            tx_to_ty_idx = (0:1:(numel(tx)-1))*upsample_fact + 1;
+            for i_up = 1:upsample_fact
+                temp_idx = tx_to_ty_idx + i_up - ceil(upsample_fact/2);
+                temp_idx(temp_idx > numel(ty)) = [];
+                temp_idx(temp_idx < 1) = [];
+                temp_idx = temp_idx(nan_mask == 1);
+                ydetrend(temp_idx) = nan;
+            end
+
+            % check time vector (sometimes ty is one sample too long?)
+            tol = 1e-6;
+            if abs(ty(end)-end_time)>tol
+                % check what's wrong
+                if ty(end)>end_time
+                    while ty(end)-end_time>tol
+                        % probably an extra sample, remove it
+                        ty=ty(1:end-1);
+                        ydetrend = ydetrend(1:end-1);
+                    end
+                else
+                    warning('Something screwy going on with the end of ty in resample_signals...')
+                end
+            end
+            if abs(ty(1)-start_time)>tol
+                % check what's wrong
+                if ty(1)<start_time
+                    while start_time-ty(1)>tol
+                        % probably an extra sample, remove it
+                        ty=ty(2:end);
+                        ydetrend = ydetrend(2:end);
+                    end
+                else
+                    warning('Something screwy going on with the start of ty in resample_signals...')
+                end
+            end
+
+            % add back trend line
+            out.(var_list{var}) = ydetrend + polyval(a,ty);
         end
-        
-        % add back trend line
-        out.(var_list{var}) = ydetrend + polyval(a,ty);
     end
     out.t = ty;
 else
