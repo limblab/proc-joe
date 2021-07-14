@@ -876,27 +876,27 @@
 
     
 %% loop through files to cross-validate decoders
-    decoderResults_cell = cell(length(td_all),1);
-    for filenum = 1:length(td_all)
-        % Load data
-        td_list = td_all{filenum};
-        task_list = task_list_all{filenum};
-        % bin data at 50ms
-        for i_td = 1:numel(td_list)
-            td_list{i_td} = binTD(td_list{i_td},0.05/td_list{i_td}(1).bin_size);
-        end
-        
-        % Get encoding models
-        decoderResults_cell{filenum} = reachingDecoders(td_list,task_list,robot_height_all{filenum},struct(...
-            'model_aliases',{{'handelbow'}},... % currently only supports 1 model, unless multiple models have same number of out_signals
-            'arrayname',arrayname,...
-            'crossval_lookup',[],...
-            'num_repeats',2,... % 
-            'num_folds',5));
-    end
-    
-    
-    
+%     decoderResults_cell = cell(length(td_all),1);
+%     for filenum = 1:length(td_all)
+%         % Load data
+%         td_list = td_all{filenum};
+%         task_list = task_list_all{filenum};
+%         % bin data at 50ms
+%         for i_td = 1:numel(td_list)
+%             td_list{i_td} = binTD(td_list{i_td},0.05/td_list{i_td}(1).bin_size);
+%         end
+%         
+%         % Get encoding models
+%         decoderResults_cell{filenum} = reachingDecoders(td_list,task_list,robot_height_all{filenum},struct(...
+%             'model_aliases',{{'handelbow'}},... % currently only supports 1 model, unless multiple models have same number of out_signals
+%             'arrayname',arrayname,...
+%             'crossval_lookup',[],...
+%             'num_repeats',2,... % 
+%             'num_folds',5));
+%     end
+%     
+%     
+%     
     
     
 %% save all the showing figures

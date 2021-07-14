@@ -144,27 +144,7 @@
         end
     end
     
-    
-%% find movement onset and offset for each trial
-
     td_list = {td_beg, td_end};
-    for i = 1:numel(td_list)
-        dlc_idx = [find((strcmpi(td_list{i}.dlc_pos_names,['hand2','_x']))),...
-                            find((strcmpi(td_list{i}.dlc_pos_names,['hand2','_y']))),...
-                            find((strcmpi(td_list{i}.dlc_pos_names,['hand2','_z'])))];
-        
-        hand_speed = sqrt(sum(td_list{i}.dlc_vel(:,dlc_idx).^2,2));
-        
-        
-        % plot hand speed for each trial
-        f=figure(); hold on;
-        for i_trial = 1:10:numel(td_list{i}.trial_start)
-            plot(hand_speed(td_list{i}.trial_start(i_trial):td_list{i}.trial_end(i_trial)),'k');
-        end
-    end
-
-    
-    
 %% cross correlation with and without weight, only during trials
 
     tree_perm_use = []; max_corr = -100;
@@ -215,8 +195,69 @@
     caxis(max(max(corr_mat_diff,[],'omitnan'),[],'omitnan')*[-1,1]);
     cmap = colorcet('D1'); colormap(cmap);
 
+        
+%% Loop through files to cross-validate encoders
     
-%% plot firing rates for similar trials in the two conditions....
-
+    % build one model for the entire data. Include term for whether the
+    % weight was on or not
     
+    td_use = [];
+    
+    for i_td = 1:numel(td_list)
+        % get keep_mask
+        keep_mask = any(1:1:numel(td_list{i_td}.ana_var) >= td_list{i_td}.trial_start & 1:1:numel(td_list{i_td}.ana_var) <= td_list{i_td}.trial_end,1);
+        % put relevant data into td_all
+        if(i_td==1)
+            td_beg_size = sum(keep_mask);
 
+            % data
+            td_use.LeftS1_FR = td_list{i_td}.LeftS1_FR(keep_mask==1,:);
+            td_use.dlc_pos = td_list{i_td}.dlc_pos(keep_mask==1,:);
+            td_use.dlc_vel = td_list{i_td}.dlc_vel(keep_mask==1,:);
+            td_use.weight_var = ones(sum(keep_mask),1);
+            
+            % meta info
+            td_use.dlc_pos_names = td_list{i_td}.dlc_pos_names;
+            td_use.LeftS1_unit_guide = td_list{i_td}.LeftS1_unit_guide;
+            td_use.bin_size = td_list{i_td}.bin_size'
+        else
+            % append data
+            td_use.LeftS1_FR = [td_use.LeftS1_FR;td_list{i_td}.LeftS1_FR(keep_mask==1,:)];
+            td_use.dlc_pos = [td_use.dlc_pos;td_list{i_td}.dlc_pos(keep_mask==1,:)];
+            td_use.dlc_vel = [td_use.dlc_vel;td_list{i_td}.dlc_vel(keep_mask==1,:)];
+            td_use.weight_var = [td_use.weight_var; zeros(sum(keep_mask),1)];
+        end
+    end
+    
+    % build glm with hand+elbow pos+vel as predictors. Include weight term
+    % and bias as predictors as well
+    % indices for cartesian hand coordinates
+    %
+    % smooth firing rates
+    td_use = smoothSignals(td_use,struct('signals','LeftS1_FR'));
+    
+    markername = 'hand2';
+    [point_exists,marker_hand_idx] = ismember(strcat(markername,'_',{'x','y','z'}),td_use.dlc_pos_names);
+    assert(all(point_exists),'Hand marker does not exist?')
+
+    markername = 'elbow1';
+    [point_exists,marker_elbow_idx] = ismember(strcat(markername,'_',{'x','y','z'}),td_use.dlc_pos_names);
+    assert(all(point_exists),'Elbow marker does not exist?')
+
+    x = [td_use.dlc_pos(:,[marker_hand_idx marker_elbow_idx]), ...
+        td_use.dlc_vel(:,[marker_hand_idx marker_elbow_idx]),...
+            td_use.weight_var(:)];
+        
+    y = td_use.LeftS1_FR(:,:);
+    
+    glm_distribution = 'poisson';
+    b = zeros(size(x,2)+1,size(y,2));
+    yfit = zeros(size(y));
+    
+    for iVar = 1:size(y,2)
+        [b(:,iVar),~,s_temp] = glmfit(x,y(:,iVar),glm_distribution);
+        yfit(:,iVar) = exp([ones(size(x,1),1), x]*b(:,iVar)); 
+    end
+    
+    
+    
