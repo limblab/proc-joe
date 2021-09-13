@@ -41,6 +41,8 @@ function [crossEval, crossTuning, crossvalLookup, crossval_glm_info,crossval_glm
     crossval_lookup = [];
     verbose = true;
     get_tuning_curves = false;
+    subsample = 'none';
+    
     if nargin > 1, assignParams(who,params); end % overwrite parameters
 
     glm_params = params.glm_params;
@@ -48,15 +50,11 @@ function [crossEval, crossTuning, crossvalLookup, crossval_glm_info,crossval_glm
     % inialize temporary eval holders
     [repeatEval,repeatTuning,repeatCrossvalLookup,repeatInfo,repeatInfoWithin] = deal(cell(num_repeats,1));
 
-%% make sure both td's have the same length
     % extract different tasks from td_list
     td_plane_all = td_list{1};
     td_freereach_all = td_list{2};
 
-    min_dur = Inf;
-    for i_td = 1:2 % in case there are more tasks for some reason
-        min_dur = min(min_dur,length(td_list{i_td}.dlc_pos));
-    end
+    
     
 %% Compile training and test sets
     % loop over num repeats
@@ -65,28 +63,104 @@ function [crossEval, crossTuning, crossvalLookup, crossval_glm_info,crossval_glm
         fprintf('Starting %dx%d-fold crossvalidation at time %f\n',num_repeats,num_folds,toc(repeat_timer));
     end
     for repeatctr = 1:num_repeats
-        % get fold indices
-        indices = crossvalind('Kfold',min_dur,num_folds);
+        td_freereach_use = td_freereach_all;
+        td_plane_use = td_plane_all;
+        if(strcmpi(subsample,'half_data')==1) % remove half of 3D task
+            td_fields = fieldnames(td_freereach_use);
+            pos_length = length(td_freereach_use.dlc_pos);
+            min_dur = ceil(pos_length/2);
+            keep_idx = datasample(1:1:pos_length,min_dur,'Replace',false);
 
-        % initialize temporary fold evaluation structure
-        [foldEval,foldTuning,foldCrossvalLookup,foldInfo,foldInfoWithin] = deal(cell(num_folds,1));
-
-        % loop over number of folds
-        if verbose
-            fold_timer = tic;
+            for i_field = 1:numel(td_fields)
+                if(size(td_freereach_use.(td_fields{i_field}),1) == pos_length)
+                    td_freereach_use.(td_fields{i_field}) = td_freereach_use.(td_fields{i_field})(keep_idx,:);
+                end
+            end
         end
-        for foldctr = 1:num_folds
-            %% make sure td's have same length
+        
+        if(strcmpi(subsample,'yaxis')==1 || strcmpi(subsample,'xaxis')==1 || strcmpi(subsample,'zaxis')==1) % sample movements along a specific axis
+            switch subsample
+                case 'xaxis'
+                    axis_vec = [1,0,0]';
+                case 'yaxis'
+                    axis_vec = [0,1,0]';
+                case 'zaxis'
+                    axis_vec = [0,0,1]';
+                otherwise
+                    error('unknown subsample');
+            end
+            
+            for td_ctr = 1:2
+                % get all of data from task
+                switch td_ctr
+                    case 1
+                        td_use = td_plane_use;
+                    case 2 
+                        td_use = td_freereach_use;
+                end
+                % get sampling weights based on angle between hand vel and
+                % provided axis
+                markername = 'hand2';
+                dlc_idx = [find((strcmpi(td_use.dlc_pos_names,[markername,'_x']))),...
+                            find((strcmpi(td_use.dlc_pos_names,[markername,'_y']))),...
+                            find((strcmpi(td_use.dlc_pos_names,[markername,'_z'])))];
+
+                marker_vel = td_use.dlc_vel(:,dlc_idx);
+                
+                cos_ang = acos(abs(marker_vel)*axis_vec./sqrt(sum(marker_vel.^2,2))); % take abs bc we don't care about sign for sampling
+                % flip cos_ang (0 is close to axis, pi/2 is orthogonal)
+                cos_ang = (-1*cos_ang + pi/2);
+                cos_ang(cos_ang < pi/4) = 0;
+                
+                % sample data based on weights
+                pos_length = length(td_use.dlc_pos);
+                n_sample = ceil(sum(cos_ang > 0)*0.95);
+                idx_subsample = datasample(1:1:pos_length,n_sample,'Replace',false,'Weights',cos_ang);
+                
+                % subsample data
+                td_fields = fieldnames(td_use);
+
+                for i_field = 1:numel(td_fields)
+                    if(size(td_use.(td_fields{i_field}),1) == pos_length)
+                        td_use.(td_fields{i_field}) = td_use.(td_fields{i_field})(idx_subsample,:);
+                    end
+                end
+                
+                % overwrite td_to_use
+                switch td_ctr
+                    case 1
+                        td_plane_use = td_use;
+                    case 2
+                        td_freereach_use = td_use;
+                end
+            end
+        end
+        
+        if(strcmpi(subsample,'speed')==1)
+            % if subsample speed, do that
+            temp_td_list = {td_plane_all,td_freereach_use};
+            temp_task_list = {'RT','RT3D'};
+
+            % get kinematic data and make plots
+            temp_td_list = subsampleSpeedDistributions(temp_td_list,temp_task_list);
+
+            td_plane = temp_td_list{1};
+            td_freereach = temp_td_list{2};
+            
+        else
+            % otherwise, make sure td's have same length -- this applies
+            % even if sample is yaxis, xaxis, half data, etc.
             for i=1:2
                 switch i
                     case 1
-                        td_temp = td_plane_all;
+                        td_temp = td_plane_use;
                     case 2
-                        td_temp = td_freereach_all;
+                        td_temp = td_freereach_use;
                 end
 
                 td_fields = fieldnames(td_temp);
                 pos_length = length(td_temp.dlc_pos);
+                min_dur = min(length(td_plane_all.dlc_pos),length(td_freereach_use.dlc_pos));
                 keep_idx = datasample(1:1:pos_length,min_dur,'Replace',false);
 
                 for i_field = 1:numel(td_fields)
@@ -103,6 +177,21 @@ function [crossEval, crossTuning, crossvalLookup, crossval_glm_info,crossval_glm
                 end
                 clear td_temp;
             end
+        end
+        
+        
+        % get fold indices
+        min_dur = min(length(td_plane.dlc_pos),length(td_freereach.dlc_pos));
+        indices = crossvalind('Kfold',min_dur,num_folds);
+
+        % initialize temporary fold evaluation structure
+        [foldEval,foldTuning,foldCrossvalLookup,foldInfo,foldInfoWithin] = deal(cell(num_folds,1));
+
+        % loop over number of folds
+        if verbose
+            fold_timer = tic;
+        end
+        for foldctr = 1:num_folds
             
             % Get test and training indices for this fold
             % check if there's a crossval lookup table
@@ -167,11 +256,16 @@ function [crossEval, crossTuning, crossvalLookup, crossval_glm_info,crossval_glm
             end
             [foldEval{foldctr},foldTuning{foldctr}, foldInfo{foldctr},foldInfoWithin{foldctr}] = analyzeFold(td_train,{td_test_plane,td_test_freereach},train_spacenum,params);
 
-            % get test trialIDs
-            trialID = cat(1,find(indices==foldctr)',find(indices==foldctr)');
-            spaceNum = zeros(size(trialID)) + [1;2]; % 1=high,2=low
+            % get test trialIDs. These need to correspond to the original
+            % trial data idx...
+            
+            idx_fold = find(indices==foldctr);
+                
+            fold_trial_id = [td_plane.trial_id(idx_fold); td_freereach.trial_id(idx_fold)];
+            spaceNum = [ones(length(idx_fold),1); 1+ones(length(idx_fold),1)];
+            
             foldCrossvalLookup{foldctr} = table(...
-                repmat(params.crossvalID,length(trialID),1),trialID',spaceNum',...
+                repmat(params.crossvalID,length(fold_trial_id),1),fold_trial_id,spaceNum,...
                 'VariableNames',{'crossvalID','trialID','spaceNum'});
 
             if verbose

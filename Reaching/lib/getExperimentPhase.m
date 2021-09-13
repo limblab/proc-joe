@@ -130,15 +130,30 @@ function [trial_data,keep_mask_all,keep_mask_spd,keep_mask_pos] = getExperimentP
         
         
     elseif(strcmpi(task,'RT3D')==1 || strcmpi(task,'freeReach')==1)
-        if(isfield(trial_data,'ana_var') && 1==1)
-            markername = 'elbow1';
+        if(isfield(trial_data,'ana_var'))
+            keep_mask_pos = trial_data.ana_var > 500; % & trial_data.dlc_pos(:,dlc_idx(1)) >-55 & trial_data.dlc_pos(:,dlc_idx(1)) < 0;
+            
+            markername = 'hand2';
             dlc_idx = [find(strcmpi(trial_data.dlc_pos_names,[markername,'_x'])),find(strcmpi(trial_data.dlc_pos_names,[markername,'_y'])),...
                 find(strcmpi(trial_data.dlc_pos_names,[markername,'_z']))];
+            dlc_pos = trial_data.dlc_pos(:,dlc_idx);
+            dlc_pos = dlc_pos - median(dlc_pos,1,'omitnan');
             
-            keep_mask_pos = trial_data.ana_var > 500 & trial_data.dlc_pos(:,dlc_idx(1)) >-55 & trial_data.dlc_pos(:,dlc_idx(1)) < 0;
-            
-            
-            
+            if(strcmpi(trial_data.monkey,'Han'))
+                x_lower_bound = -Inf; %remove if smaller than this
+                z_lower_bound = -29;
+                y_lower_bound = -11;
+            elseif(strcmpi(trial_data.monkey,'Crackle'))
+                x_lower_bound = -Inf;
+                z_lower_bound = -Inf;
+                y_lower_bound = -Inf;
+            elseif(strcmpi(trial_data.monkey,'Rocket'))
+                x_lower_bound = -25; %remove if smaller than this
+                z_lower_bound = -20;
+                y_lower_bound = -Inf;
+            end
+             keep_mask_pos = keep_mask_pos & dlc_pos(:,3) >= z_lower_bound & dlc_pos(:,1) >= x_lower_bound & dlc_pos(:,2) >= y_lower_bound;
+             
         else % position based...
             % remove if hand position is outside predefined cube.
             if(strcmpi(trial_data.monkey,'Han'))
@@ -147,7 +162,7 @@ function [trial_data,keep_mask_all,keep_mask_spd,keep_mask_pos] = getExperimentP
                 y_upper_bound = 30; % remove if smaller than this
                 y_lower_bound = -10;
                 z_upper_bound = 50;
-                z_lower_bound = -20; % remove if larger than this
+                z_lower_bound = -40; % remove if larger than this
             elseif(strcmpi(trial_data.monkey,'Crackle'))       
                 x_upper_bound = 35; % remove if larger than this, and others
                 x_lower_bound = -35; %remove if smaller than this
@@ -155,6 +170,13 @@ function [trial_data,keep_mask_all,keep_mask_spd,keep_mask_pos] = getExperimentP
                 y_lower_bound = -17;
                 z_upper_bound = 35;
                 z_lower_bound = -15; % remove if larger than this, and others
+            elseif(strcmpi(trial_data.monkey,'Rocket'))
+                x_upper_bound = 35; % remove if larger than this, and others
+                x_lower_bound = -27.5; %remove if smaller than this
+                y_upper_bound = 40; % remove if smaller than this, and others
+                y_lower_bound = -10;
+                z_upper_bound = Inf;
+                z_lower_bound = -20; % remove if larger than this, and others
             else
                warning('position bounds for 3D task is not implemented for this monkey.');
                x_upper_bound = Inf;
@@ -177,19 +199,19 @@ function [trial_data,keep_mask_all,keep_mask_spd,keep_mask_pos] = getExperimentP
 
             % remove if ELBOW position is outside predefined cube.
             if(strcmpi(trial_data.monkey,'Han'))
-                x_upper_bound = 0; % remove if larger than this
+                x_upper_bound = 15; % remove if larger than this
                 x_lower_bound = -30; %remove if smaller than this
                 y_upper_bound = Inf; % remove if smaller than this
                 y_lower_bound = -Inf;
                 z_upper_bound = Inf;
                 z_lower_bound = -Inf; % remove if larger than this
             elseif(strcmpi(trial_data.monkey,'Crackle'))       
-                x_upper_bound = 35; % remove if larger than this, and others
+                x_upper_bound = 6; % remove if larger than this, and others
                 x_lower_bound = -20; %remove if smaller than this
-                y_upper_bound = Inf; % remove if smaller than this, and others
+                y_upper_bound = 15; % remove if smaller than this, and others
                 y_lower_bound = -Inf;
                 z_upper_bound = Inf;
-                z_lower_bound = -Inf; % remove if larger than this, and others
+                z_lower_bound = -15; % remove if larger than this, and others
             else
                warning('position bounds for 3D task is not implemented for this monkey.');
                x_upper_bound = Inf;

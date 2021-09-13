@@ -19,6 +19,7 @@ function results = reachingEncoders(td_list,task_list,robot_height,params)
     num_repeats = 20; % 20 is default number of repeats, no need to pass in
     num_tuning_bins = 16;
     num_musc_pcs = 5;
+    subsample = 'none';
     model_type = 'glm';
     model_aliases = {'ext','ego','musc','handelbow'};
     arrayname = 'S1';
@@ -228,7 +229,8 @@ function results = reachingEncoders(td_list,task_list,robot_height,params)
         'crossval_lookup',[],...
         'unit_guide',unit_guide,...
         'num_tuning_bins',num_tuning_bins,...
-        'get_tuning_curves',get_tuning_curves);
+        'get_tuning_curves',get_tuning_curves,...
+        'subsample',subsample);
     [crossEval,crossTuning,crossval_lookup,crossval_glm_info,crossval_glm_info_within] = analyze3DReachVs2DReach({td_plane,td_freereach},crossval_params);
 
 %% create return struct

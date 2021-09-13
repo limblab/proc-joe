@@ -60,7 +60,7 @@ function [ output_data ] = getDecayRate( array_data, stim_window, baseline_windo
         p_stim = mean(response_to_each_pulse{condition}(1:n_pulses)); n_stim = n_pulses*array_data.numStims(condition);
         p_base = min(max(p_base,0),1);
         p_stim = min(max(p_stim,0),1);
-        is_responsive(condition) = pearsonChiSquareBinomial(p_base,p_stim,n_base,n_stim,'lower') < 0.005;%0.05/numel(fits); 
+        is_responsive(condition) = pearsonChiSquareBinomial(p_base,p_stim,n_base,n_stim,'lower') < 0.05;%0.05/numel(fits); 
 %             is_responsive(condition) = mean(y_data_stim(1:4)) > mean(y_data_baseline)+2*std(y_data_baseline) & mean(y_data_baseline) > min_baseline_counts;
 
         is_responsive_nonstim(condition ) = sum(baseline_spike_counts > p_stim)/numel(baseline_spike_counts) < 0.05/numel(fits);

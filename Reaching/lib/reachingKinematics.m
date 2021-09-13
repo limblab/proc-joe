@@ -59,6 +59,7 @@ function [output_data] = reachingKinematics(td_list,task_list,input_data)
     f_corr = figure();
     task_3d_idx = find(strcmpi(task_list,'RT3D')|strcmpi(task_list,'freeReach'),1,'first');
     task_2d_idx = find(strcmpi(task_list,'RT'),1,'first');
+    
     markernames = {'hand2','elbow1'};
     perc_bound = [5,95];
     
@@ -76,9 +77,9 @@ function [output_data] = reachingKinematics(td_list,task_list,input_data)
     for i_task = 1:2 %loop for both RT2D and RT3D tasks
         switch i_task
             case 1
-                task_idx = task_3d_idx;
-            case 2
                 task_idx = task_2d_idx;
+            case 2
+                task_idx = task_3d_idx;
         end
         
         %start of plotting hand marker distribution, and correlation
@@ -102,8 +103,10 @@ function [output_data] = reachingKinematics(td_list,task_list,input_data)
 
             grid on
             xlabel('x-pos (cm)'); ylabel('y-pos (cm)'); zlabel('z-pos');
-            l=legend('RT3D','RT2D');
+            l=legend('RT2D','RT3D');
             set(l,'box','off','location','best');
+            formatForLee(gcf);
+            set(gca,'fontsize',14);
             
             % compute volume, and extent along each axis
             if(~isempty(strfind(markername,'hand')))
@@ -131,7 +134,7 @@ function [output_data] = reachingKinematics(td_list,task_list,input_data)
         for i_marker = 1:numel(corr_markernames)
             dlc_idx = [dlc_idx,find((strcmpi(td_list{task_idx}.dlc_pos_names,[corr_markernames{i_marker},'_x']))),...
                 find((strcmpi(td_list{task_idx}.dlc_pos_names,[corr_markernames{i_marker},'_y']))),...
-                ];
+                find((strcmpi(td_list{task_idx}.dlc_pos_names,[corr_markernames{i_marker},'_z'])))];
         end
         
         % get velocity for each marker
@@ -157,13 +160,19 @@ function [output_data] = reachingKinematics(td_list,task_list,input_data)
     %Make a scatter plot with the correlation data
     figure(f_corr); hold on;
     f_corr.Name = [td_list{task_idx}.monkey, '_', td_list{task_idx}.date, '_', task_list{task_idx}, '_corr2Dvs3D'];
-    % plot hand x (1) vs elbow x (3)
-    plot(corr_V_RT2D(1,3),corr_V_RT3D(1,3),'r.','markersize',40);
-    % plot hand y (2) vs elbow y (4)
-    plot(corr_V_RT2D(2,4),corr_V_RT3D(2,4),'c.','markersize',40);
+    % plot hand x (1) vs elbow x (4)
+    plot(corr_V_RT2D(1,4),corr_V_RT3D(1,4),'r.','markersize',40);
+    % plot hand y (2) vs elbow y (5)
+    plot(corr_V_RT2D(2,5),corr_V_RT3D(2,5),'c.','markersize',40);
+    % plot hand z (3) vs elbow z(6)
+    plot(corr_V_RT2D(3,6), corr_V_RT3D(3,6),'m.','markersize',40);
     % plot hand speed (1) vs elbow speed (2)
     plot(corr_S_RT2D(1,2),corr_S_RT3D(1,2),'k.','markersize',40);
-
+   
+    kin_corr.corr_3D = [corr_V_RT3D(1,4), corr_V_RT3D(2,5), corr_V_RT3D(3,6), corr_S_RT3D(1,2)];
+    kin_corr.corr_2D = [corr_V_RT2D(1,4), corr_V_RT2D(2,5), corr_V_RT2D(3,6), corr_S_RT2D(1,2)];
+    
+    
     %Set the lines on the graph
     h(1) = plot([0 0],[-1000 1000],'k-','linewidth',0.5); % plot y-axis
     h(2) = plot([-1000 1000],[0 0],'k-','linewidth',0.5); % plot x-axis
@@ -171,53 +180,78 @@ function [output_data] = reachingKinematics(td_list,task_list,input_data)
     set( get( get( h(1), 'Annotation'), 'LegendInformation' ), 'IconDisplayStyle', 'off' );
     set( get( get( h(2), 'Annotation'), 'LegendInformation' ), 'IconDisplayStyle', 'off' );
     set( get( get( h(3), 'Annotation'), 'LegendInformation' ), 'IconDisplayStyle', 'off' );
-    lgd = legend('Elbow-V-X - Hand-V-X',...
-    'Elbow-V-Y - Hand-V-Y',...
-    'Elbow-S - Hand-S',...
+    lgd = legend('Elbow V_X - Hand V_X',...
+    'Elbow V_Y - Hand V_Y',...
+    'Elbow V_Z - Hand V_Z',...
+    'Elbow spd - Hand spd',...
     '','','');
-    lgd.Location = 'northwest';
+    lgd.Location = 'best';
     xlim([-0.3,1]);
     ylim([-0.3,1]);
     xlabel('RT2D Correlation');
     ylabel('RT3D Correlation');
     formatForLee(gcf);
     set(gca,'fontsize',14);
-
-    % format workspace figures
-    for i = 1:numel(f_workspace)
-        figure(f_workspace(i))
-        l=legend('3D task','2D task');
-        set(l,'box','off','location','best');
-        formatForLee(gcf);
-        set(gca,'fontsize',14);
-    end
     
-    % plot correlation between joint angles for each task
+    % plot correlation between joint angles for each task as a heatmap,
+    % include difference between tasks
+    
     f_joint = [];
+    corr_joint = {};
+    max_corr = -1;
     for i_td = 1:numel(td_list)
         if(isfield(td_list{i_td},'opensim_names') && ~isempty(td_list{i_td}.opensim_names))
             markername = 'vel';
             [vel_idx] = find(~cellfun(@isempty,strfind(td_list{i_td}.opensim_names,strcat('_',markername))));
 
             joint_vel = td_list{i_td}.opensim(:,vel_idx);
-
-            corr_joint = corr(joint_vel);
-
-            f_joint = figure();
-            f_joint.Name = [td_list{i_td}.monkey, '_', td_list{i_td}.date, '_',td_list{i_td}.task, '_handElbowSpeedHist'];
-            imagesc(abs(corr_joint));
-            caxis([0,1]);
-            colormap(colorcet('L1'));
-            b=colorbar;
+            joint_vel_names = erase(td_list{i_td}.opensim_names(vel_idx),'_vel'); % remove trailing identifier
+            joint_vel_names = strrep(joint_vel_names,'_',' ');
+            
+            corr_joint{i_td} = corr(joint_vel);
+            for i_joint = 1:numel(joint_vel_names) % overwrite diagonal vals
+                corr_joint{i_td}(i_joint,i_joint) = nan;
+            end
+            max_corr = max(max_corr,max(max(corr_joint{i_td},[],'omitnan'),[],'omitnan'));
         end
     end
+    diff_corr = abs(corr_joint{task_3d_idx})-abs(corr_joint{task_2d_idx});
+    max_corr = max(max_corr,abs(max(max(diff_corr,[],'omitnan'),[],'omitnan')));
     
+    % make figs
+    im_alpha = tril(ones(numel(joint_vel_names)),-1); % set diagonal and upper diagonal as not visible
+    for i_td = 1:numel(td_list)
+        f_joint = figure();
+        f_joint.Name = [td_list{i_td}.monkey, '_', td_list{i_td}.date, '_',td_list{i_td}.task, '_jointAngleCorrelation'];
+        f_joint.Position = [691 124 1099 839];
+        
+        imagesc(abs(corr_joint{i_td}),'AlphaData',im_alpha);
+        caxis([0,ceil(max_corr*10)/10]); % round up to nearest tenth
+        colormap(colorcet('L5'));
+        b=colorbar;
+        set(gca,'XTick',1:1:numel(joint_vel_names),'XTickLabel',joint_vel_names);
+        set(gca,'YTick',1:1:numel(joint_vel_names),'YTickLabel',joint_vel_names);
+        
+    end
+    % plot difference between correlations
+    f_joint = figure();
+    f_joint.Name = [td_list{i_td}.monkey, '_', td_list{i_td}.date, '_jointAngleCorrelationDifference'];
+    f_joint.Position = [691 124 1099 839];
+    
+    imagesc(diff_corr,'AlphaData',im_alpha);
+    caxis([-ceil(max_corr*10)/10,ceil(max_corr*10)/10]); % round up to nearest tenth
+    colormap(colorcet('D4'));
+    b=colorbar;
+    set(gca,'XTick',1:1:numel(joint_vel_names),'XTickLabel',joint_vel_names);
+    set(gca,'YTick',1:1:numel(joint_vel_names),'YTickLabel',joint_vel_names);
     
     
     % plot speed histogram for hand and elbow markers, comparing both tasks
     markernames = {'hand2','elbow1'};
     spd_data = cell(numel(td_list),1); % speed data for each trial data and marker
+    vel_data = cell(numel(td_list),1); % vel data for each trial data and marker
     max_spd = 0;
+    max_vel = 0;
     for i_td = 1:numel(td_list)
         for i_marker = 1:numel(markernames)
             dlc_idx = [find((strcmpi(td_list{i_td}.dlc_pos_names,[markernames{i_marker},'_x']))),...
@@ -227,8 +261,10 @@ function [output_data] = reachingKinematics(td_list,task_list,input_data)
             marker_vel = td_list{i_td}.dlc_vel(:,dlc_idx);
             marker_spd = sqrt(sum(marker_vel.^2,2));
             
-            spd_data{i_td} = [spd_data{i_td}, marker_spd];
+            spd_data{i_td} = [spd_data{i_td}, marker_spd]; % append for each marker
+            vel_data{i_td} = [vel_data{i_td}, marker_vel]; % append for each marker, x then y then z
             max_spd = max(max_spd, max(marker_spd));
+            max_vel = max(max_vel, max(max(abs(marker_vel))));
         end
     end
     
@@ -239,7 +275,14 @@ function [output_data] = reachingKinematics(td_list,task_list,input_data)
     for i_marker = 1:numel(markernames)
         ax_list(end+1) = subplot(numel(markernames),1,i_marker); hold on
         for i_td = 1:numel(spd_data)
-            [spd_counts] = histcounts(spd_data{i_td}(:,i_marker),bin_edges,'normalization','probability');
+            switch i_td
+                case 1
+                    task_idx = task_2d_idx;
+                case 2
+                    task_idx = task_3d_idx;
+            end
+            
+            [spd_counts] = histcounts(spd_data{task_idx}(:,i_marker),bin_edges,'normalization','probability');
             histogram('BinEdges',bin_edges,'BinCounts',spd_counts,'FaceColor','none','edgeColor',getColorFromList(1,i_td-1),'linewidth',2);
         end
         xlabel([markernames{i_marker},' speed (cm/s)']);
@@ -251,6 +294,27 @@ function [output_data] = reachingKinematics(td_list,task_list,input_data)
     l=legend(task_list); set(l,'box','off');
     
     
+    f_vel_dist = figure();
+    f_vel_dist.Name = [td_list{i_td}.monkey, '_', td_list{i_td}.date, '_handElbowVelHist'];
+    ax_list = [];
+    bin_edges = linspace(-max_vel,max_vel,200);
+    vel_names = {'x','y','z'};
+    for i_marker = 1:numel(markernames)
+        for i_dir = 1:3 % x, y, z
+            ax_list(end+1) = subplot(3,numel(markernames),i_marker + 2*(i_dir-1)); hold on
+            for i_td = 1:numel(vel_data)
+                [vel_counts] = histcounts(vel_data{i_td}(:,i_dir + 3*(i_marker-1)),bin_edges,'normalization','probability');
+                histogram('BinEdges',bin_edges,'BinCounts',vel_counts,'FaceColor','none','edgeColor',getColorFromList(1,i_td-1),'linewidth',2);
+            end
+            xlabel([markernames{i_marker},' Vel ' vel_names{i_dir} ' (cm/s)']);
+            ylabel('Proportion of data');
+            formatForLee(gcf);
+            set(gca,'fontsize',14);
+        end
+    end
+    linkaxes(ax_list,'xy');
+    l=legend(task_list); set(l,'box','off');
+    xlim([-max_vel,max_vel])
     % package outputs into nice tables so the data is easily worked with
     output_data.kin_corr = kin_corr;
     output_data.workspace_min = workspace_min;

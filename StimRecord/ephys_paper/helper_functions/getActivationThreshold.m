@@ -7,6 +7,10 @@ function [output_data] = getActivationThreshold(array_data, input_data)
     is_responsive = zeros(numel(array_data),1);
     
     percent_responsive = nan(numel(array_data),numel(input_data.amp_list));
+    percent_responsive_null = nan(numel(array_data),1);
+    avg_num_spikes = nan(size(percent_responsive));
+    avg_num_spikes_null = nan(size(percent_responsive_null));
+    
     stat = nan(numel(array_data),numel(input_data.amp_list));
     
     for i_unit = 1:numel(array_data)
@@ -36,8 +40,10 @@ function [output_data] = getActivationThreshold(array_data, input_data)
 %                 stat(i_unit,amp_idx) = poisscdf(num_spikes, baseline_val*total_stims,'upper');
                 p_base = baseline_val; p_stim = num_responsive/total_stims; n_base = total_stims; n_stim = total_stims;
                 stat(i_unit,amp_idx) = pearsonChiSquareBinomial(p_base,p_stim,n_base,n_stim,'lower');
-                percent_responsive(i_unit,amp_idx) = num_responsive/total_stims - baseline_val;
-                
+                percent_responsive(i_unit,amp_idx) = p_stim;
+                percent_responsive_null(i_unit) = p_base;
+                avg_num_spikes(i_unit,amp_idx) = num_spikes/total_stims - baseline_val;
+                avg_num_spikes_null(i_unit) = baseline_val;
             end
         end
         
@@ -58,6 +64,9 @@ function [output_data] = getActivationThreshold(array_data, input_data)
     output_data.thresholds = thresholds;
     output_data.is_responsive = is_responsive;
     output_data.percent_responsive = percent_responsive;
+    output_data.percent_responsive_null = percent_responsive_null;
     output_data.poiss_stat = stat;
+    output_data.avg_num_spikes_null = avg_num_spikes_null;
+    output_data.avg_num_spikes = avg_num_spikes;
     
 end

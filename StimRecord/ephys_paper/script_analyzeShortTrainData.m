@@ -64,8 +64,8 @@ end
     rebound_input_data.blank_time = [-10,10]/1000; %s
     
     rebound_input_data.bin_size = 5/1000; % s
-    rebound_input_data.kernel_length = 1;
-    rebound_input_data.num_consec_bins = 6;
+    rebound_input_data.kernel_length = 2;
+    rebound_input_data.num_consec_bins = 2;
     [rebound_data] = getReboundExcitationWrapper(exp_array_data,rebound_input_data);
     
     
@@ -117,9 +117,9 @@ end
     inhib_input_data.pre_window = [-80,-10]/1000; % s 
     inhib_input_data.post_window = [0,260]/1000; % s
     inhib_input_data.bin_window = [inhib_input_data.pre_window(1),490/1000];
-    inhib_input_data.max_time_start = 150/1000; % s
+    inhib_input_data.max_time_start = 40/1000; % s
     inhib_input_data.bin_size = 5/1000; % s
-    inhib_input_data.kernel_length = 1;
+    inhib_input_data.kernel_length = 2;
     inhib_input_data.blank_time = [-5,10]/1000; % s
     
     inhib_input_data.num_consec_bins = 2;
@@ -168,13 +168,14 @@ end
     
 %% inhib dur stats
     freq_list=[179,94,49,20];
-    
+    is_inhib = exp_inhib_data.is_inhib;
+    is_inhib(isnan(is_inhib)) = 0;
     freqs = []; inhib_durs = []; cell_id = [];
-    for i_cell = 1:size(exp_inhib_data.is_inhib,1)
-        num_add = sum(exp_inhib_data.is_inhib(i_cell,2:end));
+    for i_cell = 1:size(is_inhib,1)
+        num_add = sum(is_inhib(i_cell,2:end),'omitnan');
         cell_id = [cell_id; i_cell+zeros(num_add,1)];
-        freqs = [freqs; freq_list(exp_inhib_data.is_inhib(i_cell,2:end)==1)'];
-        inhib_durs = [inhib_durs; exp_inhib_data.inhib_dur(i_cell,find(exp_inhib_data.is_inhib(i_cell,2:end))+1)'];
+        freqs = [freqs; freq_list(is_inhib(i_cell,2:end)==1)'];
+        inhib_durs = [inhib_durs; exp_inhib_data.inhib_dur(i_cell,find(is_inhib(i_cell,2:end))+1)'];
     end
     inhib_durs = inhib_durs*1000;
     

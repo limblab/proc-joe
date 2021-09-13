@@ -11,17 +11,18 @@
 %% Set up meta info and load trial data
     clear; clc;
     if ispc
-        folderpath = 'D:\Lab\Data\DLC_videos\Han_20210709_freeReachWeight\neural-data\';
+        folderpath = 'D:\Lab\Data\FreeReaching\Han_20210623\neural-data\';
     else
         folderpath = '/data/raeed/project-data/limblab/s1-kinematics';
     end
     
     % load data
-    file_info = dir(fullfile(folderpath,'*td*'));
+    file_info = dir(fullfile(folderpath,'*td*.mat'));
 
     filenames = horzcat({file_info.name})';
     
-    % save directory information (for convenience, since this code takes a while)
+    % save directory information (for convenience, since this code takes a
+    % while)tw
     savefile = true;
     if savefile
         savedir = fullfile(folderpath,'reaching_experiments','EncodingResults');
@@ -34,7 +35,7 @@
     
     arrayname = 'LeftS1';
     monkey_names = {'Han'};
-    included_models = {'ext','handelbow'}; % models to calculate encoders for
+    included_models = {'ext','handelbow','joint'}; % models to calculate encoders for
     models_to_plot = {'ext','handelbow'}; % main models of the paper
     not_plot_models = setdiff(included_models,models_to_plot);
     bin_size = 0.05; % s
@@ -55,6 +56,7 @@
     for filenum = 1:length(filenames)
         % Load data
         load(fullfile(file_info(filenum).folder,file_info(filenum).name));
+        
         keep_mask = ones(size(td_list));
         robot_height = [];
         for i_td = 1:numel(td_list) % each entry in td_list is a different trial_data for a different experiment (free reach vs 2D random walk for example)
@@ -82,8 +84,11 @@
 
 
             if(isfield(td_list{i_td},'dlc_pos'))
+                % smooth marker data
+                td_list{i_td} = smoothSignals(td_list{i_td},struct('signals','dlc_pos'));
+                
                 % set origin as shoulder position at t=0
-                td_list{i_td} = setOriginAsShoulder(td_list{i_td},0); % use fixed position (t=0) or set shoulder as 0 for each data point.
+                td_list{i_td} = setOriginAsShoulder(td_list{i_td},0); % use fixed position (t=0) or set shoulder as 0 for each data point.                
                 % get marker velocity
                 td_list{i_td} = getDifferential(td_list{i_td},struct('signals','dlc_pos','alias','dlc_vel'));
                 % remove time points where dlc tracking is bad
@@ -118,6 +123,9 @@
 %             markername = 'hand3';
 %             dlc_idx = find((strcmpi(td_list{i_td}.dlc_pos_names,[markername,'_z'])));
 %             robot_height(end+1) = mean(td_list{i_td}.dlc_pos(:,dlc_idx),'omitnan');
+
+            % overwrite trial-id
+            td_list{i_td}.trial_id = (1:1:length(td_list{i_td}.dlc_pos))';
         end
         td_all{filenum} = td_list;
         task_list_all{filenum} = task_list;
@@ -125,7 +133,6 @@
         clear td_list;
     end
 
-    
     
 %% Loop through files to make kinematic figures
     fprintf('Starting kinematic analysis of %d files.',length(td_all))
@@ -137,7 +144,7 @@
         % get kinematic data and make plots
         kin_data = reachingKinematics(td_list,task_list,kin_input_data);
     end
-    
+        
     
 %% loop through files and compute cross correlation between neural signals and kinematics
     for filenum = 1:length(td_all)
@@ -148,6 +155,8 @@
         xcorr_data = crossCorrKinNeural(td_list);
     end
 
+   
+    
     
 %% Loop through files to cross-validate encoders
     fprintf('Starting analysis of %d files. Warning: cross-validation will take a long time\n',length(td_all))
@@ -169,7 +178,8 @@
             'crossval_lookup',[],...
             'get_tuning_curves',true,...
             'num_repeats',20,... % Raeed used 20 repeats.
-            'num_folds',5));
+            'num_folds',5,...
+            'subsample','none')); % 'speed','half_data','yaxis','xaxis','zaxis','none'
     end
 
 %% save encoder results
@@ -246,15 +256,17 @@
                 encoderResults.crossTuning.(sprintf('glm_%s_model_dlc_vel_handCurve',included_models{modelnum})),...
                 encoderResults.crossTuning.(sprintf('glm_%s_model_dlc_vel_handPD',included_models{modelnum})),...
                 encoderResults.crossTuning.(sprintf('glm_%s_model_dlc_vel_handPD_zAng',included_models{modelnum})),...
-                'VariableNames',strcat(included_models(modelnum),{'_velCurve','_velPD','_velPDzAng'}));
-            model_tuning_cell{modelnum}.Properties.VariableDescriptions = {'linear','circular','circular'};
+                encoderResults.crossTuning.(sprintf('glm_%s_model_dlc_vel_handModdepth3D',included_models{modelnum})),...
+                'VariableNames',strcat(included_models(modelnum),{'_velCurve','_velPD','_velPDzAng','_modDepth'}));
+            model_tuning_cell{modelnum}.Properties.VariableDescriptions = {'linear','circular','circular','linear'};
         end
         model_tuning_cell{end} = table(...
             encoderResults.crossTuning.([arrayname,'_FR_dlc_vel_handCurve']),...
             encoderResults.crossTuning.([arrayname,'_FR_dlc_vel_handPD']),...
             encoderResults.crossTuning.([arrayname,'_FR_dlc_vel_handPD_zAng']),...
-            'VariableNames',strcat('S1_FR',{'_velCurve','_velPD','_velPDzAng'}));
-        model_tuning_cell{end}.Properties.VariableDescriptions = {'linear','circular','circular'};
+            encoderResults.crossTuning.([arrayname,'_FR_dlc_vel_handModdepth3D']),...
+            'VariableNames',strcat('S1_FR',{'_velCurve','_velPD','_velPDzAng','_modDepth'}));
+        model_tuning_cell{end}.Properties.VariableDescriptions = {'linear','circular','circular','linear'};
                 
         % put it together
         model_tuning{monkey_idx,session_ctr(monkey_idx)} = horzcat(...
@@ -280,15 +292,49 @@
         fprintf('Processed file %d of %d at time %f\n',filenum,length(encoderResults_cell),toc(fileclock))
     end
     
+  
+    
+%% get predictions across entire file using correct model fold
+    td_list = td_all{1};
+    for i_td = 1:numel(td_list)
+        task_idx = i_td;
+    
+        % get predictions
+
+        for mdlnum = 1:numel(included_models)
+            % preallocate space
+            td_list{task_idx}.(encoderResults.params.model_names{mdlnum}) = nan(size(td_list{task_idx}.LeftS1_FR,1),size(td_list{task_idx}.LeftS1_FR,2),encoderResults.params.num_repeats);
+            for i_repeat = 1:encoderResults.params.num_repeats
+                for i_fold = 1:encoderResults.params.num_folds
+                    % get predictions across whole file
+                    temp_td = getModel(td_list{task_idx},...
+                        encoderResults.glm_info{i_fold +(i_repeat-1)*encoderResults.params.num_folds,mdlnum});
+
+                    % store those that were in the test set. field name =
+                    % encoderResults.params.model_names{mdlnum}
+                    test_set_idx = encoderResults.params.crossval_lookup.trialID(encoderResults.params.crossval_lookup.spaceNum==2 & ...
+                        encoderResults.params.crossval_lookup.crossvalID(:,1) == i_repeat & ...
+                        encoderResults.params.crossval_lookup.crossvalID(:,2) == i_fold);
+
+                    td_list{task_idx}.(encoderResults.params.model_names{mdlnum})(test_set_idx,:,i_repeat) = temp_td.(encoderResults.params.model_names{mdlnum})(test_set_idx,:);
+                end
+            end
+%         
+        end
+    end
+
+    
+    
+    
 %% %% plot random "trials" and predictions from one of the models - real FR, model predict FR for multiple neurons
 
-    unit_idx_list = [6,9,14];
+    unit_idx_list = [9];
    
     num_rows = length(unit_idx_list) + 1; %last row for speed 
     td_idx = 2; % pick which task to use
     
     window_plot = [-2,2]; % s
-    num_trials_plot = 3;
+    num_trials_plot = 4;
     num_neurons = length(unit_idx_list);
     bin_size = td_list{td_idx}.bin_size;
     % pick random time point, make sure data in window are consecutive
@@ -322,10 +368,6 @@
     x_data = (0:1:diff(window_idx(1,:)))*bin_size;
     encoderResults = encoderResults_cell{1};
     repeatnum = 1;
-    % predict FR for unit in time window, then plot for each model
-    for mdlnum = 1:numel(included_models)
-        td_list_smooth = getModel(td_list_smooth,encoderResults.glm_info{repeatnum,mdlnum});
-    end
     
     for i_neuron = 1:num_rows
         for i_trial = 1:num_trials_plot
@@ -338,9 +380,9 @@
                 plot(x_data,td_list_smooth.LeftS1_FR(window_idx(i_trial,1):window_idx(i_trial,2),unit_idx_list(i_neuron)),'k','linewidth',2)
                 
                 % plot the model firing rate data
-                plot(x_data,td_list_smooth.glm_ext_model(window_idx(i_trial,1):window_idx(i_trial,2),unit_idx_list(i_neuron)),'color',getColorFromList(1,2),'linewidth',2)
-                plot(x_data,td_list_smooth.glm_handelbow_model(window_idx(i_trial,1):window_idx(i_trial,2),unit_idx_list(i_neuron)),'color',getColorFromList(1,0),'linewidth',2)
-%                 plot(x_data,td_list_smooth.glm_joint_model(window_idx(i_trial,1):window_idx(i_trial,2),unit_idx_list(i_neuron)),'color',getColorFromList(1,1),'linewidth',2)
+                plot(x_data,td_list_smooth.glm_ext_model(window_idx(i_trial,1):window_idx(i_trial,2),unit_idx_list(i_neuron),1),'color',getColorFromList(1,2),'linewidth',2)
+                plot(x_data,td_list_smooth.glm_handelbow_model(window_idx(i_trial,1):window_idx(i_trial,2),unit_idx_list(i_neuron),1),'color',getColorFromList(1,3),'linewidth',2)
+%                 plot(x_data,td_list_smooth.glm_joint_model(window_idx(i_trial,1):window_idx(i_trial,2),unit_idx_list(i_neuron),1),'color',getColorFromList(1,1),'linewidth',2)
                 
             end
             
@@ -352,7 +394,7 @@
             if i_neuron == num_rows %if last row
                 dlc_section_velocity = td_list_smooth.dlc_vel(window_idx(i_trial,1):window_idx(i_trial,2),19:21);
                 dlc_section_speed = sqrt(sum(dlc_section_velocity.^2,2)); % apparently there's a unit conversion here
-                plot(x_data,dlc_section_speed,'color',getColorFromList(1,mdlnum),'linewidth',2);
+                plot(x_data,dlc_section_speed,'color','k','linewidth',2);
              
                 if i_trial == 1
                     ylabel('speed (mm/s)')
@@ -361,7 +403,7 @@
 
             formatForLee(gcf);
             set(gca,'fontsize',14);
-            
+            xlim([0,4])
             %don't plot the x and y ticks if not the first column
             if i_trial ~= 1
                 set(gca, 'YTick', [])
@@ -440,8 +482,10 @@
             end
             xlabel(sprintf('%s pR2',getModelTitles(model_pairs{1,1})))
             ylabel(sprintf('%s pR2',getModelTitles(model_pairs{1,2})))
+            
         end
         l=legend(legend_data,spacenames);
+%         l=legend(legend_data,'low spd','high spd');
         set(l,'box','off');
     end
     formatForLee(gcf);
@@ -490,6 +534,8 @@
             axis square
             xlabel(spacenames(1))
             ylabel(spacenames(2))
+%             xlabel('RT3D low spd pR2');
+%             ylabel('RT3D high spd pR2');
         end
         
         models_to_plot_names = strings;
@@ -549,16 +595,17 @@
     end
     f=figure();
     f.Name = [encoderResults.crossEval.monkey{1} ,'_', encoderResults.crossEval.date{1},'_',model_pairs{1},'_',model_pairs{2},'_pr2performancecomparison'];
+    f.Position = [680 485 1058 493];
     subplot(1,2,1); hold on;
     
     plot(data(~no_winner,1),data(~no_winner,2),'.','color',getColorFromList(1,1),'markersize',20)
     plot(data(no_winner,1),data(no_winner,2),'o','color',getColorFromList(1,1),'markersize',6)
     
-    xlabel('2D whole-arm pR^2 minus hand-only pR^2');
-    ylabel('3D whole-arm pR^2 minus hand-only pR^2');
+    xlabel('RT2D whole-arm pR^2 minus hand-only pR^2');
+    ylabel('RT3D whole-arm pR^2 minus hand-only pR^2');
     plot([-0.1,0.5],[-0.1,0.5],'k--');
-    xlim([-0.1,0.1]);
-    ylim([-0.1,0.1]);
+%     xlim([-0.02,0.1]);
+%     ylim([-0.02,0.1]);
     formatForLee(gcf);
     set(gca,'fontsize',14);
     
@@ -566,9 +613,209 @@
     histogram(data(:,2)-data(:,1),-0.1:0.005:0.1)
     formatForLee(gcf);
     set(gca,'fontsize',14);
-    xlabel('Whole-arm pR^2 - Hand-only pR^2 across spaces')
+    xlabel('Whole-arm pR^2 - Hand-only pR^2 across speeds')
     ylabel('Number of neurons');
     [p] = ranksum(data(:,2),data(:,1),'tail','right')
+    
+    
+%% get FR during reaches in the PD for each neuron
+    td_list = td_all{1};
+    task_list = task_list_all{1};
+    cutoff = 95;
+    
+    tasknames = {'RW','none'};
+    keep_mask = strcmpi(model_tuning{1,1}.task,tasknames{1});
+    space_1_tuning = model_tuning{1,1}(keep_mask,:);
+    keep_mask = strcmpi(model_tuning{1,1}.task,tasknames{2});
+    space_2_tuning = model_tuning{1,1}(keep_mask,:);
+    avg_1_tuning = neuronAverage(space_1_tuning,struct('keycols','signalID','do_ci',true,'do_nanmean',true));
+    avg_2_tuning = neuronAverage(space_2_tuning,struct('keycols','signalID','do_ci',true,'do_nanmean', true));
+
+    td_2d = td_list{find(strcmpi(task_list,'RT'))};
+    td_3d = td_list{find(strcmpi(task_list,'RT3D'))};
+    is_3d = nan;
+    FR_high_spd = [];
+    for i_unit = 1:length(td_list{1}.LeftS1_unit_guide)
+        avg_1_idx = find(all(avg_1_tuning.signalID == td_list{1}.LeftS1_unit_guide(i_unit,:),2));
+        velPD_2D = avg_1_tuning.S1_FR_velPD(avg_1_idx);
+        velPD_zAng_2D = avg_1_tuning.S1_FR_velPDzAng(avg_1_idx);
+        
+        avg_2_idx = find(all(avg_2_tuning.signalID == td_list{1}.LeftS1_unit_guide(i_unit,:),2));
+        velPD_3D = avg_2_tuning.S1_FR_velPD(avg_2_idx);
+        velPD_zAng_3D = avg_2_tuning.S1_FR_velPDzAng(avg_2_idx);
+
+        PD_2D_vec = convertToVec(velPD_2D, velPD_zAng_2D);
+        PD_2D_vec = PD_2D_vec(1:2);
+        PD_3D_vec = convertToVec(velPD_3D, velPD_zAng_3D);
+        
+        % for each trial data, get high speed movements in direction of PD
+        % then get firing rates during those movements
+        for i_td = 1:2
+            switch i_td
+                case 1
+                    td_use = td_2d;
+                    vec_use = PD_2D_vec;
+                    is_3d = 0;
+                case 2
+                    td_use = td_3d;
+                    vec_use = PD_3D_vec;
+                    is_3d = 1;
+            end
+            dlc_idx = [find((strcmpi(td_use.dlc_pos_names,['hand2','_x']))),...
+                            find((strcmpi(td_use.dlc_pos_names,['hand2','_y']))),...
+                           find((strcmpi(td_use.dlc_pos_names,['hand2','_z'])))];
+                        
+            pd_len = numel(vec_use);
+            spd_data = sqrt(sum(td_use.dlc_vel(:,dlc_idx(1:pd_len)).^2,2));
+            
+            cos_sim = td_use.dlc_vel(:,dlc_idx(1:pd_len))*vec_use'./sqrt(sum(vec_use.^2,2))./spd_data;
+            
+            in_dir = cos_sim > cos(pi/4);
+            FR_data = td_use.LeftS1_FR(in_dir,i_unit);
+            FR_data(isnan(FR_data)) = [];
+            
+            FR_high_spd(i_unit,i_td) = prctile(FR_data,cutoff);
+            
+        end
+    end
+    
+    figure();
+    bin_edges = -95:10:95;
+    histogram(FR_high_spd(:,2)-FR_high_spd(:,1),bin_edges);
+
+%% save variables
+    % 3D PD
+    tasknames = {'RW','none'};
+    keep_mask = strcmpi(model_tuning{1,1}.task,tasknames{1});
+    space_1_tuning = model_tuning{1,1}(keep_mask,:);
+    keep_mask = strcmpi(model_tuning{1,1}.task,tasknames{2});
+    space_2_tuning = model_tuning{1,1}(keep_mask,:);
+    avg_1_tuning = neuronAverage(space_1_tuning,struct('keycols','signalID','do_ci',true,'do_nanmean',true));
+    avg_2_tuning = neuronAverage(space_2_tuning,struct('keycols','signalID','do_ci',true,'do_nanmean', true));
+
+
+    tuning_data = [];
+    tuning_data.velPD_2D = avg_1_tuning.S1_FR_velPD;
+    tuning_data.velPD_2D_CILo = avg_1_tuning.S1_FR_velPDCILo;
+    tuning_data.velPD_2D_CIHi = avg_1_tuning.S1_FR_velPDCIHi;
+    
+    tuning_data.velPD_zAng_2D = avg_1_tuning.S1_FR_velPDzAng;
+    tuning_data.velPD_zAng_2D_CILo = avg_1_tuning.S1_FR_velPDzAngCILo;
+    tuning_data.velPD_zAng_2D_CIHi = avg_1_tuning.S1_FR_velPDzAngCIHi;
+    
+    tuning_data.velPD_3D = avg_2_tuning.S1_FR_velPD;
+    tuning_data.velPD_3D_CILo = avg_2_tuning.S1_FR_velPDCILo;
+    tuning_data.velPD_3D_CIHi = avg_2_tuning.S1_FR_velPDCIHi;
+    
+    tuning_data.velPD_zAng_3D = avg_2_tuning.S1_FR_velPDzAng;
+    tuning_data.velPD_zAng_3D_CILo = avg_2_tuning.S1_FR_velPDzAngCILo;
+    tuning_data.velPD_zAng_3D_CIHi = avg_2_tuning.S1_FR_velPDzAngCIHi;
+
+      
+%% save all the showing figures
+
+% fpath = folderpath; % folderpath is defined at the beginning, can overwrite to a different path
+
+FigList = findobj(allchild(0), 'flat', 'Type', 'figure');
+for iFig = 1:length(FigList)
+  FigHandle = FigList(iFig);
+  %
+  if(strcmpi(FigHandle.Name, '')==1)
+    FigHandle.Name = num2str(get(FigHandle, 'Number'));
+  end
+  saveFiguresLIB(FigHandle, fpath, FigHandle.Name);
+
+end  
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+%% get pR2 vs. speed for both models
+    td_list = td_all{1};
+    task_idx = find(strcmpi(task_list,'RT3D'));
+    
+    % get speed
+    markername = 'hand2';
+    dlc_idx = [find((strcmpi(td_list{task_idx}.dlc_pos_names,[markername,'_x']))),...
+                find((strcmpi(td_list{task_idx}.dlc_pos_names,[markername,'_y']))),...
+                find((strcmpi(td_list{task_idx}.dlc_pos_names,[markername,'_z'])))];
+    
+    spd_data = sqrt(sum(td_list{task_idx}.dlc_vel(:,dlc_idx).^2,2));
+
+    % get predictions
+    
+    for mdlnum = 1:numel(included_models)
+        % preallocate space
+        td_list{task_idx}.(encoderResults.params.model_names{mdlnum}) = nan(size(td_list{task_idx}.LeftS1_FR,1),size(td_list{task_idx}.LeftS1_FR,2),encoderResults.params.num_repeats);
+        for i_repeat = 1:encoderResults.params.num_repeats
+            for i_fold = 1:encoderResults.params.num_folds
+                % get predictions across whole file
+                temp_td = getModel(td_list{task_idx},...
+                    encoderResults.glm_info{i_fold +(i_repeat-1)*encoderResults.params.num_folds,mdlnum});
+                
+                % store those that were in the test set. field name =
+                % encoderResults.params.model_names{mdlnum}
+                test_set_idx = encoderResults.params.crossval_lookup.trialID(encoderResults.params.crossval_lookup.spaceNum==2 & ...
+                    encoderResults.params.crossval_lookup.crossvalID(:,1) == i_repeat & ...
+                    encoderResults.params.crossval_lookup.crossvalID(:,2) == i_fold);
+                
+                td_list{task_idx}.(encoderResults.params.model_names{mdlnum})(test_set_idx,:,i_repeat) = temp_td.(encoderResults.params.model_names{mdlnum})(test_set_idx,:);
+            end
+        end
+%         
+    end
+    
+    %% compute prediction error vs speed
+    mean_pred_error = zeros(size(td_list{task_idx}.LeftS1_FR,1),size(td_list{task_idx}.LeftS1_FR,2),2);
+    for mdlnum = 1:numel(included_models)  
+        mean_pred_error(:,:,mdlnum) = mean(abs(td_list{task_idx}.LeftS1_FR - td_list{task_idx}.(encoderResults.params.model_names{mdlnum})),3,'omitnan');
+    end
+    
+    figure()
+    idx = 6;
+    plot(spd_data,mean_pred_error(:,idx,2) - mean_pred_error(:,idx,1),'.')
+    
+    
+%% get pR2 pairwise and histogram diff for high correlation conditions   
+    
+
+    % evaluate model on segments of data. Compare performance vs.
+    % correlation
+    seg_len = 20; % 50 ms bins
+    seg_start = 1:seg_len:(size(td_list{task_idx}.LeftS1_FR,1)-seg_len);
+    
+    seg_end = seg_start + seg_len-1;
+    temp_td = td_list{task_idx};
+    n_repeats = encoderResults.params.num_repeats;
+    
+    dlc_idx = [find((strcmpi(td_list{task_idx}.dlc_pos_names,['hand2_x']))),...
+                find((strcmpi(td_list{task_idx}.dlc_pos_names,['hand2_y']))),...
+                find((strcmpi(td_list{task_idx}.dlc_pos_names,['elbow1_x']))),...
+                find((strcmpi(td_list{task_idx}.dlc_pos_names,['elbow1_y'])))];
+    
+    eval_ext = zeros(numel(seg_start),size(td_list{task_idx}.LeftS1_FR,2),n_repeats);
+    eval_handelbow = zeros(size(eval_ext));
+    corr_data = zeros(numel(seg_start),2); % hand-elbow x, hand-elbow y correlation
+    for i_seg = 1:numel(seg_start)    
+        for i_rep = 1:n_repeats
+            % get pr2 vals for this segment
+            temp_td.LeftS1_FR = td_list{task_idx}.LeftS1_FR(seg_start(i_seg):seg_end(i_seg),:);
+            temp_td.glm_ext_model = td_list{task_idx}.glm_ext_model(seg_start(i_seg):seg_end(i_seg),:,i_rep);
+            temp_td.glm_handelbow_model = td_list{task_idx}.glm_handelbow_model(seg_start(i_seg):seg_end(i_seg),:,i_rep);
+            eval_ext(i_seg,:,i_rep) = evalModel(temp_td,struct('out_signals','LeftS1_FR','model_name','ext_model','model_type','glm','eval_metric','pr2'));
+            eval_handelbow(i_seg,:,i_rep) = evalModel(temp_td,struct('out_signals','LeftS1_FR','model_name','handelbow_model','model_type','glm','eval_metric','pr2'));
+        end
+        % get correlation values for this segment
+        temp_corr = corr(td_list{task_idx}.dlc_vel(seg_start(i_seg):seg_end(i_seg),dlc_idx));
+        corr_data(i_seg,:) = [temp_corr(1,3),temp_corr(2,4)];
+    end
+        
+    mean_eval_ext = mean(eval_ext,3);
+    mean_eval_handeblow = mean(eval_handelbow,3);
+       
+    histogram(mean_eval_handeblow - mean_eval_ext)
+    
+    
+    
+    
     
 %% plot vel and pos magnitude against each other for all neurons
     % need to account for magnitude of data when doing this
@@ -586,7 +833,7 @@
     end
     
     % normalize by magnitude of corresponding data
-    spacename = 'RT3D';
+    spacename = 'RT3D'; % space name sets range of velocities and positions
     td_idx = find(strcmpi(task_list,spacename),1,'first');
     pos_data = td_list{td_idx}.dlc_pos(:,encoderResults.glm_info_within{1, 2,glm_idx}.in_signals{1,2});
     vel_data = td_list{td_idx}.dlc_vel(:,encoderResults.glm_info_within{1, 2,glm_idx}.in_signals{2,2});
@@ -602,6 +849,8 @@
     proj_list = zeros(size(b_list,1),2,size(b_list,3));
     for i_rep = 1:size(encoderResults.glm_info_within,1)
         b_list(i_rep,:,:) = encoderResults.glm_info_within{i_rep, glm_idx}.b(2:end,:);
+        
+        %glm_info_within(,1,) is RT2d; 2 = RT3d
         proj_list(i_rep,1,:) = sqrt(sum((encoderResults.glm_info_within{i_rep, 2,glm_idx}.b(2:4,:)).^2,1)); % pos proj
         proj_list(i_rep,2,:) = sqrt(sum((encoderResults.glm_info_within{i_rep, 2,glm_idx}.b(5:end,:)).^2,1)); % vel proj
     end
@@ -623,6 +872,49 @@
     set(gca,'fontsize',14);
     xlim([0,max_lim]);
     ylim([0,max_lim]);
+    
+    
+%% plot mod depth across tasks
+    figure();
+    
+    sessionnum=1;
+    tasknames = {'RW','none'}; % RT2d = 1, RT3d = 2
+    for monkeynum = 1:length(monkey_names)
+        for spacenum = 1:2 % 1 = 2D, 2 = 3D
+            % set subplot
+            subplot(1,length(monkey_names),monkeynum)
+            plot([-1 1],[-1 1],'k--','linewidth',0.5)
+            hold on
+            plot([0 0],[-1 1],'k-','linewidth',0.5)
+            plot([-1 1],[0 0],'k-','linewidth',0.5)
+            
+            keep_mask = strcmpi(model_tuning{monkeynum,sessionnum}.task,tasknames{1});
+            space_1_tuning = model_tuning{monkeynum,sessionnum}(keep_mask,:);
+            keep_mask = strcmpi(model_tuning{monkeynum,sessionnum}.task,tasknames{2});
+            space_2_tuning = model_tuning{monkeynum,sessionnum}(keep_mask,:);
+            
+            avg_1_tuning = neuronAverage(space_1_tuning,struct('keycols','signalID','do_nanmean',true));
+            avg_2_tuning = neuronAverage(space_2_tuning,struct('keycols','signalID','do_nanmean', true));
+            % scatter filled circles if there's a winner, empty circles if not
+           
+            plot(avg_1_tuning.S1_FR_modDepth,avg_2_tuning.S1_FR_modDepth,'.')
+                
+                
+            % make axes pretty
+            set(gca,'box','off','tickdir','out',...
+                'xlim',[-0.1 0.6],'ylim',[-0.1 0.6])
+            axis square
+            if monkeynum ~= 1
+                set(gca,'box','off','tickdir','out',...
+                    'xtick',[],'ytick',[])
+            end
+            xlabel('RT2D Mod Depth');
+            ylabel('RT3D Mod Depth');
+        end
+    end
+    formatForLee(gcf);
+    set(gca,'fontsize',14);
+
     
     
 %% plot PDs across spaces (bootstraps based on actual FR)
@@ -834,7 +1126,7 @@
     end
     
     
-%% compute correlation matrices between neurons for 2D and 3D task, for each model as well?
+%% compute correlation matrices between neurons for 2D and 3D task
 
     spacenames = {'RT','RT3D'};
     tree_perm_use = []; max_corr = -100;
@@ -874,42 +1166,77 @@
     end
 
 
-    
-%% loop through files to cross-validate decoders
-%     decoderResults_cell = cell(length(td_all),1);
-%     for filenum = 1:length(td_all)
-%         % Load data
-%         td_list = td_all{filenum};
-%         task_list = task_list_all{filenum};
-%         % bin data at 50ms
-%         for i_td = 1:numel(td_list)
-%             td_list{i_td} = binTD(td_list{i_td},0.05/td_list{i_td}(1).bin_size);
-%         end
-%         
-%         % Get encoding models
-%         decoderResults_cell{filenum} = reachingDecoders(td_list,task_list,robot_height_all{filenum},struct(...
-%             'model_aliases',{{'handelbow'}},... % currently only supports 1 model, unless multiple models have same number of out_signals
-%             'arrayname',arrayname,...
-%             'crossval_lookup',[],...
-%             'num_repeats',2,... % 
-%             'num_folds',5));
-%     end
-%     
-%     
-%     
-    
-    
-%% save all the showing figures
 
-fpath = folderpath; % folderpath is defined at the beginning, can overwrite to a different path
 
-FigList = findobj(allchild(0), 'flat', 'Type', 'figure');
-for iFig = 1:length(FigList)
-  FigHandle = FigList(iFig);
-  %??? What do we have in fighandle, can we have fig title?
-  if(strcmpi(FigHandle.Name, '')==1)
-    FigHandle.Name = num2str(get(FigHandle, 'Number'));
-  end
-  saveFiguresLIB(FigHandle, fpath, FigHandle.Name);
+%% split td based on speed. 1 =  low speed (called RT2D in figs), 2 = high speed (called RT3D in figs)
+    
+    task_idx = 1;
+    td_list = {};
+    td_use = td_all{1}{task_idx};
+    
+    task_list_all{1} = {'RT';'RT3D'};
+    
+    markername = 'hand2';
+    dlc_idx = [find((strcmpi(td_use.dlc_pos_names,[markername,'_x']))),...
+                find((strcmpi(td_use.dlc_pos_names,[markername,'_y']))),...
+                find((strcmpi(td_use.dlc_pos_names,[markername,'_z'])))];
+            
+    marker_vel = td_use.dlc_vel(:,dlc_idx);
+    marker_spd = sqrt(sum(marker_vel.^2,2));
+    
+    marker_spd_cutoff = prctile(marker_spd,50);
+    low_spd_mask = marker_spd < marker_spd_cutoff;
+        
+    td_list{1} = td_use;
+    td_list{2} = td_use;
+    
+    td_fields = fieldnames(td_use);
+    pos_length = length(td_use.dlc_pos);
 
-end
+    for i_field = 1:numel(td_fields)
+        if(size(td_use.(td_fields{i_field}),1) == pos_length)
+            td_list{1}.(td_fields{i_field}) = td_list{1}.(td_fields{i_field})(low_spd_mask==1,:);
+            td_list{2}.(td_fields{i_field}) = td_list{2}.(td_fields{i_field})(low_spd_mask==0,:);
+        end
+    end
+
+    td_all{1} = td_list;
+    %%
+        % simple -- compare predictions for movements in x direction vs
+    % movements in y direction
+    
+    move_dir = atan2(td_list{task_idx}.dlc_vel(:,dlc_idx(2)), td_list{task_idx}.dlc_vel(:,dlc_idx(1)));
+
+    in_y_dir = angleDiff(move_dir, pi/2,1,0) < pi/4 & spd_data > prctile(spd_data,40);
+    in_x_dir = angleDiff(move_dir,0,1,0) < pi/4 & spd_data > prctile(spd_data,40);
+    
+    % get x and y dir predictions and pr2 score
+    
+    n_repeats = size(td_list{task_idx}.glm_ext_vel_model,3);
+    eval_ext_y = zeros(size(td_list{task_idx}.LeftS1_FR,2),n_repeats);
+    eval_handelbow_y = zeros(size(eval_ext_y));
+    eval_ext_x = zeros(size(eval_ext_y));
+    eval_handelbow_x = zeros(size(eval_ext_y));
+    temp_td = td_list{task_idx};
+    
+
+    for i_rep = 1:n_repeats
+        % y dir
+        temp_td.LeftS1_FR = td_list{task_idx}.LeftS1_FR(in_y_dir,:);
+        temp_td.glm_ext_model = td_list{task_idx}.glm_ext_vel_model(in_y_dir,:,i_rep);
+        temp_td.glm_handelbow_model = td_list{task_idx}.glm_handelbow_vel_model(in_y_dir,:,i_rep);
+        eval_ext_y(:,i_rep) = evalModel(temp_td,struct('out_signals','LeftS1_FR','model_name','ext_model','model_type','glm','eval_metric','pr2'));
+        eval_handelbow_y(:,i_rep) = evalModel(temp_td,struct('out_signals','LeftS1_FR','model_name','handelbow_model','model_type','glm','eval_metric','pr2'));
+        % x dir
+        temp_td.LeftS1_FR = td_list{task_idx}.LeftS1_FR(in_x_dir,:);
+        temp_td.glm_ext_model = td_list{task_idx}.glm_ext_vel_model(in_x_dir,:,i_rep);
+        temp_td.glm_handelbow_model = td_list{task_idx}.glm_handelbow_vel_model(in_x_dir,:,i_rep);
+        eval_ext_x(:,i_rep) = evalModel(temp_td,struct('out_signals','LeftS1_FR','model_name','ext_model','model_type','glm','eval_metric','pr2'));
+        eval_handelbow_x(:,i_rep) = evalModel(temp_td,struct('out_signals','LeftS1_FR','model_name','handelbow_model','model_type','glm','eval_metric','pr2'));
+        
+    end
+    
+    mean_ext_y = mean(eval_ext_y,2);
+    mean_ext_x = mean(eval_ext_x,2);
+    mean_handelbow_y = mean(eval_handelbow_y,2);
+    mean_handelbow_x = mean(eval_handelbow_x,2);

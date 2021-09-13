@@ -44,9 +44,9 @@
 %         close all
     end
     
-%% get decay time constant and response amp for amp-freq and intermittent data. This can take awhile....
+%% Get all relevant data (decay time constant and response amp) for amp-freq and intermittent data. This can take awhile....
     analyze_amp_freq_data = 1;
-    analyze_intermittent_data = 1;
+    analyze_intermittent_data = 0;
 
     decay_rate_input_data = [];
     
@@ -96,7 +96,7 @@
         boxplot_params.median_color = colors(color_idx(condition),:);
         boxplot_params.box_color = colors(color_idx(condition),:);
         boxplot_params.whisker_color = colors(color_idx(condition),:);
-        boxplot_wrapper(x_data(condition),(exp_amp_freq_data.stim_chan_decay_rates(:,condition)),boxplot_params);
+        boxplot_wrapper(x_data(condition),(exp_amp_freq_data.nonstim_chan_decay_rates(:,condition)),boxplot_params);
     end
     xlabel('Frequency (Hz)');
     ylabel('Decay rate (1/s)')
@@ -125,16 +125,16 @@
         chan_stim = [chan_stim; exp_amp_freq_data.stim_chan_chan_stim(i_unit)*ones(12,1)];
         chan_rec = [chan_rec; exp_amp_freq_data.stim_chan_chan_rec(i_unit)*ones(12,1)];
     end
-%     for i_unit = 1:size(exp_amp_freq_data.nonstim_chan_decay_rates,1)
-%         decay_list = [decay_list; exp_amp_freq_data.nonstim_chan_decay_rates(i_unit,:)'];
-%         amp_list = [amp_list;amp_data'];
-%         freq_list = [freq_list;freq_data'];
-%         monkey_list = [monkey_list; exp_amp_freq_data.nonstim_chan_monkey(i_unit)*ones(12,1)];
-%         is_stim_chan = [is_stim_chan; zeros(12,1)];
-%         unit_id = [unit_id; (i_unit+100)*ones(12,1)]; % + 100 to avoid the stim chan id's
-%         chan_stim = [chan_stim; exp_amp_freq_data.nonstim_chan_chan_stim(i_unit)*ones(12,1)];
-%         chan_rec = [chan_rec; exp_amp_freq_data.nonstim_chan_chan_rec(i_unit)*ones(12,1)];
-%     end
+    for i_unit = 1:size(exp_amp_freq_data.nonstim_chan_decay_rates,1)
+        decay_list = [decay_list; exp_amp_freq_data.nonstim_chan_decay_rates(i_unit,:)'];
+        amp_list = [amp_list;amp_data'];
+        freq_list = [freq_list;freq_data'];
+        monkey_list = [monkey_list; exp_amp_freq_data.nonstim_chan_monkey(i_unit)*ones(12,1)];
+        is_stim_chan = [is_stim_chan; zeros(12,1)];
+        unit_id = [unit_id; (i_unit+100)*ones(12,1)]; % + 100 to avoid the stim chan id's
+        chan_stim = [chan_stim; exp_amp_freq_data.nonstim_chan_chan_stim(i_unit)*ones(12,1)];
+        chan_rec = [chan_rec; exp_amp_freq_data.nonstim_chan_chan_rec(i_unit)*ones(12,1)];
+    end
     
     keep_mask = ones(length(decay_list),1);
     keep_mask(decay_list > 10) = 0;
@@ -155,7 +155,7 @@
         categorical(chan_stim),categorical(chan_rec),...
         'VariableNames',{'decay','amp','freq','monkey','is_stim_chan','unit_id','chan_stim','chan_rec'});
     
-    mdl_spec = 'decay~amp*is_stim_chan + freq*is_stim_chan +monkey+chan_stim+chan_rec';
+    mdl_spec = 'decay~amp*freq*is_stim_chan +monkey+chan_stim+chan_rec';
 %     mdl_spec = 'decay~amp*freq*is_stim_chan + monkey';
     amp_freq_decay_mdl = fitlm(amp_freq_decay_tbl,mdl_spec);
     

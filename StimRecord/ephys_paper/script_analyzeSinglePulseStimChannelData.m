@@ -19,23 +19,24 @@
 %% plot raster of example neuron
 
     raster_input_data = [];
-    raster_input_data.x_lim = [-50,150]; % ms
+    raster_input_data.x_lim = [-10,10]; % ms
     raster_input_data.amp_list = exp_input_data.amp_list;
-    raster_input_data.marker_style = '.'; % line is the correct way, but much slower
+    raster_input_data.marker_style = 'line'; % line is the correct way, but much slower
     raster_input_data.plot_amp = 1;
     
-%     load('D:\Lab\Data\stim_ephys_paper\artifact_analysis\sim_study\duke_blank_times');
-%     raster_input_data.duke_blank_times = blank_times;
+    load('D:\Lab\Data\stim_ephys_paper\artifact_analysis\sim_study\duke_blank_times');
+    raster_input_data.duke_blank_times = blank_times;
     load('D:\Lab\Data\stim_ephys_paper\artifact_analysis\sim_study\black_blank_times');
-%     raster_input_data.black_blank_times = blank_times;
+    raster_input_data.black_blank_times = blank_times;
     
-    for exp_idx = 1:numel(exp_array_data)%5 %4, 5, 13, 25 (14,12)
+    for exp_idx = 5%1:numel(exp_array_data)%5 %4, 5, 13, 25 (14,12)
         raster_input_data.is_model = 0;
         plotModelExpAmpRaster(exp_array_data{exp_idx},raster_input_data);
     end
 
 %% Activation threshold
     activation_input_data.spike_window = [0.5,5]/1000;
+    
     activation_input_data.remove_intrinsic = 1;
     activation_input_data.amp_list = exp_input_data.amp_list;
     
@@ -43,7 +44,7 @@
     
     if(activation_input_data.use_stats) 
         activation_input_data.sub_baseline = 0;
-        activation_input_data.threshold = 0.0005;
+        activation_input_data.threshold = 0.05;
     else
         activation_input_data.sub_baseline = 1;
         activation_input_data.threshold = 0.5;
@@ -55,13 +56,13 @@
     exp_threshold_data = getActivationThreshold(exp_array_data,activation_input_data);
 
 %% plot activation threshold data
-    f=figure('Position',[2918,452,300,400]); hold on;
+    f=figure('Position',[2918,452,250,327]); hold on;
     f.Name = 'Han_Duncan_activationThreshold';
         
     for i_amp = 1:numel(exp_input_data.amp_list)
         num_neurons(i_amp) = sum(exp_threshold_data.thresholds == exp_input_data.amp_list(i_amp));
         
-        bar(exp_input_data.amp_list(i_amp), num_neurons(i_amp),5,...
+        bar(exp_input_data.amp_list(i_amp), num_neurons(i_amp),4.5,...
             'FaceColor',[0.2,0.2,0.2]);
         
     end
@@ -69,11 +70,56 @@
     formatForLee(gcf); set(gca,'fontsize',14);
     ylabel('Number of neurons');
     xlabel('Amplitude (\muA)');
-    xlim([0,42.5]);
-    set(gca,'XTick',[0:10:40],'XTickLabel',{'0','','20','','40'});
+    xlim([0,30]);
+    set(gca,'XTick',[0:10:40],'XTickLabel',{'0','10','20','30'});
     ax = gca; ax.XAxis.MinorTickValues = [0:5:45];
     ax.YAxis.MinorTickValues = [0:1:18];
     
+%% plot proportion responsive across amplitudes
+    f=figure('Position',[2255 443 450 420]); hold on;
+    f.Name = 'Han_Duncan_singlePulse_proportionResponsive';
+    amp_list = [5,10,15,20,25,30,40,50,100];
+    boxplot_params = [];
+    boxplot_params.use_same_color_for_all = 1; % omits median color
+    
+    boxplot_params.median_color = 'k';
+    boxplot_params.box_width = 3;
+    boxplot_params.linewidth = 1.5;
+    
+    % variables for stats at bottom of section
+    amp_tbl = [];
+    id_tbl = [];
+    num_spikes_tbl = [];
+    for i_amp = 1:numel(exp_input_data.amp_list)        
+        boxplot_wrapper(amp_list(i_amp),exp_threshold_data.avg_num_spikes(:,i_amp),boxplot_params);
+        
+        num_add = sum(~isnan(exp_threshold_data.avg_num_spikes(:,i_amp)));
+        amp_tbl = [amp_tbl; exp_input_data.amp_list(i_amp)*ones(num_add,1)];
+        id_tbl = [id_tbl; find(~isnan(exp_threshold_data.avg_num_spikes(:,i_amp)))];
+        num_spikes_tbl = [num_spikes_tbl; exp_threshold_data.avg_num_spikes(~isnan(exp_threshold_data.avg_num_spikes(:,i_amp)),i_amp)];
+    end
+    
+    % 0uA case
+%     boxplot_wrapper(0,exp_threshold_data.avg_num_spikes_null,boxplot_params);
+    
+    formatForLee(gcf); set(gca,'fontsize',14);
+    ylabel('Spikes per pulse above baseline');
+    xlabel('Amplitude (\muA)');
+    xlim([0,105]);
+    
+    set(gca,'XTick',[0:10:100]);
+    ax = gca; ax.XAxis.MinorTickValues = [0:5:100];
+    ax.YAxis.MinorTickValues = [0:1:18];
+
+    
+    
+    num_tbl = table(amp_tbl, id_tbl,num_spikes_tbl,...
+        'VariableNames',{'amp','neuron','num_spikes'});
+    num_tbl.neuron = categorical(num_tbl.neuron);
+
+    num_tbl_spec = 'num_spikes~amp+neuron';
+    num_mdl = fitlm(num_tbl,num_tbl_spec)
+
 %% magnitude and latency of volleys
     lat_input_data.amp_list = exp_input_data.amp_list;
     lat_input_data.peak_window = [0,10]/1000; % s
@@ -126,7 +172,7 @@
     
 %% latency vs. standard dev of spikes in a peak
 
-    f=figure('Position',[2885 476 395 327]); hold on
+    f=figure('Position',[2885 476 300 327]); hold on
     f.Name = 'Han_duncan_stimChan_spikeTimingVsSpread';
     % latency vs. width
     amps_plot = [2,5,8,9];
@@ -143,7 +189,7 @@
             group_id_list = [group_id_list; exp_latency_data.peak_num(mask)'];
             
         if(any(i_amp==amps_plot))
-            plot(log10(exp_latency_data.lat_list(mask)*1000),log10(exp_latency_data.std_list(mask)*1000),...
+            plot((exp_latency_data.lat_list(mask)*1000),(exp_latency_data.std_list(mask)*1000),...
                 'o','color',color_list(color_cnt,:),'markersize',4)
             color_cnt = color_cnt+1;
         end

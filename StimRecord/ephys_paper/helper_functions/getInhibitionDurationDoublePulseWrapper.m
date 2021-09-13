@@ -13,7 +13,7 @@ function [output_data] = getInhibitionDurationDoubplePulseWrapper(array_data,inp
     PSTH = [];
     amp = [];
     threshold = [];
-    is_inhib = zeros(numel(array_data),numel(input_data.cond_list),1);
+    is_inhib = nan(numel(array_data),numel(input_data.cond_list),1);
     inhib_dur = nan(numel(array_data),numel(input_data.cond_list),1);
     threshold = nan(numel(array_data),numel(input_data.cond_list),1);
     
