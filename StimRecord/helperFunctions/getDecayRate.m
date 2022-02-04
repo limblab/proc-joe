@@ -18,6 +18,7 @@ function [ output_data ] = getDecayRate( array_data, stim_window, baseline_windo
     response_to_each_pulse = cell(numel(fits),1);
     lat_of_spikes = cell(numel(fits),1);
     response_amp = zeros(numel(fits),1);
+    std_response_amp = zeros(numel(fits),1);
     
     base_spike_times = [];
     for condition = 1:numel(fits)
@@ -72,30 +73,40 @@ function [ output_data ] = getDecayRate( array_data, stim_window, baseline_windo
         else % count spikes in a time window, ignore spikes too close to stim onset
             num_spikes = 0;
             num_stim_pulses = 0;
-            for p = 1:numel(array_data.PULSE_TIMES{condition}{1})-1
-                % this one counts all spikes within in the time window
-                % (except for those occuring near stim onset)
-%                 spike_window_adj = [spike_window(1)/1000 + array_data.PULSE_TIMES{condition}{1}(p),array_data.PULSE_TIMES{condition}{1}(p+1)];
-                % this one counts spikes within a time window post stim for 
-                % each pulse in the response amp time window
-                spike_window_adj = [spike_window(1)/1000 + array_data.PULSE_TIMES{condition}{1}(p),...
-                    spike_window(2)/1000 + array_data.PULSE_TIMES{condition}{1}(p)];
-                spike_window_adj = [min(spike_window_adj(1),response_amp_time/1000),min(spike_window_adj(2),response_amp_time/1000)];
-                
-                num_spikes = num_spikes + sum(array_data.spikeTrialTimes{condition} >= spike_window_adj(1) & array_data.spikeTrialTimes{condition} <= spike_window_adj(2));
-                
-                if(array_data.PULSE_TIMES{condition}{1}(p) < response_amp_time/1000)
-                    num_stim_pulses = num_stim_pulses + 1;
-                end
-                
-                
-                
-            end
-%             response_amp(condition) = (num_spikes/array_data.numStims(condition))/(response_amp_time - num_stim_pulses*spike_window(1))*1000 - ...
-%                 mean(y_data_baseline)/mode(diff(array_data.binEdges{condition})/1000); % Hz above baseline
-            response_amp(condition) = (num_spikes/array_data.numStims(condition))/(num_stim_pulses*diff(spike_window))*1000 - ...
+            num_spikes =  sum(array_data.spikeTrialTimes{condition} >= 0 & array_data.spikeTrialTimes{condition} <= 3.9);
+%             for p = 1:numel(array_data.PULSE_TIMES{condition}{1})-1
+%                 % this one counts all spikes within in the time window
+%                 % (except for those occuring near stim onset)
+% %                 spike_window_adj = [spike_window(1)/1000 + array_data.PULSE_TIMES{condition}{1}(p),array_data.PULSE_TIMES{condition}{1}(p+1)];
+%                 % this one counts spikes within a time window post stim for 
+%                 % each pulse in the response amp time window
+%                 spike_window_adj = [spike_window(1)/1000 + array_data.PULSE_TIMES{condition}{1}(p),...
+%                     spike_window(2)/1000 + array_data.PULSE_TIMES{condition}{1}(p)];
+%                 spike_window_adj = [min(spike_window_adj(1),response_amp_time/1000),min(spike_window_adj(2),response_amp_time/1000)];
+%                 
+%                 num_spikes = num_spikes + sum(array_data.spikeTrialTimes{condition} >= spike_window_adj(1) & array_data.spikeTrialTimes{condition} <= spike_window_adj(2));
+%                 
+%                 if(array_data.PULSE_TIMES{condition}{1}(p) < response_amp_time/1000)
+%                     num_stim_pulses = num_stim_pulses + 1;
+%                 end
+%                 
+%                 
+%                 
+%             end
+            response_amp(condition) = (num_spikes/array_data.numStims(condition))/(response_amp_time - 0*num_stim_pulses*1)*1000 - ...
                 mean(y_data_baseline)/mode(diff(array_data.binEdges{condition})/1000); % Hz above baseline
+%             response_amp(condition) = (num_spikes/array_data.numStims(condition))/(num_stim_pulses*diff(spike_window))*1000 - ...
+%                 mean(y_data_baseline)/mode(diff(array_data.binEdges{condition})/1000); % Hz above baseline
 
+            % get response amp per trial
+            response_amp_trial = [];
+            for i_trial = 1:max(array_data.stimData{condition})
+                num_spikes =  sum(array_data.spikeTrialTimes{condition} >= 0 & array_data.spikeTrialTimes{condition} <= 3.5 & ...
+                    array_data.stimData{condition} == i_trial);
+                response_amp_trial(end+1) = (num_spikes)/(response_amp_time - 0*num_stim_pulses*1)*1000 - ...
+                    mean(y_data_baseline)/mode(diff(array_data.binEdges{condition})/1000);
+            end
+            std_response_amp(condition) = std(response_amp_trial);
         end
         
         
@@ -140,5 +151,6 @@ function [ output_data ] = getDecayRate( array_data, stim_window, baseline_windo
     output_data.response_amp = response_amp;
     output_data.response_to_each_pulse = response_to_each_pulse;
     output_data.spike_lat = lat_of_spikes;
+    output_data.std_response_amp = std_response_amp;
 end
 

@@ -58,28 +58,60 @@ load('D:\Lab\Data\stim_ephys_paper\artifact_analysis\Duncan_Han_dukeProjBox\Duke
         peak_data{file_num}.pw2 = pulse_width_2(file_num);
         peak_data{file_num}.chan = stim_chan(file_num);
         
-        if(make_plot)
+        if(make_plot && file_num==239)
             f=figure();
             f.Name = [file_list(file_num).name(1:end-10),'_raw'];
-            subplot(2,1,1)
-            plot(x_data,(plot_data(:,1:2:6)'),'color',getColorFromList(1,0),'linewidth',1);
+            subplot(3,1,1)
+            plot(x_data,(plot_data(:,2:2:6)')/1000,'color',getColorFromList(1,1),'linewidth',1);
             hold on 
-            plot(x_data,(plot_data(:,2:2:6)'),'color',getColorFromList(1,1),'linewidth',1);
-            xlim([-2,6])
-            ylim([-5100,5100])
-            ylabel('Voltage (\muV)');
+            plot(x_data,(plot_data(:,1:2:6)')/1000,'color',getColorFromList(1,0),'linewidth',0.5);
+            xlim([-2,5])
+            ylim([-5.1,5.1])
+            ylabel('Voltage (mV)');
             formatForLee(gcf)
-            xlabel('Time after stimulation offset (ms)');
             set(gca,'fontsize',14)
 
-            subplot(2,1,2)
+            subplot(3,1,2)
             f.Name = [file_list(file_num).name(1:end-10),'_filtered'];
-            plot(x_data,(acausalFilter(plot_data(:,1:2:6))'),'color',getColorFromList(1,0),'linewidth',1);
+            plot(x_data,(acausalFilter(plot_data(:,2:2:6))')/1000,'color',getColorFromList(1,1),'linewidth',1);
             hold on
-            plot(x_data,(acausalFilter(plot_data(:,2:2:6))'),'color',getColorFromList(1,1),'linewidth',1);
-            xlim([-2,6])
-            ylim([-3000,3000])
-            ylabel('Voltage (\muV)');
+            plot(x_data,(acausalFilter(plot_data(:,1:2:6))')/1000,'color',getColorFromList(1,0),'linewidth',0.5);
+            xlim([-2,5])
+            ylim([-2,2])
+            ylabel('Voltage (mV)');
+            formatForLee(gcf)
+            set(gca,'fontsize',14)
+            
+            
+            
+            % this assumes that the rest of the script has been ran, which is dumb but it's a hack...
+            gain_data_cath = ones(size(x_data));
+            gain_data_ano = ones(size(x_data));
+            amp_idx = find(amps==50);
+            t_data = x_data;
+            
+            gain_data_cath_interp = interp1(bin_centers-0.05, metric_gain_cathodic(amp_idx,:),t_data(t_data > 0 & t_data < 5),'linear','extrap');
+            gain_data_ano_interp = interp1(bin_centers-0.05, metric_gain_anodic(amp_idx,:),t_data(t_data > 0 & t_data < 5),'linear','extrap');
+            
+            gain_data_cath_interp(gain_data_cath_interp < 0) = 0.00001;
+            gain_data_ano_interp(gain_data_ano_interp < 0) = 0.00001;
+            
+            gain_data_cath_interp(gain_data_cath_interp > 1) = 1;
+            gain_data_ano_interp(gain_data_ano_interp > 1) = 1;
+            
+            gain_data_cath(t_data>0 & t_data < 5) = gain_data_cath_interp;
+            gain_data_ano(t_data>0 & t_data < 5) = gain_data_ano_interp;
+           
+            subplot(3,1,3)
+            f.Name = [file_list(file_num).name(1:end-10),'_filtered'];
+            % anodic
+            plot(x_data,1./(gain_data_cath)'.*(acausalFilter(plot_data(:,2:2:6))')/1000,'color',getColorFromList(1,1),'linewidth',1);
+            hold on
+            % cathodic
+            plot(x_data,1./(gain_data_ano)'.*(acausalFilter(plot_data(:,1:2:6))')/1000,'color',getColorFromList(1,0),'linewidth',0.5);
+            xlim([-2,5])
+            ylim([-2,2])
+            ylabel('Voltage (mV)');
             formatForLee(gcf)
             xlabel('Time after stimulation offset (ms)');
             set(gca,'fontsize',14)
@@ -193,6 +225,7 @@ load('D:\Lab\Data\stim_ephys_paper\artifact_analysis\Duncan_Han_dukeProjBox\Duke
 
     end
 
+    
 %% plot gain of amplifier at different time across amplitudes and polarity
     bin_centers = 0.75:0.5:4;
     bin_width = mean(diff(bin_centers));
@@ -227,8 +260,8 @@ load('D:\Lab\Data\stim_ephys_paper\artifact_analysis\Duncan_Han_dukeProjBox\Duke
     amp_keep = [10,25,50,100]';
     amp_mask = any(amps==amp_keep);
     
-    offset_cathodic = [-0.9,0.1,1.1,-0.9]./40;
-    offset_anodic = [-1.1,-0.1,-0.9,-1.1]./40;
+    offset_cathodic = [-0.8,0.0,1.2,-0.8]./40;
+    offset_anodic = [-1.2,-0.2,-0.8,-1.2]./40;
     color_list = inferno(numel(amp_keep)+1);
     
     f=figure(); hold on;
@@ -244,11 +277,12 @@ load('D:\Lab\Data\stim_ephys_paper\artifact_analysis\Duncan_Han_dukeProjBox\Duke
                     
                     low_bar = -std_gain_cathodic(i_amp,:);
                     high_bar = std_gain_cathodic(i_amp,:);
-                    plot(bin_centers,metric_gain_cathodic(i_amp,:),...
+%                     plot(bin_centers,metric_gain_cathodic(i_amp,:),...
+                    errorbar(bin_centers+offset_cathodic(sum(amp_mask(1:i_amp))),metric_gain_cathodic(i_amp,:),low_bar,high_bar,...
                         'marker','.','markersize',22,'linestyle','-',...
                         'color',color_list(sum(amp_mask(1:i_amp)),:),'linewidth',2);
                     
-%                     errorbar(bin_centers+offset_cathodic(sum(amp_mask(1:i_amp))),metric_gain_cathodic(i_amp,:),low_bar,high_bar,...
+%                     
         
 
                 else
@@ -256,11 +290,10 @@ load('D:\Lab\Data\stim_ephys_paper\artifact_analysis\Duncan_Han_dukeProjBox\Duke
 %                     high_bar = squeeze(prc_gain_anodic(i_amp,:,2))-metric_gain_anodic(i_amp,:);
                     low_bar = -std_gain_anodic(i_amp,:);
                     high_bar = std_gain_anodic(i_amp,:);
-%                     d=errorbar(bin_centers+offset_anodic(sum(amp_mask(1:i_amp))),metric_gain_anodic(i_amp,:),low_bar,high_bar,...
-                     plot(bin_centers,metric_gain_anodic(i_amp,:),...
+                    d=errorbar(bin_centers+offset_anodic(sum(amp_mask(1:i_amp))),metric_gain_anodic(i_amp,:),low_bar,high_bar,...
                         'marker','s','markersize',8,'linestyle','--',...
                         'color',color_list(sum(amp_mask(1:i_amp)),:),'linewidth',2);
-%                     d.Bar.LineStyle = 'dotted';
+                    d.Bar.LineStyle = 'dotted';
                 %                     plot(bin_centers,metric_gain_anodic(i_amp,:),...
 
                 end

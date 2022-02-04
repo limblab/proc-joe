@@ -1,11 +1,11 @@
 %% define params
 PARAMS.gain = 0.2;
 PARAMS.spread = 0.25;
-PARAMS.refractory_time_constant = 40; % ms
+PARAMS.refractory_time_constant = 112; % ms
 PARAMS.conductance = 2.32;
 PARAMS.chronaxie = 0.43; % ms
 PARAMS.rheobase = 3.71; % uA
-PARAMS.exp_time_constant = 112; % ms
+PARAMS.exp_time_constant = 40; % ms
 
 CONSTANTS.t_abs = 1; % ms
 CONSTANTS.distances = 1:0.1:3; % mm

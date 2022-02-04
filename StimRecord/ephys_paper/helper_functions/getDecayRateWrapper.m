@@ -38,6 +38,7 @@ function [data_struct] = getDecayRateWrapper(data_struct, field_name, input_data
         data_struct.([field_name,'_chan_rec'])(u,1) = data_struct.(field_name){u}.CHAN_REC;
         data_struct.([field_name,'_monkey'])(u,1) = strcmpi(data_struct.(field_name){u}.monkey,'Han');% 1 = han, 0 = duncan
         data_struct.([field_name,'_spike_lat'])(u,:) = decay_data.spike_lat;
+        data_struct.([field_name,'_std_response_amp'])(u,:) = decay_data.std_response_amp';
     end 
 
 end

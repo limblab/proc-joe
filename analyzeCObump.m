@@ -1,16 +1,22 @@
 %% set initial parameters
 
-    input_data.folderpath = 'D:\Lab\Data\StimModel\Han_20160325_cds\';
+    input_data.folderpath = 'D:\Lab\Data\Kramer_RW\current\';
 
 %     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Duncan_17L1\mapfiles\left S1 20190205\SN 6251-002087.cmp';
-    mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
+%     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Han_13B1\map files\Left S1\SN 6251-001459.cmp';
 %     mapFileName = 'R:\limblab\lab_folder\Animal-Miscellany\Pop_18E3\Array Map Files\6250-002085\SN 6250-002085.cmp';
     
-    input_data.date = '20190515';
+    %Kramer Right S1
+    mapFileName = 'R:\limblab\lab_folder\Lab-Wide Animal Info\Implants\Blackrock Array Info\Array Map Files\6251-0922\6251-0922.cmp';
+
+    %Kramer Left S1
+%     mapFileName = 'R:\limblab\lab_folder\Lab-Wide Animal Info\Implants\Blackrock Array Info\Array Map Files\1024-0589\1024-0589.cmp';
+    
+    input_data.date = '20130404';
 
     input_data.array = 'arrayLeftS1';
-    input_data.monkey = 'monkeyHan';
-    input_data.ranBy = 'ranByKyle';
+    input_data.monkey = 'monkeyKramer';
+    input_data.ranBy = 'ranByTucker';
     input_data.lab = 6;
     input_data.mapFile = strcat('mapFile',mapFileName);
     input_data.task = 'taskRW';
@@ -25,7 +31,7 @@
 %% make cds
     cd(input_data.folderpath)
 
-    file_name = dir('*nev*');
+    file_name = dir('*1.nev*');
     
     params.event_list = {'goCueTime';'stimTime'};
     params.trial_results = {'R'};
@@ -40,16 +46,12 @@
     
     td_all = [];
     for i = 1%:numel(file_name)
-%         cds = commonDataStructure();
-%         cds.file2cds(strcat(input_data.folderpath,file_name(i).name),input_data.array,input_data.monkey,input_data.ranBy,...
-%             input_data.lab,input_data.mapFile,input_data.task,'recoverPreSync','ignoreJumps','ignoreFilecat');
+        cds = commonDataStructure();
+        cds.file2cds(strcat(input_data.folderpath,file_name(i).name),input_data.array,input_data.monkey,input_data.ranBy,...
+            input_data.lab,input_data.mapFile,input_data.task,'recoverPreSync','ignoreJumps','ignoreFilecat');
        
-%         td_temp = stripSpikeSorting(td_temp);
-        td_temp = getSpeed(td_temp);
-        td_temp = getNorm(td_temp,'vel');
-%         td_temp = getMoveOnsetAndPeak(td_temp);
+%         td_all = parseFileByTrial(cds, params);
         
-        td_all = [td_all,td_temp];
     end
     
 %     td_all = removeBadTrials(td_all);

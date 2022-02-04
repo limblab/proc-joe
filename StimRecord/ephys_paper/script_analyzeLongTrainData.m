@@ -85,8 +85,8 @@
     boxplot_params.linewidth = 1.75;
     boxplot_params.box_width = 3.5;
     boxplot_params.whisker_width = boxplot_params.box_width*0.2;
-    boxplot_params.outlier_marker = '.';
-    boxplot_params.outlier_marker_size = 12;
+    boxplot_params.outlier_marker = 'x';
+    boxplot_params.outlier_marker_size = 5;
     boxplot_params.use_log_x_scale = 0;
 
     x_data = [131,131,131,104,104,104,80,80,80,51,51,51]+[-3.5,0,3.5,-3.5,0,3.5,-3.5,0,3.5,-3.5,0,3.5];
@@ -96,12 +96,13 @@
         boxplot_params.median_color = colors(color_idx(condition),:);
         boxplot_params.box_color = colors(color_idx(condition),:);
         boxplot_params.whisker_color = colors(color_idx(condition),:);
-        boxplot_wrapper(x_data(condition),(exp_amp_freq_data.nonstim_chan_decay_rates(:,condition)),boxplot_params);
+        boxplot_wrapper(x_data(condition),(exp_amp_freq_data.stim_chan_decay_rates(:,condition)),boxplot_params);
     end
     xlabel('Frequency (Hz)');
     ylabel('Decay rate (1/s)')
 
     xlim([25,155])
+    ylim([-0.5,10])
     ax = gca;
     ax.XTick = [51,80,104,131];
     formatForLee(gcf);
@@ -156,7 +157,7 @@
         'VariableNames',{'decay','amp','freq','monkey','is_stim_chan','unit_id','chan_stim','chan_rec'});
     
     mdl_spec = 'decay~amp*freq*is_stim_chan +monkey+chan_stim+chan_rec';
-%     mdl_spec = 'decay~amp*freq*is_stim_chan + monkey';
+%     mdl_spec = 'decay~amp*freq + monkey + chan_stim';
     amp_freq_decay_mdl = fitlm(amp_freq_decay_tbl,mdl_spec);
     
     
@@ -287,9 +288,11 @@
         categorical(monkey_list),categorical(freq_list),categorical(is_cont_list),categorical(chan_stim),...
         'VariableNames',{'decay','duty','dur','monkey','freq','is_cont','chan_stim'});
     
-    mdl_spec = 'decay~duty + is_cont + monkey + freq + chan_stim';
+    mdl_spec = 'decay~duty  + is_cont + monkey + freq + chan_stim';
     int_decay_mdl = fitlm(int_decay_tbl,mdl_spec)
+   
     
+
 %% run a wilcoxon rank-sum test for each stimulation frequency and decay rate (combine durations)
     unique_duty = unique(duty_list);
     unique_freq = unique(freq_list);
@@ -322,7 +325,8 @@
         subplot_map = condition_map;
         subplot_size = [4,3];
     else
-        idx_plot = [1,3,10,12]; % 20uA 104Hz, 60uA 104Hz, 20uA 51Hz, 60uA 51Hz.
+%         idx_plot = [1,3,10,12]; 
+        idx_plot = [4,6,10,12];
         subplot_map = [3,4,1,2];
         subplot_size = [2,2];
     end  
@@ -362,7 +366,7 @@
     end
 
     linkaxes(ax,'xy');
-    ylim([-30,250])
+    ylim([-30,100])
     xlim([0,4700])
     
 
@@ -382,8 +386,9 @@
     boxplot_params.box_width = 2.35*2;
     boxplot_params.linewidth = 2;
     
-    activated_mask = exp_amp_freq_data.nonstim_chan_is_responsive(:,min_cond_idx) == 1;
+    activated_mask = exp_amp_freq_data.nonstim_chan_is_responsive(:,min_cond_idx) == 1;% | exp_amp_freq_data.nonstim_chan_is_responsive(:,min_cond_idx) == 0;
     resp_data = exp_amp_freq_data.nonstim_chan_response_amp(activated_mask==1,:);
+    std_resp_data = exp_amp_freq_data.nonstim_chan_std_response_amp(activated_mask==1,:);
     
     offset = [-2.6,0,2.6]*2;
     
@@ -395,7 +400,7 @@
     amp_all = []; freq_all = [];
     for condition = 1:numel(amp_data)
             color_idx = find(unique_amps==amp_data(condition));
-            pair_change = resp_data(:,condition); % - resp_data(:,min_cond_idx);
+            pair_change = std_resp_data(:,condition).^2;%/freq_data(condition); % - resp_data(:,min_cond_idx);
 
             boxplot_params.outlier_color = color_list(color_idx,:);
             boxplot_params.median_color = color_list(color_idx,:);
@@ -408,7 +413,7 @@
             hold on;
 
             % put data in stat matrices
-            resp_amp_all = [resp_amp_all; resp_data(:,condition)];
+            resp_amp_all = [resp_amp_all; std_resp_data(:,condition)];%/freq_data(condition)];
             monkey_all = [monkey_all; exp_amp_freq_data.nonstim_chan_monkey(activated_mask==1)];
             chan_stim_all = [chan_stim_all; exp_amp_freq_data.nonstim_chan_chan_stim(activated_mask==1) + 100*(exp_amp_freq_data.nonstim_chan_monkey(activated_mask==1)==1)];
             chan_rec_all = [chan_rec_all; exp_amp_freq_data.nonstim_chan_chan_rec(activated_mask==1) + 100*(exp_amp_freq_data.nonstim_chan_monkey(activated_mask==1)==1)];
@@ -417,7 +422,7 @@
     end
         
     xlabel('Frequency (Hz)');
-    ylabel('FR above baseline per pulse (Hz)');
+    ylabel('Firing rate variance across trains (Hz^2)');
     
     resp_amp_all(resp_amp_all < 0) = 0;
     

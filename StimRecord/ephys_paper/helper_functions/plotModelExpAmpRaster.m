@@ -70,7 +70,7 @@ function [output_data] = plotModelExpAmpRaster(data, input_data)
     if(input_data.is_model)
         optsPlot.LINE_WIDTH = 2;
     else
-        optsPlot.LINE_WIDTH = 3;
+        optsPlot.LINE_WIDTH = 2;
     end
     % populate optsSave
     optsSave = [];

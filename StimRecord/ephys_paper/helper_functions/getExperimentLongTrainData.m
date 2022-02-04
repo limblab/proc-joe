@@ -14,6 +14,7 @@ function [amp_freq_data, intermittent_data] = getExperimentLongTrainData(input_d
 
     amp_freq_stim = {};
     amp_freq_nonstim = {};
+    amp_freq_nonstim_idx = [];
     amp_freq_chan_rec = [];
     
     inter_180_stim = {};
@@ -28,6 +29,7 @@ function [amp_freq_data, intermittent_data] = getExperimentLongTrainData(input_d
     % load in amp_freq data
     files = dir([highest_folderpath 'amp_freq\pulse_times\*',search_word,'*']);
 
+    counter = 1;
     for file_num = 1:numel(files)
         % load files(f)
         load([files(file_num).folder,'\' files(file_num).name]);
@@ -37,7 +39,10 @@ function [amp_freq_data, intermittent_data] = getExperimentLongTrainData(input_d
 
         amp_freq_stim(end+1:end+numel(stim_all_temp)) = stim_all_temp;
         amp_freq_nonstim(end+1:end+numel(nonstim_all_temp)) = nonstim_all_temp;
+        amp_freq_nonstim_idx(end+1:end+numel(nonstim_all_temp)) = counter + zeros(1,numel(nonstim_all_temp));
         amp_freq_chan_rec(end+1:end+numel(nonstim_all_temp)) = chan_rec_temp;
+        
+        counter = counter + 1;
     end
 
     % load in intermittent data (180 Hz)
@@ -73,6 +78,7 @@ function [amp_freq_data, intermittent_data] = getExperimentLongTrainData(input_d
     % package outputs
     amp_freq_data.stim_chan = amp_freq_stim;
     amp_freq_data.nonstim_chan = amp_freq_nonstim;
+    amp_freq_data.nonstim_idx = amp_freq_nonstim_idx;
     amp_freq_data.nonstim_chan_rec = amp_freq_chan_rec;
     
     intermittent_data.high_freq.stim_chan = inter_180_stim;

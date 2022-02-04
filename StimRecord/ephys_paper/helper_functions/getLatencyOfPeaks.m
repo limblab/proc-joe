@@ -44,7 +44,7 @@ function [output_data] = getLatencyOfPeaks(array_data,input_data)
     end
     bin_centers = bin_edges(1:end-1) + mode(diff(bin_edges)/2);
     
-    for i_unit = 1:numel(array_data)
+    for i_unit = 4:numel(array_data)
         for i_amp = 1:numel(input_data.amp_list)
             amp_idx = find(input_data.amp_list(i_amp) == [array_data{i_unit}.STIM_PARAMETERS.amp1],1,'first');
             

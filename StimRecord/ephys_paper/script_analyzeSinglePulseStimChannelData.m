@@ -122,7 +122,7 @@
 
 %% magnitude and latency of volleys
     lat_input_data.amp_list = exp_input_data.amp_list;
-    lat_input_data.peak_window = [0,10]/1000; % s
+    lat_input_data.peak_window = [-10,10]/1000; % s
     lat_input_data.bin_size = 0.1/1000; % s
     
     lat_input_data.use_gauss_filter = 1;

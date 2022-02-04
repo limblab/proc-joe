@@ -35,7 +35,7 @@
     
     arrayname = 'LeftS1';
     monkey_names = {'Han'};
-    included_models = {'ext','handelbow','joint'}; % models to calculate encoders for
+    included_models = {'ext','handelbow'}; % models to calculate encoders for
     models_to_plot = {'ext','handelbow'}; % main models of the paper
     not_plot_models = setdiff(included_models,models_to_plot);
     bin_size = 0.05; % s
@@ -297,26 +297,29 @@
 %% get predictions across entire file using correct model fold
     td_list = td_all{1};
     for i_td = 1:numel(td_list)
-        task_idx = i_td;
-    
+        if(strcmpi(td_list{i_td}.task,'RW'))
+            task_idx=1;
+        else
+            task_idx=2;
+        end
         % get predictions
 
         for mdlnum = 1:numel(included_models)
             % preallocate space
-            td_list{task_idx}.(encoderResults.params.model_names{mdlnum}) = nan(size(td_list{task_idx}.LeftS1_FR,1),size(td_list{task_idx}.LeftS1_FR,2),encoderResults.params.num_repeats);
+            td_list{i_td}.(encoderResults.params.model_names{mdlnum}) = nan(size(td_list{i_td}.LeftS1_FR,1),size(td_list{i_td}.LeftS1_FR,2),encoderResults.params.num_repeats);
             for i_repeat = 1:encoderResults.params.num_repeats
                 for i_fold = 1:encoderResults.params.num_folds
                     % get predictions across whole file
-                    temp_td = getModel(td_list{task_idx},...
+                    temp_td = getModel(td_list{i_td},...
                         encoderResults.glm_info{i_fold +(i_repeat-1)*encoderResults.params.num_folds,mdlnum});
 
                     % store those that were in the test set. field name =
                     % encoderResults.params.model_names{mdlnum}
-                    test_set_idx = encoderResults.params.crossval_lookup.trialID(encoderResults.params.crossval_lookup.spaceNum==2 & ...
+                    test_set_idx = encoderResults.params.crossval_lookup.trialID(encoderResults.params.crossval_lookup.spaceNum==task_idx & ...
                         encoderResults.params.crossval_lookup.crossvalID(:,1) == i_repeat & ...
                         encoderResults.params.crossval_lookup.crossvalID(:,2) == i_fold);
 
-                    td_list{task_idx}.(encoderResults.params.model_names{mdlnum})(test_set_idx,:,i_repeat) = temp_td.(encoderResults.params.model_names{mdlnum})(test_set_idx,:);
+                    td_list{i_td}.(encoderResults.params.model_names{mdlnum})(test_set_idx,:,i_repeat) = temp_td.(encoderResults.params.model_names{mdlnum})(test_set_idx,:);
                 end
             end
 %         
@@ -617,6 +620,43 @@
     ylabel('Number of neurons');
     [p] = ranksum(data(:,2),data(:,1),'tail','right')
     
+
+%% get predictions during high velocity periods. Compare predicted FR to actual for each model
+% for each task
+mse = zeros(size(td_list{1}.LeftS1_spikes,2),2,numel(td_list));
+for i_task = 1:numel(td_list)
+    if(strcmpi(td_list{i_td}.task,'RW'))
+        space_idx = 1; % this corresponds to the space idx
+    else
+        space_idx=0;
+    end
+    
+    % get peaks in speed
+    dlc_spd = sqrt(sum(td_list{i_task}.dlc_vel.^2,2));
+    [pks, locs] = findpeaks(dlc_spd,'MinPeakHeight',prctile(dlc_spd,85),'MinPeakDistance',10);
+%     figure();
+%     plot(dlc_spd)
+%     hold on
+%     plot(locs, prctile(dlc_spd,90)*ones(size(locs)),'.','markersize',12)
+    
+    % get FR, predicted FR for each neuron at peaks in speed
+    FR_real = td_list{i_task}.LeftS1_spikes(locs,:);
+    FR_ext = mean(td_list{i_task}.glm_ext_model(locs,:,:),3,'omitnan');
+    FR_whole = mean(td_list{i_task}.glm_handelbow_model(locs,:,:),3,'omitnan'); % average over repeats
+    
+    mse(:,1,i_task) = mean((FR_ext-FR_real).^2,1,'omitnan');
+    mse(:,2,i_task) = mean((FR_whole-FR_real).^2,1,'omitnan');
+%     
+%     figure();
+%     for i_unit = 1:size(FR_real,2)
+%         subplot(5,5,i_unit)
+%         plot(FR_real(:,i_unit), FR_ext(:,i_unit),'.')
+%         hold on
+%         plot(FR_real(:,i_unit), FR_whole(:,i_unit),'o','markersize',4)
+%     end
+end
+
+mse_model_diff = squeeze(mse(:,2,:) - mse(:,1,:));
     
 %% get FR during reaches in the PD for each neuron
     td_list = td_all{1};

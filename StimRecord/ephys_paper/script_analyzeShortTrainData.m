@@ -224,3 +224,11 @@ end
 plot([x_data(1),x_data(end)],exp_inhib_data.threshold(idx,1)+[0,0],'k--','linewidth',1)
 
 exp_inhib_data.inhib_dur(idx,:)
+
+
+%% get decay rate (linear?) for each neuron
+
+
+
+
+
